@@ -24,6 +24,14 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
     }
     const { currencyCode, amount, destination, metadata } = parsed.data
 
+      // ⛔ IOU-only: reject native XRP
+  if (currencyCode.toUpperCase() === 'XRP') {
+    return reply.status(400).send({
+      ok: false,
+      error: 'XRP is native and cannot be issued. Use a 3-letter code (e.g., EUR) or 40-hex for custom codes.'
+    })
+  }
+
     const seed = process.env.ISSUER_SEED
     if (!seed) return reply.status(500).send({ error: 'Missing ISSUER_SEED in env' })
 

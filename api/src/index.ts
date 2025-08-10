@@ -23,9 +23,11 @@ app.get('/xrpl-status', async () => {
 // Routes
 import tokensRoutes from './routes/tokens.js'
 import trustlineRoutes from './routes/trustlines.js' 
+import balancesRoutes from './routes/balances.js' 
 
 await app.register(tokensRoutes, { prefix: '/tokens' })
 await app.register(trustlineRoutes, { prefix: '/trustlines' })
+await app.register(balancesRoutes, { prefix: '/balances' })
 
 const port = Number(process.env.PORT || 4000)
 app.listen({ port, host: '0.0.0.0' }).catch((err) => {
