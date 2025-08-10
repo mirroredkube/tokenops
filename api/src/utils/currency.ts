@@ -8,4 +8,13 @@ export function currencyToHex(code: string): string {
   export function isHexCurrency(code: string): boolean {
     return /^[0-9A-F]{40}$/.test(code)
   }
+
   
+  export function hexCurrencyToAscii(hex: string): string | null {
+    if (!/^[0-9A-F]{40}$/.test(hex)) return null
+    // strip trailing zeros and decode
+    const trimmed = hex.replace(/0+$/,'')
+    try {
+      return Buffer.from(trimmed, 'hex').toString('ascii')
+    } catch { return null }
+  }
