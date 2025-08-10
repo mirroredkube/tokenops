@@ -1,0 +1,33 @@
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Token {
+  id            String   @id @default(cuid())
+  currencyCode  String
+  amount        String
+  destination   String
+  issuer        String
+  metadataHash  String?
+  ledgerTxHash  String?
+  createdAt     DateTime @default(now())
+  events        TokenEvent[]
+}
+
+model TokenEvent {
+  id           String   @id @default(cuid())
+  tokenId      String
+  type         String
+  ledgerTxHash String?
+  memo         String?
+  createdAt    DateTime @default(now())
+
+  token Token @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  @@index([tokenId])
+}

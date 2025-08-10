@@ -1,0 +1,28 @@
+{
+  "name": "tokenops-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.0",
+    "@fastify/swagger": "^9.0.0",
+    "@fastify/swagger-ui": "^5.0.0",
+    "dotenv": "^16.4.1",
+    "fastify": "^5.0.0",
+    "xrpl": "^3.0.2",
+    "zod": "^3.23.8",
+    "@prisma/client": "^5.16.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.0",
+    "typescript": "^5.4.5",
+    "prisma": "^5.16.1"
+  }
+}
