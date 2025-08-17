@@ -10,7 +10,7 @@ await app.register(cors, { origin: true })
 await app.register(swagger, { openapi: { info: { title: 'TokenOps API', version: '0.1.0' } } })
 await app.register(swaggerUI, { routePrefix: '/docs' })
 
-app.get('/health', async () => ({ ok: true }))
+// app.get('/health', async () => ({ ok: true })) - moved to system routes
 
 // debug helper
 import { withClient } from './lib/xrplClient.js'
@@ -22,10 +22,12 @@ app.get('/debug/ledger', async () => {
 })
 
 // Routes
+import systemRoutes from './routes/system.js'
 import tokensRoutes from './routes/tokens.js'
 import trustlineRoutes from './routes/trustlines.js'
 import balancesRoutes from './routes/balances.js'
 
+app.register(systemRoutes, { prefix: '/system' })
 await app.register(tokensRoutes,   { prefix: '/tokens' })
 await app.register(trustlineRoutes,{ prefix: '/trustlines' })
 await app.register(balancesRoutes, { prefix: '/balances' })
