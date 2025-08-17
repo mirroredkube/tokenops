@@ -4,3 +4,59 @@
 
 /* Optional: slightly tighter, more B2B look */
 :root { font-feature-settings: "cv02","cv03","cv04","cv11"; }
+
+@layer utilities {
+    @keyframes float {
+      0%, 100% { transform: translateY(0) }
+      50% { transform: translateY(-2px) }
+    }
+    .animate-float { animation: float 3s ease-in-out infinite }
+  
+    /* faint card glow used behind the icon banner */
+    .card-glow {
+      background: radial-gradient(120px 120px at 10% 30%, rgba(16,185,129,.15), transparent 60%),
+                  radial-gradient(140px 140px at 90% 10%, rgba(99,102,241,.12), transparent 60%);
+    }
+  }
+
+  @layer components {
+    .btn {
+      @apply inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+             transition-colors focus-visible:outline-none focus-visible:ring-2
+             focus-visible:ring-emerald-500 focus-visible:ring-offset-2
+             disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-primary {
+      @apply bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-600;
+    }
+    .btn-outline {
+      @apply border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50;
+    }
+    .btn-ghost {
+      @apply bg-transparent text-neutral-900 hover:bg-neutral-50;
+    }
+  }
+
+  @layer components {
+    .btn {
+      @apply inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+             transition-colors focus-visible:outline-none focus-visible:ring-2
+             focus-visible:ring-emerald-500 focus-visible:ring-offset-2
+             disabled:opacity-50 disabled:pointer-events-none;
+    }
+  
+    /* Mild black */
+    .btn-primary {
+      @apply bg-neutral-800 text-white hover:bg-neutral-900 active:bg-neutral-900;
+    }
+  
+    .btn-outline {
+        @apply border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50;
+    }
+
+    .btn-ghost {
+        @apply bg-transparent text-neutral-900 hover:bg-neutral-50;
+    }
+  }
+  
+  

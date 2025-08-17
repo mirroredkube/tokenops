@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-int
 
 export const metadata = {
   title: 'Regula',
-  description: 'Compliance-grade tokenization, delivered as an API.',
+  description: 'Compliance-grade tokenization with audit trails and role-based access — adapter-based, ledger-agnostic.',
   icons: {
     // Safari & general fallbacks
     icon: [
