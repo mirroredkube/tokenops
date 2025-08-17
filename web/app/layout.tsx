@@ -5,7 +5,15 @@ import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' })
 
-export const metadata = { title: 'TokenOps', description: 'Ledger-agnostic Token Ops' }
+export const metadata = {
+  title: 'Regula',
+  description: 'Compliance-grade tokenization, delivered as an API.',
+  icons: {
+    icon: '/brand/favicon.svg',              // ← favicon
+    shortcut: '/brand/favicon.svg',          // optional: Safari pinned/shortcuts
+    apple: '/brand/favicon.svg',             // optional: Apple touch (SVG supported by modern Safari)
+  },
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

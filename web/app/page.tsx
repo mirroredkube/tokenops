@@ -1,18 +1,26 @@
 // app/page.tsx
 import Link from 'next/link'
 
+const BRAND = 'Regula'
+
 function TopStrip() {
   return (
     <div className="w-full bg-neutral-900 text-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2 text-sm">
-        {/* Brand (logo placeholder) */}
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2">
+        {/* Brand (SVG file + larger wordmark) */}
         <a href="/" className="inline-flex items-center gap-2 font-semibold tracking-tight">
-          <span aria-hidden className="inline-block h-4 w-4 rounded-sm bg-emerald-400" />
-          <span>TokenOps</span>
+          <img
+            src="/brand/logo.svg"
+            width={28}
+            height={28}
+            alt="Regula logo"
+            className="h-7 w-7 md:h-8 md:w-8"
+          />
+          <span className="text-2xl md:text-3xl leading-none">Regula</span>
         </a>
 
         {/* CTAs */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 text-sm">
           <a
             href="#get-started"
             className="rounded-md bg-emerald-500 px-3 py-1.5 font-medium text-neutral-900 hover:bg-emerald-400"
@@ -20,7 +28,7 @@ function TopStrip() {
             Get started
           </a>
           <a
-            href="mailto:hello@example.com?subject=TokenOps%20Demo"
+            href="mailto:hello@example.com?subject=Regula%20Demo"
             className="rounded-md bg-white/10 px-3 py-1.5 hover:bg-white/20"
           >
             Contact us
@@ -30,6 +38,7 @@ function TopStrip() {
     </div>
   )
 }
+
 
 function Section({
   id,
@@ -83,7 +92,7 @@ export default function HomePage() {
             XRPL first • Ledger-agnostic by design
           </span>
 
-          {/* New headline (no "TokenOps" here) */}
+          {/* Punchline */}
           <h1 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight text-neutral-900">
             Compliance-Grade Tokenization, Delivered as an API
           </h1>
@@ -123,7 +132,7 @@ export default function HomePage() {
       </section>
 
       {/* PRODUCT OVERVIEW */}
-      <Section id="product" kicker="Why TokenOps" title="Built for regulated teams—B2B by default">
+      <Section id="product" kicker={`Why ${BRAND}`} title="Built for regulated teams—B2B by default">
         <div className="grid gap-6 md:grid-cols-3">
           <Card title="Risk offloading">
             Abstract the chain behind a stable API and dashboard with auditability. Avoid ledger quirks and vendor risk.
@@ -269,7 +278,7 @@ export default function HomePage() {
             View API Docs
           </a>
           <a
-            href="mailto:hello@example.com?subject=TokenOps%20Demo"
+            href="mailto:hello@example.com?subject=Regula%20Demo"
             className="rounded-xl border px-5 py-3 text-neutral-900 hover:bg-neutral-50"
           >
             Request a Demo
@@ -284,7 +293,7 @@ export default function HomePage() {
       <footer className="mx-auto max-w-6xl px-6 pb-16">
         <div className="rounded-2xl border bg-white p-6 text-sm text-neutral-600">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="font-medium text-neutral-900">TokenOps</div>
+            <div className="font-medium text-neutral-900">{BRAND}</div>
             <nav className="flex flex-wrap gap-4">
               <Link
                 href="/app/dashboard"
@@ -305,7 +314,7 @@ export default function HomePage() {
               <a href="#get-started" className="hover:underline">
                 Get started
               </a>
-              <a href="mailto:hello@example.com?subject=TokenOps%20Demo" className="hover:underline">
+              <a href="mailto:hello@example.com?subject=Regula%20Demo" className="hover:underline">
                 Contact
               </a>
             </nav>
