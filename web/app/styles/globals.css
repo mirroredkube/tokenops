@@ -2,4 +2,5 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-gray-50 text-gray-900; }
+/* Optional: slightly tighter, more B2B look */
+:root { font-feature-settings: "cv02","cv03","cv04","cv11"; }
