@@ -1,5 +1,6 @@
 // app/page.tsx
 import Link from 'next/link'
+import CapabilitiesPager from './components/CapabilitiesPager'
 
 const BRAND = 'Regula'
 
@@ -191,6 +192,7 @@ function ShowcaseCard({
   )
 }
 
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-white">
@@ -210,7 +212,8 @@ export default function HomePage() {
             Compliance-Grade Tokenization, Delivered as an API
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-lg leading-7 text-neutral-600">
-            Issue and govern tokens with built-in compliance controls, audit trails, and RBAC. adapter-driven, ledger-agnostic.
+            Issue and govern tokens with built-in compliance controls, audit
+            trails, and RBAC. adapter-driven, ledger-agnostic.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3">
@@ -223,7 +226,7 @@ export default function HomePage() {
               Try {BRAND}
             </Link>
             <a
-              href={(process.env.NEXT_PUBLIC_API_URL ?? '') + '/docs'}
+              href={(process.env.NEXT_PUBLIC_API_URL ?? "") + "/docs"}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-outline"
@@ -236,15 +239,31 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <Feature icon={<IconCode className="h-8 w-8 text-emerald-600" />} title="API-first" subtitle="Built for engineers & auditors" />
-            <Feature icon={<IconShield className="h-8 w-8 text-emerald-600" />} title="MiCA-aware" subtitle="Compliance-framed metadata" />
-            <Feature icon={<IconPluggable className="h-8 w-8 text-emerald-600" />} title="Pluggable" subtitle="Swap in new ledgers" />
+            <Feature
+              icon={<IconCode className="h-8 w-8 text-emerald-600" />}
+              title="API-first"
+              subtitle="Built for engineers & auditors"
+            />
+            <Feature
+              icon={<IconShield className="h-8 w-8 text-emerald-600" />}
+              title="MiCA-aware"
+              subtitle="Compliance-framed metadata"
+            />
+            <Feature
+              icon={<IconPluggable className="h-8 w-8 text-emerald-600" />}
+              title="Pluggable"
+              subtitle="Swap in new ledgers"
+            />
           </div>
         </div>
       </section>
 
       {/* PRODUCT OVERVIEW */}
-      <Section id="product" kicker={`Why ${BRAND}`} title="Built for asset managers, banks & fintechs">
+      <Section
+        id="product"
+        kicker={`Why ${BRAND}`}
+        title="Built for asset managers, banks & fintechs"
+      >
         <div className="grid gap-6 md:grid-cols-3">
           <ShowcaseCard
             icon={<IconLayers className="h-full w-full" />}
@@ -271,7 +290,7 @@ export default function HomePage() {
           <ShowcaseCard
             icon={<IconShieldCheck className="h-full w-full" />}
             title="Compliance-ready by design"
-            href={(process.env.NEXT_PUBLIC_API_URL ?? '') + '/docs'}
+            href={(process.env.NEXT_PUBLIC_API_URL ?? "") + "/docs"}
             cta="View docs"
             variant="primary"
           >
@@ -282,56 +301,65 @@ export default function HomePage() {
       </Section>
 
       {/* FEATURES */}
-      <Section kicker="Capabilities" title="Core in the MVP; extensible for enterprise">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card title="Token issuance">
-            Issue fungible tokens with structured metadata (ISIN/internal IDs,
-            classification, jurisdiction, KYC flags). Explorer links & tx hashes included.
-          </Card>
-          <Card title="Access control">
-            Dashboard roles (admin / issuer / viewer) and API keys. Enable collaboration without losing control.
-          </Card>
-          <Card title="Audit & reporting">
-            Export CSV/JSON of token events and metadata. Ready for internal audits and regulator requests.
-          </Card>
-          <Card title="Ledger adapters">
-            Start on XRPL for speed and cost. Add Hedera or others via the adapter seam—no product rewrites.
-          </Card>
-          <Card title="Balances & trust lines">
-            View holders, trust limits and balances with issuer/currency filters for ops and support.
-          </Card>
-          <Card title="API + UI together">
-            Swagger to validate quickly, dashboard for non-technical stakeholders.
-          </Card>
-        </div>
-      </Section>
+      {/* CAPABILITIES – stacked showcase */}
+      <CapabilitiesPager />
 
       {/* MODULE PLACEHOLDERS */}
       <Section id="modules" kicker="Modules" title="Roadmap & placeholders">
         <div className="grid gap-4 md:grid-cols-3">
-          <Link href="#" className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md">
+          <Link
+            href="#"
+            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
+          >
             <div className="font-medium text-neutral-900">Tokenization</div>
-            <p className="mt-1 text-sm text-neutral-600">Issuance, burn, controls.</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              Issuance, burn, controls.
+            </p>
           </Link>
-          <Link href="#" className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md">
+          <Link
+            href="#"
+            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
+          >
             <div className="font-medium text-neutral-900">Compliance</div>
-            <p className="mt-1 text-sm text-neutral-600">KYC/AML flags, attestations.</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              KYC/AML flags, attestations.
+            </p>
           </Link>
-          <Link href="#" className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md">
+          <Link
+            href="#"
+            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
+          >
             <div className="font-medium text-neutral-900">Reporting</div>
-            <p className="mt-1 text-sm text-neutral-600">Exports, dashboards, alerts.</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              Exports, dashboards, alerts.
+            </p>
           </Link>
-          <Link href="#" className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md">
+          <Link
+            href="#"
+            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
+          >
             <div className="font-medium text-neutral-900">Organizations</div>
-            <p className="mt-1 text-sm text-neutral-600">Workspaces, roles, invitations.</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              Workspaces, roles, invitations.
+            </p>
           </Link>
-          <Link href="#" className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md">
+          <Link
+            href="#"
+            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
+          >
             <div className="font-medium text-neutral-900">API Keys</div>
-            <p className="mt-1 text-sm text-neutral-600">Key management, rotation, scopes.</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              Key management, rotation, scopes.
+            </p>
           </Link>
-          <Link href="#" className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md">
+          <Link
+            href="#"
+            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
+          >
             <div className="font-medium text-neutral-900">Environments</div>
-            <p className="mt-1 text-sm text-neutral-600">Testnet/Mainnet, adapters.</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              Testnet/Mainnet, adapters.
+            </p>
           </Link>
         </div>
       </Section>
@@ -341,28 +369,38 @@ export default function HomePage() {
         <ol className="grid gap-4 md:grid-cols-4">
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 1</div>
-            <div className="mt-1 font-medium text-neutral-900">Connect issuer</div>
+            <div className="mt-1 font-medium text-neutral-900">
+              Connect issuer
+            </div>
             <p className="mt-2 text-sm">
-              Configure your issuer account and workspace. No mainnet funds required for pilots.
+              Configure your issuer account and workspace. No mainnet funds
+              required for pilots.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 2</div>
-            <div className="mt-1 font-medium text-neutral-900">Create trust lines</div>
+            <div className="mt-1 font-medium text-neutral-900">
+              Create trust lines
+            </div>
             <p className="mt-2 text-sm">
               Establish holder limits and policies. Add KYC/AML flags as needed.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 3</div>
-            <div className="mt-1 font-medium text-neutral-900">Issue tokens</div>
+            <div className="mt-1 font-medium text-neutral-900">
+              Issue tokens
+            </div>
             <p className="mt-2 text-sm">
-              Mint tokens with structured metadata. Instant hashes & explorer links.
+              Mint tokens with structured metadata. Instant hashes & explorer
+              links.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 4</div>
-            <div className="mt-1 font-medium text-neutral-900">Monitor & export</div>
+            <div className="mt-1 font-medium text-neutral-900">
+              Monitor & export
+            </div>
             <p className="mt-2 text-sm">
               Track balances and events, export audit-ready CSV/JSON.
             </p>
@@ -387,10 +425,15 @@ export default function HomePage() {
    Compliance Module (KYC, audit logs)`}</pre>
             </div>
             <div className="text-sm">
-              <p className="mb-3">Middleware between conservative institutions and evolving ledgers:</p>
+              <p className="mb-3">
+                Middleware between conservative institutions and evolving
+                ledgers:
+              </p>
               <ul className="list-disc space-y-2 pl-5">
                 <li>Abstract chain quirks behind a stable API.</li>
-                <li>Keep compliance and identity off-chain, where it belongs.</li>
+                <li>
+                  Keep compliance and identity off-chain, where it belongs.
+                </li>
                 <li>Swap or add ledgers without changing product flows.</li>
               </ul>
             </div>
@@ -399,7 +442,11 @@ export default function HomePage() {
       </Section>
 
       {/* CTA */}
-      <Section id="get-started" kicker="Get started" title="Open the dashboard or request a demo">
+      <Section
+        id="get-started"
+        kicker="Get started"
+        title="Open the dashboard or request a demo"
+      >
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/app/dashboard"
@@ -412,7 +459,7 @@ export default function HomePage() {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <a
-            href={(process.env.NEXT_PUBLIC_API_URL ?? '') + '/docs'}
+            href={(process.env.NEXT_PUBLIC_API_URL ?? "") + "/docs"}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-outline"
@@ -427,7 +474,8 @@ export default function HomePage() {
           </a>
         </div>
         <p className="mt-4 text-sm text-neutral-500">
-          MVP focus: XRPL. Roadmap: Hedera adapter, role-based admin, API keys, audit exports.
+          MVP focus: XRPL. Roadmap: Hedera adapter, role-based admin, API keys,
+          audit exports.
         </p>
       </Section>
 
@@ -437,11 +485,16 @@ export default function HomePage() {
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="font-medium text-neutral-900">{BRAND}</div>
             <nav className="flex flex-wrap gap-4">
-              <Link href="/app/dashboard" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              <Link
+                href="/app/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
                 Dashboard
               </Link>
               <a
-                href={(process.env.NEXT_PUBLIC_API_URL ?? '') + '/docs'}
+                href={(process.env.NEXT_PUBLIC_API_URL ?? "") + "/docs"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
@@ -451,7 +504,10 @@ export default function HomePage() {
               <a href="#get-started" className="hover:underline">
                 Get started
               </a>
-              <a href="mailto:hello@example.com?subject=Regula%20Demo" className="hover:underline">
+              <a
+                href="mailto:hello@example.com?subject=Regula%20Demo"
+                className="hover:underline"
+              >
                 Contact
               </a>
             </nav>
@@ -459,5 +515,5 @@ export default function HomePage() {
         </div>
       </footer>
     </main>
-  )
+  );
 }
