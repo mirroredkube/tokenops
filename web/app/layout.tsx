@@ -9,10 +9,17 @@ export const metadata = {
   title: 'Regula',
   description: 'Compliance-grade tokenization, delivered as an API.',
   icons: {
-    icon: '/brand/favicon.svg',              // ← favicon
-    shortcut: '/brand/favicon.svg',          // optional: Safari pinned/shortcuts
-    apple: '/brand/favicon.svg',             // optional: Apple touch (SVG supported by modern Safari)
+    // Safari & general fallbacks
+    icon: [
+      { url: '/brand/favicon.svg', type: 'image/svg+xml' },
+      { url: '/brand/favicon.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/brand/apple-touch-icon.png',
+    other: [
+      { rel: 'mask-icon', url: '/brand/safari-pinned-tab.svg', color: '#10B981' },
+    ],
   },
+  themeColor: '#10B981', // optional
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
