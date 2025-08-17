@@ -1,6 +1,7 @@
 // app/page.tsx
 import Link from 'next/link'
 import CapabilitiesPager from './components/CapabilitiesPager'
+import { ArchitectureDiagram } from "./components/ArchitectureDiagram";
 
 const BRAND = 'Regula'
 
@@ -410,36 +411,9 @@ export default function HomePage() {
 
       {/* ARCHITECTURE */}
       <Section kicker="Architecture" title="A clean separation of concerns">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <pre className="whitespace-pre-wrap rounded-xl bg-neutral-50 p-4 text-xs leading-6 text-neutral-700">{`Your SaaS Dashboard / API
-          │
-          ▼
-   Ledger Adapter Layer   ← XRPL now, Hedera next
-          │
-          ▼
-   Token Engine (issue, revoke, report)
-          │
-          ▼
-   Compliance Module (KYC, audit logs)`}</pre>
-            </div>
-            <div className="text-sm">
-              <p className="mb-3">
-                Middleware between conservative institutions and evolving
-                ledgers:
-              </p>
-              <ul className="list-disc space-y-2 pl-5">
-                <li>Abstract chain quirks behind a stable API.</li>
-                <li>
-                  Keep compliance and identity off-chain, where it belongs.
-                </li>
-                <li>Swap or add ledgers without changing product flows.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <ArchitectureDiagram />
       </Section>
+
 
       {/* CTA */}
       <Section
