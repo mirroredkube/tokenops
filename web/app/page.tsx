@@ -2,6 +2,8 @@
 import Link from 'next/link'
 import CapabilitiesPager from './components/CapabilitiesPager'
 import { ArchitectureDiagram } from "./components/ArchitectureDiagram";
+import { CookieConsent } from "./components/CookieConsent";
+import { CookieSettingsLink } from './components/FooterLink';
 
 const BRAND = 'Regula'
 
@@ -414,7 +416,6 @@ export default function HomePage() {
         <ArchitectureDiagram />
       </Section>
 
-
       {/* CTA */}
       <Section
         id="get-started"
@@ -452,6 +453,7 @@ export default function HomePage() {
           audit exports.
         </p>
       </Section>
+      <CookieConsent />
 
       {/* FOOTER */}
       <footer className="mx-auto max-w-6xl px-6 pb-16">
@@ -459,31 +461,15 @@ export default function HomePage() {
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="font-medium text-neutral-900">{BRAND}</div>
             <nav className="flex flex-wrap gap-4">
-              <Link
-                href="/app/dashboard"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline"
-              >
-                Dashboard
-              </Link>
-              <a
-                href={(process.env.NEXT_PUBLIC_API_URL ?? "") + "/docs"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline"
-              >
-                API Docs
-              </a>
-              <a href="#get-started" className="hover:underline">
-                Get started
-              </a>
-              <a
-                href="mailto:hello@example.com?subject=Regula%20Demo"
-                className="hover:underline"
-              >
-                Contact
-              </a>
+              <div className="flex gap-4 text-sm text-neutral-500">
+                <a href="/privacy" className="hover:underline">
+                  Privacy Policy
+                </a>
+                <a href="/terms" className="hover:underline">
+                  Terms of Service
+                </a>
+                <CookieSettingsLink /> 
+              </div>
             </nav>
           </div>
         </div>
