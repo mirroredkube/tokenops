@@ -69,6 +69,13 @@ const ParamsSchema = z.object({
   id: z.string().min(1),
 })
 
+// ---------- helpers (ETag) ----------
+function weakETag(seed: string) {
+  // small, fast pseudo-hash; good enough for cache validation
+  const base = Buffer.from(seed).toString('base64url').slice(0, 16)
+  return `W/"${base}"`
+}
+
 export default async function registryRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
   // POST /registry/tokens (idempotent via txHash upsert)
   app.post('/tokens', {
@@ -151,7 +158,13 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
     try {
       const rec = await prisma.tokenRecord.findUnique({ where: { id: parsed.data.id } })
       if (!rec) return reply.status(404).send({ error: 'not_found' })
-      
+
+      // caching headers
+      const etag = weakETag(`${rec.id}:${rec.txHash}:${rec.createdAt.toISOString()}`)
+      reply.header('ETag', etag)
+      reply.header('Last-Modified', rec.createdAt.toUTCString())
+      if (req.headers['if-none-match'] === etag) return reply.status(304).send()
+
       return reply.send({ ...rec, ledger: fromPrismaLedger(rec.ledger) })
     } catch (err: any) {
       return reply.status(500).send({ error: err?.message || 'Database error' })
@@ -253,6 +266,13 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
       if (!rec) return reply.status(404).send({ error: 'not_found' })
 
       const wire = { ...rec, ledger: fromPrismaLedger(rec.ledger) }
+
+      // caching headers
+      const etag = weakETag(`${rec.id}:${rec.txHash}:${rec.createdAt.toISOString()}`)
+      reply.header('ETag', etag)
+      reply.header('Last-Modified', rec.createdAt.toUTCString())
+      if (req.headers['if-none-match'] === etag) return reply.status(304).send()
+
       const wantsCsv =
         (typeof (req.query as any).format === 'string' && (req.query as any).format.toLowerCase() === 'csv') ||
         req.headers.accept?.includes('text/csv')
@@ -297,12 +317,15 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
     schema: {
       tags: ['registry'],
       summary: 'Bulk export all token records as JSON or CSV',
-      description: 'Exports all token records in JSON or CSV format with optional filtering',
+      description: 'Exports token records in JSON or CSV with optional filtering by symbol, ledger, and date range',
       querystring: {
         type: 'object',
         properties: {
           symbol: { type: 'string' },
           ledger: LedgerSchema,
+          from: { type: 'string', format: 'date-time', description: 'ISO date-time lower bound (inclusive)' },
+          to: { type: 'string', format: 'date-time', description: 'ISO date-time upper bound (inclusive)' },
+          limit: { type: 'integer', minimum: 1, maximum: 10000, default: 1000 },
           format: { type: 'string', enum: ['json','csv'], default: 'json' }
         }
       },
@@ -321,6 +344,9 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
     const parsed = z.object({
       symbol: z.string().optional(),
       ledger: LedgerEnum.optional(),
+      from: z.string().datetime().optional(),
+      to: z.string().datetime().optional(),
+      limit: z.coerce.number().int().min(1).max(10000).default(1000),
       format: z.enum(['json', 'csv']).default('json'),
     }).safeParse(req.query)
 
@@ -334,17 +360,33 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
     const where = {
       ...(parsed.data.symbol ? { symbol: parsed.data.symbol.toUpperCase() } : {}),
       ...(parsed.data.ledger ? { ledger: toPrismaLedger(parsed.data.ledger) as any } : {}),
+      ...((parsed.data.from || parsed.data.to) ? {
+        createdAt: {
+          ...(parsed.data.from ? { gte: new Date(parsed.data.from) } : {}),
+          ...(parsed.data.to ? { lte: new Date(parsed.data.to) } : {}),
+        }
+      } : {})
     }
 
     try {
       const items = await prisma.tokenRecord.findMany({
         where,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: parsed.data.limit,
       })
 
       const records = items.map((r: any) => ({ ...r, ledger: fromPrismaLedger(r.ledger) }))
 
-      if (parsed.data.format === 'csv') {
+      // caching headers for bulk export
+      const lastMod = items[0]?.createdAt ?? new Date(0)
+      const etag = weakETag(
+        `bulk:${parsed.data.symbol ?? ''}:${parsed.data.ledger ?? ''}:${parsed.data.from ?? ''}:${parsed.data.to ?? ''}:${lastMod.toISOString()}:${records.length}`
+      )
+      reply.header('ETag', etag)
+      reply.header('Last-Modified', lastMod.toUTCString())
+      if (req.headers['if-none-match'] === etag) return reply.status(304).send()
+
+      if (parsed.data.format === 'csv' || req.headers.accept?.includes('text/csv')) {
         const columns = [
           'id',
           'ledger',
@@ -365,7 +407,7 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
         }
 
         const header = columns.join(',')
-        const rows = records.map((record: any) => 
+        const rows = records.map((record: any) =>
           columns.map((k) => esc(record[k])).join(',')
         ).join('\n')
 
