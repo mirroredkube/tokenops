@@ -85,6 +85,29 @@ export default async function tokensRoutes(app: FastifyInstance, _opts: FastifyP
         process.env.EXPLORER_URL ||
         (adapter.name === 'XRPL' ? 'https://testnet.xrpl.org' : undefined)
 
+      // [ADDED] Persist Token + TokenEvent after successful issuance
+      const token = await prisma.token.create({
+        data: {
+          currencyCode: currencyCode.toUpperCase(),
+          amount,
+          destination,
+          issuer: process.env.ISSUER_ADDRESS || 
+            (process.env.ISSUER_SEED && adapter.name === 'XRPL'
+              ? Wallet.fromSeed(process.env.ISSUER_SEED).address
+              : 'UNKNOWN'),
+        },
+      })
+
+      await prisma.tokenEvent.create({
+        data: {
+          tokenId: token.id,
+          type: 'ISSUE',
+          ledgerTxHash: txHash,
+          memo: `Issued on ${adapter.name}`,
+        },
+      })
+      // [END ADDED]
+
       // Auto-create registry entry after successful issuance
       try {
         const ledger = adapter.name === 'XRPL' ? 'xrpl-testnet' : 'xrpl-mainnet' // Default to testnet for now
