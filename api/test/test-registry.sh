@@ -32,36 +32,50 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Add PostgreSQL to PATH
+export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
+
 # Check if jq is installed
 if ! command -v jq &> /dev/null; then
     print_error "jq is required but not installed. Please install jq first."
     exit 1
 fi
 
-# Check if the API server is running
-print_status "Checking if API server is running on port 4000..."
-if ! curl -s http://localhost:4000/system/health > /dev/null 2>&1; then
-    print_warning "API server doesn't seem to be running on port 4000"
-    print_status "Please start the API server first with: npm run dev"
+# Check if test database is set up
+if [ ! -f ".env.test" ]; then
+    print_error "Test database not set up. Please run: ./test-db-setup.sh"
+    exit 1
+fi
+
+# Load test environment
+print_status "Loading test environment..."
+export $(grep -v '^#' .env.test | xargs)
+
+# Check if the API server is running on test port
+print_status "Checking if API server is running on test port 4001..."
+if ! curl -s http://localhost:4001/system/health > /dev/null 2>&1; then
+    print_warning "API server doesn't seem to be running on test port 4001"
+    print_status "Please start the API server with test database:"
+    print_status "  DATABASE_URL=\"$DATABASE_URL\" npm run dev"
     print_status "Then run this test script again."
     exit 1
 fi
 
-print_success "API server is running!"
+print_success "API server is running on test port!"
 
-# Step 1: Generate Prisma client
-print_status "Step 1: Generating Prisma client..."
-cd .. && npx prisma generate
+# Step 1: Generate Prisma client for test database
+print_status "Step 1: Generating Prisma client for test database..."
+cd .. && DATABASE_URL="$DATABASE_URL" npx prisma generate
 print_success "Prisma client generated successfully!"
 
-# Step 2: Run migrations
-print_status "Step 2: Running database migrations..."
-npx prisma migrate dev --name token_registry_enum_pg
-print_success "Database migrations completed!"
+# Step 2: Run migrations on test database
+print_status "Step 2: Running database migrations on test database..."
+DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
+print_success "Database migrations completed on test database!"
 
 # Step 3: Smoke test - Create a new token record
 print_status "Step 3: Creating a new token record..."
-CREATE_RESPONSE=$(curl -sS -X POST http://localhost:4000/registry/tokens \
+CREATE_RESPONSE=$(curl -sS -X POST http://localhost:4001/registry/tokens \
   -H "Content-Type: application/json" \
   -d '{
     "ledger":"xrpl-testnet",
@@ -87,7 +101,7 @@ print_success "Token record created with ID: $TOKEN_ID"
 
 # Step 4: Test idempotency - Create the same token again (should update)
 print_status "Step 4: Testing idempotency - creating same token again..."
-UPDATE_RESPONSE=$(curl -sS -X POST http://localhost:4000/registry/tokens \
+UPDATE_RESPONSE=$(curl -sS -X POST http://localhost:4001/registry/tokens \
   -H "Content-Type: application/json" \
   -d '{
     "ledger":"xrpl-testnet",
@@ -111,7 +125,7 @@ fi
 
 # Step 5: Create another token for testing
 print_status "Step 5: Creating another token record..."
-CREATE_RESPONSE2=$(curl -sS -X POST http://localhost:4000/registry/tokens \
+CREATE_RESPONSE2=$(curl -sS -X POST http://localhost:4001/registry/tokens \
   -H "Content-Type: application/json" \
   -d '{
     "ledger":"xrpl-mainnet",
@@ -128,7 +142,7 @@ print_success "Second token record created with ID: $TOKEN_ID2"
 
 # Step 6: List tokens with pagination
 print_status "Step 6: Testing pagination - listing tokens..."
-LIST_RESPONSE=$(curl -sS "http://localhost:4000/registry/tokens?limit=5")
+LIST_RESPONSE=$(curl -sS "http://localhost:4001/registry/tokens?limit=5")
 
 echo "List Response:"
 echo "$LIST_RESPONSE" | jq .
@@ -139,61 +153,61 @@ print_success "Found $ITEM_COUNT tokens in the registry"
 
 # Step 7: Get specific token by ID
 print_status "Step 7: Getting specific token by ID..."
-GET_RESPONSE=$(curl -sS "http://localhost:4000/registry/tokens/$TOKEN_ID")
+GET_RESPONSE=$(curl -sS "http://localhost:4001/registry/tokens/$TOKEN_ID")
 
 echo "Get Token Response:"
 echo "$GET_RESPONSE" | jq .
 
 # Step 8: Test JSON export
 print_status "Step 8: Testing JSON export..."
-JSON_EXPORT=$(curl -sS "http://localhost:4000/registry/tokens/$TOKEN_ID/report")
+JSON_EXPORT=$(curl -sS "http://localhost:4001/registry/tokens/$TOKEN_ID/report")
 
 echo "JSON Export Response:"
 echo "$JSON_EXPORT" | jq .
 
 # Step 9: Test CSV export
 print_status "Step 9: Testing CSV export..."
-CSV_EXPORT=$(curl -sS -H "Accept: text/csv" "http://localhost:4000/registry/tokens/$TOKEN_ID/report")
+CSV_EXPORT=$(curl -sS -H "Accept: text/csv" "http://localhost:4001/registry/tokens/$TOKEN_ID/report")
 
 echo "CSV Export Response:"
 echo "$CSV_EXPORT"
 
 # Step 9.5: Test bulk export
 print_status "Step 9.5: Testing bulk export..."
-BULK_JSON_EXPORT=$(curl -sS "http://localhost:4000/registry/tokens/report?format=json")
+BULK_JSON_EXPORT=$(curl -sS "http://localhost:4001/registry/tokens/report?format=json")
 
 echo "Bulk JSON Export Response:"
 echo "$BULK_JSON_EXPORT" | jq .
 
-BULK_CSV_EXPORT=$(curl -sS "http://localhost:4000/registry/tokens/report?format=csv")
+BULK_CSV_EXPORT=$(curl -sS "http://localhost:4001/registry/tokens/report?format=csv")
 
 echo "Bulk CSV Export Response:"
 echo "$BULK_CSV_EXPORT"
 
 # Step 10: Test filtering
 print_status "Step 10: Testing filtering by symbol..."
-FILTER_RESPONSE=$(curl -sS "http://localhost:4000/registry/tokens?symbol=EURT&limit=10")
+FILTER_RESPONSE=$(curl -sS "http://localhost:4001/registry/tokens?symbol=EURT&limit=10")
 
 echo "Filter Response:"
 echo "$FILTER_RESPONSE" | jq .
 
 # Step 11: Test filtering by ledger
 print_status "Step 11: Testing filtering by ledger..."
-LEDGER_FILTER_RESPONSE=$(curl -sS "http://localhost:4000/registry/tokens?ledger=xrpl-testnet&limit=10")
+LEDGER_FILTER_RESPONSE=$(curl -sS "http://localhost:4001/registry/tokens?ledger=xrpl-testnet&limit=10")
 
 echo "Ledger Filter Response:"
 echo "$LEDGER_FILTER_RESPONSE" | jq .
 
 # Step 12: Test error handling - invalid ID
 print_status "Step 12: Testing error handling with invalid ID..."
-ERROR_RESPONSE=$(curl -sS "http://localhost:4000/registry/tokens/invalid-id-123")
+ERROR_RESPONSE=$(curl -sS "http://localhost:4001/registry/tokens/invalid-id-123")
 
 echo "Error Response:"
 echo "$ERROR_RESPONSE" | jq .
 
 # Step 13: Test validation errors
 print_status "Step 13: Testing validation errors..."
-VALIDATION_ERROR=$(curl -sS -X POST http://localhost:4000/registry/tokens \
+VALIDATION_ERROR=$(curl -sS -X POST http://localhost:4001/registry/tokens \
   -H "Content-Type: application/json" \
   -d '{
     "ledger":"invalid-ledger",

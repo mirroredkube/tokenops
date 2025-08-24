@@ -31,28 +31,53 @@ Tests automatic registry creation when issuing tokens.
 
 ## Prerequisites
 
-1. **API Server Running**: Start the API server first:
-   ```bash
-   npm run dev
-   # or
-   pnpm dev
-   ```
-
+1. **PostgreSQL Running**: Ensure PostgreSQL is running on localhost:5432
 2. **Dependencies**: Ensure you have:
    - `jq` installed for JSON parsing
    - PostgreSQL running
    - Node.js and pnpm
 
-## Running Tests
+## Test Database Setup
 
-### From the API root directory:
+**⚠️ IMPORTANT: Tests use a separate test database to avoid affecting production data.**
+
+### Quick Start (Recommended)
 ```bash
-./test/test-registry.sh
-./test/test-auto-registry.sh
+# Run all tests with automatic setup and cleanup
+./test/run-tests.sh
 ```
 
-### From the test directory:
+### Manual Setup
 ```bash
+# 1. Set up test database
+./test/test-db-setup.sh
+
+# 2. Start API server with test database
+DATABASE_URL="postgresql://anitha:tokenops123@localhost:5432/tokenops_test_1234567890" npm run dev
+
+# 3. Run individual tests
+./test/test-registry.sh
+./test/test-auto-registry.sh
+
+# 4. Clean up when done
+./test/cleanup-test-db.sh
+```
+
+## Running Tests
+
+### Quick Test Run (Recommended)
+```bash
+# From API root directory
+./test/run-tests.sh
+```
+
+### Individual Test Runs
+```bash
+# From API root directory
+./test/test-registry.sh
+./test/test-auto-registry.sh
+
+# From test directory
 cd test
 ./test-registry.sh
 ./test-auto-registry.sh
@@ -60,12 +85,20 @@ cd test
 
 ## Test Results
 
-The script will:
-1. Check if the API server is running
-2. Generate Prisma client and run migrations
-3. Execute all test scenarios
+The test suite will:
+1. Set up a temporary test database
+2. Start the API server on port 4001 with test database
+3. Run all test scenarios
 4. Display detailed results with colored output
-5. Show a summary of all tests passed
+5. Clean up test database and stop server
+6. Show a summary of all tests passed
+
+## Test Database Details
+
+- **Database Name**: `tokenops_test_<timestamp>`
+- **Port**: 4001 (separate from production port 4000)
+- **Isolation**: Completely separate from production database
+- **Auto-cleanup**: Automatically removed after tests complete
 
 ## Expected Output
 
