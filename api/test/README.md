@@ -14,9 +14,20 @@ Comprehensive test suite for the token registry API endpoints.
 - ✅ Token retrieval by ID
 - ✅ JSON export functionality
 - ✅ CSV export functionality
+- ✅ Bulk export functionality (JSON/CSV)
 - ✅ Filtering by symbol and ledger
 - ✅ Error handling
 - ✅ Input validation
+
+### `test-auto-registry.sh`
+Tests automatic registry creation when issuing tokens.
+
+**Features tested:**
+- ✅ Automatic registry entry creation during token issuance
+- ✅ Registry entry verification after issuance
+- ✅ Idempotency testing for automatic creation
+- ✅ Manual vs automatic registry comparison
+- ✅ Final registry state validation
 
 ## Prerequisites
 
@@ -37,12 +48,14 @@ Comprehensive test suite for the token registry API endpoints.
 ### From the API root directory:
 ```bash
 ./test/test-registry.sh
+./test/test-auto-registry.sh
 ```
 
 ### From the test directory:
 ```bash
 cd test
 ./test-registry.sh
+./test-auto-registry.sh
 ```
 
 ## Test Results

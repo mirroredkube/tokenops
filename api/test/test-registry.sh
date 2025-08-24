@@ -158,6 +158,18 @@ CSV_EXPORT=$(curl -sS -H "Accept: text/csv" "http://localhost:4000/registry/toke
 echo "CSV Export Response:"
 echo "$CSV_EXPORT"
 
+# Step 9.5: Test bulk export
+print_status "Step 9.5: Testing bulk export..."
+BULK_JSON_EXPORT=$(curl -sS "http://localhost:4000/registry/tokens/report?format=json")
+
+echo "Bulk JSON Export Response:"
+echo "$BULK_JSON_EXPORT" | jq .
+
+BULK_CSV_EXPORT=$(curl -sS "http://localhost:4000/registry/tokens/report?format=csv")
+
+echo "Bulk CSV Export Response:"
+echo "$BULK_CSV_EXPORT"
+
 # Step 10: Test filtering
 print_status "Step 10: Testing filtering by symbol..."
 FILTER_RESPONSE=$(curl -sS "http://localhost:4000/registry/tokens?symbol=EURT&limit=10")
@@ -205,6 +217,7 @@ echo "- ✅ Token listing and pagination"
 echo "- ✅ Token retrieval by ID"
 echo "- ✅ JSON export functionality"
 echo "- ✅ CSV export functionality"
+echo "- ✅ Bulk export functionality (JSON/CSV)"
 echo "- ✅ Filtering by symbol and ledger"
 echo "- ✅ Error handling"
 echo "- ✅ Input validation"

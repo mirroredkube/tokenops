@@ -1,6 +1,8 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import { getLedgerAdapter } from '../adapters/index.js'
+import prisma from '../db/client.js'
+import { Wallet } from 'xrpl'
 
 // ---------- validation ----------
 const BodySchema = z.object({
@@ -82,6 +84,35 @@ export default async function tokensRoutes(app: FastifyInstance, _opts: FastifyP
       const explorerBase =
         process.env.EXPLORER_URL ||
         (adapter.name === 'XRPL' ? 'https://testnet.xrpl.org' : undefined)
+
+      // Auto-create registry entry after successful issuance
+      try {
+        const ledger = adapter.name === 'XRPL' ? 'xrpl-testnet' : 'xrpl-mainnet' // Default to testnet for now
+        const issuerAddress = process.env.ISSUER_ADDRESS || 
+          (process.env.ISSUER_SEED && adapter.name === 'XRPL' ? 
+            Wallet.fromSeed(process.env.ISSUER_SEED).address : undefined)
+
+        if (issuerAddress) {
+          await prisma.tokenRecord.upsert({
+            where: { txHash },
+            create: {
+              ledger: ledger === 'xrpl-testnet' ? 'XRPL_TESTNET' : 'XRPL_MAINNET',
+              symbol: currencyCode.toUpperCase(),
+              supply: amount,
+              issuerAddress,
+              holderAddress: destination,
+              txHash,
+              compliance: metadata || undefined,
+            },
+            update: {
+              compliance: metadata || undefined,
+            },
+          })
+        }
+      } catch (registryError: any) {
+        // Log registry error but don't fail the issuance
+        console.warn('Failed to create registry entry:', registryError?.message)
+      }
 
       return reply.send({
         ok: true,

@@ -15,6 +15,34 @@ const toPrismaLedger = (l: LedgerIn) =>
 const fromPrismaLedger = (l: 'XRPL_TESTNET' | 'XRPL_MAINNET') =>
   l === 'XRPL_TESTNET' ? 'xrpl-testnet' : 'xrpl-mainnet'
 
+// ---------- Fastify schemas for Swagger and validation ----------
+const LedgerSchema = { type: "string", enum: ["xrpl-testnet", "xrpl-mainnet"] } as const
+
+const TokenRecordWire = {
+  type: "object",
+  required: ["id","ledger","symbol","supply","issuerAddress","txHash","createdAt"],
+  properties: {
+    id: { type: "string" },
+    ledger: LedgerSchema,
+    symbol: { type: "string", minLength: 2, maxLength: 12 },
+    supply: { type: "string", pattern: "^[0-9]+$" },
+    issuerAddress: { type: "string" },
+    holderAddress: { type: "string", nullable: true },
+    txHash: { type: "string", pattern: "^[A-Fa-f0-9]{64}$" },
+    compliance: { type: "object", additionalProperties: true, nullable: true },
+    createdAt: { type: "string", format: "date-time" }
+  }
+} as const
+
+const ErrorSchema = {
+  type: "object",
+  properties: {
+    error: { type: "string" },
+    details: { type: "object", additionalProperties: true, nullable: true }
+  }
+} as const
+
+// ---------- Zod schemas for validation ----------
 const CreateTokenSchema = z.object({
   ledger: LedgerEnum.default('xrpl-testnet'),
   symbol: z
@@ -45,88 +73,27 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
   // POST /registry/tokens (idempotent via txHash upsert)
   app.post('/tokens', {
     schema: {
+      tags: ['registry'],
       summary: 'Create or update a token record',
       description: 'Creates a new token record or updates an existing one based on transaction hash. Idempotent operation.',
-      tags: ['registry'],
       body: {
         type: 'object',
-        required: ['symbol', 'supply', 'issuerAddress', 'txHash'],
+        required: ['ledger','symbol','supply','issuerAddress','txHash'],
         properties: {
-          ledger: {
-            type: 'string',
-            enum: ['xrpl-testnet', 'xrpl-mainnet'],
-            default: 'xrpl-testnet',
-            description: 'Target ledger for the token',
-          },
-          symbol: {
-            type: 'string',
-            minLength: 2,
-            maxLength: 12,
-            pattern: '^[A-Z0-9]+$',
-            description: 'Token symbol (2-12 characters, uppercase alphanumeric)',
-          },
-          supply: {
-            type: 'string',
-            pattern: '^\\d+$',
-            description: 'Total token supply as a string',
-          },
-          issuerAddress: {
-            type: 'string',
-            pattern: '^r[1-9A-HJ-NP-Za-km-z]{25,34}$',
-            description: 'XRPL issuer address',
-          },
-          holderAddress: {
-            type: 'string',
-            pattern: '^r[1-9A-HJ-NP-Za-km-z]{25,34}$',
-            description: 'Optional holder address',
-          },
-          txHash: {
-            type: 'string',
-            pattern: '^[A-F0-9]{64}$',
-            description: 'Transaction hash (64 hex characters)',
-          },
-          compliance: {
-            type: 'object',
-            additionalProperties: true,
-            description: 'Optional compliance metadata',
-          },
-        },
-        examples: [
-          {
-            ledger: 'xrpl-testnet',
-            symbol: 'EURT',
-            supply: '1000000',
-            issuerAddress: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
-            holderAddress: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
-            txHash: 'ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890',
-            compliance: { isin: 'EU0000000001', kyc: 'mandatory', jurisdiction: 'DE' },
-          },
-        ],
+          ledger: LedgerSchema,
+          symbol: { type: 'string', minLength: 2, maxLength: 12, pattern: '^[A-Z0-9]+$' },
+          supply: { type: 'string', pattern: '^[0-9]+$' },
+          issuerAddress: { type: 'string' },
+          holderAddress: { type: 'string' },
+          txHash: { type: 'string', pattern: '^[A-Fa-f0-9]{64}$' },
+          compliance: { type: 'object', additionalProperties: true }
+        }
       },
       response: {
-        201: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            ledger: { type: 'string', enum: ['xrpl-testnet', 'xrpl-mainnet'] },
-            symbol: { type: 'string' },
-            supply: { type: 'string' },
-            issuerAddress: { type: 'string' },
-            holderAddress: { type: 'string', nullable: true },
-            txHash: { type: 'string' },
-            compliance: { type: 'object', nullable: true },
-            createdAt: { type: 'string', format: 'date-time' },
-          },
-        },
-        422: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' },
-            details: { type: 'object' },
-          },
-        },
-        500: { type: 'object', properties: { error: { type: 'string' } } },
-      },
+        201: TokenRecordWire,
+        422: ErrorSchema,
+        400: ErrorSchema
+      }
     },
   }, async (req, reply) => {
     const parsed = CreateTokenSchema.safeParse(req.body)
@@ -165,39 +132,15 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
   // GET /registry/tokens/:id
   app.get('/tokens/:id', {
     schema: {
+      tags: ['registry'],
       summary: 'Get a specific token record by ID',
       description: 'Retrieves a token record by its unique identifier',
-      tags: ['registry'],
-      params: {
-        type: 'object',
-        required: ['id'],
-        properties: {
-          id: { type: 'string', description: 'Token record ID' },
-        },
-      },
+      params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            ledger: { type: 'string', enum: ['xrpl-testnet', 'xrpl-mainnet'] },
-            symbol: { type: 'string' },
-            supply: { type: 'string' },
-            issuerAddress: { type: 'string' },
-            holderAddress: { type: 'string', nullable: true },
-            txHash: { type: 'string' },
-            compliance: { type: 'object', nullable: true },
-            createdAt: { type: 'string', format: 'date-time' },
-          },
-        },
-        404: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' },
-          },
-        },
-        500: { type: 'object', properties: { error: { type: 'string' } } },
-      },
+        200: TokenRecordWire,
+        404: ErrorSchema,
+        422: ErrorSchema
+      }
     },
   }, async (req, reply) => {
     const parsed = ParamsSchema.safeParse(req.params)
@@ -218,61 +161,29 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
   // GET /registry/tokens (filter + pagination)
   app.get('/tokens', {
     schema: {
+      tags: ['registry'],
       summary: 'List token records with filtering and pagination',
       description: 'Retrieves a paginated list of token records with optional filtering by symbol and ledger',
-      tags: ['registry'],
       querystring: {
         type: 'object',
         properties: {
-          symbol: { type: 'string', description: 'Filter by token symbol' },
-          ledger: { 
-            type: 'string', 
-            enum: ['xrpl-testnet', 'xrpl-mainnet'],
-            description: 'Filter by ledger' 
-          },
-          limit: { 
-            type: 'number', 
-            minimum: 1, 
-            maximum: 100, 
-            default: 20,
-            description: 'Number of records to return (1-100)' 
-          },
-          cursor: { type: 'string', description: 'Cursor for pagination (token ID)' },
-        },
+          symbol: { type: 'string' },
+          ledger: LedgerSchema,
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          cursor: { type: 'string' }
+        }
       },
       response: {
         200: {
           type: 'object',
           properties: {
-            items: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  ledger: { type: 'string', enum: ['xrpl-testnet', 'xrpl-mainnet'] },
-                  symbol: { type: 'string' },
-                  supply: { type: 'string' },
-                  issuerAddress: { type: 'string' },
-                  holderAddress: { type: 'string', nullable: true },
-                  txHash: { type: 'string' },
-                  compliance: { type: 'object', nullable: true },
-                  createdAt: { type: 'string', format: 'date-time' },
-                },
-              },
-            },
-            nextCursor: { type: 'string', nullable: true },
+            items: { type: 'array', items: TokenRecordWire },
+            nextCursor: { type: 'string', nullable: true }
           },
+          required: ['items']
         },
-        422: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' },
-            details: { type: 'object' },
-          },
-        },
-        500: { type: 'object', properties: { error: { type: 'string' } } },
-      },
+        422: ErrorSchema
+      }
     },
   }, async (req, reply) => {
     const parsed = QuerySchema.safeParse(req.query)
@@ -311,59 +222,25 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
   // GET /registry/tokens/:id/report (CSV or JSON)
   app.get('/tokens/:id/report', {
     schema: {
-      summary: 'Export token record as JSON or CSV',
-      description: 'Exports a token record in JSON or CSV format based on Accept header or format query parameter',
       tags: ['registry'],
-      params: {
-        type: 'object',
-        required: ['id'],
-        properties: {
-          id: { type: 'string', description: 'Token record ID' },
-        },
-      },
+      summary: 'Export a registry record as JSON (default) or CSV',
+      description: 'Exports a token record in JSON or CSV format based on Accept header or format query parameter',
+      params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
       querystring: {
         type: 'object',
-        properties: {
-          format: { 
-            type: 'string', 
-            enum: ['json', 'csv'],
-            description: 'Export format (defaults to JSON)' 
-          },
-        },
+        properties: { format: { type: 'string', enum: ['json','csv'], default: 'json' } }
       },
       response: {
         200: {
-          description: 'Token record in requested format',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  ledger: { type: 'string', enum: ['xrpl-testnet', 'xrpl-mainnet'] },
-                  symbol: { type: 'string' },
-                  supply: { type: 'string' },
-                  issuerAddress: { type: 'string' },
-                  holderAddress: { type: 'string', nullable: true },
-                  txHash: { type: 'string' },
-                  compliance: { type: 'object', nullable: true },
-                  createdAt: { type: 'string', format: 'date-time' },
-                },
-              },
-            },
-            'text/csv': {
-              schema: { type: 'string' },
-            },
-          },
+          description: 'JSON body or CSV file',
+          oneOf: [
+            TokenRecordWire,
+            { type: 'string' } // CSV
+          ]
         },
-        404: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' },
-          },
-        },
-        500: { type: 'object', properties: { error: { type: 'string' } } },
-      },
+        404: ErrorSchema,
+        422: ErrorSchema
+      }
     },
   }, async (req, reply) => {
     const parsed = ParamsSchema.safeParse(req.params)
@@ -410,6 +287,94 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
       reply.header('Content-Type', 'text/csv; charset=utf-8')
       reply.header('Content-Disposition', `attachment; filename="token-${wire.id}.csv"`)
       return reply.send(`${header}\n${row}\n`)
+    } catch (err: any) {
+      return reply.status(500).send({ error: err?.message || 'Database error' })
+    }
+  })
+
+  // GET /registry/tokens/report (Bulk export)
+  app.get('/tokens/report', {
+    schema: {
+      tags: ['registry'],
+      summary: 'Bulk export all token records as JSON or CSV',
+      description: 'Exports all token records in JSON or CSV format with optional filtering',
+      querystring: {
+        type: 'object',
+        properties: {
+          symbol: { type: 'string' },
+          ledger: LedgerSchema,
+          format: { type: 'string', enum: ['json','csv'], default: 'json' }
+        }
+      },
+      response: {
+        200: {
+          description: 'JSON array or CSV file',
+          oneOf: [
+            { type: 'array', items: TokenRecordWire },
+            { type: 'string' } // CSV
+          ]
+        },
+        422: ErrorSchema
+      }
+    },
+  }, async (req, reply) => {
+    const parsed = z.object({
+      symbol: z.string().optional(),
+      ledger: LedgerEnum.optional(),
+      format: z.enum(['json', 'csv']).default('json'),
+    }).safeParse(req.query)
+
+    if (!parsed.success) {
+      return reply.status(422).send({ 
+        error: 'validation_error', 
+        details: parsed.error.flatten() 
+      })
+    }
+
+    const where = {
+      ...(parsed.data.symbol ? { symbol: parsed.data.symbol.toUpperCase() } : {}),
+      ...(parsed.data.ledger ? { ledger: toPrismaLedger(parsed.data.ledger) as any } : {}),
+    }
+
+    try {
+      const items = await prisma.tokenRecord.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      })
+
+      const records = items.map((r: any) => ({ ...r, ledger: fromPrismaLedger(r.ledger) }))
+
+      if (parsed.data.format === 'csv') {
+        const columns = [
+          'id',
+          'ledger',
+          'symbol',
+          'supply',
+          'issuerAddress',
+          'holderAddress',
+          'txHash',
+          'createdAt',
+          'compliance',
+        ] as const
+
+        const esc = (v: unknown) => {
+          if (v == null) return ''
+          const s = typeof v === 'string' ? v : JSON.stringify(v)
+          if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+          return s
+        }
+
+        const header = columns.join(',')
+        const rows = records.map((record: any) => 
+          columns.map((k) => esc(record[k])).join(',')
+        ).join('\n')
+
+        reply.header('Content-Type', 'text/csv; charset=utf-8')
+        reply.header('Content-Disposition', `attachment; filename="token-registry-${new Date().toISOString().split('T')[0]}.csv"`)
+        return reply.send(`${header}\n${rows}\n`)
+      }
+
+      return reply.send(records)
     } catch (err: any) {
       return reply.status(500).send({ error: err?.message || 'Database error' })
     }
