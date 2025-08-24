@@ -1,6 +1,7 @@
 // src/index.ts
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import authPlugin from './plugins/auth.js'         // ← ensure .js like your other imports
 import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import * as dotenv from 'dotenv'
@@ -12,11 +13,16 @@ dotenv.config()
 const app = Fastify({ logger: true })
 const port = Number(process.env.PORT || 4000)
 const serverUrl = `http://localhost:${port}`
+const uiOrigin = process.env.UI_ORIGIN || 'http://localhost:3000'  // UI on :3000
 
 // ----------------------------------------------------------------------------
 // Plugins
 // ----------------------------------------------------------------------------
-await app.register(cors, { origin: true })
+// CORS: allow UI origin + send cookies
+await app.register(cors, {
+  origin: [uiOrigin],
+  credentials: true,
+})
 
 await app.register(swagger, {
   openapi: {
@@ -43,6 +49,9 @@ await app.register(swaggerUI, {
   uiConfig: { docExpansion: 'list', deepLinking: true },
 })
 
+// Auth (adds /auth/google, /auth/me, /auth/logout and verifyAuthOrApiKey)
+await app.register(authPlugin)
+
 // ----------------------------------------------------------------------------
 // Routes
 // ----------------------------------------------------------------------------
@@ -65,6 +74,7 @@ await app.register(registryRoutes,   { prefix: '/registry' })
 await app.ready()
 app.log.info(`Swagger UI: /docs`)
 app.log.info(`OpenAPI JSON: /docs/json`)
+app.log.info({ uiOrigin }, 'CORS configured for UI origin')
 
 app.listen({ port, host: '0.0.0.0' }).catch((err) => {
   app.log.error(err)
