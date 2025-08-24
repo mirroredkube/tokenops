@@ -1,4 +1,6 @@
 // prisma/schema.prisma
+
+// ---------- Datasource & Generator ----------
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -8,15 +10,21 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ---------- v0.2-b: Ledger enum ----------
+enum Ledger {
+  XRPL_TESTNET
+  XRPL_MAINNET
+}
+
+// ---------- Existing models (example) ----------
 model Token {
   id            String   @id @default(cuid())
   currencyCode  String
   amount        String
   destination   String
   issuer        String
-  metadataHash  String?
-  ledgerTxHash  String?
   createdAt     DateTime @default(now())
+
   events        TokenEvent[]
 }
 
@@ -29,5 +37,22 @@ model TokenEvent {
   createdAt    DateTime @default(now())
 
   token Token @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
   @@index([tokenId])
+}
+
+// ---------- v0.2-b: Off-chain Token Registry ----------
+model TokenRecord {
+  id             String   @id @default(cuid())
+  ledger         Ledger
+  symbol         String
+  supply         String          // keep as string to avoid bigint/decimal portability issues
+  issuerAddress  String
+  holderAddress  String?
+  txHash         String   @unique
+  compliance     Json?           // JSONB on Postgres
+  createdAt      DateTime @default(now())
+
+  @@index([symbol, ledger])
+  @@index([createdAt])
 }

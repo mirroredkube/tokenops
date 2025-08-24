@@ -1,10 +1,12 @@
 import Link from 'next/link'
 
+const BRAND = 'Regula'
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-screen grid-cols-[220px_1fr]">
       <aside className="border-r bg-white p-4">
-        <div className="mb-6 font-semibold">TokenOps</div>
+        <div className="mb-6 font-semibold">{BRAND}</div>
         <nav className="space-y-2 text-sm">
           <Link href="/app/dashboard" className="block hover:underline">Dashboard</Link>
           <Link href="/app/trustlines" className="block hover:underline">Create Trust Line</Link>
