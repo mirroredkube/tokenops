@@ -31,6 +31,7 @@ await app.register(swagger, {
       { name: 'tokens', description: 'Issuance & token utilities' },
       { name: 'trustlines', description: 'Trustline management' },
       { name: 'balances', description: 'Account balances & queries' },
+      { name: 'registry', description: 'Token registry & compliance' },
     ],
   },
 })
@@ -50,11 +51,13 @@ import systemRoutes from './routes/system.js'
 import tokensRoutes from './routes/tokens.js'
 import trustlineRoutes from './routes/trustlines.js'
 import balancesRoutes from './routes/balances.js'
+import registryRoutes from './routes/registry.js'
 
 await app.register(systemRoutes,     { prefix: '/system' })
 await app.register(tokensRoutes,     { prefix: '/tokens' })
 await app.register(trustlineRoutes,  { prefix: '/trustlines' })
 await app.register(balancesRoutes,   { prefix: '/balances' })
+await app.register(registryRoutes,   { prefix: '/registry' })
 
 // ----------------------------------------------------------------------------
 // Startup

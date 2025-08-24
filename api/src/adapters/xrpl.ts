@@ -29,8 +29,8 @@ export const xrplAdapter: LedgerAdapter = {
       })
       const signed = wallet.sign(prepared)
       const res = await client.submitAndWait(signed.tx_blob)
-      const ok = (res.result?.engine_result || (res.result as any)?.meta?.TransactionResult) === 'tesSUCCESS'
-      if (!ok) throw new Error(res.result?.engine_result ?? 'submit_failed')
+      const ok = ((res.result as any)?.engine_result || (res.result as any)?.meta?.TransactionResult) === 'tesSUCCESS'
+      if (!ok) throw new Error((res.result as any)?.engine_result ?? 'submit_failed')
       return { txHash: signed.hash }
     })
   },
@@ -46,7 +46,7 @@ export const xrplAdapter: LedgerAdapter = {
 
     return await withClient(async (client: Client) => {
       const lines = await client.request({ command: 'account_lines', account: holder.address, ledger_index: 'validated', peer: issuer } as any)
-      const existing = (lines.result.lines || []).find((l: any) => l.currency === currency)
+      const existing = ((lines.result as any).lines || []).find((l: any) => l.currency === currency)
       if (existing && Number(existing.limit) >= Number(limit)) return { alreadyExisted: true, txHash: undefined }
 
       const prepared = await client.autofill({
@@ -56,8 +56,8 @@ export const xrplAdapter: LedgerAdapter = {
       })
       const signed = holder.sign(prepared)
       const res = await client.submitAndWait(signed.tx_blob)
-      const ok = (res.result?.engine_result || (res.result as any)?.meta?.TransactionResult) === 'tesSUCCESS'
-      if (!ok) throw new Error(res.result?.engine_result ?? 'submit_failed')
+      const ok = ((res.result as any)?.engine_result || (res.result as any)?.meta?.TransactionResult) === 'tesSUCCESS'
+      if (!ok) throw new Error((res.result as any)?.engine_result ?? 'submit_failed')
       return { alreadyExisted: false, txHash: signed.hash }
     })
   },
@@ -77,7 +77,7 @@ export const xrplAdapter: LedgerAdapter = {
       }
       const { ascii, hex } = norm(currency)
 
-      const balances = (lines.result.lines || [])
+      const balances = ((lines.result as any).lines || [])
         .filter((l: any) => (!issuer || l.account === issuer) && (!ascii || l.currency === ascii) && (!hex || l.currency === hex))
         .map((l: any) => ({
           currency: isHexCurrency(l.currency) ? hexCurrencyToAscii(l.currency) : l.currency,
@@ -91,7 +91,7 @@ export const xrplAdapter: LedgerAdapter = {
           qualityOut: l.quality_out,
         }))
 
-      return { xrpBalance, balances }
+      return { xrpBalance: xrpBalance.toString(), balances }
     })
   },
 }

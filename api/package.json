@@ -14,15 +14,17 @@
     "@fastify/cors": "^10.0.0",
     "@fastify/swagger": "^9.0.0",
     "@fastify/swagger-ui": "^5.0.0",
+    "@prisma/client": "^5.16.1",
     "dotenv": "^16.4.1",
     "fastify": "^5.0.0",
     "xrpl": "^3.0.2",
-    "zod": "^3.23.8",
-    "@prisma/client": "^5.16.1"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "prisma": "^5.16.1",
     "tsx": "^4.16.0",
-    "typescript": "^5.4.5",
-    "prisma": "^5.16.1"
+    "typescript": "^5.4.5"
   }
 }
