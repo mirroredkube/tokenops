@@ -27,13 +27,13 @@ function TopStrip() {
         <div className="flex items-center gap-3 text-sm">
           <a
             href="#get-started"
-            className="rounded-md bg-emerald-500 px-3 py-1.5 font-medium text-neutral-900 hover:bg-emerald-400"
+            className="rounded-md bg-emerald-500 px-3 py-1.5 font-medium text-neutral-900 hover:bg-emerald-400 transition-colors"
           >
             Get started
           </a>
           <a
             href="mailto:hello@example.com?subject=Regula%20Demo"
-            className="rounded-md bg-white/10 px-3 py-1.5 hover:bg-white/20"
+            className="rounded-md bg-white/10 px-3 py-1.5 hover:bg-white/20 transition-colors"
           >
             Contact us
           </a>
@@ -166,35 +166,62 @@ function ShowcaseCard({
 }) {
   const btnClass = variant === 'primary' ? 'btn btn-primary' : 'btn btn-outline'
   return (
-    <div className="group relative rounded-[20px] p-[1px] bg-gradient-to-br from-emerald-200/70 via-transparent to-indigo-200/70 transition-shadow duration-300 hover:shadow-xl">
-      <div className="relative rounded-[19px] bg-white">
-        {/* header banner with big icon */}
-        <div className="card-glow relative h-20 w-full overflow-hidden rounded-t-[19px] bg-neutral-50">
-          <div className="absolute inset-0 opacity-[.35] blur-2xl" />
-          <div className="absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
-            <div className="h-7 w-7 text-emerald-600 motion-safe:animate-float">{icon}</div>
-          </div>
+    <div className="rounded-2xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+      {/* header banner with big icon */}
+      <div className="relative h-20 w-full overflow-hidden rounded-t-xl bg-gradient-to-r from-emerald-50 to-blue-50 mb-4">
+        <div className="absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+          <div className="h-7 w-7 text-emerald-600">{icon}</div>
         </div>
+      </div>
 
-        {/* body */}
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
-          <p className="mt-2 text-sm leading-6 text-neutral-600">{children}</p>
+      {/* body */}
+      <div>
+        <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
+        <p className="mt-2 text-sm leading-6 text-neutral-600">{children}</p>
 
-          {href && (
-            <a href={href} target="_blank" rel="noopener noreferrer" className={`${btnClass} mt-4`}>
-              {cta}
-              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M7 5h8m0 0v8m0-8L5 15" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </a>
-          )}
-        </div>
+        {href && (
+          <a href={href} target="_blank" rel="noopener noreferrer" className={`${btnClass} mt-4`}>
+            {cta}
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M7 5h8m0 0v8m0-8L5 15" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
+        )}
       </div>
     </div>
   )
 }
 
+/* ---------- Use Case Icons ---------- */
+function IconBuilding({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M3 21h18" strokeLinejoin="round" />
+      <path d="M5 21V7l8-4v18" strokeLinejoin="round" />
+      <path d="M19 21V11l-6-4" strokeLinejoin="round" />
+      <path d="M9 9h.01" strokeLinecap="round" />
+      <path d="M9 13h.01" strokeLinecap="round" />
+      <path d="M9 17h.01" strokeLinecap="round" />
+    </svg>
+  )
+}
+function IconTrendingUp({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M22 7l-8.5 8.5-5-5L2 17" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 7h6v6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function IconGlobe({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" strokeLinejoin="round" />
+      <path d="M2 12h20" strokeLinejoin="round" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 export default function HomePage() {
   return (
@@ -207,7 +234,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs font-medium text-neutral-600 shadow-sm backdrop-blur">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-            Ledger-agnostic • Adapter-based
+            Ledger-agnostic • Adapter-based • MiCA-ready
           </span>
 
           {/* Punchline */}
@@ -215,22 +242,14 @@ export default function HomePage() {
             Compliance-Grade Tokenization, Delivered as an API
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-lg leading-7 text-neutral-600">
-            Issue and govern tokens with built-in compliance controls, audit
-            trails, and RBAC. adapter-driven, ledger-agnostic.
+            Issue and govern tokens with built-in compliance controls, audit trails, and role-based access. 
+            Multi-ledger support with XRPL, Hedera, and Ethereum adapters. Enterprise-ready from day one.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
-              href="/app/product"
-              className="btn btn-outline"
-            >
-              View Product
-            </Link>
-            <Link
               href="/app/dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-outline"
+              className="btn btn-primary"
             >
               Try {BRAND}
             </Link>
@@ -241,6 +260,12 @@ export default function HomePage() {
               className="btn btn-outline"
             >
               API Documentation
+            </a>
+            <a
+              href="mailto:hello@example.com?subject=Regula%20Demo"
+              className="btn btn-outline"
+            >
+              Request Demo
             </a>
           </div>
 
@@ -257,8 +282,8 @@ export default function HomePage() {
             />
             <Feature
               icon={<IconPluggable className="h-8 w-8 text-emerald-600" />}
-              title="Pluggable"
-              subtitle="Swap in new ledgers"
+              title="Multi-ledger"
+              subtitle="XRPL, Hedera, Ethereum"
             />
           </div>
         </div>
@@ -279,7 +304,7 @@ export default function HomePage() {
             variant="primary"
           >
             Standardize on one API and dashboard while we handle ledger quirks,
-            node health, and upgrades.
+            node health, and upgrades. Focus on your business logic, not blockchain complexity.
           </ShowcaseCard>
 
           <ShowcaseCard
@@ -290,7 +315,7 @@ export default function HomePage() {
             variant="primary"
           >
             Spin up a compliant testnet pilot in days: provision issuers, set
-            limits, and attach jurisdiction &amp; KYC flags.
+            limits, and attach jurisdiction & KYC flags. No mainnet funds required.
           </ShowcaseCard>
 
           <ShowcaseCard
@@ -301,8 +326,41 @@ export default function HomePage() {
             variant="primary"
           >
             Roles, metadata, and exports aligned to MiCA-style reviews—with
-            audit logs and evidence on tap.
+            audit logs and evidence on tap. Built for regulatory scrutiny.
           </ShowcaseCard>
+        </div>
+      </Section>
+
+      {/* USE CASES */}
+      <Section kicker="Use Cases" title="Tokenization for every asset class">
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card title="Real Estate Tokens">
+            Fractional ownership of properties with automated compliance checks, 
+            investor limits, and regulatory reporting. Support for REITs and 
+            property-backed securities.
+          </Card>
+          <Card title="Commodity-Backed Tokens">
+            Gold, silver, and other precious metals with real-time price feeds, 
+            custody verification, and settlement automation. Perfect for 
+            institutional investors.
+          </Card>
+          <Card title="Carbon Credits">
+            Environmental assets with provenance tracking, retirement verification, 
+            and regulatory compliance. Built for carbon markets and ESG initiatives.
+          </Card>
+          <Card title="Private Equity">
+            Fund tokens with investor accreditation, transfer restrictions, and 
+            automated distributions. Streamline capital calls and distributions.
+          </Card>
+          <Card title="Trade Finance">
+            Invoice and receivables financing with automated settlement, 
+            risk scoring, and regulatory reporting. Reduce settlement times 
+            from weeks to minutes.
+          </Card>
+          <Card title="Stablecoins & CBDCs">
+            Fiat-backed tokens with reserve verification, redemption mechanisms, 
+            and regulatory oversight. Built for central banks and fintechs.
+          </Card>
         </div>
       </Section>
 
@@ -310,63 +368,65 @@ export default function HomePage() {
       {/* CAPABILITIES – stacked showcase */}
       <CapabilitiesPager />
 
-      {/* MODULE PLACEHOLDERS */}
-      <Section id="modules" kicker="Modules" title="Roadmap & placeholders">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Link
-            href="#"
-            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
-          >
-            <div className="font-medium text-neutral-900">Tokenization</div>
-            <p className="mt-1 text-sm text-neutral-600">
-              Issuance, burn, controls.
-            </p>
-          </Link>
-          <Link
-            href="#"
-            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
-          >
-            <div className="font-medium text-neutral-900">Compliance</div>
-            <p className="mt-1 text-sm text-neutral-600">
-              KYC/AML flags, attestations.
-            </p>
-          </Link>
-          <Link
-            href="#"
-            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
-          >
-            <div className="font-medium text-neutral-900">Reporting</div>
-            <p className="mt-1 text-sm text-neutral-600">
-              Exports, dashboards, alerts.
-            </p>
-          </Link>
-          <Link
-            href="#"
-            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
-          >
-            <div className="font-medium text-neutral-900">Organizations</div>
-            <p className="mt-1 text-sm text-neutral-600">
-              Workspaces, roles, invitations.
-            </p>
-          </Link>
-          <Link
-            href="#"
-            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
-          >
-            <div className="font-medium text-neutral-900">API Keys</div>
-            <p className="mt-1 text-sm text-neutral-600">
-              Key management, rotation, scopes.
-            </p>
-          </Link>
-          <Link
-            href="#"
-            className="block rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md"
-          >
-            <div className="font-medium text-neutral-900">Environments</div>
-            <p className="mt-1 text-sm text-neutral-600">
-              Testnet/Mainnet, adapters.
-            </p>
-          </Link>
+      {/* TECHNICAL SPECS */}
+      <Section kicker="Technical Specifications" title="Enterprise-grade infrastructure">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-neutral-900">Supported Ledgers</h3>
+            <div className="grid gap-3">
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
+                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">X</div>
+                <div>
+                  <div className="font-medium text-neutral-900">XRPL (XRP Ledger)</div>
+                  <div className="text-sm text-neutral-600">Production ready with trustline management</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
+                <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center text-white text-xs font-bold">H</div>
+                <div>
+                  <div className="font-medium text-neutral-900">Hedera</div>
+                  <div className="text-sm text-neutral-600">Coming Q1 2024 - Enterprise DLT</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
+                <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center text-white text-xs font-bold">E</div>
+                <div>
+                  <div className="font-medium text-neutral-900">Ethereum</div>
+                  <div className="text-sm text-neutral-600">Coming Q2 2024 - ERC-20 & ERC-1400</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-neutral-900">Compliance Features</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm text-neutral-700">MiCA-compliant metadata structure</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm text-neutral-700">Role-based access control (RBAC)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm text-neutral-700">Audit trail with immutable logs</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm text-neutral-700">KYC/AML flag management</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm text-neutral-700">Regulatory reporting exports</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm text-neutral-700">Transfer restrictions & limits</span>
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
 
@@ -380,7 +440,7 @@ export default function HomePage() {
             </div>
             <p className="mt-2 text-sm">
               Configure your issuer account and workspace. No mainnet funds
-              required for pilots.
+              required for pilots. Multi-tenant support for organizations.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
@@ -390,6 +450,7 @@ export default function HomePage() {
             </div>
             <p className="mt-2 text-sm">
               Establish holder limits and policies. Add KYC/AML flags as needed.
+              Set transfer restrictions and compliance rules.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
@@ -399,7 +460,7 @@ export default function HomePage() {
             </div>
             <p className="mt-2 text-sm">
               Mint tokens with structured metadata. Instant hashes & explorer
-              links.
+              links. Real-time balance tracking and event monitoring.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
@@ -409,6 +470,7 @@ export default function HomePage() {
             </div>
             <p className="mt-2 text-sm">
               Track balances and events, export audit-ready CSV/JSON.
+              Real-time alerts and regulatory reporting dashboards.
             </p>
           </li>
         </ol>
@@ -452,8 +514,8 @@ export default function HomePage() {
           </a>
         </div>
         <p className="mt-4 text-sm text-neutral-500">
-          MVP focus: XRPL. Roadmap: Hedera adapter, role-based admin, API keys,
-          audit exports.
+          Currently supporting XRPL with Hedera and Ethereum adapters coming soon. 
+          Enterprise features: role-based admin, API keys, audit exports, and multi-tenant support.
         </p>
       </Section>
       <CookieConsent />
