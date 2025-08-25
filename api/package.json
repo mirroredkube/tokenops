@@ -24,6 +24,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.0",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",
     "prisma": "^5.16.1",
