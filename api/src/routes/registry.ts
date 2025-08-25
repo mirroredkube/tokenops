@@ -312,77 +312,7 @@ export default async function registryRoutes(app: FastifyInstance, _opts: Fastif
     }
   })
 
-  // GET /registry/stats (Token statistics)
-  app.get('/stats', {
-    schema: {
-      tags: ['registry'],
-      summary: 'Get token issuance statistics',
-      description: 'Retrieves aggregated statistics about token issuances and recent activity',
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            totalTokens: { type: 'number' },
-            totalIssuances: { type: 'number' },
-            recentTransactions: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  currencyCode: { type: 'string' },
-                  amount: { type: 'string' },
-                  destination: { type: 'string' },
-                  txHash: { type: 'string' },
-                  createdAt: { type: 'string', format: 'date-time' }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-  }, async (req, reply) => {
-    try {
-      // Get total unique tokens (by symbol)
-      const totalTokens = await prisma.tokenRecord.groupBy({
-        by: ['symbol'],
-        _count: { symbol: true }
-      }).then(groups => groups.length)
 
-      // Get total issuances
-      const totalIssuances = await prisma.tokenRecord.count()
-
-      // Get recent transactions (last 10)
-      const recentTransactions = await prisma.tokenRecord.findMany({
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          symbol: true,
-          supply: true,
-          holderAddress: true,
-          txHash: true,
-          createdAt: true
-        }
-      })
-
-      return reply.send({
-        totalTokens,
-        totalIssuances,
-        recentTransactions: recentTransactions.map(tx => ({
-          id: tx.id,
-          currencyCode: tx.symbol,
-          amount: tx.supply,
-          destination: tx.holderAddress || 'Unknown',
-          txHash: tx.txHash,
-          createdAt: tx.createdAt.toISOString()
-        }))
-      })
-    } catch (err: any) {
-      return reply.status(500).send({ error: err?.message || 'Database error' })
-    }
-  })
 
   // GET /registry/tokens/report (Bulk export)
   app.get('/tokens/report', {

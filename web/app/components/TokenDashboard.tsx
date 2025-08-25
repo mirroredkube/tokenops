@@ -20,33 +20,47 @@ export default function TokenDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // For now, we'll use mock data since the stats endpoint needs to be added to OpenAPI
-    // In a real implementation, this would fetch from /registry/stats
-    setTimeout(() => {
-      setStats({
-        totalTokens: 12,
-        totalIssuances: 45,
-        recentTransactions: [
-          {
-            id: '1',
-            currencyCode: 'USD',
-            amount: '1000',
-            destination: 'rE5MDtonMcosLV6fpRJjib3MQiBZ8HGapw',
-            txHash: '0x1234567890abcdef...',
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            currencyCode: 'EUR',
-            amount: '500',
-            destination: 'rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH',
-            txHash: '0xabcdef1234567890...',
-            createdAt: new Date(Date.now() - 86400000).toISOString()
-          }
-        ]
-      })
-      setLoading(false)
-    }, 1000)
+    const fetchStats = async () => {
+      try {
+        // Fetch recent token records from the registry API
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/registry/tokens?limit=20`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        const tokens = data.items || []
+        
+        // Calculate stats from the token records
+        const uniqueTokens = new Set(tokens.map((t: any) => t.symbol)).size
+        
+        setStats({
+          totalTokens: uniqueTokens,
+          totalIssuances: tokens.length,
+          recentTransactions: tokens.slice(0, 10).map((tx: any) => ({
+            id: tx.id,
+            currencyCode: tx.symbol,
+            amount: tx.supply,
+            destination: tx.holderAddress || 'Unknown',
+            txHash: tx.txHash,
+            createdAt: tx.createdAt
+          }))
+        })
+      } catch (err) {
+        console.error('Error fetching token data:', err)
+        // Fallback to empty stats on error
+        setStats({
+          totalTokens: 0,
+          totalIssuances: 0,
+          recentTransactions: []
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
   }, [])
 
   if (loading) {

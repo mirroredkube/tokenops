@@ -35,7 +35,7 @@ The components integrate with the following API endpoints:
 
 - `POST /trustlines/create` - Create trustline for XRPL
 - `POST /tokens/issue` - Issue tokens on the selected ledger
-- `GET /registry/stats` - Get token statistics (planned)
+- `GET /registry/tokens` - Get token records and statistics
 
 ## Features
 
