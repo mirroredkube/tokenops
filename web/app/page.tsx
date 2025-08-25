@@ -1,5 +1,8 @@
+'use client'
+
 // app/page.tsx
 import Link from 'next/link'
+import { useState } from 'react'
 import CapabilitiesPager from './components/CapabilitiesPager'
 import { ArchitectureDiagram } from "./components/ArchitectureDiagram";
 import { CookieConsent } from "./components/CookieConsent";
@@ -7,7 +10,164 @@ import { CookieSettingsLink } from './components/FooterLink';
 
 const BRAND = 'Regula'
 
-function TopStrip() {
+function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    company: '',
+    message: ''
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    
+    // Simulate email submission
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // In a real implementation, you would send this to your backend
+    // TODO: Replace with support@regula.com for production
+    const mailtoLink = `mailto:anitha.ramaswamy.2015@gmail.com?subject=Regula Contact Form - ${formData.name}&body=Name: ${formData.name}%0D%0AEmail: ${formData.email}%0D%0ACompany: ${formData.company}%0D%0A%0D%0AMessage:%0D%0A${formData.message}`
+    window.open(mailtoLink, '_blank')
+    
+    setIsSubmitted(true)
+    setIsSubmitting(false)
+    
+    // Reset form after 2 seconds
+    setTimeout(() => {
+      setIsSubmitted(false)
+      setFormData({ name: '', email: '', company: '', message: '' })
+      onClose()
+    }, 2000)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-neutral-900">Contact Us</h2>
+            <button
+              onClick={onClose}
+              className="text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {isSubmitted ? (
+            <div className="text-center py-8">
+              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">Message Sent!</h3>
+              <p className="text-neutral-600">We'll get back to you soon.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  placeholder="Your full name"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  placeholder="your.email@company.com"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="company" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Company
+                </label>
+                <input
+                  type="text"
+                  id="company"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  placeholder="Your company name"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Message *
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={4}
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+                  placeholder="Tell us about your tokenization needs..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 hover:bg-neutral-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TopStrip({ isContactOpen, setIsContactOpen }: { isContactOpen: boolean; setIsContactOpen: (open: boolean) => void }) {
   return (
     <div className="w-full bg-neutral-900 text-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2">
@@ -31,12 +191,12 @@ function TopStrip() {
           >
             Get started
           </a>
-          <a
-            href="mailto:hello@example.com?subject=Regula%20Demo"
+          <button
+            onClick={() => setIsContactOpen(true)}
             className="rounded-md bg-white/10 px-3 py-1.5 hover:bg-white/20 transition-colors"
           >
             Contact us
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -224,9 +384,11 @@ function IconGlobe({ className = '' }: { className?: string }) {
 }
 
 export default function HomePage() {
+  const [isContactOpen, setIsContactOpen] = useState(false)
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-white">
-      <TopStrip />
+      <TopStrip isContactOpen={isContactOpen} setIsContactOpen={setIsContactOpen} />
 
       {/* HERO */}
       <section className="relative overflow-hidden">
@@ -261,12 +423,12 @@ export default function HomePage() {
             >
               API Documentation
             </a>
-            <a
-              href="mailto:hello@example.com?subject=Regula%20Demo"
+            <button
+              onClick={() => setIsContactOpen(true)}
               className="btn btn-outline"
             >
               Request Demo
-            </a>
+            </button>
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -506,12 +668,12 @@ export default function HomePage() {
           >
             View API Docs
           </a>
-          <a
-            href="mailto:hello@example.com?subject=Regula%20Demo"
+          <button
+            onClick={() => setIsContactOpen(true)}
             className="btn btn-outline"
           >
             Request a Demo
-          </a>
+          </button>
         </div>
         <p className="mt-4 text-sm text-neutral-500">
           Currently supporting XRPL with Hedera and Ethereum adapters coming soon. 
@@ -539,6 +701,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Contact Modal */}
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </main>
   );
 }
