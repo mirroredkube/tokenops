@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { 
   LayoutDashboard, 
   Shield, 
@@ -14,7 +15,8 @@ import {
   Settings,
   HelpCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react'
 
 const BRAND = 'Regula'
@@ -43,9 +45,25 @@ export default function CollapsibleSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const pathname = usePathname()
+  const { user, logout } = useAuth()
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed)
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen)
+
+  const handleLogout = async () => {
+    await logout()
+  }
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user?.name) return 'U'
+    return user.name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   return (
     <>
@@ -215,20 +233,35 @@ export default function CollapsibleSidebar() {
               <div className={`
                 flex items-center rounded-md text-sm font-medium transition-colors
                 ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
-                text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer
+                text-slate-300
               `}>
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                    JD
+                  <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                    {getUserInitials()}
                   </div>
                 </div>
                 {!isCollapsed && (
                   <div className="flex-1">
-                    <div className="text-sm font-medium">John Doe</div>
-                    <div className="text-xs text-slate-400">john.doe@example.com</div>
+                    <div className="text-sm font-medium">{user?.name || 'User'}</div>
+                    <div className="text-xs text-slate-400">{user?.email || 'user@example.com'}</div>
                   </div>
                 )}
               </div>
+              
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className={`
+                  w-full flex items-center rounded-md text-sm font-medium transition-colors mt-2
+                  ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
+                  text-slate-300 hover:bg-slate-700 hover:text-white
+                `}
+              >
+                <div className="flex-shrink-0">
+                  <LogOut className="h-4 w-4" />
+                </div>
+                {!isCollapsed && <span>Sign Out</span>}
+              </button>
             </div>
           </div>
         </div>

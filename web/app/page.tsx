@@ -410,7 +410,7 @@ export default function HomePage() {
 
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
-              href="/app/dashboard"
+              href="/login"
               className="btn btn-primary"
             >
               Try {BRAND}
@@ -651,9 +651,7 @@ export default function HomePage() {
       >
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            href="/app/dashboard"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/login"
             className="btn btn-primary"
           >
             Open Dashboard
