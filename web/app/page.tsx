@@ -221,6 +221,12 @@ export default function HomePage() {
 
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
+              href="/app/product"
+              className="btn btn-outline"
+            >
+              View Product
+            </Link>
+            <Link
               href="/app/dashboard"
               target="_blank"
               rel="noopener noreferrer"
@@ -235,9 +241,6 @@ export default function HomePage() {
               className="btn btn-outline"
             >
               API Documentation
-            </a>
-            <a href="#get-started" className="btn btn-outline">
-              Get started
             </a>
           </div>
 
