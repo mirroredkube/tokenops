@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { api, ensureJson } from '@/lib/api'
 import FormField from './FormField'
 import TransactionResult from './TransactionResult'
+import LedgerLogo from './LedgerLogo'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
 type Step = 'ledger-selection' | 'trustline-setup' | 'token-issuance' | 'success'
@@ -45,24 +46,21 @@ export default function TokenIssuanceFlow() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const ledgers: { type: LedgerType; name: string; description: string; icon: string }[] = [
+  const ledgers: { type: LedgerType; name: string; description: string }[] = [
     {
       type: 'XRPL',
       name: 'XRPL (XRP Ledger)',
-      description: 'Fast, energy-efficient blockchain for payments and tokenization',
-      icon: '🌊'
+      description: 'Fast, energy-efficient blockchain for payments and tokenization'
     },
     {
       type: 'HEDERA',
       name: 'Hedera',
-      description: 'Enterprise-grade public network for the decentralized economy',
-      icon: '🌿'
+      description: 'Enterprise-grade public network for the decentralized economy'
     },
     {
       type: 'ETHEREUM',
       name: 'Ethereum',
-      description: 'Decentralized platform for smart contracts and dApps',
-      icon: '🔷'
+      description: 'Decentralized platform for smart contracts and dApps'
     }
   ]
 
@@ -193,15 +191,17 @@ export default function TokenIssuanceFlow() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {ledgers.map((ledger) => (
-              <button
-                key={ledger.type}
-                onClick={() => handleLedgerSelection(ledger.type)}
-                className="p-6 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all text-left"
-              >
-                <div className="text-3xl mb-3">{ledger.icon}</div>
-                <h3 className="font-semibold mb-2">{ledger.name}</h3>
-                <p className="text-sm text-gray-600">{ledger.description}</p>
-              </button>
+                             <button
+                 key={ledger.type}
+                 onClick={() => handleLedgerSelection(ledger.type)}
+                 className="p-6 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all text-left"
+               >
+                 <div className="mb-3">
+                   <LedgerLogo type={ledger.type} size="lg" />
+                 </div>
+                 <h3 className="font-semibold mb-2">{ledger.name}</h3>
+                 <p className="text-sm text-gray-600">{ledger.description}</p>
+               </button>
             ))}
           </div>
         </div>

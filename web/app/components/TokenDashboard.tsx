@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import LedgerLogo from './LedgerLogo'
 
 interface TokenStats {
   totalTokens: number
@@ -108,9 +109,7 @@ export default function TokenDashboard() {
         
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <span className="text-2xl">🌊</span>
-            </div>
+            <LedgerLogo type="XRPL" size="md" />
             <div className="ml-4">
               <p className="text-sm text-gray-600">Active Ledger</p>
               <p className="text-2xl font-semibold">XRPL</p>

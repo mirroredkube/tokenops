@@ -21,6 +21,12 @@ Displays transaction hashes with explorer links in a consistent format.
 ### TokenDashboard
 Shows token issuance statistics and recent activity on the main dashboard.
 
+### ServiceHealthCard
+Displays service health information in a clean, readable format with status indicators, uptime, memory usage, and process details.
+
+### XrplStatusCard
+Shows XRPL network status including connection state, ledger information, network fees, and peer count in an organized dashboard format.
+
 ## User Flow
 
 1. **Navigate to Issuance**: User clicks "Issue Token" in the sidebar
