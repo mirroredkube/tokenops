@@ -29,7 +29,7 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     
     // In a real implementation, you would send this to your backend
     // TODO: Replace with support@regula.com for production
-    const mailtoLink = `mailto:anitha.ramaswamy.2015@gmail.com?subject=Regula Contact Form - ${formData.name}&body=Name: ${formData.name}%0D%0AEmail: ${formData.email}%0D%0ACompany: ${formData.company}%0D%0A%0D%0AMessage:%0D%0A${formData.message}`
+    const mailtoLink = `mailto:support@regula.com?subject=Regula Contact Form - ${formData.name}&body=Name: ${formData.name}%0D%0AEmail: ${formData.email}%0D%0ACompany: ${formData.company}%0D%0A%0D%0AMessage:%0D%0A${formData.message}`
     window.open(mailtoLink, '_blank')
     
     setIsSubmitted(true)
