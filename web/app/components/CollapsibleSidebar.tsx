@@ -123,7 +123,7 @@ export default function CollapsibleSidebar() {
                       flex items-center rounded-md text-sm font-medium transition-colors
                       ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
                       ${isActive 
-                        ? 'bg-blue-600 text-white' 
+                        ? 'bg-emerald-900/50 text-emerald-300 border-l-2 border-emerald-500' 
                         : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                       }
                     `}
@@ -143,7 +143,7 @@ export default function CollapsibleSidebar() {
                     flex items-center rounded-md text-sm font-medium transition-colors
                     ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
                     ${isActive 
-                      ? 'bg-blue-600 text-white' 
+                      ? 'bg-emerald-900/50 text-emerald-300 border-l-2 border-emerald-500' 
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                     }
                   `}
