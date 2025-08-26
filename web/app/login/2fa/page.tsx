@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Smartphone, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TwoFactorAuthPage() {
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +30,9 @@ export default function TwoFactorAuthPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Wait a moment for cookies to be set, then refresh user data
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await refreshUser();
         router.push('/app/dashboard');
       } else {
         setError(data.error || 'Verification failed');
