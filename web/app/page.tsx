@@ -409,12 +409,14 @@ export default function HomePage() {
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3">
-            <Link
-              href="/login"
+            <a
+              href="/app/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn-primary"
             >
               Try {BRAND}
-            </Link>
+            </a>
             <a
               href={(process.env.NEXT_PUBLIC_API_URL ?? "") + "/docs"}
               target="_blank"
@@ -650,12 +652,14 @@ export default function HomePage() {
         title="Open the dashboard or request a demo"
       >
         <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href="/login"
+          <a
+            href="/app/dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn btn-primary"
           >
             Open Dashboard
-          </Link>
+          </a>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <a
