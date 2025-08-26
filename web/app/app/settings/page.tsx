@@ -1,7 +1,8 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import QRCode from 'qrcode'
 import { 
   User, 
   Mail, 
@@ -10,7 +11,14 @@ import {
   Key, 
   Globe,
   Save,
-  Edit3
+  Edit3,
+  QrCode,
+  Smartphone,
+  CheckCircle,
+  X,
+  Copy,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 export default function SettingsPage() {
@@ -26,6 +34,17 @@ export default function SettingsPage() {
       security: true
     }
   })
+
+  // 2FA State
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+  const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false)
+  const [twoFactorSecret, setTwoFactorSecret] = useState('')
+  const [twoFactorQrCode, setTwoFactorQrCode] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [showSecret, setShowSecret] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [verificationError, setVerificationError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
@@ -63,6 +82,144 @@ export default function SettingsPage() {
     })
     setIsEditing(false)
   }
+
+  // 2FA API Functions
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+
+  const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+    const response = await fetch(`${API_BASE}${url}`, {
+      ...options,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
+    return response
+  }
+
+  const getTwoFactorStatus = async () => {
+    try {
+      const response = await fetchWithAuth('/auth/2fa/status')
+      if (response.ok) {
+        const data = await response.json()
+        setTwoFactorEnabled(data.enabled)
+      }
+    } catch (error) {
+      console.error('Error fetching 2FA status:', error)
+    }
+  }
+
+  const setupTwoFactor = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetchWithAuth('/auth/2fa/setup', {
+        method: 'POST',
+        body: JSON.stringify({}) // Send empty JSON object instead of empty body
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTwoFactorSecret(data.secret)
+        
+        // Generate QR code from the otpauth URL
+        try {
+          const qrCodeDataUrl = await QRCode.toDataURL(data.otpauth)
+          setTwoFactorQrCode(qrCodeDataUrl)
+        } catch (error) {
+          console.error('Error generating QR code:', error)
+          // Fallback to the provided QR code URL
+          setTwoFactorQrCode(data.qrCodeUrl)
+        }
+        
+        setShowTwoFactorSetup(true)
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || 'Failed to setup 2FA')
+      }
+    } catch (error) {
+      console.error('Error setting up 2FA:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEnableTwoFactor = async () => {
+    await setupTwoFactor()
+  }
+
+  const handleVerifyTwoFactor = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setVerificationError('Please enter a valid 6-digit code')
+      return
+    }
+
+    setIsVerifying(true)
+    setVerificationError('')
+
+    try {
+      const response = await fetchWithAuth('/auth/2fa/verify', {
+        method: 'POST',
+        body: JSON.stringify({
+          secret: twoFactorSecret,
+          token: verificationCode
+        })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTwoFactorEnabled(true)
+        setShowTwoFactorSetup(false)
+        setVerificationCode('')
+        setTwoFactorSecret('')
+        setTwoFactorQrCode('')
+        // Refresh 2FA status
+        await getTwoFactorStatus()
+      } else {
+        const errorData = await response.json()
+        setVerificationError(errorData.error || 'Invalid verification code. Please try again.')
+      }
+    } catch (error) {
+      setVerificationError('Invalid verification code. Please try again.')
+    } finally {
+      setIsVerifying(false)
+    }
+  }
+
+  const handleDisableTwoFactor = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetchWithAuth('/auth/2fa/disable', {
+        method: 'POST',
+        body: JSON.stringify({
+          token: verificationCode || '' // Ensure we always send a token
+        })
+      })
+      
+      if (response.ok) {
+        setTwoFactorEnabled(false)
+        setVerificationCode('')
+        // Refresh 2FA status
+        await getTwoFactorStatus()
+      } else {
+        const errorData = await response.json()
+        setVerificationError(errorData.error || 'Failed to disable 2FA')
+      }
+    } catch (error) {
+      setVerificationError('Failed to disable 2FA')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
+
+  // Fetch 2FA status on component mount
+  useEffect(() => {
+    getTwoFactorStatus()
+  }, [])
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -176,11 +333,44 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between py-3">
               <div>
                 <h3 className="font-medium text-gray-900">Two-Factor Authentication</h3>
-                <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                <p className="text-sm text-gray-600">
+                  {twoFactorEnabled 
+                    ? 'Two-factor authentication is enabled for your account' 
+                    : 'Add an extra layer of security to your account'
+                  }
+                </p>
               </div>
-              <button className="px-4 py-2 text-sm font-medium text-emerald-600 border border-emerald-600 rounded-md hover:bg-emerald-50 transition-colors">
-                Enable
-              </button>
+              {twoFactorEnabled ? (
+                <button 
+                  onClick={handleDisableTwoFactor}
+                  disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      Disabling...
+                    </>
+                  ) : (
+                    'Disable'
+                  )}
+                </button>
+              ) : (
+                <button 
+                  onClick={handleEnableTwoFactor}
+                  disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-emerald-600 border border-emerald-600 rounded-md hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
+                      Setting up...
+                    </>
+                  ) : (
+                    'Enable'
+                  )}
+                </button>
+              )}
             </div>
             
             <div className="flex items-center justify-between py-3">
@@ -195,6 +385,148 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* 2FA Setup Modal */}
+        {showTwoFactorSetup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Set Up Two-Factor Authentication</h2>
+                  <button
+                    onClick={() => setShowTwoFactorSetup(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Step 1: Download App */}
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-3">Step 1: Download an Authenticator App</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Download one of these authenticator apps on your mobile device:
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Smartphone className="w-4 h-4 text-emerald-600" />
+                        <span className="text-gray-700">Google Authenticator</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Smartphone className="w-4 h-4 text-emerald-600" />
+                        <span className="text-gray-700">Authy</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Smartphone className="w-4 h-4 text-emerald-600" />
+                        <span className="text-gray-700">Microsoft Authenticator</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Scan QR Code */}
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-3">Step 2: Scan QR Code</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Open your authenticator app and scan this QR code:
+                    </p>
+                    <div className="flex justify-center">
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        {twoFactorQrCode ? (
+                          <img 
+                            src={twoFactorQrCode} 
+                            alt="QR Code for 2FA setup" 
+                            className="w-48 h-48"
+                          />
+                        ) : (
+                          <div className="w-48 h-48 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                            <div className="text-center">
+                              <QrCode className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                              <p className="text-sm text-gray-500">Loading QR Code...</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Manual Entry */}
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-3">Step 3: Manual Entry (Alternative)</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      If you can't scan the QR code, enter this secret manually:
+                    </p>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <code className="flex-1 font-mono text-sm">
+                        {showSecret ? twoFactorSecret : '••••••••••••••••••••••••••••••••'}
+                      </code>
+                      <button
+                        onClick={() => setShowSecret(!showSecret)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => copyToClipboard(twoFactorSecret)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Step 4: Verify */}
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-3">Step 4: Verify Setup</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Enter the 6-digit code from your authenticator app:
+                    </p>
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="000000"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-center text-lg font-mono tracking-widest"
+                        maxLength={6}
+                      />
+                      {verificationError && (
+                        <p className="text-sm text-red-600">{verificationError}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => setShowTwoFactorSetup(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleVerifyTwoFactor}
+                      disabled={isVerifying || verificationCode.length !== 6}
+                      className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isVerifying ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Verifying...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Verify & Enable
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Notifications */}
         <div className="bg-white rounded-lg border shadow-sm">

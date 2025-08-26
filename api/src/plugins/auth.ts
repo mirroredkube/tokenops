@@ -2,6 +2,11 @@ import type { FastifyPluginAsync } from "fastify";
 import fastifyCookie from "@fastify/cookie";
 import fastifyJwt from "@fastify/jwt";
 import fastifyOauth2 from "@fastify/oauth2";
+import { authenticator } from 'otplib';
+import crypto from 'crypto';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 // ✅ Correct type augmentation: tell @fastify/jwt what our payload/user look like
 declare module "@fastify/jwt" {
@@ -13,6 +18,7 @@ declare module "@fastify/jwt" {
       name?: string;
       picture?: string;
       role?: "admin" | "user";
+      requires2FA?: boolean;
     };
     // what req.user becomes after jwtVerify()
     user: {
@@ -21,6 +27,7 @@ declare module "@fastify/jwt" {
       name?: string;
       picture?: string;
       role?: "admin" | "user";
+      requires2FA?: boolean;
     };
   }
 }
@@ -80,6 +87,34 @@ const authPlugin: FastifyPluginAsync = async (app) => {
         .filter(Boolean);
       const role: "admin" | "user" = email && admins.includes(email.toLowerCase()) ? "admin" : "user";
 
+      // Check if user has 2FA enabled
+      const dbUser = await prisma.user.findUnique({
+        where: { sub }
+      });
+
+      if (dbUser?.twoFactorEnabled) {
+        // Store temporary session for 2FA verification
+        const tempJwt = await reply.jwtSign({ 
+          sub, 
+          email, 
+          name, 
+          role, 
+          requires2FA: true 
+        }, { expiresIn: "5m" });
+        
+        reply
+          .setCookie("temp_auth", tempJwt, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            path: "/",
+            maxAge: 60 * 5, // 5 minutes
+          })
+          .redirect((process.env.UI_ORIGIN || "http://localhost:3000") + "/login/2fa");
+        return;
+      }
+
+      // No 2FA required, proceed with normal login
       const jwt = await reply.jwtSign({ sub, email, name, role }, { expiresIn: "12h" });
       reply
         .setCookie("auth", jwt, {
@@ -120,7 +155,28 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   app.get("/auth/me", async (req, reply) => {
     try {
       await req.jwtVerify();
-      return reply.send({ user: req.user });
+      const jwtUser = req.user as any;
+      
+      // Fetch complete user data from database
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: jwtUser.sub }
+      });
+      
+      if (dbUser) {
+        // Return database user data (more complete)
+        return reply.send({ 
+          user: {
+            sub: dbUser.sub,
+            email: dbUser.email,
+            name: dbUser.name,
+            role: dbUser.role,
+            twoFactorEnabled: dbUser.twoFactorEnabled
+          }
+        });
+      } else {
+        // Fallback to JWT data if user not in database
+        return reply.send({ user: jwtUser });
+      }
     } catch {
       return reply.code(200).send({ user: null });
     }
@@ -128,6 +184,223 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
   app.post("/auth/logout", async (_req, reply) => {
     reply.clearCookie("auth", { path: "/" }).send({ ok: true });
+  });
+
+  // 2FA endpoints
+  app.post("/auth/2fa/setup", async (req, reply) => {
+    try {
+      await req.jwtVerify();
+      const user = req.user as any;
+      
+      app.log.info(`2FA setup request for user: ${user.email} (${user.sub})`);
+      
+      // Find or create user in database
+      let dbUser = await prisma.user.findUnique({
+        where: { sub: user.sub }
+      });
+      
+      if (!dbUser) {
+        dbUser = await prisma.user.create({
+          data: {
+            email: user.email,
+            name: user.name,
+            sub: user.sub,
+            role: user.role
+          }
+        });
+      }
+      
+      // Generate a new secret
+      const secret = authenticator.generateSecret();
+      
+      // Create QR code URL
+      const otpauth = authenticator.keyuri(user.email, 'Regula', secret);
+      
+      // Store the secret temporarily (in production, you'd encrypt this)
+      // For now, we'll return it to the client to store temporarily
+      
+      return reply.send({
+        secret,
+        otpauth,
+        qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauth)}`
+      });
+    } catch (error) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+  });
+
+  app.post("/auth/2fa/verify", async (req, reply) => {
+    try {
+      await req.jwtVerify();
+      const user = req.user as any;
+      const { secret, token } = req.body as { secret: string; token: string };
+      
+      if (!secret || !token) {
+        return reply.code(400).send({ error: "Missing secret or token" });
+      }
+      
+      // Verify the token
+      const isValid = authenticator.verify({ token, secret });
+      
+      if (!isValid) {
+        return reply.code(400).send({ error: "Invalid verification code" });
+      }
+      
+      // Find user in database
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: user.sub }
+      });
+      
+      if (!dbUser) {
+        return reply.code(404).send({ error: "User not found" });
+      }
+      
+      // Store the secret and enable 2FA
+      await prisma.user.update({
+        where: { id: dbUser.id },
+        data: {
+          twoFactorSecret: secret, // In production, encrypt this
+          twoFactorEnabled: true
+        }
+      });
+      
+      return reply.send({ 
+        success: true, 
+        message: "Two-factor authentication enabled successfully" 
+      });
+    } catch (error) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+  });
+
+  app.post("/auth/2fa/disable", async (req, reply) => {
+    try {
+      await req.jwtVerify();
+      const user = req.user as any;
+      const { token } = req.body as { token: string };
+      
+      if (!token) {
+        return reply.code(400).send({ error: "Missing verification token" });
+      }
+      
+      // Find user in database
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: user.sub }
+      });
+      
+      if (!dbUser || !dbUser.twoFactorEnabled) {
+        return reply.code(400).send({ error: "2FA is not enabled for this user" });
+      }
+      
+      // Verify the token against stored secret
+      const isValid = authenticator.verify({ token, secret: dbUser.twoFactorSecret! });
+      
+      if (!isValid) {
+        return reply.code(400).send({ error: "Invalid verification code" });
+      }
+      
+      // Disable 2FA
+      await prisma.user.update({
+        where: { id: dbUser.id },
+        data: {
+          twoFactorSecret: null,
+          twoFactorEnabled: false
+        }
+      });
+      
+      return reply.send({ 
+        success: true, 
+        message: "Two-factor authentication disabled successfully" 
+      });
+    } catch (error) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+  });
+
+  app.get("/auth/2fa/status", async (req, reply) => {
+    try {
+      await req.jwtVerify();
+      const user = req.user as any;
+      
+      // Find user in database
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: user.sub }
+      });
+      
+      if (!dbUser) {
+        return reply.send({ 
+          enabled: false,
+          message: "2FA status retrieved successfully" 
+        });
+      }
+      
+      return reply.send({ 
+        enabled: dbUser.twoFactorEnabled,
+        message: "2FA status retrieved successfully" 
+      });
+    } catch (error) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+  });
+
+  // 2FA verification during login
+  app.post("/auth/2fa/verify-login", async (req, reply) => {
+    try {
+      // Verify temporary JWT from 2FA flow
+      const tempJwt = req.cookies.temp_auth;
+      app.log.info(`2FA verification attempt, temp_auth cookie: ${tempJwt ? 'present' : 'missing'}`);
+      
+      if (!tempJwt) {
+        return reply.code(401).send({ error: "No temporary session found" });
+      }
+
+      const decoded = app.jwt.decode(tempJwt) as any;
+      app.log.info(`Decoded temp JWT - sub: ${decoded?.sub}, requires2FA: ${decoded?.requires2FA}`);
+      
+      if (!decoded || !decoded.requires2FA) {
+        return reply.code(401).send({ error: "Invalid temporary session" });
+      }
+
+      const { token } = req.body as { token: string };
+      if (!token) {
+        return reply.code(400).send({ error: "Missing verification code" });
+      }
+
+      // Find user and verify 2FA
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: decoded.sub }
+      });
+
+      if (!dbUser?.twoFactorEnabled || !dbUser.twoFactorSecret) {
+        return reply.code(400).send({ error: "2FA not enabled for this user" });
+      }
+
+      const isValid = authenticator.verify({ token, secret: dbUser.twoFactorSecret });
+      if (!isValid) {
+        return reply.code(400).send({ error: "Invalid verification code" });
+      }
+
+      // Issue final JWT and clear temp cookie
+      const jwt = await reply.jwtSign({ 
+        sub: decoded.sub, 
+        email: decoded.email, 
+        name: decoded.name, 
+        role: decoded.role 
+      }, { expiresIn: "12h" });
+
+      reply
+        .clearCookie("temp_auth", { path: "/" })
+        .setCookie("auth", jwt, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          path: "/",
+          maxAge: 60 * 60 * 12,
+        })
+        .send({ success: true, redirect: "/app/dashboard" });
+    } catch (error) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
   });
 };
 

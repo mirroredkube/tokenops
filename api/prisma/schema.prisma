@@ -54,3 +54,19 @@ model TokenRecord {
   @@index([symbol, ledger])
   @@index([createdAt])
 }
+
+// ---------- User Management ----------
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  sub           String   @unique // OAuth sub from Google
+  role          String   @default("user") // "admin" or "user"
+  twoFactorSecret String? // Encrypted 2FA secret
+  twoFactorEnabled Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([email])
+  @@index([sub])
+}
