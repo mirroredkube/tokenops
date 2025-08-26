@@ -242,8 +242,7 @@ export default function CollapsibleSidebar() {
                 </div>
                 {!isCollapsed && (
                   <div className="flex-1">
-                    <div className="text-sm font-medium">{user?.name || 'User'}</div>
-                    <div className="text-xs text-slate-400">{user?.email || 'user@example.com'}</div>
+                    <div className="text-sm font-medium truncate">{user?.name || 'User'}</div>
                   </div>
                 )}
               </div>

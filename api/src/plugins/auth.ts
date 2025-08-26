@@ -89,7 +89,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
           path: "/",
           maxAge: 60 * 60 * 12,
         })
-        .redirect(process.env.UI_ORIGIN || "http://localhost:3000");
+        .redirect((process.env.UI_ORIGIN || "http://localhost:3000") + "/app/dashboard");
     });
   } else {
     app.log.warn("Google OAuth not configured; set GOOGLE_* envs to enable /auth/google");
