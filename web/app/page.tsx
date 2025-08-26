@@ -547,14 +547,14 @@ export default function HomePage() {
                 <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center text-white text-xs font-bold">H</div>
                 <div>
                   <div className="font-medium text-neutral-900">Hedera</div>
-                  <div className="text-sm text-neutral-600">Coming Q1 2024 - Enterprise DLT</div>
+                  <div className="text-sm text-neutral-600">Coming Soon - Enterprise DLT</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
                 <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center text-white text-xs font-bold">E</div>
                 <div>
                   <div className="font-medium text-neutral-900">Ethereum</div>
-                  <div className="text-sm text-neutral-600">Coming Q2 2024 - ERC-20 & ERC-1400</div>
+                  <div className="text-sm text-neutral-600">Coming Soon - ERC-20 & ERC-1400</div>
                 </div>
               </div>
             </div>
