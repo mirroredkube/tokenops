@@ -30,9 +30,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/app/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-  { href: '/app/trustlines', label: 'Create Trust Line', icon: <Shield className="h-4 w-4" /> },
   { href: '/app/issuance', label: 'Issue Token', icon: <Coins className="h-4 w-4" /> },
+  { href: '/app/trustlines', label: 'Manage Trustlines', icon: <Shield className="h-4 w-4" /> },
   { href: '/app/balances', label: 'View Balances', icon: <Wallet className="h-4 w-4" /> },
+  { href: '/app/reports', label: 'Reports', icon: <FileText className="h-4 w-4" /> },
   { href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`, label: 'API Docs', icon: <FileText className="h-4 w-4" /> },
 ]
 

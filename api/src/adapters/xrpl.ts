@@ -1,7 +1,7 @@
 import xrpl, { Client, Wallet } from 'xrpl'
 import { withClient } from '../lib/xrplClient.js'
 import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../utils/currency.js'
-import type { LedgerAdapter, IssueParams, TrustlineParams, BalancesParams } from './ledger.js'
+import type { LedgerAdapter, IssueParams, TrustlineParams, BalancesParams, AccountLinesParams } from './ledger.js'
 
 const normalize = (code: string) => {
   const up = code.trim().toUpperCase()
@@ -92,6 +92,19 @@ export const xrplAdapter: LedgerAdapter = {
         }))
 
       return { xrpBalance: xrpBalance.toString(), balances }
+    })
+  },
+
+  async getAccountLines({ account, peer, ledger_index = 'validated' }: AccountLinesParams) {
+    return await withClient(async (client: Client) => {
+      const resp = await client.request({ 
+        command: 'account_lines', 
+        account, 
+        peer, 
+        ledger_index 
+      } as any)
+      
+      return (resp.result as any).lines || []
     })
   },
 }

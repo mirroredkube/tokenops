@@ -6,12 +6,20 @@ import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
-type Step = 'ledger-selection' | 'trustline-setup' | 'token-issuance' | 'compliance-metadata' | 'success'
+type Step = 'ledger-selection' | 'trustline-check' | 'trustline-setup' | 'token-issuance' | 'compliance-metadata' | 'success'
 
 interface TrustlineData {
   currencyCode: string
+  holderAddress: string
+  issuerAddress: string
   limit: string
   holderSecret: string
+}
+
+interface TrustlineCheckData {
+  currencyCode: string
+  holderAddress: string
+  issuerAddress: string
 }
 
 interface TokenData {
@@ -44,10 +52,18 @@ interface IssuanceResult {
 export default function TokenIssuanceFlow() {
   const [currentStep, setCurrentStep] = useState<Step>('ledger-selection')
   const [selectedLedger, setSelectedLedger] = useState<LedgerType>('XRPL')
-  const [trustlineData, setTrustlineData] = useState<TrustlineData>({
-    currencyCode: '',
-    limit: '',
-    holderSecret: ''
+    const [trustlineCheckData, setTrustlineCheckData] = useState<TrustlineCheckData>({ 
+    currencyCode: '', 
+    holderAddress: '',
+    issuerAddress: ''
+  })
+  
+  const [trustlineData, setTrustlineData] = useState<TrustlineData>({ 
+    currencyCode: '', 
+    holderAddress: '',
+    issuerAddress: '',
+    limit: '', 
+    holderSecret: '' 
   })
   const [tokenData, setTokenData] = useState<TokenData>({
     currencyCode: '',
@@ -70,6 +86,10 @@ export default function TokenIssuanceFlow() {
   const [result, setResult] = useState<IssuanceResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [trustlineCheckResult, setTrustlineCheckResult] = useState<{
+    exists: boolean
+    details?: any
+  } | null>(null)
 
   const ledgers: { type: LedgerType; name: string; description: string }[] = [
     {
@@ -91,7 +111,68 @@ export default function TokenIssuanceFlow() {
 
   const handleLedgerSelection = (ledger: LedgerType) => {
     setSelectedLedger(ledger)
-    setCurrentStep('trustline-setup')
+    setCurrentStep('trustline-check')
+  }
+
+  const handleTrustlineCheck = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Check if trustline exists using account_lines command
+      const { data, error } = await api.POST('/trustlines/check', {
+        body: {
+          account: trustlineCheckData.holderAddress,
+          peer: trustlineCheckData.issuerAddress,
+          currency: trustlineCheckData.currencyCode,
+          ledger_index: "validated"
+        }
+      })
+
+      if (error) {
+        // If the account doesn't exist or other error, assume trustline doesn't exist
+        console.log('Trustline check failed, proceeding to create:', error)
+        setTrustlineData(prev => ({
+          ...prev,
+          currencyCode: trustlineCheckData.currencyCode,
+          holderAddress: trustlineCheckData.holderAddress,
+          issuerAddress: trustlineCheckData.issuerAddress
+        }))
+        setCurrentStep('trustline-setup')
+        return
+      }
+
+      // Check if the trustline exists in the response (API now filters by currency)
+      const lines = data?.lines || []
+      const existingTrustline = lines.length > 0 ? lines[0] : null
+      
+      const trustlineExists = !!existingTrustline
+      
+      // Store the check result
+      setTrustlineCheckResult({
+        exists: trustlineExists,
+        details: existingTrustline
+      })
+      
+      if (trustlineExists) {
+        // Trustline exists, skip to token issuance
+        setCurrentStep('token-issuance')
+      } else {
+        // Trustline doesn't exist, copy data and proceed to setup
+        setTrustlineData(prev => ({
+          ...prev,
+          currencyCode: trustlineCheckData.currencyCode,
+          holderAddress: trustlineCheckData.holderAddress,
+          issuerAddress: trustlineCheckData.issuerAddress
+        }))
+        setCurrentStep('trustline-setup')
+      }
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleTrustlineSubmit = async (e: React.FormEvent) => {
@@ -167,7 +248,8 @@ export default function TokenIssuanceFlow() {
 
   const resetFlow = () => {
     setCurrentStep('ledger-selection')
-    setTrustlineData({ currencyCode: '', limit: '', holderSecret: '' })
+    setTrustlineCheckData({ currencyCode: '', holderAddress: '', issuerAddress: '' })
+    setTrustlineData({ currencyCode: '', holderAddress: '', issuerAddress: '', limit: '', holderSecret: '' })
     setTokenData({ currencyCode: '', amount: '', destination: '', metadata: {}, metadataRaw: '' })
     setComplianceData({
       isin: '',
@@ -182,6 +264,7 @@ export default function TokenIssuanceFlow() {
     })
     setResult(null)
     setError(null)
+    setTrustlineCheckResult(null)
   }
 
   return (
@@ -191,6 +274,7 @@ export default function TokenIssuanceFlow() {
         <div className="flex items-center justify-between">
           {[
             { step: 'ledger-selection', label: 'Select Ledger' },
+            { step: 'trustline-check', label: 'Check Trustline' },
             { step: 'trustline-setup', label: 'Setup Trustline' },
             { step: 'token-issuance', label: 'Issue Token' },
             { step: 'compliance-metadata', label: 'Compliance' },
@@ -200,7 +284,7 @@ export default function TokenIssuanceFlow() {
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
                 currentStep === item.step 
                   ? (item.step === 'success' ? 'bg-green-500 border-green-500 text-white' : 'bg-blue-500 border-blue-500 text-white')
-                  : index < ['ledger-selection', 'trustline-setup', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
+                  : index < ['ledger-selection', 'trustline-check', 'trustline-setup', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
                   ? 'bg-green-500 border-green-500 text-white'
                   : 'border-gray-300 text-gray-500'
               }`}>
@@ -213,9 +297,9 @@ export default function TokenIssuanceFlow() {
               }`}>
                 {item.label}
               </span>
-              {index < 4 && (
+              {index < 5 && (
                 <div className={`w-16 h-0.5 mx-4 ${
-                  index < ['ledger-selection', 'trustline-setup', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
+                  index < ['ledger-selection', 'trustline-check', 'trustline-setup', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
                     ? 'bg-green-500' 
                     : 'bg-gray-300'
                 }`} />
@@ -260,26 +344,130 @@ export default function TokenIssuanceFlow() {
         </div>
       )}
 
-      {currentStep === 'trustline-setup' && (
+      {currentStep === 'trustline-check' && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-semibold mb-2">Setup Trustline</h2>
+            <h2 className="text-2xl font-semibold mb-2">Check Trustline Status</h2>
             <p className="text-gray-600">
-              Before issuing tokens on {selectedLedger}, the holder needs to establish a trustline with the issuer.
+              Let's check if a trustline already exists for this currency and holder.
             </p>
           </div>
-          <form onSubmit={handleTrustlineSubmit} className="space-y-4">
+          
+          <form onSubmit={handleTrustlineCheck} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Currency Code" required>
                 <input
                   type="text"
-                  value={trustlineData.currencyCode}
-                  onChange={(e) => setTrustlineData(prev => ({ ...prev, currencyCode: e.target.value }))}
+                  value={trustlineCheckData.currencyCode}
+                  onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, currencyCode: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="USD, EUR, or custom code"
                   required
                 />
               </FormField>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Holder Address" required>
+                <input
+                  type="text"
+                  value={trustlineCheckData.holderAddress}
+                  onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, holderAddress: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="rHolder123..."
+                  required
+                />
+              </FormField>
+              <FormField label="Issuer Address" required>
+                <input
+                  type="text"
+                  value={trustlineCheckData.issuerAddress}
+                  onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, issuerAddress: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="rIssuer456..."
+                  required
+                />
+              </FormField>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setCurrentStep('ledger-selection')}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              >
+                {loading ? 'Checking...' : 'Check Trustline'}
+              </button>
+            </div>
+          </form>
+
+          {/* Trustline Check Result */}
+          {trustlineCheckResult && (
+            <div className={`p-4 rounded-lg border ${
+              trustlineCheckResult.exists 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  {trustlineCheckResult.exists ? (
+                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <div className="ml-3">
+                  <h4 className={`text-sm font-medium ${
+                    trustlineCheckResult.exists ? 'text-green-800' : 'text-yellow-800'
+                  }`}>
+                    {trustlineCheckResult.exists ? 'Trustline Found!' : 'Trustline Not Found'}
+                  </h4>
+                  <p className={`text-sm mt-1 ${
+                    trustlineCheckResult.exists ? 'text-green-700' : 'text-yellow-700'
+                  }`}>
+                    {trustlineCheckResult.exists 
+                      ? `A trustline exists for ${trustlineCheckData.currencyCode} from ${trustlineCheckData.issuerAddress} with limit ${trustlineCheckResult.details?.limit || 'unknown'} and balance ${trustlineCheckResult.details?.balance || '0'}.`
+                      : `No trustline found for ${trustlineCheckData.currencyCode} from ${trustlineCheckData.issuerAddress}. You'll need to create one.`
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {currentStep === 'trustline-setup' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold mb-2">Create New Trustline</h2>
+            <p className="text-gray-600">
+              The trustline doesn't exist. Let's create a new one with the additional required information.
+            </p>
+          </div>
+          
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h3 className="font-semibold text-blue-900 mb-2">Trustline Details</h3>
+            <div className="text-sm text-blue-800 space-y-1">
+              <p><strong>Currency:</strong> {trustlineCheckData.currencyCode}</p>
+              <p><strong>Holder:</strong> {trustlineCheckData.holderAddress}</p>
+              <p><strong>Issuer:</strong> {trustlineCheckData.issuerAddress}</p>
+            </div>
+          </div>
+          
+          <form onSubmit={handleTrustlineSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Trust Limit" required>
                 <input
                   type="text"
@@ -291,6 +479,7 @@ export default function TokenIssuanceFlow() {
                 />
               </FormField>
             </div>
+            
             <FormField 
               label="Holder Secret (Family Seed)" 
               required
@@ -308,7 +497,7 @@ export default function TokenIssuanceFlow() {
             <div className="flex gap-4">
               <button
                 type="button"
-                onClick={() => setCurrentStep('ledger-selection')}
+                onClick={() => setCurrentStep('trustline-check')}
                 className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Back
@@ -318,7 +507,7 @@ export default function TokenIssuanceFlow() {
                 disabled={loading}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
-                {loading ? 'Creating Trustline...' : 'Create Trustline'}
+                {loading ? 'Creating...' : 'Create Trustline'}
               </button>
             </div>
           </form>

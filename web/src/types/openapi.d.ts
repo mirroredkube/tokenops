@@ -4,6 +4,303 @@
  */
 
 export interface paths {
+    "/auth/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/verify-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/health": {
         parameters: {
             query?: never;
@@ -196,6 +493,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/trustlines/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check if a trustline exists between holder and issuer
+         * @description Uses XRPL account_lines command to check if a trustline exists for a specific currency
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /** @example {
+                     *       "account": "rHolder123...",
+                     *       "peer": "rIssuer456...",
+                     *       "ledger_index": "validated"
+                     *     } */
+                    "application/json": {
+                        /** @description Holder account address (r-address) */
+                        account: string;
+                        /** @description Issuer account address (r-address) */
+                        peer: string;
+                        /** @description Optional currency filter (3-char code or hex) */
+                        currency?: string;
+                        /**
+                         * @description Ledger index to query (default: validated)
+                         * @default validated
+                         */
+                        ledger_index?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                            account?: string;
+                            peer?: string;
+                            lines?: {
+                                account?: string;
+                                balance?: string;
+                                currency?: string;
+                                limit?: string;
+                                limit_peer?: string;
+                                quality_in?: number;
+                                quality_out?: number;
+                                no_ripple?: boolean;
+                                no_ripple_peer?: boolean;
+                                authorized?: boolean;
+                                peer_authorized?: boolean;
+                                freeze?: boolean;
+                                freeze_peer?: boolean;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trustlines/create": {
         parameters: {
             query?: never;
@@ -338,6 +738,405 @@ export interface paths {
                         "application/json": {
                             ok?: boolean;
                             error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/registry/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List token records with filtering and pagination
+         * @description Retrieves a paginated list of token records with optional filtering by symbol and ledger
+         */
+        get: {
+            parameters: {
+                query?: {
+                    symbol?: string;
+                    ledger?: "xrpl-testnet" | "xrpl-mainnet";
+                    limit?: number;
+                    cursor?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: {
+                                id: string;
+                                /** @enum {string} */
+                                ledger: "xrpl-testnet" | "xrpl-mainnet";
+                                symbol: string;
+                                supply: string;
+                                issuerAddress: string;
+                                holderAddress?: string | null;
+                                txHash: string;
+                                compliance?: {
+                                    [key: string]: unknown;
+                                } | null;
+                                /** Format: date-time */
+                                createdAt: string;
+                            }[];
+                            nextCursor?: string | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create or update a token record
+         * @description Creates a new token record or updates an existing one based on transaction hash. Idempotent operation.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        ledger: "xrpl-testnet" | "xrpl-mainnet";
+                        symbol: string;
+                        supply: string;
+                        issuerAddress: string;
+                        holderAddress?: string;
+                        txHash: string;
+                        compliance?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            /** @enum {string} */
+                            ledger: "xrpl-testnet" | "xrpl-mainnet";
+                            symbol: string;
+                            supply: string;
+                            issuerAddress: string;
+                            holderAddress?: string | null;
+                            txHash: string;
+                            compliance?: {
+                                [key: string]: unknown;
+                            } | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/registry/tokens/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a specific token record by ID
+         * @description Retrieves a token record by its unique identifier
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            /** @enum {string} */
+                            ledger: "xrpl-testnet" | "xrpl-mainnet";
+                            symbol: string;
+                            supply: string;
+                            issuerAddress: string;
+                            holderAddress?: string | null;
+                            txHash: string;
+                            compliance?: {
+                                [key: string]: unknown;
+                            } | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/registry/tokens/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export a registry record as JSON (default) or CSV
+         * @description Exports a token record in JSON or CSV format based on Accept header or format query parameter
+         */
+        get: {
+            parameters: {
+                query?: {
+                    format?: "json" | "csv";
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description JSON body or CSV file */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            /** @enum {string} */
+                            ledger: "xrpl-testnet" | "xrpl-mainnet";
+                            symbol: string;
+                            supply: string;
+                            issuerAddress: string;
+                            holderAddress?: string | null;
+                            txHash: string;
+                            compliance?: {
+                                [key: string]: unknown;
+                            } | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        } | string;
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/registry/tokens/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bulk export all token records as JSON or CSV
+         * @description Exports token records in JSON or CSV with optional filtering by symbol, ledger, and date range
+         */
+        get: {
+            parameters: {
+                query?: {
+                    symbol?: string;
+                    ledger?: "xrpl-testnet" | "xrpl-mainnet";
+                    /** @description ISO date-time lower bound (inclusive) */
+                    from?: string;
+                    /** @description ISO date-time upper bound (inclusive) */
+                    to?: string;
+                    limit?: number;
+                    format?: "json" | "csv";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description JSON array or CSV file */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            /** @enum {string} */
+                            ledger: "xrpl-testnet" | "xrpl-mainnet";
+                            symbol: string;
+                            supply: string;
+                            issuerAddress: string;
+                            holderAddress?: string | null;
+                            txHash: string;
+                            compliance?: {
+                                [key: string]: unknown;
+                            } | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[] | string;
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            details?: {
+                                [key: string]: unknown;
+                            } | null;
                         };
                     };
                 };
