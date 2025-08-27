@@ -6,7 +6,7 @@ import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
-type Step = 'ledger-selection' | 'trustline-setup' | 'token-issuance' | 'success'
+type Step = 'ledger-selection' | 'trustline-setup' | 'token-issuance' | 'compliance-metadata' | 'success'
 
 interface TrustlineData {
   currencyCode: string
@@ -19,6 +19,19 @@ interface TokenData {
   amount: string
   destination: string
   metadata: Record<string, any>
+  metadataRaw: string // Store raw text for editing
+}
+
+interface ComplianceData {
+  isin: string
+  legalIssuerName: string
+  micaClassification: 'stablecoin' | 'security_token' | 'utility_token' | 'asset_backed'
+  kycRequirement: 'mandatory' | 'optional' | 'not_required'
+  jurisdiction: string
+  purpose: string
+  expirationDate?: string
+  transferRestrictions: boolean
+  maxTransferAmount?: string
 }
 
 interface IssuanceResult {
@@ -40,7 +53,19 @@ export default function TokenIssuanceFlow() {
     currencyCode: '',
     amount: '',
     destination: '',
-    metadata: {}
+    metadata: {},
+    metadataRaw: ''
+  })
+  const [complianceData, setComplianceData] = useState<ComplianceData>({
+    isin: '',
+    legalIssuerName: '',
+    micaClassification: 'utility_token',
+    kycRequirement: 'optional',
+    jurisdiction: '',
+    purpose: '',
+    expirationDate: '',
+    transferRestrictions: false,
+    maxTransferAmount: ''
   })
   const [result, setResult] = useState<IssuanceResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -104,8 +129,17 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
+      // Combine token data with compliance metadata
+      const enrichedTokenData = {
+        ...tokenData,
+        metadata: {
+          ...tokenData.metadata,
+          compliance: complianceData
+        }
+      }
+
       const { data, error } = await api.POST('/tokens/issue', {
-        body: tokenData
+        body: enrichedTokenData
       })
 
       if (error || !data) {
@@ -118,7 +152,7 @@ export default function TokenIssuanceFlow() {
         explorer: data.explorer
       }))
 
-      setCurrentStep('success')
+      setCurrentStep('compliance-metadata')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -126,10 +160,26 @@ export default function TokenIssuanceFlow() {
     }
   }
 
+  const handleComplianceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrentStep('success')
+  }
+
   const resetFlow = () => {
     setCurrentStep('ledger-selection')
     setTrustlineData({ currencyCode: '', limit: '', holderSecret: '' })
-    setTokenData({ currencyCode: '', amount: '', destination: '', metadata: {} })
+    setTokenData({ currencyCode: '', amount: '', destination: '', metadata: {}, metadataRaw: '' })
+    setComplianceData({
+      isin: '',
+      legalIssuerName: '',
+      micaClassification: 'utility_token',
+      kycRequirement: 'optional',
+      jurisdiction: '',
+      purpose: '',
+      expirationDate: '',
+      transferRestrictions: false,
+      maxTransferAmount: ''
+    })
     setResult(null)
     setError(null)
   }
@@ -143,26 +193,29 @@ export default function TokenIssuanceFlow() {
             { step: 'ledger-selection', label: 'Select Ledger' },
             { step: 'trustline-setup', label: 'Setup Trustline' },
             { step: 'token-issuance', label: 'Issue Token' },
+            { step: 'compliance-metadata', label: 'Compliance' },
             { step: 'success', label: 'Complete' }
           ].map((item, index) => (
             <div key={item.step} className="flex items-center">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
                 currentStep === item.step 
-                  ? 'bg-blue-500 border-blue-500 text-white' 
-                  : index < ['ledger-selection', 'trustline-setup', 'token-issuance', 'success'].indexOf(currentStep)
+                  ? (item.step === 'success' ? 'bg-green-500 border-green-500 text-white' : 'bg-blue-500 border-blue-500 text-white')
+                  : index < ['ledger-selection', 'trustline-setup', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
                   ? 'bg-green-500 border-green-500 text-white'
                   : 'border-gray-300 text-gray-500'
               }`}>
                 {index + 1}
               </div>
               <span className={`ml-2 text-sm ${
-                currentStep === item.step ? 'text-blue-600 font-medium' : 'text-gray-500'
+                currentStep === item.step 
+                  ? (item.step === 'success' ? 'text-green-600 font-medium' : 'text-blue-600 font-medium')
+                  : 'text-gray-500'
               }`}>
                 {item.label}
               </span>
-              {index < 3 && (
+              {index < 4 && (
                 <div className={`w-16 h-0.5 mx-4 ${
-                  index < ['ledger-selection', 'trustline-setup', 'token-issuance', 'success'].indexOf(currentStep)
+                  index < ['ledger-selection', 'trustline-setup', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
                     ? 'bg-green-500' 
                     : 'bg-gray-300'
                 }`} />
@@ -313,25 +366,50 @@ export default function TokenIssuanceFlow() {
                 required
               />
             </FormField>
-            <FormField 
-              label="Metadata (JSON)" 
-              helperText="Optional metadata to be stored with the token transaction"
-            >
-              <textarea
-                value={JSON.stringify(tokenData.metadata, null, 2)}
-                onChange={(e) => {
-                  try {
-                    const parsed = JSON.parse(e.target.value)
-                    setTokenData(prev => ({ ...prev, metadata: parsed }))
-                  } catch {
-                    // Ignore invalid JSON while typing
-                  }
-                }}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={4}
-                placeholder='{"jurisdiction": "DE", "purpose": "payment"}'
-              />
-            </FormField>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex-shrink-0 mt-0.5">
+                  <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-yellow-800">Public On-Chain Metadata</h4>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    This metadata will be stored permanently on the blockchain and is publicly visible. 
+                    Do not include sensitive information like personal data, compliance details, or private business information.
+                  </p>
+                </div>
+              </div>
+              
+              <FormField 
+                label="Additional Metadata (JSON)" 
+                helperText="Optional public metadata (e.g., token description, issuer website, logo URL)"
+              >
+                <textarea
+                  value={tokenData.metadataRaw}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setTokenData(prev => ({ ...prev, metadataRaw: value }))
+                    
+                    // Try to parse JSON and update metadata if valid
+                    if (value.trim() === '') {
+                      setTokenData(prev => ({ ...prev, metadata: {} }))
+                    } else {
+                      try {
+                        const parsed = JSON.parse(value)
+                        setTokenData(prev => ({ ...prev, metadata: parsed }))
+                      } catch {
+                        // Invalid JSON - keep the raw text but don't update metadata
+                      }
+                    }
+                  }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={4}
+                  placeholder='{"description": "EUR-backed stablecoin", "website": "https://example.com", "logo": "https://example.com/logo.png"}'
+                />
+              </FormField>
+            </div>
             <div className="flex gap-4">
               <button
                 type="button"
@@ -346,6 +424,163 @@ export default function TokenIssuanceFlow() {
                 className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
               >
                 {loading ? 'Issuing Token...' : 'Issue Token'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {currentStep === 'compliance-metadata' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold mb-2">MiCA Compliance Metadata</h2>
+            <p className="text-gray-600">
+              Configure compliance metadata for regulatory reporting and audit trails.
+            </p>
+          </div>
+          <form onSubmit={handleComplianceSubmit} className="space-y-6">
+            {/* Basic Compliance Information */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="ISIN Code" required>
+                  <input
+                    type="text"
+                    value={complianceData.isin}
+                    onChange={(e) => setComplianceData(prev => ({ ...prev, isin: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="DE0001234567"
+                    required
+                  />
+                </FormField>
+                <FormField label="Legal Issuer Name" required>
+                  <input
+                    type="text"
+                    value={complianceData.legalIssuerName}
+                    onChange={(e) => setComplianceData(prev => ({ ...prev, legalIssuerName: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="Acme Bank AG"
+                    required
+                  />
+                </FormField>
+              </div>
+            </div>
+
+            {/* MiCA Classification */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">MiCA Classification</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Token Classification" required>
+                  <select
+                    value={complianceData.micaClassification}
+                    onChange={(e) => setComplianceData(prev => ({ ...prev, micaClassification: e.target.value as any }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="stablecoin">Stablecoin</option>
+                    <option value="security_token">Security Token</option>
+                    <option value="utility_token">Utility Token</option>
+                    <option value="asset_backed">Asset-Backed Token</option>
+                  </select>
+                </FormField>
+                <FormField label="KYC Requirement" required>
+                  <select
+                    value={complianceData.kycRequirement}
+                    onChange={(e) => setComplianceData(prev => ({ ...prev, kycRequirement: e.target.value as any }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="mandatory">Mandatory</option>
+                    <option value="optional">Optional</option>
+                    <option value="not_required">Not Required</option>
+                  </select>
+                </FormField>
+              </div>
+            </div>
+
+            {/* Jurisdiction and Purpose */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Jurisdiction & Purpose</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Jurisdiction" required>
+                  <input
+                    type="text"
+                    value={complianceData.jurisdiction}
+                    onChange={(e) => setComplianceData(prev => ({ ...prev, jurisdiction: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="DE, EEA, EU"
+                    required
+                  />
+                </FormField>
+                <FormField label="Purpose" required>
+                  <input
+                    type="text"
+                    value={complianceData.purpose}
+                    onChange={(e) => setComplianceData(prev => ({ ...prev, purpose: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="Payment, Investment, Utility"
+                    required
+                  />
+                </FormField>
+              </div>
+            </div>
+
+            {/* Transfer Restrictions */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Transfer Restrictions</h3>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="transferRestrictions"
+                    checked={complianceData.transferRestrictions}
+                    onChange={(e) => setComplianceData(prev => ({ ...prev, transferRestrictions: e.target.checked }))}
+                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="transferRestrictions" className="ml-2 text-sm text-gray-700">
+                    Enable transfer restrictions
+                  </label>
+                </div>
+                {complianceData.transferRestrictions && (
+                  <FormField label="Maximum Transfer Amount">
+                    <input
+                      type="text"
+                      value={complianceData.maxTransferAmount}
+                      onChange={(e) => setComplianceData(prev => ({ ...prev, maxTransferAmount: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      placeholder="10000"
+                    />
+                  </FormField>
+                )}
+              </div>
+            </div>
+
+            {/* Expiration */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Expiration (Optional)</h3>
+              <FormField label="Expiration Date">
+                <input
+                  type="date"
+                  value={complianceData.expirationDate}
+                  onChange={(e) => setComplianceData(prev => ({ ...prev, expirationDate: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </FormField>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setCurrentStep('token-issuance')}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              >
+                Complete Issuance
               </button>
             </div>
           </form>
