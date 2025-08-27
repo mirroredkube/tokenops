@@ -6,7 +6,7 @@ import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
-type Step = 'ledger-selection' | 'trustline-check' | 'token-issuance' | 'compliance-metadata' | 'success'
+type Step = 'ledger-selection' | 'trustline-check' | 'token-issuance' | 'compliance-metadata' | 'success' | 'coming-soon'
 
 interface TrustlineData {
   currencyCode: string
@@ -111,7 +111,14 @@ export default function TokenIssuanceFlow() {
 
   const handleLedgerSelection = (ledger: LedgerType) => {
     setSelectedLedger(ledger)
-    setCurrentStep('trustline-check')
+    
+    // Different flows for different ledgers
+    if (ledger === 'XRPL') {
+      setCurrentStep('trustline-check')
+    } else {
+      // For Hedera and Ethereum, show coming soon
+      setCurrentStep('coming-soon')
+    }
   }
 
   const handleTrustlineCheck = async (e: React.FormEvent) => {
@@ -353,25 +360,64 @@ export default function TokenIssuanceFlow() {
 
       {/* Step Content */}
       {currentStep === 'ledger-selection' && (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">Select Target Ledger</h2>
-            <p className="text-gray-600">Choose the blockchain platform where you want to issue your token.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {ledgers.map((ledger) => (
-                             <button
-                 key={ledger.type}
-                 onClick={() => handleLedgerSelection(ledger.type)}
-                 className="p-6 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all text-left"
-               >
-                 <div className="mb-3">
-                   <LedgerLogo type={ledger.type} size="lg" />
-                 </div>
-                 <h3 className="font-semibold mb-2">{ledger.name}</h3>
-                 <p className="text-sm text-gray-600">{ledger.description}</p>
-               </button>
-            ))}
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+          <div className="max-w-6xl mx-auto">
+            {/* Header Section */}
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
+                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Select Target Ledger</h1>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Choose the blockchain platform where you want to issue your token
+              </p>
+            </div>
+
+            {/* Ledger Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {ledgers.map((ledger) => (
+                <button
+                  key={ledger.type}
+                  onClick={() => handleLedgerSelection(ledger.type)}
+                  className="group bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl hover:border-emerald-300 transition-all duration-300 text-left overflow-hidden transform hover:-translate-y-1"
+                >
+                  <div className="p-8">
+                    <div className="mb-6 flex justify-center">
+                      <div className="p-4 bg-gray-100 rounded-xl group-hover:bg-emerald-50 transition-colors duration-300">
+                        <LedgerLogo type={ledger.type} size="lg" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">{ledger.name}</h3>
+                    <p className="text-gray-600 leading-relaxed mb-6">{ledger.description}</p>
+                    
+                    {/* Status Badge */}
+                    <div className="flex items-center justify-between">
+                      {ledger.type === 'XRPL' ? (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          Available
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          Coming Soon
+                        </span>
+                      )}
+                      
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -596,7 +642,86 @@ export default function TokenIssuanceFlow() {
         </div>
       )}
 
-      
+      {currentStep === 'coming-soon' && (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Header Section */}
+            <div className="mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-amber-100 rounded-full mb-6">
+                <svg className="w-10 h-10 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Coming Soon!</h1>
+              <p className="text-xl text-gray-600 mb-8">
+                {selectedLedger} support is currently under development
+              </p>
+            </div>
+
+            {/* Ledger Info Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-8">
+              <div className="flex justify-center mb-6">
+                <div className="p-4 bg-gray-100 rounded-xl">
+                  <LedgerLogo type={selectedLedger} size="lg" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">{selectedLedger} Integration</h2>
+              <p className="text-gray-600 mb-6">
+                We're working hard to bring {selectedLedger} support to our platform. 
+                This will include token issuance, trustline management, and compliance features.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Token Issuance</h3>
+                  <p className="text-sm text-gray-600">Issue tokens on {selectedLedger}</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Trust Management</h3>
+                  <p className="text-sm text-gray-600">Manage trustlines and permissions</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Compliance</h3>
+                  <p className="text-sm text-gray-600">MiCA-compliant token management</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => setCurrentStep('ledger-selection')}
+                className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200"
+              >
+                ← Back to Ledger Selection
+              </button>
+              <button
+                onClick={() => window.open('https://github.com/your-repo', '_blank')}
+                className="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-all duration-200"
+              >
+                Follow Development
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {currentStep === 'token-issuance' && (
         <div className="space-y-6">
