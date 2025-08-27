@@ -309,42 +309,101 @@ export default function TokenIssuanceFlow() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Progress Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {[
-            { step: 'ledger-selection', label: 'Select Ledger' },
-            { step: 'trustline-check', label: 'Setup Trustline' },
-            { step: 'token-issuance', label: 'Issue Token' },
-            { step: 'compliance-metadata', label: 'Compliance' },
-            { step: 'success', label: 'Complete' }
-          ].map((item, index) => (
-            <div key={item.step} className="flex items-center">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                currentStep === item.step 
-                  ? (item.step === 'success' ? 'bg-green-500 border-green-500 text-white' : 'bg-blue-500 border-blue-500 text-white')
-                  : index < ['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
-                  ? 'bg-green-500 border-green-500 text-white'
-                  : 'border-gray-300 text-gray-500'
-              }`}>
-                {index + 1}
-              </div>
-              <span className={`ml-2 text-sm ${
-                currentStep === item.step 
-                  ? (item.step === 'success' ? 'text-green-600 font-medium' : 'text-blue-600 font-medium')
-                  : 'text-gray-500'
-              }`}>
-                {item.label}
-              </span>
-              {index < 4 && (
-                <div className={`w-16 h-0.5 mx-4 ${
-                  index < ['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
-                    ? 'bg-green-500' 
-                    : 'bg-gray-300'
-                }`} />
-              )}
-            </div>
-          ))}
+      {/* Modern Progress Indicator */}
+      <div className="mb-12">
+        <div className="relative">
+          {/* Background line */}
+          <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
+          
+          {/* Progress line */}
+          <div 
+            className="absolute top-6 left-0 h-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-700 ease-out"
+            style={{ 
+              width: `${(['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep) / 4) * 100}%` 
+            }}
+          ></div>
+          
+          <div className="flex items-center justify-between relative z-10">
+            {[
+              { step: 'ledger-selection', label: 'Select Ledger', icon: '🔗' },
+              { step: 'trustline-check', label: 'Setup Trustline', icon: '🤝' },
+              { step: 'token-issuance', label: 'Issue Token', icon: '🪙' },
+              { step: 'compliance-metadata', label: 'Compliance', icon: '📋' },
+              { step: 'success', label: 'Complete', icon: '✅' }
+            ].map((item, index) => {
+              const stepIndex = ['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
+              const isActive = currentStep === item.step
+              const isCompleted = index < stepIndex
+              const isUpcoming = index > stepIndex
+              
+              return (
+                <div key={item.step} className="flex flex-col items-center">
+                  {/* Step Circle */}
+                  <div className={`
+                    relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
+                    ${isActive 
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/30 scale-110' 
+                      : isCompleted 
+                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
+                        : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                    }
+                    ${isUpcoming ? 'opacity-60' : 'opacity-100'}
+                  `}>
+                    {isCompleted ? (
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <span className="text-lg">{item.icon}</span>
+                    )}
+                    
+                    {/* Pulse animation for active step */}
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20"></div>
+                    )}
+                  </div>
+                  
+                  {/* Step Label */}
+                  <div className="mt-3 text-center">
+                    <span className={`
+                      text-sm font-medium transition-all duration-300
+                      ${isActive 
+                        ? 'text-blue-600' 
+                        : isCompleted 
+                          ? 'text-emerald-600' 
+                          : 'text-gray-500'
+                      }
+                      ${isActive ? 'scale-105' : ''}
+                    `}>
+                      {item.label}
+                    </span>
+                    
+                    {/* Step number */}
+                    <div className={`
+                      mt-1 text-xs font-mono transition-all duration-300
+                      ${isActive 
+                        ? 'text-blue-500' 
+                        : isCompleted 
+                          ? 'text-emerald-500' 
+                          : 'text-gray-400'
+                      }
+                    `}>
+                      Step {index + 1}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        
+        {/* Progress percentage */}
+        <div className="mt-6 text-center">
+          <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
+            <span className="text-sm font-medium text-gray-600">
+              Progress: {Math.round((['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep) / 4) * 100)}%
+            </span>
+          </div>
         </div>
       </div>
 
