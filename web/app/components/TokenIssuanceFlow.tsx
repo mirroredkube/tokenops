@@ -90,22 +90,26 @@ export default function TokenIssuanceFlow() {
     exists: boolean
     details?: any
   } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const ledgers: { type: LedgerType; name: string; description: string }[] = [
+  const ledgers: { type: LedgerType; name: string; description: string; status: 'live' | 'beta' | 'coming-soon' }[] = [
     {
       type: 'XRPL',
       name: 'XRPL (XRP Ledger)',
-      description: 'Fast, energy-efficient blockchain for payments and tokenization'
+      description: 'Fast, energy-efficient blockchain for payments and tokenization',
+      status: 'live'
     },
     {
       type: 'HEDERA',
       name: 'Hedera',
-      description: 'Enterprise-grade public network for the decentralized economy'
+      description: 'Enterprise-grade public network for the decentralized economy',
+      status: 'coming-soon'
     },
     {
       type: 'ETHEREUM',
       name: 'Ethereum',
-      description: 'Decentralized platform for smart contracts and dApps'
+      description: 'Decentralized platform for smart contracts and dApps',
+      status: 'coming-soon'
     }
   ]
 
@@ -310,7 +314,7 @@ export default function TokenIssuanceFlow() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Modern Progress Indicator */}
-      <div className="mb-12">
+      <div className="mb-6">
         <div className="relative">
           {/* Background line */}
           <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
@@ -419,63 +423,130 @@ export default function TokenIssuanceFlow() {
 
       {/* Step Content */}
       {currentStep === 'ledger-selection' && (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4 rounded-2xl">
           <div className="max-w-6xl mx-auto">
             {/* Header Section */}
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
-                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-full mb-3">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Select Target Ledger</h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Select Target Ledger</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Choose the blockchain platform where you want to issue your token
               </p>
             </div>
 
-            {/* Ledger Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {ledgers.map((ledger) => (
-                <button
-                  key={ledger.type}
-                  onClick={() => handleLedgerSelection(ledger.type)}
-                  className="group bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl hover:border-emerald-300 transition-all duration-300 text-left overflow-hidden transform hover:-translate-y-1"
-                >
-                  <div className="p-8">
-                    <div className="mb-6 flex justify-center">
-                      <div className="p-4 bg-gray-100 rounded-xl group-hover:bg-emerald-50 transition-colors duration-300">
-                        <LedgerLogo type={ledger.type} size="lg" />
+            {/* Ledger Selection */}
+            <div className="space-y-3">
+              {/* Search/Filter Bar */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search ledgers..."
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+                            {/* Ledger Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {(() => {
+                  const filteredLedgers = ledgers.filter(ledger => 
+                    searchQuery === '' || 
+                    ledger.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    ledger.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    ledger.type.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  
+                  if (searchQuery && filteredLedgers.length === 0) {
+                    return (
+                      <div className="col-span-full text-center py-8">
+                        <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-4">
+                          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No ledgers found</h3>
+                        <p className="text-gray-500 mb-4">Try searching for something else or check back later for more options.</p>
+                        <button
+                          onClick={() => setSearchQuery('')}
+                          className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
+                        >
+                          Clear search
+                        </button>
                       </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{ledger.name}</h3>
-                    <p className="text-gray-600 leading-relaxed mb-6">{ledger.description}</p>
-                    
-                    {/* Status Badge */}
-                    <div className="flex items-center justify-between">
-                      {ledger.type === 'XRPL' ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    )
+                  }
+                  
+                  return filteredLedgers.map((ledger) => (
+                    <button
+                      key={ledger.type}
+                      onClick={() => handleLedgerSelection(ledger.type)}
+                      className="group bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-emerald-300 transition-all duration-200 text-left overflow-hidden transform hover:-translate-y-0.5"
+                    >
+                      <div className="p-4">
+                        <div className="mb-3 flex justify-center">
+                          <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-emerald-50 transition-colors duration-200">
+                            <LedgerLogo type={ledger.type} size="md" />
+                          </div>
+                        </div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-1 truncate">{ledger.name}</h3>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">{ledger.description}</p>
+                        
+                        {/* Status Badge */}
+                        <div className="flex items-center justify-between">
+                          {ledger.status === 'live' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Live
+                            </span>
+                          ) : ledger.status === 'beta' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Beta
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                              Soon
+                            </span>
+                          )}
+                          
+                          <svg className="w-4 h-4 text-gray-300 group-hover:text-emerald-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
-                          Available
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          Coming Soon
-                        </span>
-                      )}
-                      
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                })()}
+              </div>
+
+              
             </div>
           </div>
         </div>
