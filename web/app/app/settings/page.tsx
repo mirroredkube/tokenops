@@ -38,9 +38,11 @@ export default function SettingsPage() {
   // 2FA State
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
   const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false)
+  const [showDisableTwoFactor, setShowDisableTwoFactor] = useState(false)
   const [twoFactorSecret, setTwoFactorSecret] = useState('')
   const [twoFactorQrCode, setTwoFactorQrCode] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
+  const [disableVerificationCode, setDisableVerificationCode] = useState('')
   const [showSecret, setShowSecret] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [verificationError, setVerificationError] = useState('')
@@ -187,18 +189,27 @@ export default function SettingsPage() {
   }
 
   const handleDisableTwoFactor = async () => {
+    if (!disableVerificationCode || disableVerificationCode.length !== 6) {
+      setVerificationError('Please enter a valid 6-digit code')
+      return
+    }
+
     try {
       setIsLoading(true)
+      setVerificationError('')
+      
       const response = await fetchWithAuth('/auth/2fa/disable', {
         method: 'POST',
         body: JSON.stringify({
-          token: verificationCode || '' // Ensure we always send a token
+          token: disableVerificationCode
         })
       })
       
       if (response.ok) {
         setTwoFactorEnabled(false)
-        setVerificationCode('')
+        setDisableVerificationCode('')
+        setShowDisableTwoFactor(false)
+        setVerificationError('')
         // Refresh 2FA status
         await getTwoFactorStatus()
       } else {
@@ -342,18 +353,11 @@ export default function SettingsPage() {
               </div>
               {twoFactorEnabled ? (
                 <button 
-                  onClick={handleDisableTwoFactor}
+                  onClick={() => setShowDisableTwoFactor(true)}
                   disabled={isLoading}
                   className="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                      Disabling...
-                    </>
-                  ) : (
-                    'Disable'
-                  )}
+                  Disable
                 </button>
               ) : (
                 <button 
@@ -616,6 +620,87 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* 2FA Disable Modal */}
+        {showDisableTwoFactor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Disable Two-Factor Authentication</h2>
+                  <button
+                    onClick={() => {
+                      setShowDisableTwoFactor(false)
+                      setDisableVerificationCode('')
+                      setVerificationError('')
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      To disable two-factor authentication, please enter the 6-digit code from your authenticator app.
+                    </p>
+                    
+                    <div>
+                      <label htmlFor="disable-verification-code" className="block text-sm font-medium text-gray-700 mb-2">
+                        Verification Code
+                      </label>
+                      <input
+                        id="disable-verification-code"
+                        type="text"
+                        value={disableVerificationCode}
+                        onChange={(e) => setDisableVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="000000"
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        autoFocus
+                      />
+                    </div>
+
+                    {verificationError && (
+                      <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                        {verificationError}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDisableTwoFactor}
+                      disabled={isLoading || disableVerificationCode.length !== 6}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Disabling...
+                        </>
+                      ) : (
+                        'Disable 2FA'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDisableTwoFactor(false)
+                        setDisableVerificationCode('')
+                        setVerificationError('')
+                      }}
+                      className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
