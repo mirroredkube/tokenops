@@ -61,12 +61,14 @@ import tokensRoutes from './routes/tokens.js'
 import trustlineRoutes from './routes/trustlines.js'
 import balancesRoutes from './routes/balances.js'
 import registryRoutes from './routes/registry.js'
+import complianceRoutes from './routes/compliance.js'
 
 await app.register(systemRoutes,     { prefix: '/system' })
 await app.register(tokensRoutes,     { prefix: '/tokens' })
 await app.register(trustlineRoutes,  { prefix: '/trustlines' })
 await app.register(balancesRoutes,   { prefix: '/balances' })
 await app.register(registryRoutes,   { prefix: '/registry' })
+await app.register(complianceRoutes, { prefix: '/compliance' })
 
 // ----------------------------------------------------------------------------
 // Startup

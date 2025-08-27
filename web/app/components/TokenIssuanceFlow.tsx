@@ -216,17 +216,9 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
-      // Combine token data with compliance metadata
-      const enrichedTokenData = {
-        ...tokenData,
-        metadata: {
-          ...tokenData.metadata,
-          compliance: complianceData
-        }
-      }
-
+      // Only send token data - compliance data is collected separately and stored off-chain
       const { data, error } = await api.POST('/tokens/issue', {
-        body: enrichedTokenData
+        body: tokenData
       })
 
       if (error || !data) {
@@ -249,7 +241,28 @@ export default function TokenIssuanceFlow() {
 
   const handleComplianceSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setCurrentStep('success')
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Store compliance data off-chain in database
+      const { data, error } = await api.POST('/compliance/store', {
+        body: {
+          tokenTxHash: result?.txHash,
+          complianceData: complianceData
+        }
+      })
+
+      if (error || !data) {
+        throw new Error(error?.error || 'Failed to store compliance data')
+      }
+
+      setCurrentStep('success')
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const resetFlow = () => {
