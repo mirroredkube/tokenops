@@ -396,7 +396,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs font-medium text-neutral-600 shadow-sm backdrop-blur">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-            Ledger-agnostic • Adapter-based • MiCA-ready
+            Live Product • Ready to Use • Enterprise-Grade
           </span>
 
           {/* Punchline */}
@@ -649,7 +649,7 @@ export default function HomePage() {
       <Section
         id="get-started"
         kicker="Get started"
-        title="Open the dashboard or request a demo"
+        title="Ready to try the platform?"
       >
         <div className="flex flex-wrap items-center gap-3">
           <a
