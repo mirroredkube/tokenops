@@ -172,6 +172,12 @@ export default function TokenIssuanceFlow() {
           holderAddress: trustlineCheckData.holderAddress,
           issuerAddress: trustlineCheckData.issuerAddress
         }))
+        // Also pre-populate token data for after trustline creation
+        setTokenData(prev => ({
+          ...prev,
+          currencyCode: trustlineCheckData.currencyCode,
+          destination: trustlineCheckData.holderAddress
+        }))
         // Stay on same step, additional fields will appear
       }
     } catch (err: any) {
@@ -200,6 +206,14 @@ export default function TokenIssuanceFlow() {
         ...prev,
         trustlineTxHash: data.txHash || undefined,
         trustlineExplorer: data.explorer || undefined
+      }))
+
+      // Populate token data with trustline information
+      setTokenData(prev => ({
+        ...prev,
+        currencyCode: trustlineData.currencyCode,
+        destination: trustlineData.holderAddress,
+        amount: '100' // Default amount
       }))
 
       setCurrentStep('token-issuance')
