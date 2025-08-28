@@ -61,15 +61,38 @@ export function storeIdempotency(idempotencyKey: string, response: any): void {
 }
 
 // ---------- Asset Validation Middleware ----------
+import prisma from '../../db/client.js'
+
 export async function validateAsset(assetId: string): Promise<Asset> {
-  const asset = assets.get(assetId)
+  const asset = await prisma.asset.findUnique({
+    where: { id: assetId }
+  })
+  
   if (!asset) {
     throw new Error('Asset not found')
   }
-  if (asset.status !== 'active') {
-    throw new Error(`Asset is ${asset.status}, must be active`)
+  
+  if (asset.status !== 'ACTIVE') {
+    throw new Error(`Asset is ${asset.status.toLowerCase()}, must be active`)
   }
-  return asset
+  
+  // Convert Prisma model to Asset type
+  return {
+    id: asset.id,
+    assetRef: asset.assetRef,
+    ledger: asset.ledger.toLowerCase() as "xrpl"|"hedera"|"ethereum",
+    network: asset.network.toLowerCase() as "mainnet"|"testnet"|"devnet",
+    issuer: asset.issuer,
+    code: asset.code,
+    decimals: asset.decimals,
+    complianceMode: asset.complianceMode.toLowerCase() as "OFF"|"RECORD_ONLY"|"GATED_BEFORE",
+    controls: asset.controls as any,
+    registry: asset.registry as any,
+    metadata: asset.metadata as any,
+    status: asset.status.toLowerCase() as "draft"|"active"|"paused"|"retired",
+    createdAt: asset.createdAt.toISOString(),
+    updatedAt: asset.updatedAt.toISOString()
+  }
 }
 
 // ---------- Helper Functions ----------

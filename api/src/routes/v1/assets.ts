@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
-import { Asset, assets, generateAssetRef, generateAssetId } from './shared.js'
+import { generateAssetRef } from './shared.js'
+import prisma from '../../db/client.js'
 
 // ---------- Validation Schemas ----------
 const AssetCreateSchema = z.object({
@@ -29,8 +30,6 @@ const AssetCreateSchema = z.object({
 const AssetUpdateSchema = AssetCreateSchema.partial().extend({
   status: z.enum(["draft", "active", "paused", "retired"]).optional()
 })
-
-
 
 export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
   // 1. POST /v1/assets - Create new asset
@@ -124,50 +123,48 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
     const assetData = parsed.data
     
     try {
-      // Generate asset identifier
-      const id = generateAssetId()
+      // Generate asset reference
       const assetRef = generateAssetRef(assetData.ledger, assetData.network, assetData.issuer, assetData.code)
       
       // Check if asset already exists
-      for (const asset of assets.values()) {
-        if (asset.assetRef === assetRef) {
-          return reply.status(409).send({ error: 'Asset already exists' })
+      const existingAsset = await prisma.asset.findUnique({
+        where: { assetRef }
+      })
+      
+      if (existingAsset) {
+        return reply.status(409).send({ error: 'Asset already exists' })
+      }
+      
+      // Create asset in database
+      const asset = await prisma.asset.create({
+        data: {
+          assetRef,
+          ledger: assetData.ledger.toUpperCase() as any,
+          network: assetData.network.toUpperCase() as any,
+          issuer: assetData.issuer,
+          code: assetData.code,
+          decimals: assetData.decimals,
+          complianceMode: assetData.complianceMode.toUpperCase() as any,
+          controls: assetData.controls,
+          registry: assetData.registry,
+          metadata: assetData.metadata,
+          status: 'DRAFT'
         }
-      }
-      
-      // Create asset
-      const asset: Asset = {
-        id,
-        assetRef,
-        ledger: assetData.ledger,
-        network: assetData.network,
-        issuer: assetData.issuer,
-        code: assetData.code,
-        decimals: assetData.decimals,
-        complianceMode: assetData.complianceMode,
-        controls: assetData.controls,
-        registry: assetData.registry,
-        metadata: assetData.metadata,
-        status: 'draft',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-      
-      assets.set(id, asset)
+      })
       
       console.log('Asset created:', asset)
       
       return reply.status(201).send({
         id: asset.id,
         assetRef: asset.assetRef,
-        ledger: asset.ledger,
-        network: asset.network,
+        ledger: asset.ledger.toLowerCase(),
+        network: asset.network.toLowerCase(),
         issuer: asset.issuer,
         code: asset.code,
         decimals: asset.decimals,
-        complianceMode: asset.complianceMode,
-        status: asset.status,
-        createdAt: asset.createdAt
+        complianceMode: asset.complianceMode.toLowerCase(),
+        status: asset.status.toLowerCase(),
+        createdAt: asset.createdAt.toISOString()
       })
     } catch (error: any) {
       console.error('Error creating asset:', error)
@@ -214,12 +211,35 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
   }, async (req, reply) => {
     const { assetId } = req.params as { assetId: string }
     
-    const asset = assets.get(assetId)
-    if (!asset) {
-      return reply.status(404).send({ error: 'Asset not found' })
+    try {
+      const asset = await prisma.asset.findUnique({
+        where: { id: assetId }
+      })
+      
+      if (!asset) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      return reply.send({
+        id: asset.id,
+        assetRef: asset.assetRef,
+        ledger: asset.ledger.toLowerCase(),
+        network: asset.network.toLowerCase(),
+        issuer: asset.issuer,
+        code: asset.code,
+        decimals: asset.decimals,
+        complianceMode: asset.complianceMode.toLowerCase(),
+        controls: asset.controls,
+        registry: asset.registry,
+        metadata: asset.metadata,
+        status: asset.status.toLowerCase(),
+        createdAt: asset.createdAt.toISOString(),
+        updatedAt: asset.updatedAt.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error fetching asset:', error)
+      return reply.status(500).send({ error: 'Failed to fetch asset' })
     }
-    
-    return reply.send(asset)
   })
 
   // 3. PUT /v1/assets/{assetId} - Update asset
@@ -268,41 +288,65 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       return reply.status(400).send({ error: 'Invalid request body' })
     }
     
-    const asset = assets.get(assetId)
-    if (!asset) {
-      return reply.status(404).send({ error: 'Asset not found' })
+    try {
+      const asset = await prisma.asset.findUnique({
+        where: { id: assetId }
+      })
+      
+      if (!asset) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      // Allow status changes for all assets, but restrict other updates to draft assets only
+      const hasStatusChange = parsed.data.status !== undefined
+      const hasOtherChanges = Object.keys(parsed.data).some(key => key !== 'status')
+      
+      if (!hasStatusChange && hasOtherChanges && asset.status !== 'DRAFT') {
+        return reply.status(409).send({ error: 'Can only update draft assets' })
+      }
+      
+      // Prepare update data
+      const updateData: any = {}
+      
+      if (parsed.data.status) {
+        updateData.status = parsed.data.status.toUpperCase() as any
+      }
+      if (parsed.data.complianceMode) {
+        updateData.complianceMode = parsed.data.complianceMode.toUpperCase() as any
+      }
+      if (parsed.data.controls) {
+        updateData.controls = parsed.data.controls
+      }
+      if (parsed.data.registry) {
+        updateData.registry = parsed.data.registry
+      }
+      if (parsed.data.metadata) {
+        updateData.metadata = parsed.data.metadata
+      }
+      
+      // Update asset in database
+      const updatedAsset = await prisma.asset.update({
+        where: { id: assetId },
+        data: updateData
+      })
+      
+      return reply.send({
+        id: updatedAsset.id,
+        assetRef: updatedAsset.assetRef,
+        status: updatedAsset.status.toLowerCase(),
+        updatedAt: updatedAsset.updatedAt.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error updating asset:', error)
+      return reply.status(500).send({ error: 'Failed to update asset' })
     }
-    
-    // Allow status changes for all assets, but restrict other updates to draft assets only
-    const hasStatusChange = parsed.data.status !== undefined
-    const hasOtherChanges = Object.keys(parsed.data).some(key => key !== 'status')
-    
-    if (!hasStatusChange && hasOtherChanges && asset.status !== 'draft') {
-      return reply.status(409).send({ error: 'Can only update draft assets' })
-    }
-    
-    // Update asset
-    const updatedAsset: Asset = {
-      ...asset,
-      ...parsed.data,
-      updatedAt: new Date().toISOString()
-    }
-    
-    assets.set(assetId, updatedAsset)
-    
-    return reply.send({
-      id: updatedAsset.id,
-      assetRef: updatedAsset.assetRef,
-      status: updatedAsset.status,
-      updatedAt: updatedAsset.updatedAt
-    })
   })
 
-  // 4. DELETE /v1/assets/{assetId} - Deactivate asset
+  // 4. DELETE /v1/assets/{assetId} - Delete asset
   app.delete('/assets/:assetId', {
     schema: {
-      summary: 'Deactivate asset',
-      description: 'Mark asset as retired (no new issuances)',
+      summary: 'Delete asset',
+      description: 'Delete asset (draft assets only)',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -312,47 +356,52 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         }
       },
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            status: { type: 'string' }
-          }
-        },
-        404: { type: 'object', properties: { error: { type: 'string' } } }
+        204: { type: 'null' },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        409: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req, reply) => {
     const { assetId } = req.params as { assetId: string }
     
-    const asset = assets.get(assetId)
-    if (!asset) {
-      return reply.status(404).send({ error: 'Asset not found' })
+    try {
+      const asset = await prisma.asset.findUnique({
+        where: { id: assetId }
+      })
+      
+      if (!asset) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      if (asset.status !== 'DRAFT') {
+        return reply.status(409).send({ error: 'Can only delete draft assets' })
+      }
+      
+      await prisma.asset.delete({
+        where: { id: assetId }
+      })
+      
+      return reply.status(204).send()
+    } catch (error: any) {
+      console.error('Error deleting asset:', error)
+      return reply.status(500).send({ error: 'Failed to delete asset' })
     }
-    
-    // Mark as retired
-    asset.status = 'retired'
-    asset.updatedAt = new Date().toISOString()
-    
-    return reply.send({
-      id: asset.id,
-      status: asset.status
-    })
   })
 
   // 5. GET /v1/assets - List assets
   app.get('/assets', {
     schema: {
       summary: 'List assets',
-      description: 'Get all assets with optional filtering',
+      description: 'List assets with optional filtering',
       tags: ['v1'],
       querystring: {
         type: 'object',
         properties: {
-          ledger: { type: 'string' },
-          status: { type: 'string' },
-          limit: { type: 'number', default: 50 },
-          offset: { type: 'number', default: 0 }
+          ledger: { type: 'string', enum: ['xrpl', 'hedera', 'ethereum'] },
+          status: { type: 'string', enum: ['draft', 'active', 'paused', 'retired'] },
+          limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
+          offset: { type: 'number', minimum: 0, default: 0 }
         }
       },
       response: {
@@ -385,38 +434,51 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       }
     }
   }, async (req, reply) => {
-    const { ledger, status, limit = 50, offset = 0 } = req.query as any
+    const { ledger, status, limit = 20, offset = 0 } = req.query as any
     
-    let filteredAssets = Array.from(assets.values())
-    
-    // Apply filters
-    if (ledger) {
-      filteredAssets = filteredAssets.filter(asset => asset.ledger === ledger)
+    try {
+      // Build where clause
+      const where: any = {}
+      
+      if (ledger) {
+        where.ledger = ledger.toUpperCase()
+      }
+      
+      if (status) {
+        where.status = status.toUpperCase()
+      }
+      
+      // Get assets from database
+      const [assets, total] = await Promise.all([
+        prisma.asset.findMany({
+          where,
+          take: limit,
+          skip: offset,
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.asset.count({ where })
+      ])
+      
+      return reply.send({
+        assets: assets.map(asset => ({
+          id: asset.id,
+          assetRef: asset.assetRef,
+          ledger: asset.ledger.toLowerCase(),
+          network: asset.network.toLowerCase(),
+          issuer: asset.issuer,
+          code: asset.code,
+          decimals: asset.decimals,
+          complianceMode: asset.complianceMode.toLowerCase(),
+          status: asset.status.toLowerCase(),
+          createdAt: asset.createdAt.toISOString()
+        })),
+        total,
+        limit,
+        offset
+      })
+    } catch (error: any) {
+      console.error('Error listing assets:', error)
+      return reply.status(500).send({ error: 'Failed to list assets' })
     }
-    if (status) {
-      filteredAssets = filteredAssets.filter(asset => asset.status === status)
-    }
-    
-    // Pagination
-    const total = filteredAssets.length
-    const paginatedAssets = filteredAssets.slice(offset, offset + limit)
-    
-    return reply.send({
-      assets: paginatedAssets.map(asset => ({
-        id: asset.id,
-        assetRef: asset.assetRef,
-        ledger: asset.ledger,
-        network: asset.network,
-        issuer: asset.issuer,
-        code: asset.code,
-        decimals: asset.decimals,
-        complianceMode: asset.complianceMode,
-        status: asset.status,
-        createdAt: asset.createdAt
-      })),
-      total,
-      limit,
-      offset
-    })
   })
 }

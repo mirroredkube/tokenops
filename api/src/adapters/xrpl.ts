@@ -125,7 +125,15 @@ export const xrplAdapter: LedgerAdapter = {
         ledger_index: "validated",
       })
       
-      const line = (lines.result as any).lines.find((l: any) => l.currency === asset.code)
+      const line = (lines.result as any).lines.find((l: any) => {
+        const lineCurrency = l.currency?.toUpperCase()
+        
+        if (isHexCurrency(asset.code)) {
+          return lineCurrency === asset.code
+        } else {
+          return lineCurrency === asset.code || lineCurrency === currencyToHex(asset.code)
+        }
+      })
       
       if (!line) {
         return { ok: false, reason: "No trustline", fix: "PREREQ_SIGN" }

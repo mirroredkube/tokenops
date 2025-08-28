@@ -15,6 +15,75 @@ enum Ledger {
   XRPL_MAINNET
 }
 
+enum AssetLedger {
+  XRPL
+  HEDERA
+  ETHEREUM
+}
+
+enum AssetNetwork {
+  MAINNET
+  TESTNET
+  DEVNET
+}
+
+enum ComplianceMode {
+  OFF
+  RECORD_ONLY
+  GATED_BEFORE
+}
+
+enum AssetStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  RETIRED
+}
+
+// ---------- Asset Management ----------
+model Asset {
+  id             String         @id @default(cuid())
+  assetRef       String         @unique
+  ledger         AssetLedger
+  network        AssetNetwork
+  issuer         String
+  code           String
+  decimals       Int
+  complianceMode ComplianceMode @default(RECORD_ONLY)
+  controls       Json?          // JSONB on Postgres
+  registry       Json?          // JSONB on Postgres
+  metadata       Json?          // JSONB on Postgres
+  status         AssetStatus    @default(DRAFT)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  issuances      Issuance[]
+
+  @@index([ledger, network])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Issuance {
+  id             String   @id @default(cuid())
+  assetId        String
+  to             String
+  amount         String
+  complianceRef  Json?    // JSONB on Postgres
+  anchor         Boolean  @default(true)
+  txId           String?
+  explorer       String?
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 // ---------- On-ledger issuance artifacts ----------
 model Token {
   id            String   @id @default(cuid())

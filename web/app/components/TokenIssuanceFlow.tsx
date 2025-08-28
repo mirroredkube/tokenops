@@ -6,7 +6,7 @@ import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
-type Step = 'ledger-selection' | 'trustline-check' | 'token-issuance' | 'compliance-metadata' | 'success' | 'coming-soon'
+type Step = 'ledger-selection' | 'asset-selection' | 'trustline-check' | 'token-issuance' | 'compliance-metadata' | 'success' | 'coming-soon'
 
 interface TrustlineData {
   currencyCode: string
@@ -28,6 +28,19 @@ interface TokenData {
   destination: string
   metadata: Record<string, any>
   metadataRaw: string // Store raw text for editing
+}
+
+interface Asset {
+  id: string
+  assetRef: string
+  ledger: string
+  network: string
+  issuer: string
+  code: string
+  decimals: number
+  complianceMode: 'OFF' | 'RECORD_ONLY' | 'GATED_BEFORE'
+  status: 'draft' | 'active' | 'paused' | 'retired'
+  createdAt: string
 }
 
 interface ComplianceData {
@@ -52,6 +65,10 @@ interface IssuanceResult {
 export default function TokenIssuanceFlow() {
   const [currentStep, setCurrentStep] = useState<Step>('ledger-selection')
   const [selectedLedger, setSelectedLedger] = useState<LedgerType>('XRPL')
+  const [assets, setAssets] = useState<Asset[]>([])
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+  const [assetsLoading, setAssetsLoading] = useState(false)
+  const [assetsError, setAssetsError] = useState<string | null>(null)
     const [trustlineCheckData, setTrustlineCheckData] = useState<TrustlineCheckData>({ 
     currencyCode: '', 
     holderAddress: '',
@@ -92,6 +109,66 @@ export default function TokenIssuanceFlow() {
   } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Fetch assets for the selected ledger
+  const fetchAssets = async () => {
+    setAssetsLoading(true)
+    setAssetsError(null)
+    
+    try {
+      const { data, error } = await api.GET('/v1/assets', {
+        params: {
+          query: {
+            ledger: selectedLedger.toLowerCase(),
+            status: 'active',
+            limit: 50,
+            offset: 0
+          }
+        }
+      })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to fetch assets')
+      }
+
+      if (!data || !data.assets) {
+        throw new Error('No assets data received')
+      }
+
+      // Transform API response to match our Asset interface
+      const transformedAssets: Asset[] = data.assets.map((asset: any) => ({
+        id: asset.id || '',
+        assetRef: asset.assetRef || '',
+        ledger: asset.ledger || '',
+        network: asset.network || '',
+        issuer: asset.issuer || '',
+        code: asset.code || '',
+        decimals: asset.decimals || 0,
+        complianceMode: asset.complianceMode || 'RECORD_ONLY',
+        status: asset.status || 'draft',
+        createdAt: asset.createdAt || new Date().toISOString()
+      }))
+      
+      setAssets(transformedAssets)
+      
+      // Auto-select if only one asset
+      if (transformedAssets.length === 1) {
+        setSelectedAsset(transformedAssets[0])
+      }
+    } catch (err: any) {
+      console.error('Error fetching assets:', err)
+      setAssetsError(err.message || 'Failed to fetch assets')
+    } finally {
+      setAssetsLoading(false)
+    }
+  }
+
+  // Fetch assets when entering asset selection step
+  useEffect(() => {
+    if (currentStep === 'asset-selection' && selectedLedger) {
+      fetchAssets()
+    }
+  }, [currentStep, selectedLedger])
+
   const ledgers: { type: LedgerType; name: string; description: string; status: 'live' | 'beta' | 'coming-soon' }[] = [
     {
       type: 'XRPL',
@@ -118,11 +195,31 @@ export default function TokenIssuanceFlow() {
     
     // Different flows for different ledgers
     if (ledger === 'XRPL') {
-      setCurrentStep('trustline-check')
+      setCurrentStep('asset-selection')
     } else {
       // For Hedera and Ethereum, show coming soon
       setCurrentStep('coming-soon')
     }
+  }
+
+  const handleAssetSelection = (asset: Asset) => {
+    setSelectedAsset(asset)
+    
+    // Update trustline check data with asset info
+    setTrustlineCheckData(prev => ({
+      ...prev,
+      currencyCode: asset.code,
+      issuerAddress: asset.issuer
+    }))
+    
+    // Update token data with asset info
+    setTokenData(prev => ({
+      ...prev,
+      currencyCode: asset.code
+    }))
+    
+    // Proceed to next step
+    setCurrentStep('trustline-check')
   }
 
   const handleTrustlineCheck = async (e: React.FormEvent) => {
@@ -131,23 +228,40 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
-      // TODO: Replace with actual API call when asset selection is implemented
-      // For now, use mock data
-      const mockData = {
-        exists: false,
-        details: null
+       // Check if we have a selected asset
+      if (!selectedAsset) {
+        throw new Error('No asset selected. Please go back and select an asset.')
       }
-      const data = mockData
-      const error = null
 
-      // Mock data - no error checking needed
+      // Use the real opt-in check API
+      console.log('Selected asset:', selectedAsset)
+      console.log('Asset ID being used:', selectedAsset.id)
+      console.log('Checking trustline for:', trustlineCheckData)
+      
+      const apiUrl = `/v1/assets/${selectedAsset.id}/opt-ins/${trustlineCheckData.holderAddress}`
+      console.log('API URL:', apiUrl)
+      
+      const { data, error } = await api.GET(apiUrl as any, {})
 
-                    setTrustlineCheckResult({
-        exists: false,
-        details: null
+      console.log('API response:', { data, error })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to check trustline')
+      }
+
+      if (!data) {
+        throw new Error('No response data received')
+      }
+
+      // Handle the response data safely
+      const responseData = data as any
+      setTrustlineCheckResult({
+        exists: responseData.exists,
+        details: responseData.details || null
       })
     } catch (err: any) {
-      setError(err.message)
+      console.error('Trustline check error:', err)
+      setError(err.message || 'Failed to check trustline')
     } finally {
       setLoading(false)
     }
@@ -158,18 +272,42 @@ export default function TokenIssuanceFlow() {
     setLoading(true)
     setError(null)
 
-        try {
-      // TODO: Replace with actual API call when asset selection is implemented
-      // For now, use mock data
+    try {
+      // Check if we have a selected asset
+      if (!selectedAsset) {
+        throw new Error('No asset selected. Please go back and select an asset.')
+      }
+
+      // Use the real opt-in setup API
+      console.log('Creating trustline for asset:', selectedAsset)
+      console.log('Trustline data:', trustlineData)
+      
+      const { data, error } = await api.PUT(`/v1/assets/${selectedAsset.id}/opt-ins/${trustlineCheckData.holderAddress}` as any, {
+        body: {
+          limit: trustlineData.limit || '1000000000' // Default limit if not specified
+        }
+      })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to create trustline')
+      }
+
+      if (!data) {
+        throw new Error('No response data received')
+      }
+
+      // Handle the response data safely
+      const responseData = data as any
       setResult(prev => ({
         ...prev,
-        trustlineTxHash: 'mock_tx_hash_123',
-        trustlineExplorer: 'https://testnet.xrpl.org/transactions/mock_tx_hash_123'
+        trustlineTxHash: responseData.txId || 'pending',
+        trustlineExplorer: responseData.explorer || `https://testnet.xrpl.org/transactions/${responseData.txId || 'pending'}`
       }))
 
       setCurrentStep('compliance-metadata')
     } catch (err: any) {
-      setError(err.message)
+      console.error('Opt-in submit error:', err)
+      setError(err.message || 'Failed to create trustline')
     } finally {
       setLoading(false)
     }
@@ -181,24 +319,48 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
-      // Only send token data - compliance data is collected separately and stored off-chain
-      const { data, error } = await api.POST('/tokens/issue', {
-        body: tokenData
-      })
-
-      if (error || !data) {
-        throw new Error(error?.error || 'Failed to issue token')
+      // Check if we have a selected asset
+      if (!selectedAsset) {
+        throw new Error('No asset selected. Please go back and select an asset.')
       }
 
+      // Prepare the issuance request
+      const issuanceRequest = {
+        to: tokenData.destination,
+        amount: tokenData.amount.toString(),
+        // For now, we'll skip complianceRef since we're not storing compliance records yet
+        // complianceRef: {
+        //   recordId: 'temp-record-id',
+        //   sha256: 'temp-sha256'
+        // },
+        anchor: true
+      }
+
+      // Use the new asset-centric API
+      const { data, error } = await api.POST(`/v1/assets/${selectedAsset.id}/issuances` as any, {
+        body: issuanceRequest
+      })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to issue token')
+      }
+
+      if (!data) {
+        throw new Error('No response data received')
+      }
+
+      // Handle the response data safely
+      const responseData = data as any
       setResult(prev => ({
         ...prev,
-        txHash: data.txHash,
-        explorer: data.explorer
+        txHash: responseData.txId || 'pending',
+        explorer: responseData.explorer || `https://testnet.xrpl.org/transactions/${responseData.txId || 'pending'}`
       }))
 
       setCurrentStep('success')
     } catch (err: any) {
-      setError(err.message)
+      console.error('Token issuance error:', err)
+      setError(err.message || 'Failed to issue token')
     } finally {
       setLoading(false)
     }
@@ -225,14 +387,17 @@ export default function TokenIssuanceFlow() {
     if (currentStep === 'token-issuance') {
       setTokenData(prev => ({
         ...prev,
-        currencyCode: trustlineData.currencyCode || trustlineCheckData.currencyCode,
+        currencyCode: selectedAsset?.code || trustlineData.currencyCode || trustlineCheckData.currencyCode,
         destination: trustlineData.holderAddress || trustlineCheckData.holderAddress
       }))
     }
-  }, [currentStep, trustlineData, trustlineCheckData])
+  }, [currentStep, selectedAsset, trustlineData, trustlineCheckData])
 
   const resetFlow = () => {
     setCurrentStep('ledger-selection')
+    setSelectedAsset(null)
+    setAssets([])
+    setAssetsError(null)
     setTrustlineCheckData({ currencyCode: '', holderAddress: '', issuerAddress: '' })
     setTrustlineData({ currencyCode: '', holderAddress: '', issuerAddress: '', limit: '', holderSecret: '' })
     setTokenData({ currencyCode: '', amount: '', destination: '', metadata: {}, metadataRaw: '' })
@@ -264,7 +429,7 @@ export default function TokenIssuanceFlow() {
           <div 
             className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
             style={{ 
-              width: `${(['ledger-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 4) * 100}%` 
+              width: `${(['ledger-selection', 'asset-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 5) * 100}%` 
             }}
           ></div>
           
@@ -272,10 +437,19 @@ export default function TokenIssuanceFlow() {
             {[
               { 
                 step: 'ledger-selection', 
-                label: 'Select Ledger & Asset', 
+                label: 'Select Ledger', 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                )
+              },
+              { 
+                step: 'asset-selection', 
+                label: 'Select Asset', 
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                   </svg>
                 )
               },
@@ -316,7 +490,7 @@ export default function TokenIssuanceFlow() {
                 )
               }
             ].map((item, index) => {
-              const stepIndex = ['ledger-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep)
+              const stepIndex = ['ledger-selection', 'asset-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep)
               const isActive = currentStep === item.step
               const isCompleted = index < stepIndex
               const isUpcoming = index > stepIndex
@@ -389,7 +563,7 @@ export default function TokenIssuanceFlow() {
         <div className="mt-6 text-center">
           <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
             <span className="text-sm font-medium text-gray-600">
-              Progress: {Math.round((['ledger-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 4) * 100)}%
+              Progress: {Math.round((['ledger-selection', 'asset-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 5) * 100)}%
             </span>
           </div>
         </div>
@@ -536,6 +710,116 @@ export default function TokenIssuanceFlow() {
         </div>
       )}
 
+      {currentStep === 'asset-selection' && (
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4 rounded-2xl">
+          <div className="max-w-6xl mx-auto">
+            {/* Header Section */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-3">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose an Active Asset</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Select an active asset on {selectedLedger} to issue tokens
+              </p>
+            </div>
+
+            {/* Asset Selection */}
+            <div className="space-y-6">
+              {/* Loading State */}
+              {assetsLoading && (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading assets...</p>
+                </div>
+              )}
+
+              {/* Error State */}
+              {assetsError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <span className="text-red-600 mr-2">⚠️</span>
+                    <span className="text-red-800">{assetsError}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* No Assets State */}
+              {!assetsLoading && !assetsError && assets.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No active assets found</h3>
+                  <p className="text-gray-500 mb-6">You need to create an asset first before issuing tokens.</p>
+                  <a
+                    href="/app/assets/create"
+                    target="_blank"
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    Create Asset
+                  </a>
+                </div>
+              )}
+
+              {/* Assets Grid */}
+              {!assetsLoading && !assetsError && assets.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {assets.map((asset) => (
+                    <button
+                      key={asset.id}
+                      onClick={() => handleAssetSelection(asset)}
+                      className="group bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200 text-left overflow-hidden transform hover:-translate-y-0.5"
+                    >
+                      <div className="p-6">
+                        <div className="mb-4 flex justify-center">
+                          <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors duration-200">
+                            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{asset.code}</h3>
+                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{asset.assetRef}</p>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">Network:</span>
+                            <span className="font-medium text-gray-900">{asset.network}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">Decimals:</span>
+                            <span className="font-medium text-gray-900">{asset.decimals}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">Compliance:</span>
+                            <span className="font-medium text-gray-900">{asset.complianceMode}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Back Button */}
+              <div className="text-center pt-6">
+                <button
+                  onClick={() => setCurrentStep('ledger-selection')}
+                  className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
+                >
+                  ← Back to Ledger Selection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {currentStep === 'trustline-check' && (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
           <div className="max-w-5xl mx-auto">
@@ -545,6 +829,13 @@ export default function TokenIssuanceFlow() {
               <p className="text-gray-600">
                 We'll verify if a trustline exists and configure one if needed for your token issuance
               </p>
+              {selectedAsset && (
+                <div className="mt-4 inline-flex items-center px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="text-sm font-medium text-blue-800">
+                    Selected Asset: {selectedAsset.code} ({selectedAsset.network})
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Main Form Card */}
@@ -569,10 +860,16 @@ export default function TokenIssuanceFlow() {
                          type="text"
                          value={trustlineCheckData.currencyCode}
                          onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, currencyCode: e.target.value }))}
-                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-medium transition-all duration-200"
+                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-medium transition-all duration-200 bg-gray-50"
                          placeholder="USD, EUR, COMP"
                          required
+                         readOnly={!!selectedAsset}
                        />
+                       {selectedAsset && (
+                         <p className="text-sm text-gray-500 mt-1">
+                           Currency code is set from the selected asset
+                         </p>
+                       )}
                      </div>
                      
                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -600,10 +897,16 @@ export default function TokenIssuanceFlow() {
                            type="text"
                            value={trustlineCheckData.issuerAddress}
                            onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, issuerAddress: e.target.value }))}
-                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
+                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200 bg-gray-50"
                            placeholder="rIssuer456..."
                            required
+                           readOnly={!!selectedAsset}
                          />
+                         {selectedAsset && (
+                           <p className="text-sm text-gray-500 mt-1">
+                             Issuer address is set from the selected asset
+                           </p>
+                         )}
                        </div>
                      </div>
                    </div>
@@ -612,10 +915,10 @@ export default function TokenIssuanceFlow() {
                   <div className="flex items-center justify-between pt-8 border-t border-gray-100">
                                          <button
                        type="button"
-                       onClick={() => setCurrentStep('ledger-selection')}
+                       onClick={() => setCurrentStep('asset-selection')}
                        className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
                      >
-                      ← Back to Ledger Selection
+                      ← Back to Asset Selection
                     </button>
                                                              <button
                       type="submit"
