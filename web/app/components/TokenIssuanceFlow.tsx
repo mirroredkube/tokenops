@@ -321,7 +321,7 @@ export default function TokenIssuanceFlow() {
           
           {/* Progress line */}
           <div 
-            className="absolute top-6 left-0 h-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-700 ease-out"
+            className="absolute top-6 left-0 h-0.5 bg-gradient-to-r from-slate-600 to-slate-800 rounded-full transition-all duration-700 ease-out"
             style={{ 
               width: `${(['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep) / 4) * 100}%` 
             }}
@@ -329,11 +329,51 @@ export default function TokenIssuanceFlow() {
           
           <div className="flex items-center justify-between relative z-10">
             {[
-              { step: 'ledger-selection', label: 'Select Ledger', icon: '🔗' },
-              { step: 'trustline-check', label: 'Setup Trustline', icon: '🤝' },
-              { step: 'token-issuance', label: 'Issue Token', icon: '🪙' },
-              { step: 'compliance-metadata', label: 'Compliance', icon: '📋' },
-              { step: 'success', label: 'Complete', icon: '✅' }
+              { 
+                step: 'ledger-selection', 
+                label: 'Select Ledger', 
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                )
+              },
+              { 
+                step: 'trustline-check', 
+                label: 'Setup Trustline', 
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                  </svg>
+                )
+              },
+              { 
+                step: 'token-issuance', 
+                label: 'Issue Token', 
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                )
+              },
+              { 
+                step: 'compliance-metadata', 
+                label: 'Compliance', 
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )
+              },
+              { 
+                step: 'success', 
+                label: 'Complete', 
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )
+              }
             ].map((item, index) => {
               const stepIndex = ['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
               const isActive = currentStep === item.step
@@ -343,58 +383,58 @@ export default function TokenIssuanceFlow() {
               return (
                 <div key={item.step} className="flex flex-col items-center">
                   {/* Step Circle */}
-                  <div className={`
-                    relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
-                    ${isActive 
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/30 scale-110' 
-                      : isCompleted 
-                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
-                        : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
-                    }
-                    ${isUpcoming ? 'opacity-60' : 'opacity-100'}
-                  `}>
-                    {isCompleted ? (
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    ) : (
-                      <span className="text-lg">{item.icon}</span>
-                    )}
+                                     <div className={`
+                     relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
+                     ${isActive 
+                       ? 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-700 text-white shadow-lg shadow-slate-700/30 scale-110' 
+                       : isCompleted 
+                         ? 'bg-gradient-to-br from-slate-600 to-slate-700 border-slate-600 text-white shadow-lg shadow-slate-600/30' 
+                         : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                     }
+                     ${isUpcoming ? 'opacity-60' : 'opacity-100'}
+                   `}>
+                                         {isCompleted ? (
+                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                       </svg>
+                     ) : (
+                       <div className="w-5 h-5">{item.icon}</div>
+                     )}
                     
-                    {/* Pulse animation for active step */}
-                    {isActive && (
-                      <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20"></div>
-                    )}
+                                         {/* Pulse animation for active step */}
+                     {isActive && (
+                       <div className="absolute inset-0 rounded-full bg-slate-500 animate-ping opacity-20"></div>
+                     )}
                   </div>
                   
                   {/* Step Label */}
-                  <div className="mt-3 text-center">
-                    <span className={`
-                      text-sm font-medium transition-all duration-300
-                      ${isActive 
-                        ? 'text-blue-600' 
-                        : isCompleted 
-                          ? 'text-emerald-600' 
-                          : 'text-gray-500'
-                      }
-                      ${isActive ? 'scale-105' : ''}
-                    `}>
-                      {item.label}
-                    </span>
-                    
-                    {/* Step number */}
-                    <div className={`
-                      mt-1 text-xs font-mono transition-all duration-300
-                      ${isActive 
-                        ? 'text-blue-500' 
-                        : isCompleted 
-                          ? 'text-emerald-500' 
-                          : 'text-gray-400'
-                      }
-                    `}>
-                      Step {index + 1}
-                    </div>
-                  </div>
+                                     <div className="mt-3 text-center">
+                     <span className={`
+                       text-sm font-medium transition-all duration-300
+                       ${isActive 
+                         ? 'text-slate-700' 
+                         : isCompleted 
+                           ? 'text-slate-600' 
+                           : 'text-gray-500'
+                       }
+                       ${isActive ? 'scale-105' : ''}
+                     `}>
+                       {item.label}
+                     </span>
+                     
+                     {/* Step number */}
+                     <div className={`
+                       mt-1 text-xs font-mono transition-all duration-300
+                       ${isActive 
+                         ? 'text-slate-600' 
+                         : isCompleted 
+                           ? 'text-slate-500' 
+                           : 'text-gray-400'
+                       }
+                     `}>
+                       Step {index + 1}
+                     </div>
+                   </div>
                 </div>
               )
             })}
@@ -427,9 +467,9 @@ export default function TokenIssuanceFlow() {
           <div className="max-w-6xl mx-auto">
             {/* Header Section */}
             <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-full mb-3">
-                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg mb-3 shadow-sm">
+                <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Select Target Ledger</h1>
@@ -452,7 +492,7 @@ export default function TokenIssuanceFlow() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search ledgers..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white"
                 />
                 {searchQuery && (
                   <button
@@ -477,34 +517,34 @@ export default function TokenIssuanceFlow() {
                   )
                   
                   if (searchQuery && filteredLedgers.length === 0) {
-                    return (
-                      <div className="col-span-full text-center py-8">
-                        <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-4">
-                          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No ledgers found</h3>
-                        <p className="text-gray-500 mb-4">Try searching for something else or check back later for more options.</p>
-                        <button
-                          onClick={() => setSearchQuery('')}
-                          className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
-                        >
-                          Clear search
-                        </button>
-                      </div>
-                    )
+                                         return (
+                       <div className="col-span-full text-center py-8">
+                         <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-4">
+                           <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                           </svg>
+                         </div>
+                         <h3 className="text-lg font-medium text-gray-900 mb-2">No ledgers found</h3>
+                         <p className="text-gray-500 mb-4">Try searching for something else or check back later for more options.</p>
+                         <button
+                           onClick={() => setSearchQuery('')}
+                           className="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors duration-200"
+                         >
+                           Clear search
+                         </button>
+                       </div>
+                     )
                   }
                   
                   return filteredLedgers.map((ledger) => (
                     <button
                       key={ledger.type}
                       onClick={() => handleLedgerSelection(ledger.type)}
-                      className="group bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-emerald-300 transition-all duration-200 text-left overflow-hidden transform hover:-translate-y-0.5"
+                      className="group bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-slate-300 transition-all duration-200 text-left overflow-hidden transform hover:-translate-y-0.5"
                     >
                       <div className="p-4">
                         <div className="mb-3 flex justify-center">
-                          <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-emerald-50 transition-colors duration-200">
+                          <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-slate-50 transition-colors duration-200">
                             <LedgerLogo type={ledger.type} size="md" />
                           </div>
                         </div>
@@ -513,30 +553,30 @@ export default function TokenIssuanceFlow() {
                         
                         {/* Status Badge */}
                         <div className="flex items-center justify-between">
-                          {ledger.status === 'live' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              Live
-                            </span>
-                          ) : ledger.status === 'beta' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              Beta
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                              </svg>
-                              Soon
-                            </span>
-                          )}
+                                                   {ledger.status === 'live' ? (
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                             </svg>
+                             Available
+                           </span>
+                         ) : ledger.status === 'beta' ? (
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                             </svg>
+                             Beta
+                           </span>
+                         ) : (
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                             </svg>
+                             Coming Soon
+                           </span>
+                         )}
                           
-                          <svg className="w-4 h-4 text-gray-300 group-hover:text-emerald-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-gray-300 group-hover:text-slate-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
                         </div>
