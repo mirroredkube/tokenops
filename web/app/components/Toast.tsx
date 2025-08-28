@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from 'lucide-react'
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning'
@@ -61,14 +61,15 @@ export default function Toast({ type, message, duration = 3000, onClose }: Toast
   )
 }
 
-// Toast context for managing multiple toasts
+// Toast context
 interface ToastContextType {
   showToast: (type: ToastType, message: string, duration?: number) => void
-  removeToast: (id: string) => void
-  toasts: Array<{ id: string; type: ToastType; message: string; duration?: number }>
 }
 
-export const useToast = (): ToastContextType => {
+const ToastContext = createContext<ToastContextType | undefined>(undefined)
+
+// Toast provider component
+export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Array<{ id: string; type: ToastType; message: string; duration?: number }>>([])
 
   const showToast = (type: ToastType, message: string, duration?: number) => {
@@ -80,28 +81,29 @@ export const useToast = (): ToastContextType => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }
 
-  return {
-    showToast,
-    removeToast,
-    toasts
-  }
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      <div className="fixed top-4 right-4 z-[9999] space-y-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            type={toast.type}
+            message={toast.message}
+            duration={toast.duration}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
+    </ToastContext.Provider>
+  )
 }
 
-// Toast container component
-export function ToastContainer() {
-  const { toasts, removeToast } = useToast()
-
-  return (
-    <div className="fixed top-4 right-4 z-[9999] space-y-2">
-      {toasts.map((toast: { id: string; type: ToastType; message: string; duration?: number }) => (
-        <Toast
-          key={toast.id}
-          type={toast.type}
-          message={toast.message}
-          duration={toast.duration}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
-    </div>
-  )
+// Hook to use toast
+export function useToast(): ToastContextType {
+  const context = useContext(ToastContext)
+  if (context === undefined) {
+    throw new Error('useToast must be used within a ToastProvider')
+  }
+  return context
 }
