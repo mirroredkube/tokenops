@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import Link from 'next/link'
 import CustomDropdown from '../../components/CustomDropdown'
+import { trackPageView, trackAssetAction, AnalyticsEvents } from '../../lib/analytics'
 
 interface Asset {
   id: string
@@ -30,6 +31,8 @@ export default function AssetsPage() {
 
   useEffect(() => {
     fetchAssets()
+    // Track page view
+    trackPageView('assets_list')
   }, [filters])
 
   const fetchAssets = async () => {
@@ -130,6 +133,11 @@ export default function AssetsPage() {
           updatedAt: (data as any).updatedAt || new Date().toISOString()
         } : asset
       ))
+      
+      // Track analytics
+      trackAssetAction(AnalyticsEvents[`ASSET_${newStatus.toUpperCase()}` as keyof typeof AnalyticsEvents], assetId, {
+        new_status: newStatus
+      })
       
       // Show success message
       const statusLabels = {

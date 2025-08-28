@@ -1,4 +1,5 @@
 import CollapsibleSidebar from '../components/CollapsibleSidebar'
+import { ToastContainer } from '../components/Toast'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-auto p-6 lg:p-8">
         {children}
       </main>
+      <ToastContainer />
     </div>
   )
 }

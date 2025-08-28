@@ -5,6 +5,7 @@ import { api } from '@/lib/api'
 import FormField from '../../../components/FormField'
 import CustomDropdown from '../../../components/CustomDropdown'
 import Accordion from '../../../components/Accordion'
+import { trackPageView, trackAssetAction, AnalyticsEvents } from '../../../lib/analytics'
 
 interface AssetFormData {
   ledger: "xrpl" | "hedera" | "ethereum"
@@ -31,6 +32,9 @@ export default function CreateAssetPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Track page view
+  trackPageView('asset_create')
   const [formData, setFormData] = useState<AssetFormData>({
     ledger: 'xrpl',
     network: 'testnet',
@@ -83,6 +87,13 @@ export default function CreateAssetPage() {
       }
 
       console.log('Asset created successfully:', data)
+      
+      // Track analytics
+      trackAssetAction(AnalyticsEvents.ASSET_CREATED, data.id || 'unknown', {
+        ledger: formData.ledger,
+        network: formData.network,
+        compliance_mode: formData.complianceMode
+      })
       
       // Redirect to asset details page
       router.push(`/app/assets/${data.id}`)

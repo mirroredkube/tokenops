@@ -4,6 +4,9 @@ import { useParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import Link from 'next/link'
 import ConfirmationDialog from '../../../components/ConfirmationDialog'
+import { useToast } from '../../../components/Toast'
+import { trackCopyAction, trackAssetAction, AnalyticsEvents, trackPageView } from '../../../lib/analytics'
+import { Copy } from 'lucide-react'
 
 interface Asset {
   id: string
@@ -55,6 +58,10 @@ export default function AssetDetailsPage() {
 
   useEffect(() => {
     fetchAsset()
+    // Track page view
+    if (assetId) {
+      trackPageView('asset_details', { asset_id: assetId })
+    }
   }, [assetId])
 
   const fetchAsset = async () => {
@@ -172,6 +179,12 @@ export default function AssetDetailsPage() {
       
       setAsset(updatedAsset)
       
+      // Track analytics
+      trackAssetAction(AnalyticsEvents[`ASSET_${newStatus.toUpperCase()}` as keyof typeof AnalyticsEvents], asset.id, {
+        previous_status: asset.status,
+        new_status: newStatus
+      })
+      
       // Show success message
       const statusLabels = {
         'active': 'activated',
@@ -207,9 +220,21 @@ export default function AssetDetailsPage() {
     }
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    // TODO: Add toast notification
+  const { showToast } = useToast()
+
+  const copyToClipboard = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      
+      // Show success toast
+      showToast('success', `${type} copied to clipboard`)
+      
+      // Track analytics
+      trackCopyAction(type, text)
+    } catch (err) {
+      // Show error toast
+      showToast('error', 'Failed to copy to clipboard')
+    }
   }
 
   if (loading) {
@@ -348,12 +373,13 @@ export default function AssetDetailsPage() {
               <code className="flex-1 p-3 bg-gray-100 rounded text-sm font-mono">
                 {asset.assetRef}
               </code>
-              <button
-                onClick={() => copyToClipboard(asset.assetRef)}
-                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-              >
-                Copy
-              </button>
+                              <button
+                  onClick={() => copyToClipboard(asset.assetRef, 'Asset Reference')}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200"
+                  title="Copy Asset Reference"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
             </div>
           </div>
 
@@ -367,12 +393,13 @@ export default function AssetDetailsPage() {
                   <code className="flex-1 p-2 bg-gray-100 rounded text-sm font-mono">
                     {asset.issuer}
                   </code>
-                  <button
-                    onClick={() => copyToClipboard(asset.issuer)}
-                    className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                  >
-                    Copy
-                  </button>
+                                      <button
+                      onClick={() => copyToClipboard(asset.issuer, 'Issuer Address')}
+                      className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200"
+                      title="Copy Issuer Address"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
                 </div>
               </div>
               <div>
