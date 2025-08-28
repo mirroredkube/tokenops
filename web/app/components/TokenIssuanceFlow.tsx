@@ -401,10 +401,13 @@ export default function TokenIssuanceFlow() {
                        <div className="w-5 h-5">{item.icon}</div>
                      )}
                     
-                                         {/* Pulse animation for active step */}
-                     {isActive && (
-                       <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-20"></div>
-                     )}
+                                                             {/* Enhanced pulse animation for active step */}
+                    {isActive && (
+                      <>
+                        <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-40"></div>
+                        <div className="absolute inset-0 rounded-full bg-gray-500 animate-pulse opacity-30"></div>
+                      </>
+                    )}
                   </div>
                   
                   {/* Step Label */}
