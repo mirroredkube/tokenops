@@ -55,7 +55,7 @@ export default function CustomDropdown({
         className={`w-full px-4 py-3 pr-10 text-sm bg-white border border-gray-300 rounded-lg text-left focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 hover:border-gray-400 ${
           selectedOption ? 'text-gray-900' : 'text-gray-500'
         }`}
-        required={required}
+        
       >
         {selectedOption ? selectedOption.label : placeholder}
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
