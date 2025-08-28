@@ -1264,42 +1264,77 @@ export default function TokenIssuanceFlow() {
       )}
 
       {currentStep === 'success' && result && (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-semibold mb-2">Token Issued Successfully!</h2>
-            <p className="text-gray-600">
-              Your token has been issued on {selectedLedger} and stored in the local database.
-            </p>
-          </div>
-          
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-            <h3 className="font-semibold mb-4">Transaction Details</h3>
-            <div className="space-y-3">
-              {result.trustlineTxHash && (
-                <TransactionResult
-                  title="Trustline Transaction"
-                  txHash={result.trustlineTxHash}
-                  explorer={result.trustlineExplorer}
-                />
-              )}
-              {result.txHash && (
-                <TransactionResult
-                  title="Token Issuance Transaction"
-                  txHash={result.txHash}
-                  explorer={result.explorer}
-                />
-              )}
+        <div className="bg-gradient-to-br from-gray-50 to-slate-50 py-8 px-4 rounded-2xl">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Success Icon */}
+            <div className="mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-xl mb-6">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">Token Issued Successfully!</h1>
+              <p className="text-lg text-gray-600">
+                Your token has been issued on {selectedLedger} and stored in the local database.
+              </p>
             </div>
-          </div>
 
-          <div className="text-center">
-            <button
-              onClick={resetFlow}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            >
-              Issue Another Token
-            </button>
+            {/* Transaction Details */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Transaction Details</h2>
+              <div className="space-y-4">
+                {result.trustlineTxHash && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Trustline Transaction:</p>
+                    <div className="flex items-center justify-between">
+                      <code className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded font-mono break-all">
+                        {result.trustlineTxHash}
+                      </code>
+                      {result.trustlineExplorer && (
+                        <a
+                          href={result.trustlineExplorer}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-4 inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md"
+                        >
+                          View on Explorer →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {result.txHash && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Token Issuance Transaction:</p>
+                    <div className="flex items-center justify-between">
+                      <code className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded font-mono break-all">
+                        {result.txHash}
+                      </code>
+                      {result.explorer && (
+                        <a
+                          href={result.explorer}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-4 inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md"
+                        >
+                          View on Explorer →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={resetFlow}
+                className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                Issue Another Token
+              </button>
+            </div>
           </div>
         </div>
       )}
