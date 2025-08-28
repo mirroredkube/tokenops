@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api, ensureJson } from '@/lib/api'
 import FormField from './FormField'
 import TransactionResult from './TransactionResult'
@@ -227,7 +227,7 @@ export default function TokenIssuanceFlow() {
         amount: '100' // Default amount
       }))
 
-      setCurrentStep('token-issuance')
+      setCurrentStep('compliance-metadata')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -256,7 +256,7 @@ export default function TokenIssuanceFlow() {
         explorer: data.explorer
       }))
 
-      setCurrentStep('compliance-metadata')
+      setCurrentStep('success')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -270,25 +270,26 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
-      // Store compliance data off-chain in database
-      const { data, error } = await api.POST('/compliance/store', {
-        body: {
-          tokenTxHash: result?.txHash,
-          complianceData: complianceData
-        }
-      })
-
-      if (error || !data) {
-        throw new Error(error?.error || 'Failed to store compliance data')
-      }
-
-      setCurrentStep('success')
+      // Just navigate to the Issue step - compliance data will be stored later
+      // when the token is actually issued
+      setCurrentStep('token-issuance')
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
   }
+
+  // Auto-populate token issuance data when reaching the issue step
+  useEffect(() => {
+    if (currentStep === 'token-issuance') {
+      setTokenData(prev => ({
+        ...prev,
+        currencyCode: trustlineData.currencyCode || trustlineCheckData.currencyCode,
+        destination: trustlineData.holderAddress || trustlineCheckData.holderAddress
+      }))
+    }
+  }, [currentStep, trustlineData, trustlineCheckData])
 
   const resetFlow = () => {
     setCurrentStep('ledger-selection')
@@ -323,7 +324,7 @@ export default function TokenIssuanceFlow() {
           <div 
             className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
             style={{ 
-              width: `${(['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep) / 4) * 100}%` 
+              width: `${(['ledger-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 4) * 100}%` 
             }}
           ></div>
           
@@ -331,7 +332,7 @@ export default function TokenIssuanceFlow() {
             {[
               { 
                 step: 'ledger-selection', 
-                label: 'Select Ledger', 
+                label: 'Select Ledger & Asset', 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -340,19 +341,10 @@ export default function TokenIssuanceFlow() {
               },
               { 
                 step: 'trustline-check', 
-                label: 'Setup Trustline', 
+                label: 'Opt-In', 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                  </svg>
-                )
-              },
-              { 
-                step: 'token-issuance', 
-                label: 'Issue Token', 
-                icon: (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                   </svg>
                 )
               },
@@ -366,6 +358,15 @@ export default function TokenIssuanceFlow() {
                 )
               },
               { 
+                step: 'token-issuance', 
+                label: 'Issue', 
+                icon: (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                )
+              },
+              { 
                 step: 'success', 
                 label: 'Complete', 
                 icon: (
@@ -375,7 +376,7 @@ export default function TokenIssuanceFlow() {
                 )
               }
             ].map((item, index) => {
-              const stepIndex = ['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep)
+              const stepIndex = ['ledger-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep)
               const isActive = currentStep === item.step
               const isCompleted = index < stepIndex
               const isUpcoming = index > stepIndex
@@ -401,8 +402,8 @@ export default function TokenIssuanceFlow() {
                        <div className="w-5 h-5">{item.icon}</div>
                      )}
                     
-                                                             {/* Enhanced pulse animation for active step */}
-                    {isActive && (
+                                                             {/* Enhanced pulse animation for active step (except Complete) */}
+                    {isActive && item.step !== 'success' && (
                       <>
                         <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-40"></div>
                         <div className="absolute inset-0 rounded-full bg-gray-500 animate-pulse opacity-30"></div>
@@ -448,7 +449,7 @@ export default function TokenIssuanceFlow() {
         <div className="mt-6 text-center">
           <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
             <span className="text-sm font-medium text-gray-600">
-              Progress: {Math.round((['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep) / 4) * 100)}%
+              Progress: {Math.round((['ledger-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 4) * 100)}%
             </span>
           </div>
         </div>
@@ -795,10 +796,10 @@ export default function TokenIssuanceFlow() {
                           <div className="mt-8">
                                                                                      <button
                               type="button"
-                              onClick={() => setCurrentStep('token-issuance')}
+                              onClick={() => setCurrentStep('compliance-metadata')}
                               className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
                             >
-                              Continue to Token Issuance
+                              Continue to Issue
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                               </svg>
@@ -1042,10 +1043,10 @@ export default function TokenIssuanceFlow() {
                   <div className="flex items-center justify-between pt-8 border-t border-gray-100">
                     <button
                       type="button"
-                      onClick={() => setCurrentStep('trustline-check')}
+                      onClick={() => setCurrentStep('compliance-metadata')}
                       className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
                     >
-                      ← Back to Trustline Configuration
+                      ← Back to Compliance
                     </button>
                     <button
                       type="submit"
@@ -1234,10 +1235,10 @@ export default function TokenIssuanceFlow() {
                   <div className="flex items-center justify-between pt-8 border-t border-gray-100">
                     <button
                       type="button"
-                      onClick={() => setCurrentStep('token-issuance')}
+                      onClick={() => setCurrentStep('trustline-check')}
                       className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
                     >
-                      ← Back to Token Issuance
+                      ← Back to Opt-In
                     </button>
                     <button
                       type="submit"
@@ -1254,7 +1255,7 @@ export default function TokenIssuanceFlow() {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          Complete Issuance
+                          Continue to Issue
                         </>
                       )}
                     </button>
