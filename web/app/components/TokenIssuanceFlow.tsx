@@ -369,9 +369,17 @@ export default function TokenIssuanceFlow() {
         anchor: anchorCompliance
       }
 
-      // Use the new asset-centric API
+      // Generate idempotency key
+      const idempotencyKey = `issuance_${selectedAsset.id}_${tokenData.destination}_${Date.now()}`
+
+      console.log('Issuing token with request:', issuanceRequest)
+
+      // Use the new asset-centric API with idempotency
       const { data, error } = await api.POST(`/v1/assets/${selectedAsset.id}/issuances` as any, {
-        body: issuanceRequest
+        body: issuanceRequest,
+        headers: {
+          'Idempotency-Key': idempotencyKey
+        }
       })
 
       if (error && typeof error === 'object' && 'error' in error) {
@@ -384,6 +392,8 @@ export default function TokenIssuanceFlow() {
 
       // Handle the response data safely
       const responseData = data as any
+      console.log('Issuance response:', responseData)
+
       setResult(prev => ({
         ...prev,
         txHash: responseData.txId || 'pending',
@@ -1725,9 +1735,9 @@ export default function TokenIssuanceFlow() {
                           {result.complianceRecord.recordId}
                         </code>
                       </div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-start justify-between">
                         <span className="text-sm text-blue-600">SHA256:</span>
-                        <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono">
+                        <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono break-all max-w-xs">
                           {result.complianceRecord.sha256}
                         </code>
                       </div>
@@ -1735,6 +1745,12 @@ export default function TokenIssuanceFlow() {
                         <span className="text-sm text-blue-600">Anchored:</span>
                         <span className="text-sm font-medium text-blue-700">
                           {anchorCompliance ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-600">Status:</span>
+                        <span className="text-sm font-medium text-blue-700">
+                          {result.txHash && result.txHash !== 'pending' ? 'Successfully anchored' : 'Pending'}
                         </span>
                       </div>
                     </div>

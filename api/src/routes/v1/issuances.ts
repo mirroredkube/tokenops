@@ -237,28 +237,49 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       
       const issuanceId = generateIssuanceId()
       
-      // Store issuance record
-      const issuance = {
-        issuanceId,
-        assetId: asset.id,
-        assetRef: asset.assetRef,
-        to,
-        amount,
-        complianceRef,
-        txId: result.txHash,
-        explorer: `https://testnet.xrpl.org/transactions/${result.txHash}`,
-        status: 'submitted',
-        createdAt: new Date().toISOString()
-      }
-      
-      issuances.set(issuanceId, issuance)
+      // Store issuance record in database
+      const issuance = await prisma.issuance.create({
+        data: {
+          id: issuanceId,
+          assetId: asset.id,
+          to,
+          amount,
+          complianceRef: complianceRef ? complianceRef : undefined,
+          anchor,
+          txId: result.txHash,
+          explorer: `https://testnet.xrpl.org/transactions/${result.txHash}`,
+          status: 'submitted'
+        }
+      })
       
       // Store for idempotency
       if (idempotencyKey) {
-        storeIdempotency(idempotencyKey, issuance)
+        storeIdempotency(idempotencyKey, {
+          issuanceId: issuance.id,
+          assetId: issuance.assetId,
+          assetRef: asset.assetRef,
+          to: issuance.to,
+          amount: issuance.amount,
+          complianceRef: complianceRef,
+          txId: issuance.txId,
+          explorer: issuance.explorer,
+          status: issuance.status,
+          createdAt: issuance.createdAt.toISOString()
+        })
       }
       
-      return reply.status(202).send(issuance)
+      return reply.status(202).send({
+        issuanceId: issuance.id,
+        assetId: issuance.assetId,
+        assetRef: asset.assetRef,
+        to: issuance.to,
+        amount: issuance.amount,
+        complianceRef: complianceRef,
+        txId: issuance.txId,
+        explorer: issuance.explorer,
+        status: issuance.status,
+        createdAt: issuance.createdAt.toISOString()
+      })
     } catch (error: any) {
       console.error('Error issuing tokens:', error)
       
@@ -320,12 +341,25 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       const asset = await validateAsset(assetId)
       
       // Get issuance
-      const issuance = issuances.get(issuanceId)
+      const issuance = await prisma.issuance.findUnique({
+        where: { id: issuanceId }
+      })
       if (!issuance || issuance.assetId !== assetId) {
         return reply.status(404).send({ error: 'Issuance not found' })
       }
       
-      return reply.send(issuance)
+      return reply.send({
+        issuanceId: issuance.id,
+        assetId: issuance.assetId,
+        assetRef: asset.assetRef,
+        to: issuance.to,
+        amount: issuance.amount,
+        complianceRef: issuance.complianceRef as any,
+        txId: issuance.txId,
+        explorer: issuance.explorer,
+        status: issuance.status,
+        createdAt: issuance.createdAt.toISOString()
+      })
     } catch (error: any) {
       console.error('Error getting issuance:', error)
       
@@ -396,23 +430,25 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       const asset = await validateAsset(assetId)
       
       // Filter issuances by asset
-      const assetIssuances = Array.from(issuances.values())
-        .filter(issuance => issuance.assetId === assetId)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      const assetIssuances = await prisma.issuance.findMany({
+        where: { assetId: asset.id },
+        take: limit,
+        skip: offset,
+        orderBy: { createdAt: 'desc' }
+      })
       
       // Pagination
-      const total = assetIssuances.length
-      const paginatedIssuances = assetIssuances.slice(offset, offset + limit)
+      const total = await prisma.issuance.count({ where: { assetId: asset.id } })
       
       return reply.send({
-        issuances: paginatedIssuances.map(issuance => ({
-          issuanceId: issuance.issuanceId,
+        issuances: assetIssuances.map(issuance => ({
+          issuanceId: issuance.id,
           assetId: issuance.assetId,
           to: issuance.to,
           amount: issuance.amount,
           txId: issuance.txId,
           status: issuance.status,
-          createdAt: issuance.createdAt
+          createdAt: issuance.createdAt.toISOString()
         })),
         total,
         limit,
