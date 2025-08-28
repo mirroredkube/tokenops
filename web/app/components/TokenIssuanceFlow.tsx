@@ -233,6 +233,11 @@ export default function TokenIssuanceFlow() {
         throw new Error('No asset selected. Please go back and select an asset.')
       }
 
+      // Validate holder address format
+      if (!trustlineCheckData.holderAddress || !trustlineCheckData.holderAddress.match(/^r[a-zA-Z0-9]{24,34}$/)) {
+        throw new Error('Invalid holder address format. Must be a valid XRPL address starting with "r"')
+      }
+
       // Use the real opt-in check API
       console.log('Selected asset:', selectedAsset)
       console.log('Asset ID being used:', selectedAsset.id)
@@ -278,11 +283,21 @@ export default function TokenIssuanceFlow() {
         throw new Error('No asset selected. Please go back and select an asset.')
       }
 
+      // Validate holder address format
+      if (!trustlineCheckData.holderAddress || !trustlineCheckData.holderAddress.match(/^r[a-zA-Z0-9]{24,34}$/)) {
+        throw new Error('Invalid holder address format. Must be a valid XRPL address starting with "r"')
+      }
+
       // Use the real opt-in setup API
       console.log('Creating trustline for asset:', selectedAsset)
       console.log('Trustline data:', trustlineData)
+      console.log('Holder address being used:', trustlineCheckData.holderAddress)
+      console.log('Holder address type:', typeof trustlineCheckData.holderAddress)
       
-      const { data, error } = await api.PUT(`/v1/assets/${selectedAsset.id}/opt-ins/${trustlineCheckData.holderAddress}` as any, {
+      const apiUrl = `/v1/assets/${selectedAsset.id}/opt-ins/${trustlineCheckData.holderAddress}`
+      console.log('API URL:', apiUrl)
+      
+      const { data, error } = await api.PUT(apiUrl as any, {
         body: {
           limit: trustlineData.limit || '1000000000' // Default limit if not specified
         }
