@@ -109,6 +109,10 @@ export default function TokenIssuanceFlow() {
   } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Security flags (in production, these would come from environment)
+  const allowUiSecret = process.env.NEXT_PUBLIC_ALLOW_UI_SECRET === 'true'
+  const devAllowRawSecret = process.env.NEXT_PUBLIC_DEV_ALLOW_RAW_SECRET === 'true'
+
   // Fetch assets for the selected ledger
   const fetchAssets = async () => {
     setAssetsLoading(true)
@@ -299,7 +303,13 @@ export default function TokenIssuanceFlow() {
       
       const { data, error } = await api.PUT(apiUrl as any, {
         body: {
-          limit: trustlineData.limit || '1000000000' // Default limit if not specified
+          params: {
+            limit: trustlineData.limit || '1000000000', // Default limit if not specified
+            holderSecret: allowUiSecret && devAllowRawSecret ? trustlineData.holderSecret : undefined
+          },
+          signing: {
+            mode: allowUiSecret && devAllowRawSecret ? 'server' : 'wallet'
+          }
         }
       })
 
@@ -1020,19 +1030,48 @@ export default function TokenIssuanceFlow() {
                                </div>
                                
                                <div className="space-y-2">
-                                 <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                   Holder Secret (Family Seed)
-                                   <span className="text-red-500 ml-1">*</span>
-                                 </label>
-                                 <input
-                                   type="password"
-                                   value={trustlineData.holderSecret}
-                                   onChange={(e) => setTrustlineData(prev => ({ ...prev, holderSecret: e.target.value }))}
-                                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
-                                   placeholder="sEd7..."
-                                   required
-                                 />
-                                 <p className="text-sm text-gray-500 mt-2">Private key of the holder account</p>
+                                 {allowUiSecret && devAllowRawSecret ? (
+                                   <>
+                                     <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                       Holder Secret (Family Seed)
+                                       <span className="text-red-500 ml-1">*</span>
+                                     </label>
+                                     <input
+                                       type="password"
+                                       value={trustlineData.holderSecret}
+                                       onChange={(e) => setTrustlineData(prev => ({ ...prev, holderSecret: e.target.value }))}
+                                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
+                                       placeholder="sEd7..."
+                                       required
+                                     />
+                                     <p className="text-sm text-gray-500 mt-2">Private key of the holder account</p>
+                                   </>
+                                 ) : (
+                                   <>
+                                     <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                       Sign with Wallet
+                                       <span className="text-red-500 ml-1">*</span>
+                                     </label>
+                                     <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                                       <div className="flex items-center gap-3">
+                                         <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                         </svg>
+                                         <div>
+                                           <p className="text-sm font-medium text-blue-900">Wallet Signing Required</p>
+                                           <p className="text-sm text-blue-700">Connect your wallet to sign the trustline transaction securely</p>
+                                         </div>
+                                       </div>
+                                       <button
+                                         type="button"
+                                         className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors duration-200"
+                                       >
+                                         Connect Wallet
+                                       </button>
+                                     </div>
+                                     <p className="text-sm text-gray-500 mt-2">For security, we never handle your private keys</p>
+                                   </>
+                                 )}
                                </div>
                              </div>
                             

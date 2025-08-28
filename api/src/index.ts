@@ -34,11 +34,8 @@ await app.register(swagger, {
     servers: [{ url: serverUrl }],
     tags: [
       { name: 'system', description: 'Liveness & ledger connectivity' },
-      { name: 'tokens', description: 'Issuance & token utilities' },
-      { name: 'opt-in', description: 'Opt-In management (trustline/associate/ATA)' },
       { name: 'balances', description: 'Account balances & queries' },
-      { name: 'registry', description: 'Token registry & compliance' },
-      { name: 'v1', description: 'New v1 API endpoints' },
+      { name: 'v1', description: 'Asset-centric API endpoints' },
     ],
   },
 })
@@ -58,21 +55,17 @@ await app.register(authPlugin)
 // ----------------------------------------------------------------------------
 // Keep the .js extensions if your dev/runtime resolves TS via tsx
 import systemRoutes from './routes/system.js'
-import tokensRoutes from './routes/tokens.js'
 import balancesRoutes from './routes/balances.js'
-import registryRoutes from './routes/registry.js'
 
-// New v1 routes
+// New v1 routes (asset-centric)
 import v1ComplianceRoutes from './routes/v1/compliance.js'
 import v1AssetRoutes from './routes/v1/assets.js'
 import v1OptInRoutes from './routes/v1/opt-ins.js'
 import v1IssuanceRoutes from './routes/v1/issuances.js'
 
-// Legacy routes (for backward compatibility during transition)
+// Essential routes (no v1 equivalent)
 await app.register(systemRoutes,     { prefix: '/system' })
-await app.register(tokensRoutes,     { prefix: '/tokens' })
 await app.register(balancesRoutes,   { prefix: '/balances' })
-await app.register(registryRoutes,   { prefix: '/registry' })
 
 // New v1 routes (asset-centric)
 await app.register(v1ComplianceRoutes, { prefix: '/v1' })

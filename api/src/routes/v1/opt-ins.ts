@@ -7,8 +7,9 @@ import { Asset, assets, validateAsset } from './shared.js'
 // ---------- Validation Schemas ----------
 const OptInParamsSchema = z.object({
   params: z.object({
-    limit: z.string().regex(/^[0-9]{1,16}$/).optional()
-  }).optional(),
+    limit: z.string().regex(/^[0-9]{1,16}$/).optional(),
+    holderSecret: z.string().regex(/^s[a-zA-Z0-9]{24,34}$/).optional() // Optional now, will be validated based on mode
+  }),
   signing: z.object({
     mode: z.enum(['wallet', 'server']).default('server')
   }).optional()
@@ -168,15 +169,43 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
 
     const { params, signing } = body.data
     const limit = params?.limit || '1000000000' // Safe high default
+    const holderSecret = params?.holderSecret
     const mode = signing?.mode || 'server'
+    
+    // Security validation based on environment flags
+    const allowUiSecret = process.env.ALLOW_UI_SECRET === 'true'
+    const devAllowRawSecret = process.env.DEV_ALLOW_RAW_SECRET === 'true'
+    const isDev = process.env.NODE_ENV !== 'production'
     
     try {
       // Validate asset exists and is active
       const asset = await validateAsset(assetId)
       
-      // For MVP, we'll use server-side signing
+      // Handle different signing modes
       if (mode === 'wallet') {
+        // TODO: Implement wallet signing flow
         return reply.status(400).send({ error: 'Wallet mode not implemented yet' })
+      }
+      
+      // Server mode - validate secret handling
+      if (mode === 'server') {
+        if (!holderSecret) {
+          return reply.status(400).send({ error: 'Holder secret is required for server mode' })
+        }
+        
+        // Security check: only allow raw secrets in dev with explicit flag
+        if (!allowUiSecret && !devAllowRawSecret) {
+          return reply.status(403).send({ 
+            error: 'Raw secret input is disabled in production. Use wallet signing mode.' 
+          })
+        }
+        
+        // Additional dev-only check
+        if (!isDev && !devAllowRawSecret) {
+          return reply.status(403).send({ 
+            error: 'Raw secret input is not allowed in production environment' 
+          })
+        }
       }
       
       const adapter = getLedgerAdapter()
@@ -185,7 +214,7 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
       const result = await adapter.createTrustline({
         currencyCode: asset.code,
         limit,
-        holderSecret: process.env.HOLDER_SECRET || '' // For MVP, use env var
+        holderSecret: holderSecret!
       })
       
       return reply.status(202).send({
