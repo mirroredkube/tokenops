@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import Link from 'next/link'
+import CustomDropdown from '../../components/CustomDropdown'
 
 interface Asset {
   id: string
@@ -156,38 +157,40 @@ export default function AssetsPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Ledger
             </label>
-            <select
+            <CustomDropdown
               value={filters.ledger}
-              onChange={(e) => setFilters(prev => ({ ...prev, ledger: e.target.value }))}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            >
-              <option value="">All Ledgers</option>
-              <option value="xrpl">XRPL</option>
-              <option value="hedera">Hedera</option>
-              <option value="ethereum">Ethereum</option>
-            </select>
+              onChange={(value) => setFilters(prev => ({ ...prev, ledger: value }))}
+              options={[
+                { value: '', label: 'All Ledgers' },
+                { value: 'xrpl', label: 'XRPL' },
+                { value: 'hedera', label: 'Hedera' },
+                { value: 'ethereum', label: 'Ethereum' }
+              ]}
+              placeholder="All Ledgers"
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Status
             </label>
-            <select
+            <CustomDropdown
               value={filters.status}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="retired">Retired</option>
-            </select>
+              onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'draft', label: 'Draft' },
+                { value: 'active', label: 'Active' },
+                { value: 'paused', label: 'Paused' },
+                { value: 'retired', label: 'Retired' }
+              ]}
+              placeholder="All Statuses"
+            />
           </div>
         </div>
       </div>

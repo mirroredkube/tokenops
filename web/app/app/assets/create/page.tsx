@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import FormField from '../../../components/FormField'
+import CustomDropdown from '../../../components/CustomDropdown'
 
 interface AssetFormData {
   ledger: "xrpl" | "hedera" | "ethereum"
@@ -102,31 +103,33 @@ export default function CreateAssetPage() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Ledger" required>
-                                   <select
+                               <FormField label="Ledger" required>
+                     <CustomDropdown
                        value={formData.ledger}
-                       onChange={(e) => handleInputChange('ledger', e.target.value)}
-                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                       onChange={(value) => handleInputChange('ledger', value)}
+                       options={[
+                         { value: 'xrpl', label: 'XRPL (XRP Ledger)' },
+                         { value: 'hedera', label: 'Hedera' },
+                         { value: 'ethereum', label: 'Ethereum' }
+                       ]}
+                       placeholder="Select Ledger"
                        required
-                     >
-                       <option value="xrpl">XRPL (XRP Ledger)</option>
-                       <option value="hedera">Hedera</option>
-                       <option value="ethereum">Ethereum</option>
-                     </select>
-            </FormField>
+                     />
+                   </FormField>
 
-            <FormField label="Network" required>
-              <select
-                value={formData.network}
-                onChange={(e) => handleInputChange('network', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                required
-              >
-                <option value="testnet">Testnet</option>
-                <option value="mainnet">Mainnet</option>
-                <option value="devnet">Devnet</option>
-              </select>
-            </FormField>
+                   <FormField label="Network" required>
+                     <CustomDropdown
+                       value={formData.network}
+                       onChange={(value) => handleInputChange('network', value)}
+                       options={[
+                         { value: 'testnet', label: 'Testnet' },
+                         { value: 'mainnet', label: 'Mainnet' },
+                         { value: 'devnet', label: 'Devnet' }
+                       ]}
+                       placeholder="Select Network"
+                       required
+                     />
+                   </FormField>
 
             <FormField label="Issuer Address" required>
               <input
@@ -168,18 +171,19 @@ export default function CreateAssetPage() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Compliance Settings</h2>
           <div className="space-y-4">
-            <FormField label="Compliance Mode" required>
-              <select
-                value={formData.complianceMode}
-                onChange={(e) => handleInputChange('complianceMode', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                required
-              >
-                <option value="OFF">No Compliance</option>
-                <option value="RECORD_ONLY">Record Only (Optional)</option>
-                <option value="GATED_BEFORE">Gated Before (Required)</option>
-              </select>
-            </FormField>
+                               <FormField label="Compliance Mode" required>
+                     <CustomDropdown
+                       value={formData.complianceMode}
+                       onChange={(value) => handleInputChange('complianceMode', value)}
+                       options={[
+                         { value: 'OFF', label: 'No Compliance' },
+                         { value: 'RECORD_ONLY', label: 'Record Only (Optional)' },
+                         { value: 'GATED_BEFORE', label: 'Gated Before (Required)' }
+                       ]}
+                       placeholder="Select Compliance Mode"
+                       required
+                     />
+                   </FormField>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="ISIN Code">
