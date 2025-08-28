@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { currencyToHex, isHexCurrency } from '../../utils/currency.js'
 import { Asset, assets, issuances, validateAsset, generateIssuanceId, checkIdempotency, storeIdempotency } from './shared.js'
+import prisma from '../../db/client.js'
 
 // ---------- Validation Schemas ----------
 const IssuanceSchema = z.object({
@@ -16,6 +17,92 @@ const IssuanceSchema = z.object({
 })
 
 export default async function issuanceRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
+  // 0. GET /v1/issuances - List all issuances (for dashboard)
+  app.get('/issuances', {
+    schema: {
+      summary: 'List all issuances across assets',
+      description: 'Get all token issuances for dashboard and reporting',
+      tags: ['v1'],
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'string', pattern: '^[0-9]{1,3}$', default: '50' },
+          offset: { type: 'string', pattern: '^[0-9]+$', default: '0' },
+          status: { type: 'string', enum: ['pending', 'submitted', 'validated', 'failed'] },
+          assetId: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  assetId: { type: 'string' },
+                  assetRef: { type: 'string' },
+                  to: { type: 'string' },
+                  amount: { type: 'string' },
+                  txId: { type: 'string' },
+                  status: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' }
+                }
+              }
+            },
+            total: { type: 'number' },
+            limit: { type: 'number' },
+            offset: { type: 'number' }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    const { limit = '50', offset = '0', status, assetId } = req.query as any
+    
+    const where: any = {}
+    if (status) where.status = status
+    if (assetId) where.assetId = assetId
+    
+    const [issuances, total] = await Promise.all([
+      prisma.issuance.findMany({
+        where,
+        take: parseInt(limit),
+        skip: parseInt(offset),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          asset: {
+            select: {
+              assetRef: true,
+              code: true
+            }
+          }
+        }
+      }),
+      prisma.issuance.count({ where })
+    ])
+    
+    return reply.send({
+      items: issuances.map(issuance => ({
+        id: issuance.id,
+        assetId: issuance.assetId,
+        assetRef: issuance.asset.assetRef,
+        to: issuance.to,
+        amount: issuance.amount,
+        txId: issuance.txId,
+        status: issuance.status,
+        createdAt: issuance.createdAt.toISOString(),
+        updatedAt: issuance.updatedAt.toISOString()
+      })),
+      total,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    })
+  })
+
   // 1. POST /v1/assets/{assetId}/issuances - Create issuance
   app.post('/assets/:assetId/issuances', {
     schema: {

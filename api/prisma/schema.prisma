@@ -9,12 +9,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ---------- Networks ----------
-enum Ledger {
-  XRPL_TESTNET
-  XRPL_MAINNET
-}
-
+// ---------- Asset Management ----------
 enum AssetLedger {
   XRPL
   HEDERA
@@ -81,46 +76,6 @@ model Issuance {
 
   @@index([assetId])
   @@index([status])
-  @@index([createdAt])
-}
-
-// ---------- On-ledger issuance artifacts ----------
-model Token {
-  id            String   @id @default(cuid())
-  currencyCode  String
-  amount        String
-  destination   String
-  issuer        String
-  createdAt     DateTime @default(now())
-
-  events        TokenEvent[]
-}
-
-model TokenEvent {
-  id           String   @id @default(cuid())
-  tokenId      String
-  type         String
-  ledgerTxHash String?
-  memo         String?
-  createdAt    DateTime @default(now())
-
-  token Token @relation(fields: [tokenId], references: [id], onDelete: Cascade)
-  @@index([tokenId])
-}
-
-// ---------- Off-chain registry with compliance ----------
-model TokenRecord {
-  id             String   @id @default(cuid())
-  ledger         Ledger
-  symbol         String
-  supply         String          // keep as string to avoid bigint/decimal edges
-  issuerAddress  String
-  holderAddress  String?
-  txHash         String   @unique
-  compliance     Json?           // JSONB on Postgres
-  createdAt      DateTime @default(now())
-
-  @@index([symbol, ledger])
   @@index([createdAt])
 }
 

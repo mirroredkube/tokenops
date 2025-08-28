@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import LedgerLogo from './LedgerLogo'
 import { TokenIcon, IssuanceIcon } from './FancyStatIcons'
+import { api } from '@/lib/api'
 
 interface TokenStats {
   totalTokens: number
@@ -11,7 +12,7 @@ interface TokenStats {
     currencyCode: string
     amount: string
     destination: string
-    txHash: string
+    txId: string
     createdAt: string
   }>
 }
@@ -23,28 +24,25 @@ export default function TokenDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-        const response = await fetch(`${base}/registry/tokens?limit=20`)
+        // Fetch assets and issuances from new v1 endpoints
+        const [assetsResponse, issuancesResponse] = await Promise.all([
+          api.GET('/v1/assets' as any, { params: { query: { limit: '50', offset: '0' } } }),
+          api.GET('/v1/issuances' as any, { params: { query: { limit: '50', offset: '0' } } })
+        ])
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-        const tokens = data.items || []
-
-        const uniqueTokens = new Set(tokens.map((t: any) => t.symbol)).size
+        const assets = assetsResponse.data?.assets || assetsResponse.data?.items || []
+        const issuances = issuancesResponse.data?.items || []
 
         setStats({
-          totalTokens: uniqueTokens,
-          totalIssuances: tokens.length,
-          recentTransactions: tokens.slice(0, 10).map((tx: any) => ({
-            id: tx.id,
-            currencyCode: tx.symbol,
-            amount: tx.supply,
-            destination: tx.holderAddress || 'Unknown',
-            txHash: tx.txHash,
-            createdAt: tx.createdAt
+          totalTokens: assets.length,
+          totalIssuances: issuances.length,
+          recentTransactions: issuances.slice(0, 10).map((issuance: any) => ({
+            id: issuance.id,
+            currencyCode: issuance.assetRef?.split(':').pop()?.split('.').pop() || 'Unknown',
+            amount: issuance.amount,
+            destination: issuance.to,
+            txId: issuance.txId || 'Pending',
+            createdAt: issuance.createdAt
           }))
         })
       } catch (err) {
@@ -165,7 +163,7 @@ export default function TokenDashboard() {
                       {new Date(tx.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <code className="text-xs">{tx.txHash.substring(0, 12)}...</code>
+                      <code className="text-xs">{tx.txId.substring(0, 12)}...</code>
                     </td>
                   </tr>
                 ))}
