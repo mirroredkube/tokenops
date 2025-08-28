@@ -493,192 +493,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/opt-in/check": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Check Opt-In status between holder and issuer
-         * @description Uses ledger-specific commands to check if a holder has opted into an asset (trustline/associate/ATA)
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    /** @example {
-                     *       "account": "rHolder123...",
-                     *       "peer": "rIssuer456...",
-                     *       "ledger_index": "validated"
-                     *     } */
-                    "application/json": {
-                        /** @description Holder account address */
-                        account: string;
-                        /** @description Issuer account address */
-                        peer: string;
-                        /** @description Optional currency filter (3-char code or hex) */
-                        currency?: string;
-                        /**
-                         * @description Ledger index to query (default: validated)
-                         * @default validated
-                         */
-                        ledger_index?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            account?: string;
-                            peer?: string;
-                            lines?: {
-                                account?: string;
-                                balance?: string;
-                                currency?: string;
-                                limit?: string;
-                                limit_peer?: string;
-                                quality_in?: number;
-                                quality_out?: number;
-                                no_ripple?: boolean;
-                                no_ripple_peer?: boolean;
-                                authorized?: boolean;
-                                peer_authorized?: boolean;
-                                freeze?: boolean;
-                                freeze_peer?: boolean;
-                            }[];
-                        };
-                    };
-                };
-                /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            error?: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            error?: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/opt-in/setup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Setup Opt-In between holder and issuer
-         * @description Creates Opt-In for a specific currency with a given limit (trustline/associate/ATA)
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    /** @example {
-                     *       "currencyCode": "USD",
-                     *       "limit": "1000000",
-                     *       "holderSecret": "s..."
-                     *     } */
-                    "application/json": {
-                        /** @description Currency code (3-char or hex) */
-                        currencyCode: string;
-                        /** @description Opt-In limit amount */
-                        limit: string;
-                        /** @description Holder wallet secret (dev-only) */
-                        holderSecret: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            txHash?: string;
-                            alreadyExisted?: boolean;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            error?: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            error?: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/balances/{account}": {
         parameters: {
             query?: never;
@@ -1149,7 +963,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/compliance/store": {
+    "/v1/compliance-records": {
         parameters: {
             query?: never;
             header?: never;
@@ -1158,6 +972,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Create compliance record
+         * @description Store off-ledger compliance metadata (MiCA, ISIN, jurisdiction)
+         */
         post: {
             parameters: {
                 query?: never;
@@ -1168,22 +986,56 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        tokenTxHash: string;
-                        complianceData: Record<string, never>;
+                        /** @default cmp.v1 */
+                        version?: string;
+                        /** @description Asset identifier */
+                        assetId: string;
+                        holder: string;
+                        /** @description ISIN code */
+                        isin?: string;
+                        /** @description Legal issuer name */
+                        legalIssuer?: string;
+                        /** @description Jurisdiction code */
+                        jurisdiction?: string;
+                        /** @description MiCA classification */
+                        micaClass?: string;
+                        /** @description KYC requirement level */
+                        kycRequirement?: string;
+                        /** @default false */
+                        transferRestrictions?: boolean;
+                        /** @description Token purpose */
+                        purpose?: string;
+                        docs?: {
+                            type?: string;
+                            hash?: string;
+                        }[];
+                        /** Format: date-time */
+                        consentTs?: string;
                     };
                 };
             };
             responses: {
                 /** @description Default Response */
-                200: {
+                201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            ok?: boolean;
-                            id?: string;
-                            message?: string;
+                            recordId?: string;
+                            sha256?: string;
+                            status?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
                         };
                     };
                 };
@@ -1195,19 +1047,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/compliance/{txHash}": {
+    "/v1/compliance-records/{recordId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        /**
+         * Get compliance record
+         * @description Fetch compliance record (redacted for privacy)
+         */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    txHash: string;
+                    recordId: string;
                 };
                 cookie?: never;
             };
@@ -1220,8 +1076,899 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            ok?: boolean;
-                            compliance?: Record<string, never>;
+                            recordId?: string;
+                            sha256?: string;
+                            status?: string;
+                            assetId?: string;
+                            jurisdiction?: string;
+                            micaClass?: string;
+                            transferRestrictions?: boolean;
+                            purpose?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance-records/{recordId}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Verify compliance record
+         * @description Update compliance record status (auditor/regulator only)
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    recordId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "verified" | "rejected";
+                        /** @description Reason for rejection */
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            recordId?: string;
+                            status?: string;
+                            verifiedAt?: string;
+                            reason?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List assets
+         * @description Get all assets with optional filtering
+         */
+        get: {
+            parameters: {
+                query?: {
+                    ledger?: string;
+                    status?: string;
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assets?: {
+                                id?: string;
+                                assetRef?: string;
+                                ledger?: string;
+                                network?: string;
+                                issuer?: string;
+                                code?: string;
+                                decimals?: number;
+                                complianceMode?: string;
+                                status?: string;
+                                createdAt?: string;
+                            }[];
+                            total?: number;
+                            limit?: number;
+                            offset?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create new asset
+         * @description Register a new asset with ledger binding and policy configuration
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Target ledger for the asset
+                         * @enum {string}
+                         */
+                        ledger: "xrpl" | "stellar" | "evm" | "solana" | "algorand" | "hedera";
+                        /**
+                         * @description Network environment
+                         * @default testnet
+                         * @enum {string}
+                         */
+                        network?: "mainnet" | "testnet" | "devnet";
+                        /** @description Issuer address/identifier on the ledger */
+                        issuer: string;
+                        /** @description Currency code/symbol */
+                        code: string;
+                        /** @description Number of decimal places */
+                        decimals: number;
+                        /**
+                         * @description Compliance enforcement mode
+                         * @default RECORD_ONLY
+                         * @enum {string}
+                         */
+                        complianceMode?: "OFF" | "RECORD_ONLY" | "GATED_BEFORE";
+                        controls?: {
+                            requireAuth?: boolean;
+                            freeze?: boolean;
+                            clawback?: boolean;
+                            transferFeeBps?: number;
+                        };
+                        registry?: {
+                            isin?: string;
+                            lei?: string;
+                            micaClass?: string;
+                            jurisdiction?: string;
+                        };
+                        metadata?: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            assetRef?: string;
+                            ledger?: string;
+                            network?: string;
+                            issuer?: string;
+                            code?: string;
+                            decimals?: number;
+                            complianceMode?: string;
+                            status?: string;
+                            createdAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assets/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get asset details
+         * @description Retrieve asset configuration and metadata
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Asset ID */
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            assetRef?: string;
+                            ledger?: string;
+                            network?: string;
+                            issuer?: string;
+                            code?: string;
+                            decimals?: number;
+                            complianceMode?: string;
+                            controls?: Record<string, never>;
+                            registry?: Record<string, never>;
+                            metadata?: Record<string, never>;
+                            status?: string;
+                            createdAt?: string;
+                            updatedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        /**
+         * Update asset
+         * @description Update asset configuration (draft assets only)
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status?: "draft" | "active" | "paused" | "retired";
+                        /** @enum {string} */
+                        complianceMode?: "OFF" | "RECORD_ONLY" | "GATED_BEFORE";
+                        controls?: Record<string, never>;
+                        registry?: Record<string, never>;
+                        metadata?: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            assetRef?: string;
+                            status?: string;
+                            updatedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Deactivate asset
+         * @description Mark asset as retired (no new issuances)
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            status?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assets/{assetId}/opt-ins/{holder}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get opt-in status for a holder and asset
+         * @description Check if a holder has opted into an asset (XRPL = trustline)
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Asset ID */
+                    assetId: string;
+                    /** @description Holder account address */
+                    holder: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assetId?: string;
+                            assetRef?: string;
+                            holder?: string;
+                            exists?: boolean;
+                            details?: {
+                                limit?: string;
+                                balance?: string;
+                                authorized?: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        /**
+         * Create or update opt-in for a holder and asset
+         * @description Create trustline (XRPL) or equivalent opt-in mechanism
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    assetId: string;
+                    holder: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        params?: {
+                            limit?: string;
+                        };
+                        signing?: {
+                            /** @enum {string} */
+                            mode?: "wallet" | "server";
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assetId?: string;
+                            assetRef?: string;
+                            holder?: string;
+                            txId?: string;
+                            status?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                            reason?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Remove opt-in for a holder and asset
+         * @description Remove trustline (XRPL) or equivalent opt-in mechanism
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    assetId: string;
+                    holder: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assetId?: string;
+                            holder?: string;
+                            txId?: string;
+                            status?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assets/{assetId}/issuances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List issuances for an asset
+         * @description Get all issuances for a specific asset
+         */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path: {
+                    /** @description Asset ID */
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            issuances?: {
+                                issuanceId?: string;
+                                assetId?: string;
+                                to?: string;
+                                amount?: string;
+                                txId?: string;
+                                status?: string;
+                                createdAt?: string;
+                            }[];
+                            total?: number;
+                            limit?: number;
+                            offset?: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Issue tokens to a holder
+         * @description Issue tokens with optional compliance anchoring
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Asset ID */
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Recipient address */
+                        to: string;
+                        /** @description Amount to issue */
+                        amount: string;
+                        /** @description Compliance record reference */
+                        complianceRef?: {
+                            recordId?: string;
+                            sha256?: string;
+                        };
+                        /**
+                         * @description Anchor compliance data to blockchain
+                         * @default true
+                         */
+                        anchor?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            issuanceId?: string;
+                            assetId?: string;
+                            assetRef?: string;
+                            to?: string;
+                            amount?: string;
+                            complianceRef?: {
+                                recordId?: string;
+                                sha256?: string;
+                            };
+                            txId?: string;
+                            explorer?: string;
+                            status?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assets/{assetId}/issuances/{issuanceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get issuance status
+         * @description Fetch issuance details and transaction status
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Asset ID */
+                    assetId: string;
+                    /** @description Issuance ID */
+                    issuanceId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            issuanceId?: string;
+                            assetId?: string;
+                            assetRef?: string;
+                            to?: string;
+                            amount?: string;
+                            complianceRef?: {
+                                recordId?: string;
+                                sha256?: string;
+                            };
+                            txId?: string;
+                            explorer?: string;
+                            status?: string;
+                            createdAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
                         };
                     };
                 };

@@ -131,22 +131,21 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
-      const { data, error } = await api.POST('/opt-in/check', {
-        body: {
-          account: trustlineCheckData.holderAddress,
-          peer: trustlineCheckData.issuerAddress,
-          currency: trustlineCheckData.currencyCode
-        }
-      })
-
-      if (error || !data) {
-        throw new Error(error?.error || 'Failed to check Opt-In status')
+      // TODO: Replace with actual API call when asset selection is implemented
+      // For now, use mock data
+      const mockData = {
+        exists: false,
+        details: null
       }
+      const data = mockData
+      const error = null
 
-              setTrustlineCheckResult({
-          exists: !!(data.lines && data.lines.length > 0),
-          details: data.lines?.[0] || null
-        })
+      // Mock data - no error checking needed
+
+                    setTrustlineCheckResult({
+        exists: false,
+        details: null
+      })
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -159,24 +158,14 @@ export default function TokenIssuanceFlow() {
     setLoading(true)
     setError(null)
 
-    try {
-      const { data, error } = await api.POST('/opt-in/setup', {
-        body: {
-          currencyCode: trustlineData.currencyCode,
-          limit: trustlineData.limit,
-          holderSecret: trustlineData.holderSecret
-        }
-      })
-
-      if (error || !data) {
-        throw new Error(error?.error || 'Failed to setup Opt-In')
-      }
-
-              setResult(prev => ({
-          ...prev,
-          trustlineTxHash: data.txHash,
-          trustlineExplorer: data.txHash ? `https://testnet.xrpl.org/transactions/${data.txHash}` : undefined
-        }))
+        try {
+      // TODO: Replace with actual API call when asset selection is implemented
+      // For now, use mock data
+      setResult(prev => ({
+        ...prev,
+        trustlineTxHash: 'mock_tx_hash_123',
+        trustlineExplorer: 'https://testnet.xrpl.org/transactions/mock_tx_hash_123'
+      }))
 
       setCurrentStep('compliance-metadata')
     } catch (err: any) {

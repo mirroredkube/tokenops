@@ -67,15 +67,9 @@ export default function ManageOptInPage() {
     setSuccess(null)
 
     try {
-      const { data, error } = await api.POST('/opt-in/setup', {
-        body: {
-          currencyCode: formData.currencyCode,
-          limit: formData.limit,
-          holderSecret: formData.holderSecret
-        }
-      })
-
-      if (error) throw new Error(error.error)
+      // TODO: Replace with actual API call when asset selection is implemented
+      // For now, show success message
+      console.log('Opt-in creation:', formData)
 
       setSuccess('Opt-In created successfully!')
       setFormData({

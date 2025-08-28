@@ -16,7 +16,10 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Building,
+  CheckSquare,
+  BarChart3
 } from 'lucide-react'
 
 const BRAND = 'Regula'
@@ -30,9 +33,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/app/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-  { href: '/app/issuance', label: 'Issue Token', icon: <Coins className="h-4 w-4" /> },
-  { href: '/app/balances', label: 'View Balances', icon: <Wallet className="h-4 w-4" /> },
-  { href: '/app/reports', label: 'Reports', icon: <FileText className="h-4 w-4" /> },
+  { href: '/app/assets', label: 'Assets', icon: <Building className="h-4 w-4" /> },
+  { href: '/app/issuance', label: 'Token Issuance', icon: <Coins className="h-4 w-4" /> },
+  { href: '/app/compliance', label: 'Compliance', icon: <Shield className="h-4 w-4" /> },
+  { href: '/app/opt-in', label: 'Opt-Ins', icon: <CheckSquare className="h-4 w-4" /> },
+  { href: '/app/reports', label: 'Reports', icon: <BarChart3 className="h-4 w-4" /> },
+  { href: '/app/balances', label: 'Balances', icon: <Wallet className="h-4 w-4" /> },
   { href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`, label: 'API Docs', icon: <FileText className="h-4 w-4" /> },
 ]
 
