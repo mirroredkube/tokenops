@@ -55,11 +55,18 @@ interface ComplianceData {
   maxTransferAmount?: string
 }
 
+interface ComplianceRecord {
+  recordId: string
+  sha256: string
+  createdAt: string
+}
+
 interface IssuanceResult {
   txHash?: string
   explorer?: string
   trustlineTxHash?: string
   trustlineExplorer?: string
+  complianceRecord?: ComplianceRecord
 }
 
 export default function TokenIssuanceFlow() {
@@ -107,6 +114,8 @@ export default function TokenIssuanceFlow() {
     exists: boolean
     details?: any
   } | null>(null)
+  const [complianceRecord, setComplianceRecord] = useState<ComplianceRecord | null>(null)
+  const [anchorCompliance, setAnchorCompliance] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Security flags (in production, these would come from environment)
@@ -353,12 +362,11 @@ export default function TokenIssuanceFlow() {
       const issuanceRequest = {
         to: tokenData.destination,
         amount: tokenData.amount.toString(),
-        // For now, we'll skip complianceRef since we're not storing compliance records yet
-        // complianceRef: {
-        //   recordId: 'temp-record-id',
-        //   sha256: 'temp-sha256'
-        // },
-        anchor: true
+        complianceRef: complianceRecord ? {
+          recordId: complianceRecord.recordId,
+          sha256: complianceRecord.sha256
+        } : undefined,
+        anchor: anchorCompliance
       }
 
       // Use the new asset-centric API
@@ -379,7 +387,8 @@ export default function TokenIssuanceFlow() {
       setResult(prev => ({
         ...prev,
         txHash: responseData.txId || 'pending',
-        explorer: responseData.explorer || `https://testnet.xrpl.org/transactions/${responseData.txId || 'pending'}`
+        explorer: responseData.explorer || `https://testnet.xrpl.org/transactions/${responseData.txId || 'pending'}`,
+        complianceRecord: complianceRecord || undefined
       }))
 
       setCurrentStep('success')
@@ -397,11 +406,49 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
-      // Just navigate to the Issue step - compliance data will be stored later
-      // when the token is actually issued
+      // Create compliance record using the v1 API
+      const complianceRequest = {
+        assetId: selectedAsset?.id,
+        holder: trustlineData.holderAddress || trustlineCheckData.holderAddress,
+        purpose: complianceData.purpose,
+        isin: complianceData.isin,
+        legalIssuer: complianceData.legalIssuerName,
+        jurisdiction: complianceData.jurisdiction,
+        micaClass: complianceData.micaClassification,
+        kycRequirement: complianceData.kycRequirement,
+        transferRestrictions: complianceData.transferRestrictions
+      }
+
+      console.log('Creating compliance record:', complianceRequest)
+
+      const { data, error } = await api.POST('/v1/compliance-records' as any, {
+        body: complianceRequest
+      })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to create compliance record')
+      }
+
+      if (!data) {
+        throw new Error('No response data received')
+      }
+
+      // Store the compliance record
+      const responseData = data as any
+      const newComplianceRecord: ComplianceRecord = {
+        recordId: responseData.recordId,
+        sha256: responseData.sha256,
+        createdAt: new Date().toISOString() // API doesn't return createdAt, so we'll use current time
+      }
+
+      setComplianceRecord(newComplianceRecord)
+      console.log('Compliance record created:', newComplianceRecord)
+
+      // Navigate to the Issue step
       setCurrentStep('token-issuance')
     } catch (err: any) {
-      setError(err.message)
+      console.error('Compliance submit error:', err)
+      setError(err.message || 'Failed to create compliance record')
     } finally {
       setLoading(false)
     }
@@ -440,6 +487,8 @@ export default function TokenIssuanceFlow() {
     setResult(null)
     setError(null)
     setTrustlineCheckResult(null)
+    setComplianceRecord(null)
+    setAnchorCompliance(true)
   }
 
   return (
@@ -1336,6 +1385,48 @@ export default function TokenIssuanceFlow() {
                     </div>
                   </div>
 
+                  {/* Anchor Compliance Toggle */}
+                  {complianceRecord && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center h-6">
+                            <input
+                              id="anchor-compliance"
+                              type="checkbox"
+                              checked={anchorCompliance}
+                              onChange={(e) => setAnchorCompliance(e.target.checked)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="anchor-compliance" className="text-sm font-medium text-blue-900">
+                              Anchor Compliance Data
+                            </label>
+                            <p className="text-xs text-blue-700 mt-1">
+                              Include compliance record in the blockchain transaction
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-blue-100 rounded p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-blue-800">Record ID:</span>
+                            <code className="text-xs text-blue-900 bg-blue-200 px-2 py-1 rounded font-mono">
+                              {complianceRecord.recordId}
+                            </code>
+                          </div>
+                          <div className="flex items-start justify-between">
+                            <span className="text-xs font-medium text-blue-800">SHA256 Hash:</span>
+                            <code className="text-xs text-blue-900 bg-blue-200 px-2 py-1 rounded font-mono break-all max-w-xs">
+                              {complianceRecord.sha256}
+                            </code>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Action Buttons */}
                   <div className="flex items-center justify-between pt-8 border-t border-gray-100">
                     <button
@@ -1621,6 +1712,31 @@ export default function TokenIssuanceFlow() {
                           View on Explorer →
                         </a>
                       )}
+                    </div>
+                  </div>
+                )}
+                {result.complianceRecord && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-blue-700 mb-2">Compliance Record:</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-600">Record ID:</span>
+                        <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono">
+                          {result.complianceRecord.recordId}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-600">SHA256:</span>
+                        <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono">
+                          {result.complianceRecord.sha256}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-600">Anchored:</span>
+                        <span className="text-sm font-medium text-blue-700">
+                          {anchorCompliance ? 'Yes' : 'No'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
