@@ -131,66 +131,22 @@ export default function TokenIssuanceFlow() {
     setError(null)
 
     try {
-      // Check if trustline exists using account_lines command
-      const { data, error } = await api.POST('/trustlines/check', {
+      const { data, error } = await api.POST('/opt-in/check', {
         body: {
           account: trustlineCheckData.holderAddress,
           peer: trustlineCheckData.issuerAddress,
-          currency: trustlineCheckData.currencyCode,
-          ledger_index: "validated"
+          currency: trustlineCheckData.currencyCode
         }
       })
 
-      if (error) {
-        // If the account doesn't exist or other error, assume trustline doesn't exist
-        console.log('Trustline check failed, proceeding to create:', error)
-        setTrustlineData(prev => ({
-          ...prev,
-          currencyCode: trustlineCheckData.currencyCode,
-          holderAddress: trustlineCheckData.holderAddress,
-          issuerAddress: trustlineCheckData.issuerAddress
-        }))
-        // Stay on current step, additional fields will appear
-        return
+      if (error || !data) {
+        throw new Error(error?.error || 'Failed to check Opt-In status')
       }
 
-      // Check if the trustline exists in the response (API now filters by currency)
-      const lines = data?.lines || []
-      const existingTrustline = lines.length > 0 ? lines[0] : null
-      
-      const trustlineExists = !!existingTrustline
-      
-      // Store the check result
-      setTrustlineCheckResult({
-        exists: trustlineExists,
-        details: existingTrustline
-      })
-      
-      if (trustlineExists) {
-        // Trustline exists, stay on current step and show result
-        // User will explicitly click "Continue to Token Issuance"
-        // Copy data to token issuance form
-        setTokenData(prev => ({
-          ...prev,
-          currencyCode: trustlineCheckData.currencyCode,
-          destination: trustlineCheckData.holderAddress
-        }))
-      } else {
-        // Trustline doesn't exist, copy data for creation form
-        setTrustlineData(prev => ({
-          ...prev,
-          currencyCode: trustlineCheckData.currencyCode,
-          holderAddress: trustlineCheckData.holderAddress,
-          issuerAddress: trustlineCheckData.issuerAddress
-        }))
-        // Also pre-populate token data for after trustline creation
-        setTokenData(prev => ({
-          ...prev,
-          currencyCode: trustlineCheckData.currencyCode,
-          destination: trustlineCheckData.holderAddress
-        }))
-        // Stay on same step, additional fields will appear
-      }
+              setTrustlineCheckResult({
+          exists: !!(data.lines && data.lines.length > 0),
+          details: data.lines?.[0] || null
+        })
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -198,34 +154,29 @@ export default function TokenIssuanceFlow() {
     }
   }
 
-  const handleTrustlineSubmit = async (e: React.FormEvent) => {
+  const handleOptInSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
-      const { data, error } = await api.POST('/trustlines/create', {
-        body: trustlineData
+      const { data, error } = await api.POST('/opt-in/setup', {
+        body: {
+          currencyCode: trustlineData.currencyCode,
+          limit: trustlineData.limit,
+          holderSecret: trustlineData.holderSecret
+        }
       })
 
       if (error || !data) {
-        throw new Error(error?.error || 'Failed to create trustline')
+        throw new Error(error?.error || 'Failed to setup Opt-In')
       }
 
-      // Store trustline result for later
-      setResult(prev => ({
-        ...prev,
-        trustlineTxHash: data.txHash || undefined,
-        trustlineExplorer: data.explorer || undefined
-      }))
-
-      // Populate token data with trustline information
-      setTokenData(prev => ({
-        ...prev,
-        currencyCode: trustlineData.currencyCode,
-        destination: trustlineData.holderAddress,
-        amount: '100' // Default amount
-      }))
+              setResult(prev => ({
+          ...prev,
+          trustlineTxHash: data.txHash,
+          trustlineExplorer: data.txHash ? `https://testnet.xrpl.org/transactions/${data.txHash}` : undefined
+        }))
 
       setCurrentStep('compliance-metadata')
     } catch (err: any) {
@@ -781,7 +732,7 @@ export default function TokenIssuanceFlow() {
                             <div className="mt-6">
                                                                                            <button
                                 type="button"
-                                onClick={handleTrustlineSubmit}
+                                onClick={handleOptInSubmit}
                                 disabled={loading}
                                 className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
                               >

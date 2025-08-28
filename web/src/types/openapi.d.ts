@@ -493,7 +493,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/trustlines/check": {
+    "/opt-in/check": {
         parameters: {
             query?: never;
             header?: never;
@@ -503,8 +503,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Check if a trustline exists between holder and issuer
-         * @description Uses XRPL account_lines command to check if a trustline exists for a specific currency
+         * Check Opt-In status between holder and issuer
+         * @description Uses ledger-specific commands to check if a holder has opted into an asset (trustline/associate/ATA)
          */
         post: {
             parameters: {
@@ -521,9 +521,9 @@ export interface paths {
                      *       "ledger_index": "validated"
                      *     } */
                     "application/json": {
-                        /** @description Holder account address (r-address) */
+                        /** @description Holder account address */
                         account: string;
-                        /** @description Issuer account address (r-address) */
+                        /** @description Issuer account address */
                         peer: string;
                         /** @description Optional currency filter (3-char code or hex) */
                         currency?: string;
@@ -596,7 +596,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/trustlines/create": {
+    "/opt-in/setup": {
         parameters: {
             query?: never;
             header?: never;
@@ -606,8 +606,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Create/Set a trust line (Holder → Issuer)
-         * @description Holder establishes a trust line to the issuer for a given currency and limit. 3-char codes or longer ASCII are normalized by the adapter.
+         * Setup Opt-In between holder and issuer
+         * @description Creates Opt-In for a specific currency with a given limit (trustline/associate/ATA)
          */
         post: {
             parameters: {
@@ -619,16 +619,16 @@ export interface paths {
             requestBody: {
                 content: {
                     /** @example {
-                     *       "currencyCode": "EURF",
+                     *       "currencyCode": "USD",
                      *       "limit": "1000000",
-                     *       "holderSecret": "sEd7...DEV_ONLY..."
+                     *       "holderSecret": "s..."
                      *     } */
                     "application/json": {
-                        /** @description 3-char code (EUR) or longer ASCII; adapter handles hex conversion. */
+                        /** @description Currency code (3-char or hex) */
                         currencyCode: string;
-                        /** @description Trust line limit as a string to preserve precision. */
+                        /** @description Opt-In limit amount */
                         limit: string;
-                        /** @description DEV ONLY: Family seed of the holder (used to sign the TrustSet). */
+                        /** @description Holder wallet secret (dev-only) */
                         holderSecret: string;
                     };
                 };
@@ -642,9 +642,8 @@ export interface paths {
                     content: {
                         "application/json": {
                             ok?: boolean;
+                            txHash?: string;
                             alreadyExisted?: boolean;
-                            txHash?: string | null;
-                            explorer?: string | null;
                         };
                     };
                 };

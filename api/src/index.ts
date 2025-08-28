@@ -28,14 +28,14 @@ await app.register(swagger, {
   openapi: {
     info: {
       title: 'TokenOps API',
-      description: 'XRPL system & tokenization APIs',
+      description: 'Multi-ledger tokenization APIs',
       version: '0.1.0',
     },
     servers: [{ url: serverUrl }],
     tags: [
-      { name: 'system', description: 'Liveness & XRPL connectivity' },
+      { name: 'system', description: 'Liveness & ledger connectivity' },
       { name: 'tokens', description: 'Issuance & token utilities' },
-      { name: 'trustlines', description: 'Trustline management' },
+      { name: 'opt-in', description: 'Opt-In management (trustline/associate/ATA)' },
       { name: 'balances', description: 'Account balances & queries' },
       { name: 'registry', description: 'Token registry & compliance' },
     ],
@@ -58,14 +58,14 @@ await app.register(authPlugin)
 // Keep the .js extensions if your dev/runtime resolves TS via tsx
 import systemRoutes from './routes/system.js'
 import tokensRoutes from './routes/tokens.js'
-import trustlineRoutes from './routes/trustlines.js'
+import optInRoutes from './routes/opt-in.js'
 import balancesRoutes from './routes/balances.js'
 import registryRoutes from './routes/registry.js'
 import complianceRoutes from './routes/compliance.js'
 
 await app.register(systemRoutes,     { prefix: '/system' })
 await app.register(tokensRoutes,     { prefix: '/tokens' })
-await app.register(trustlineRoutes,  { prefix: '/trustlines' })
+await app.register(optInRoutes,      { prefix: '/opt-in' })
 await app.register(balancesRoutes,   { prefix: '/balances' })
 await app.register(registryRoutes,   { prefix: '/registry' })
 await app.register(complianceRoutes, { prefix: '/compliance' })

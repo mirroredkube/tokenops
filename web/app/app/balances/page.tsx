@@ -20,7 +20,7 @@ export default function BalancesPage() {
       const { data, error } = await api.GET('/balances/{account}', {
         params: { path: { account }, query: { issuer: issuer || undefined, currency: currency || undefined } }
       })
-      if (error || !data) { alert(error?.message ?? 'Failed'); return }
+      if (error || !data) { alert(error?.error ?? 'Failed'); return }
       setRes(data)
     } finally {
       setLoading(false)

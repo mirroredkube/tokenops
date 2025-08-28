@@ -39,7 +39,8 @@ Shows XRPL network status including connection state, ledger information, networ
 
 The components integrate with the following API endpoints:
 
-- `POST /trustlines/create` - Create trustline for XRPL
+- `POST /opt-in/check` - Check Opt-In status for XRPL
+- `POST /opt-in/setup` - Setup Opt-In for XRPL
 - `POST /tokens/issue` - Issue tokens on the selected ledger
 - `GET /registry/tokens` - Get token records and statistics
 

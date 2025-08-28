@@ -14,10 +14,12 @@ interface Trustline {
   status: 'active' | 'pending' | 'failed'
 }
 
-export default function ManageTrustlinesPage() {
-  const [trustlines, setTrustlines] = useState<Trustline[]>([])
-  const [loading, setLoading] = useState(true)
+export default function ManageOptInPage() {
+  const [optIns, setOptIns] = useState<Trustline[]>([])
+  const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     currencyCode: '',
     limit: '',
@@ -25,32 +27,30 @@ export default function ManageTrustlinesPage() {
     noRipple: false,
     requireAuth: false
   })
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchTrustlines()
+    fetchOptIns()
   }, [])
 
-  const fetchTrustlines = async () => {
+  const fetchOptIns = async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      // TODO: Implement API endpoint to fetch existing trustlines
-      // const { data, error } = await api.GET('/trustlines')
-      // if (error) throw new Error(error.message)
-      // setTrustlines(data.trustlines || [])
-      
+      // TODO: Implement API endpoint to fetch existing opt-ins
+      // const { data, error } = await api.GET('/opt-in')
+      // if (error) throw new Error(error.error)
+      // setOptIns(data.optIns || [])
+
       // Mock data for now
-      setTrustlines([
+      setOptIns([
         {
           id: '1',
           currencyCode: 'USD',
           limit: '1000000',
-          holderAddress: 'rHolder123...',
-          issuerAddress: 'rIssuer456...',
+          holderAddress: 'rHolder456...',
+          issuerAddress: 'rIssuer123...',
           txHash: 'ABC123...',
-          createdAt: '2024-01-15T10:30:00Z',
-          status: 'active'
+          status: 'active',
+          createdAt: new Date().toISOString()
         }
       ])
     } catch (err: any) {
@@ -60,7 +60,7 @@ export default function ManageTrustlinesPage() {
     }
   }
 
-  const handleCreateTrustline = async (e: React.FormEvent) => {
+  const handleCreateOptIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setCreating(true)
     setError(null)
@@ -85,7 +85,7 @@ export default function ManageTrustlinesPage() {
         noRipple: false,
         requireAuth: false
       })
-      // fetchTrustlines() // Refresh the list
+      // fetchOptIns() // Refresh the list
 
     } catch (err: any) {
       setError(err.message)
@@ -94,12 +94,12 @@ export default function ManageTrustlinesPage() {
     }
   }
 
-  const handleAuthorizeTrustline = async (trustlineId: string) => {
+  const handleAuthorizeOptIn = async (optInId: string) => {
     try {
       // Note: Authorization is handled differently in the new Opt-In system
       // This would need to be implemented based on the specific ledger requirements
       setSuccess('Authorization not yet implemented in new Opt-In system')
-      // fetchTrustlines() // Refresh the list
+      // fetchOptIns() // Refresh the list
     } catch (err: any) {
       setError(err.message)
     }
@@ -145,8 +145,8 @@ export default function ManageTrustlinesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Create Trustline Form */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Create New Trustline</h2>
-          <form onSubmit={handleCreateTrustline} className="space-y-4">
+          <h2 className="text-xl font-semibold mb-4">Create New Opt-In</h2>
+          <form onSubmit={handleCreateOptIn} className="space-y-4">
             <FormField label="Currency Code" required>
               <input
                 type="text"
@@ -217,39 +217,39 @@ export default function ManageTrustlinesPage() {
               disabled={creating}
               className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {creating ? 'Creating Trustline...' : 'Create Trustline'}
+              {creating ? 'Creating Opt-In...' : 'Create Opt-In'}
             </button>
           </form>
         </div>
 
         {/* Existing Trustlines */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Existing Trustlines</h2>
+          <h2 className="text-xl font-semibold mb-4">Existing Opt-Ins</h2>
           
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading trustlines...</p>
+              <p className="mt-2 text-gray-600">Loading opt-ins...</p>
             </div>
-          ) : trustlines.length === 0 ? (
+          ) : optIns.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-600">No trustlines found.</p>
-              <p className="text-sm text-gray-500 mt-1">Create your first trustline to get started.</p>
+              <p className="text-gray-600">No opt-ins found.</p>
+              <p className="text-sm text-gray-500 mt-1">Create your first opt-in to get started.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {trustlines.map((trustline) => (
-                <div key={trustline.id} className="p-4 border border-gray-200 rounded-lg">
+              {optIns.map((optIn) => (
+                <div key={optIn.id} className="p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{trustline.currencyCode}</span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(trustline.status)}`}>
-                        {trustline.status}
+                      <span className="font-medium">{optIn.currencyCode}</span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(optIn.status)}`}>
+                        {optIn.status}
                       </span>
                     </div>
-                    {trustline.status === 'pending' && (
+                    {optIn.status === 'pending' && (
                       <button
-                        onClick={() => handleAuthorizeTrustline(trustline.id)}
+                        onClick={() => handleAuthorizeOptIn(optIn.id)}
                         className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         Authorize
@@ -257,10 +257,10 @@ export default function ManageTrustlinesPage() {
                     )}
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p>Limit: {trustline.limit}</p>
-                    <p>Holder: {trustline.holderAddress}</p>
-                    <p>Issuer: {trustline.issuerAddress}</p>
-                    <p>Created: {new Date(trustline.createdAt).toLocaleDateString()}</p>
+                    <p>Limit: {optIn.limit}</p>
+                    <p>Holder: {optIn.holderAddress}</p>
+                    <p>Issuer: {optIn.issuerAddress}</p>
+                    <p>Created: {new Date(optIn.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))}

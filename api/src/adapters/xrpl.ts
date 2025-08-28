@@ -1,7 +1,7 @@
 import xrpl, { Client, Wallet } from 'xrpl'
 import { withClient } from '../lib/xrplClient.js'
 import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../utils/currency.js'
-import type { LedgerAdapter, IssueParams, TrustlineParams, BalancesParams, AccountLinesParams } from './ledger.js'
+import type { LedgerAdapter, IssueParams, TrustlineParams, BalancesParams, AccountLinesParams, AssetRef, PrereqStatus, SignIntent, TxResult } from './ledger.js'
 
 const normalize = (code: string) => {
   const up = code.trim().toUpperCase()
@@ -12,7 +12,10 @@ const normalize = (code: string) => {
 
 export const xrplAdapter: LedgerAdapter = {
   name: 'XRPL',
+  id: 'xrpl',
+  supportsAuthorization: false,
 
+  // Legacy methods (backward compatibility)
   async issueToken({ currencyCode, amount, destination, metadata }: IssueParams) {
     const seed = process.env.ISSUER_SEED || process.env.ISSUER_SECRET
     if (!seed) throw new Error('Missing ISSUER_SEED')
@@ -107,4 +110,91 @@ export const xrplAdapter: LedgerAdapter = {
       return (resp.result as any).lines || []
     })
   },
+
+  // New ledger-agnostic methods
+  async checkPrereq({ holder, asset }: { holder: string; asset: AssetRef }): Promise<PrereqStatus> {
+    if (asset.ledger !== 'xrpl') {
+      return { ok: false, reason: 'Unsupported ledger', fix: 'UNKNOWN' }
+    }
+
+    return await withClient(async (client: Client) => {
+      const lines = await client.request({
+        command: "account_lines",
+        account: holder,
+        peer: asset.issuer,
+        ledger_index: "validated",
+      })
+      
+      const line = (lines.result as any).lines.find((l: any) => l.currency === asset.code)
+      
+      if (!line) {
+        return { ok: false, reason: "No trustline", fix: "PREREQ_SIGN" }
+      }
+      
+      if (Number(line.limit) <= 0) {
+        return { ok: false, reason: "Limit too low", fix: "LIMIT_TOO_LOW" }
+      }
+      
+      return { 
+        ok: true, 
+        details: { 
+          limit: line.limit, 
+          balance: line.balance,
+          currency: line.currency,
+          issuer: line.account
+        } 
+      }
+    })
+  },
+
+  async requestPrereqSetup({ holder, asset }: { holder: string; asset: AssetRef }): Promise<SignIntent> {
+    if (asset.ledger !== 'xrpl') {
+      throw new Error('Unsupported ledger')
+    }
+
+    const tx = {
+      TransactionType: "TrustSet",
+      Account: holder,
+      LimitAmount: { 
+        currency: asset.code, 
+        issuer: asset.issuer, 
+        value: "1000000000" // Default limit, could be made configurable
+      },
+    }
+    
+    return { kind: "WALLET_POPUP", tx }
+  },
+
+  async issue({ to, asset, amount, memoHex }: { to: string; asset: AssetRef; amount: string; memoHex?: string }): Promise<TxResult> {
+    if (asset.ledger !== 'xrpl') {
+      throw new Error('Unsupported ledger')
+    }
+
+    const seed = process.env.ISSUER_SEED || process.env.ISSUER_SECRET
+    if (!seed) throw new Error('Missing ISSUER_SEED')
+    const wallet = Wallet.fromSeed(seed)
+
+    return await withClient(async (client: Client) => {
+      const prepared = await client.autofill({
+        TransactionType: 'Payment',
+        Account: wallet.address,
+        Destination: to,
+        Amount: { 
+          currency: asset.code, 
+          value: amount, 
+          issuer: wallet.address 
+        },
+        Memos: memoHex ? [{ Memo: { MemoData: memoHex } }] : undefined,
+      })
+      const signed = wallet.sign(prepared)
+      const res = await client.submitAndWait(signed.tx_blob)
+      const ok = ((res.result as any)?.engine_result || (res.result as any)?.meta?.TransactionResult) === 'tesSUCCESS'
+      if (!ok) throw new Error((res.result as any)?.engine_result ?? 'submit_failed')
+      return { txid: signed.hash }
+    })
+  },
+
+  explorerTxUrl(txid: string): string {
+    return `https://livenet.xrpl.org/transactions/${txid}`
+  }
 }

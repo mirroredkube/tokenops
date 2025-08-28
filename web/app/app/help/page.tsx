@@ -68,7 +68,7 @@ export default function HelpPage() {
       title: "Create Trust Lines",
       description: "Set up trustlines for XRPL token management",
       icon: <Shield className="h-5 w-5" />,
-      href: "/app/trustlines",
+      href: "/app/opt-in",
       external: true
     },
     {
