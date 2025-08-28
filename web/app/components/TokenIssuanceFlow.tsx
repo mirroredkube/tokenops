@@ -321,7 +321,7 @@ export default function TokenIssuanceFlow() {
           
           {/* Progress line */}
           <div 
-            className="absolute top-6 left-0 h-0.5 bg-gradient-to-r from-slate-600 to-slate-800 rounded-full transition-all duration-700 ease-out"
+            className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
             style={{ 
               width: `${(['ledger-selection', 'trustline-check', 'token-issuance', 'compliance-metadata', 'success'].indexOf(currentStep) / 4) * 100}%` 
             }}
@@ -386,9 +386,9 @@ export default function TokenIssuanceFlow() {
                                      <div className={`
                      relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
                      ${isActive 
-                       ? 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-700 text-white shadow-lg shadow-slate-700/30 scale-110' 
+                       ? 'bg-gray-800 border-gray-800 text-white shadow-sm scale-110' 
                        : isCompleted 
-                         ? 'bg-gradient-to-br from-slate-600 to-slate-700 border-slate-600 text-white shadow-lg shadow-slate-600/30' 
+                         ? 'bg-gray-600 border-gray-600 text-white' 
                          : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
                      }
                      ${isUpcoming ? 'opacity-60' : 'opacity-100'}
@@ -403,7 +403,7 @@ export default function TokenIssuanceFlow() {
                     
                                          {/* Pulse animation for active step */}
                      {isActive && (
-                       <div className="absolute inset-0 rounded-full bg-slate-500 animate-ping opacity-20"></div>
+                       <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-20"></div>
                      )}
                   </div>
                   
@@ -412,9 +412,9 @@ export default function TokenIssuanceFlow() {
                      <span className={`
                        text-sm font-medium transition-all duration-300
                        ${isActive 
-                         ? 'text-slate-700' 
+                         ? 'text-gray-900' 
                          : isCompleted 
-                           ? 'text-slate-600' 
+                           ? 'text-gray-700' 
                            : 'text-gray-500'
                        }
                        ${isActive ? 'scale-105' : ''}
@@ -426,9 +426,9 @@ export default function TokenIssuanceFlow() {
                      <div className={`
                        mt-1 text-xs font-mono transition-all duration-300
                        ${isActive 
-                         ? 'text-slate-600' 
+                         ? 'text-gray-600' 
                          : isCompleted 
-                           ? 'text-slate-500' 
+                           ? 'text-gray-500' 
                            : 'text-gray-400'
                        }
                      `}>
@@ -467,8 +467,8 @@ export default function TokenIssuanceFlow() {
           <div className="max-w-6xl mx-auto">
             {/* Header Section */}
             <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg mb-3 shadow-sm">
-                <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-3">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
@@ -492,7 +492,7 @@ export default function TokenIssuanceFlow() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search ledgers..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white"
                 />
                 {searchQuery && (
                   <button
@@ -528,7 +528,7 @@ export default function TokenIssuanceFlow() {
                          <p className="text-gray-500 mb-4">Try searching for something else or check back later for more options.</p>
                          <button
                            onClick={() => setSearchQuery('')}
-                           className="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors duration-200"
+                           className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
                          >
                            Clear search
                          </button>
@@ -540,11 +540,11 @@ export default function TokenIssuanceFlow() {
                     <button
                       key={ledger.type}
                       onClick={() => handleLedgerSelection(ledger.type)}
-                      className="group bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-slate-300 transition-all duration-200 text-left overflow-hidden transform hover:-translate-y-0.5"
+                      className="group bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200 text-left overflow-hidden transform hover:-translate-y-0.5"
                     >
                       <div className="p-4">
                         <div className="mb-3 flex justify-center">
-                          <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-slate-50 transition-colors duration-200">
+                          <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-gray-100 transition-colors duration-200">
                             <LedgerLogo type={ledger.type} size="md" />
                           </div>
                         </div>
@@ -554,7 +554,7 @@ export default function TokenIssuanceFlow() {
                         {/* Status Badge */}
                         <div className="flex items-center justify-between">
                                                    {ledger.status === 'live' ? (
-                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                              </svg>
@@ -576,7 +576,7 @@ export default function TokenIssuanceFlow() {
                            </span>
                          )}
                           
-                          <svg className="w-4 h-4 text-gray-300 group-hover:text-slate-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
                         </div>
@@ -606,9 +606,9 @@ export default function TokenIssuanceFlow() {
             {/* Main Form Card */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               {/* Form Header */}
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-6">
+              <div className="bg-gray-800 px-8 py-6">
                 <h2 className="text-2xl font-bold text-white mb-2">Trustline Details</h2>
-                <p className="text-emerald-100">Enter the basic information to check trustline status</p>
+                <p className="text-gray-300">Enter the basic information to check trustline status</p>
               </div>
 
               {/* Form Content */}
@@ -625,7 +625,7 @@ export default function TokenIssuanceFlow() {
                          type="text"
                          value={trustlineCheckData.currencyCode}
                          onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, currencyCode: e.target.value }))}
-                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 text-base font-medium transition-all duration-200"
+                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-medium transition-all duration-200"
                          placeholder="USD, EUR, COMP"
                          required
                        />
@@ -641,7 +641,7 @@ export default function TokenIssuanceFlow() {
                            type="text"
                            value={trustlineCheckData.holderAddress}
                            onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, holderAddress: e.target.value }))}
-                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 text-base font-mono transition-all duration-200"
+                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
                            placeholder="rHolder123..."
                            required
                          />
@@ -656,7 +656,7 @@ export default function TokenIssuanceFlow() {
                            type="text"
                            value={trustlineCheckData.issuerAddress}
                            onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, issuerAddress: e.target.value }))}
-                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 text-base font-mono transition-all duration-200"
+                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
                            placeholder="rIssuer456..."
                            required
                          />
@@ -673,11 +673,11 @@ export default function TokenIssuanceFlow() {
                      >
                       ← Back to Ledger Selection
                     </button>
-                                         <button
-                       type="submit"
-                       disabled={loading}
-                       className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl"
-                     >
+                                                             <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
                       {loading ? (
                         <>
                           <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
@@ -699,18 +699,18 @@ export default function TokenIssuanceFlow() {
                 {trustlineCheckResult && (
                   <div className={`mt-12 p-8 rounded-2xl border-2 ${
                     trustlineCheckResult.exists 
-                      ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200' 
-                      : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
+                      ? 'bg-gray-50 border-gray-200' 
+                      : 'bg-amber-50 border-amber-200'
                   }`}>
                     <div className="flex items-start space-x-6">
                       <div className="flex-shrink-0">
                         <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
                           trustlineCheckResult.exists 
-                            ? 'bg-emerald-100' 
+                            ? 'bg-green-100' 
                             : 'bg-amber-100'
                         }`}>
                           {trustlineCheckResult.exists ? (
-                            <svg className="w-8 h-8 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
                           ) : (
@@ -722,15 +722,15 @@ export default function TokenIssuanceFlow() {
                       </div>
                       
                       <div className="flex-1">
-                                                 <h3 className={`text-lg font-semibold mb-2 ${
-                           trustlineCheckResult.exists ? 'text-emerald-800' : 'text-amber-800'
-                         }`}>
-                          {trustlineCheckResult.exists ? '✅ Trustline Found!' : '⚠️ Trustline Not Found'}
+                                                                         <h3 className={`text-lg font-semibold mb-2 ${
+                          trustlineCheckResult.exists ? 'text-green-800' : 'text-amber-800'
+                        }`}>
+                          {trustlineCheckResult.exists ? 'Trustline Found' : '⚠️ Trustline Not Found'}
                         </h3>
                         
-                                                 <p className={`text-base leading-relaxed ${
-                           trustlineCheckResult.exists ? 'text-emerald-700' : 'text-amber-700'
-                         }`}>
+                        <p className={`text-base leading-relaxed ${
+                          trustlineCheckResult.exists ? 'text-green-700' : 'text-amber-700'
+                        }`}>
                           {trustlineCheckResult.exists 
                             ? `A trustline exists for ${trustlineCheckData.currencyCode} from ${trustlineCheckData.issuerAddress} with limit ${trustlineCheckResult.details?.limit || 'unknown'} and balance ${trustlineCheckResult.details?.balance || '0'}.`
                             : `No trustline found for ${trustlineCheckData.currencyCode} from ${trustlineCheckData.issuerAddress}. Please provide additional details to create one.`
@@ -751,7 +751,7 @@ export default function TokenIssuanceFlow() {
                                    type="text"
                                    value={trustlineData.limit}
                                    onChange={(e) => setTrustlineData(prev => ({ ...prev, limit: e.target.value }))}
-                                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 text-base transition-all duration-200"
+                                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base transition-all duration-200"
                                    placeholder="1000000"
                                    required
                                  />
@@ -766,7 +766,7 @@ export default function TokenIssuanceFlow() {
                                    type="password"
                                    value={trustlineData.holderSecret}
                                    onChange={(e) => setTrustlineData(prev => ({ ...prev, holderSecret: e.target.value }))}
-                                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 text-base font-mono transition-all duration-200"
+                                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
                                    placeholder="sEd7..."
                                    required
                                  />
@@ -775,12 +775,12 @@ export default function TokenIssuanceFlow() {
                              </div>
                             
                             <div className="mt-6">
-                                                             <button
-                                 type="button"
-                                 onClick={handleTrustlineSubmit}
-                                 disabled={loading}
-                                 className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
-                               >
+                                                                                           <button
+                                type="button"
+                                onClick={handleTrustlineSubmit}
+                                disabled={loading}
+                                className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                              >
                                 {loading ? 'Creating Trustline...' : 'Create Trustline'}
                               </button>
                             </div>
@@ -790,11 +790,11 @@ export default function TokenIssuanceFlow() {
                         {/* Proceed Button for Existing Trustline */}
                         {trustlineCheckResult.exists && (
                           <div className="mt-8">
-                                                         <button
-                               type="button"
-                               onClick={() => setCurrentStep('token-issuance')}
-                               className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
-                             >
+                                                                                     <button
+                              type="button"
+                              onClick={() => setCurrentStep('token-issuance')}
+                              className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
+                            >
                               Continue to Token Issuance
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
