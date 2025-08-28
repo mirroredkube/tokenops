@@ -894,138 +894,211 @@ export default function TokenIssuanceFlow() {
       )}
 
       {currentStep === 'token-issuance' && (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">Issue Token</h2>
-            <p className="text-gray-600">
-              Now issue tokens from the issuer to the holder on {selectedLedger}.
-            </p>
-          </div>
-          <form onSubmit={handleTokenIssuance} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Currency Code (Locked)" required>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={tokenData.currencyCode}
-                    onChange={(e) => setTokenData(prev => ({ ...prev, currencyCode: e.target.value }))}
-                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 cursor-not-allowed"
-                    placeholder="USD, EUR, or custom code"
-                    disabled
-                    title="Currency is locked based on the trustline configuration"
-                  />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Currency locked based on trustline configuration</p>
-              </FormField>
-              <FormField label="Amount" required>
-                <input
-                  type="text"
-                  value={tokenData.amount}
-                  onChange={(e) => setTokenData(prev => ({ ...prev, amount: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="100"
-                  required
-                />
-              </FormField>
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4 rounded-2xl">
+          <div className="max-w-5xl mx-auto">
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-3">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Issue Token</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Now issue tokens from the issuer to the holder on {selectedLedger}.
+              </p>
             </div>
-            <FormField label="Destination Address (Locked)" required>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={tokenData.destination}
-                  onChange={(e) => setTokenData(prev => ({ ...prev, destination: e.target.value }))}
-                  className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 cursor-not-allowed"
-                  placeholder="r..."
-                  disabled
-                  title="Destination address is locked based on the trustline configuration"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
+
+            {/* Main Form Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              {/* Form Header */}
+              <div className="bg-gray-800 px-8 py-6">
+                <h2 className="text-2xl font-bold text-white mb-2">Token Details</h2>
+                <p className="text-gray-300">Configure the token issuance parameters</p>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Destination address locked based on trustline configuration</p>
-            </FormField>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex-shrink-0 mt-0.5">
-                  <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-yellow-800">Public On-Chain Metadata</h4>
-                  <p className="text-sm text-yellow-700 mt-1">
-                    This metadata will be stored permanently on the blockchain and is publicly visible. 
-                    Do not include sensitive information like personal data, compliance details, or private business information.
-                  </p>
-                </div>
-              </div>
-              
-              <FormField 
-                label="Additional Metadata (JSON)" 
-                helperText="Optional public metadata (e.g., token description, issuer website, logo URL)"
-              >
-                <textarea
-                  value={tokenData.metadataRaw}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setTokenData(prev => ({ ...prev, metadataRaw: value }))
+
+              {/* Form Content */}
+              <div className="p-8">
+                                <form onSubmit={handleTokenIssuance} className="space-y-6">
+                  {/* Input Fields */}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          Currency Code (Locked)
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={tokenData.currencyCode}
+                            onChange={(e) => setTokenData(prev => ({ ...prev, currencyCode: e.target.value }))}
+                            className="w-full px-4 py-3 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 bg-gray-50 cursor-not-allowed text-base font-medium transition-all duration-200"
+                            placeholder="USD, EUR, or custom code"
+                            disabled
+                            title="Currency is locked based on the trustline configuration"
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                            <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500">Currency locked based on trustline configuration</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          Amount
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={tokenData.amount}
+                          onChange={(e) => setTokenData(prev => ({ ...prev, amount: e.target.value }))}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-medium transition-all duration-200"
+                          placeholder="100"
+                          required
+                        />
+                      </div>
+                    </div>
                     
-                    // Try to parse JSON and update metadata if valid
-                    if (value.trim() === '') {
-                      setTokenData(prev => ({ ...prev, metadata: {} }))
-                    } else {
-                      try {
-                        const parsed = JSON.parse(value)
-                        setTokenData(prev => ({ ...prev, metadata: parsed }))
-                      } catch {
-                        // Invalid JSON - keep the raw text but don't update metadata
-                      }
-                    }
-                  }}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={4}
-                  placeholder='{"description": "EUR-backed stablecoin", "website": "https://example.com", "logo": "https://example.com/logo.png"}'
-                />
-              </FormField>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                        Destination Address (Locked)
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={tokenData.destination}
+                          onChange={(e) => setTokenData(prev => ({ ...prev, destination: e.target.value }))}
+                          className="w-full px-4 py-3 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 bg-gray-50 cursor-not-allowed text-base font-mono transition-all duration-200"
+                          placeholder="r..."
+                          disabled
+                          title="Destination address is locked based on the trustline configuration"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500">Destination address locked based on trustline configuration</p>
+                    </div>
+                  </div>
+
+                  {/* Metadata Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-amber-800">Public On-Chain Metadata</h4>
+                        <p className="text-sm text-amber-700 mt-1">
+                          This metadata will be stored permanently on the blockchain and is publicly visible. 
+                          Do not include sensitive information like personal data, compliance details, or private business information.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                        Additional Metadata (JSON)
+                      </label>
+                      <textarea
+                        value={tokenData.metadataRaw}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setTokenData(prev => ({ ...prev, metadataRaw: value }))
+                          
+                          // Try to parse JSON and update metadata if valid
+                          if (value.trim() === '') {
+                            setTokenData(prev => ({ ...prev, metadata: {} }))
+                          } else {
+                            try {
+                              const parsed = JSON.parse(value)
+                              setTokenData(prev => ({ ...prev, metadata: parsed }))
+                            } catch {
+                              // Invalid JSON - keep the raw text but don't update metadata
+                            }
+                          }
+                        }}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base transition-all duration-200"
+                        rows={4}
+                        placeholder='{"description": "EUR-backed stablecoin", "website": "https://example.com", "logo": "https://example.com/logo.png"}'
+                      />
+                      <p className="text-xs text-gray-500">Optional public metadata (e.g., token description, issuer website, logo URL)</p>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between pt-8 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep('trustline-check')}
+                      className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
+                    >
+                      ← Back to Trustline Configuration
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                          Issuing Token...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                          </svg>
+                          Issue Token
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setCurrentStep('trustline-check')}
-                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
-              >
-                {loading ? 'Issuing Token...' : 'Issue Token'}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
 
       {currentStep === 'compliance-metadata' && (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-semibold mb-2">MiCA Compliance Metadata</h2>
-            <p className="text-gray-600">
-              Configure compliance metadata for regulatory reporting and audit trails.
-            </p>
-          </div>
-          <form onSubmit={handleComplianceSubmit} className="space-y-6">
-            {/* Basic Compliance Information */}
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4 rounded-2xl">
+          <div className="max-w-5xl mx-auto">
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-3">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">MiCA Compliance Metadata</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Configure compliance metadata for regulatory reporting and audit trails.
+              </p>
+            </div>
+
+            {/* Main Form Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              {/* Form Header */}
+              <div className="bg-gray-800 px-8 py-6">
+                <h2 className="text-2xl font-bold text-white mb-2">Compliance Details</h2>
+                <p className="text-gray-300">Configure regulatory compliance information</p>
+              </div>
+
+              {/* Form Content */}
+              <div className="p-8">
+                                <form onSubmit={handleComplianceSubmit} className="space-y-6">
+                  {/* Basic Compliance Information */}
             <div className="bg-gray-50 p-6 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1154,22 +1227,39 @@ export default function TokenIssuanceFlow() {
               </FormField>
             </div>
 
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setCurrentStep('token-issuance')}
-                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
-              >
-                Complete Issuance
-              </button>
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between pt-8 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep('token-issuance')}
+                      className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
+                    >
+                      ← Back to Token Issuance
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                          Completing Issuance...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Complete Issuance
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
