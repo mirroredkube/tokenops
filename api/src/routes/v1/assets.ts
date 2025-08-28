@@ -273,8 +273,11 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       return reply.status(404).send({ error: 'Asset not found' })
     }
     
-    // Allow status changes and updates to draft assets
-    if (asset.status !== 'draft' && parsed.data.status === undefined) {
+    // Allow status changes for all assets, but restrict other updates to draft assets only
+    const hasStatusChange = parsed.data.status !== undefined
+    const hasOtherChanges = Object.keys(parsed.data).some(key => key !== 'status')
+    
+    if (!hasStatusChange && hasOtherChanges && asset.status !== 'draft') {
       return reply.status(409).send({ error: 'Can only update draft assets' })
     }
     

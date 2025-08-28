@@ -22,6 +22,7 @@ export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [filters, setFilters] = useState({
     ledger: '',
     status: ''
@@ -102,14 +103,46 @@ export default function AssetsPage() {
 
   const handleStatusChange = async (assetId: string, newStatus: 'active' | 'paused' | 'retired') => {
     try {
-      // TODO: Replace with actual API call
       console.log(`Changing asset ${assetId} status to ${newStatus}`)
+
+      // Call the backend API to update the asset status
+      const { data, error } = await api.PUT(`/v1/assets/${assetId}` as any, {
+        body: {
+          status: newStatus
+        }
+      })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to update asset status')
+      }
+
+      if (!data) {
+        throw new Error('No response data received')
+      }
+
+      console.log('Asset status updated successfully:', data)
       
-      // Update local state
+      // Update local state with the new data from the API
       setAssets(prev => prev.map(asset => 
-        asset.id === assetId ? { ...asset, status: newStatus } : asset
+        asset.id === assetId ? { 
+          ...asset, 
+          status: (data as any).status || newStatus,
+          updatedAt: (data as any).updatedAt || new Date().toISOString()
+        } : asset
       ))
+      
+      // Show success message
+      const statusLabels = {
+        'active': 'activated',
+        'paused': 'paused',
+        'retired': 'retired'
+      }
+      setSuccessMessage(`Asset successfully ${statusLabels[newStatus]}`)
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err: any) {
+      console.error('Error updating asset status:', err)
       setError(`Failed to update status: ${err.message}`)
     }
   }
@@ -143,6 +176,16 @@ export default function AssetsPage() {
           <div className="flex items-center">
             <span className="text-red-600 mr-2">⚠️</span>
             <span className="text-red-800">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <span className="text-green-600 mr-2">✅</span>
+            <span className="text-green-800">{successMessage}</span>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import Link from 'next/link'
+import ConfirmationDialog from '../../../components/ConfirmationDialog'
 
 interface Asset {
   id: string
@@ -37,6 +38,20 @@ export default function AssetDetailsPage() {
   const [asset, setAsset] = useState<Asset | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [confirmationDialog, setConfirmationDialog] = useState<{
+    isOpen: boolean
+    action: string
+    title: string
+    message: string
+    variant: 'danger' | 'warning' | 'info'
+  }>({
+    isOpen: false,
+    action: '',
+    title: '',
+    message: '',
+    variant: 'info'
+  })
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAsset()
@@ -45,36 +60,38 @@ export default function AssetDetailsPage() {
   const fetchAsset = async () => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API call when types are fixed
       console.log('Fetching asset:', assetId)
+
+      const { data, error } = await api.GET(`/v1/assets/${assetId}` as any, {})
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to fetch asset')
+      }
+
+      if (!data) {
+        throw new Error('No asset data received')
+      }
+
+      console.log('Asset fetched successfully:', data)
       
-      // Mock data for testing
-      const mockAsset: Asset = {
-        id: assetId,
-        assetRef: 'xrpl:testnet/iou:rL7uh1hrWXRknvhhCBgRbvdRytourhCaGX.COMP',
-        ledger: 'xrpl',
-        network: 'testnet',
-        issuer: 'rL7uh1hrWXRknvhhCBgRbvdRytourhCaGX',
-        code: 'COMP',
-        decimals: 6,
-        complianceMode: 'RECORD_ONLY',
-        status: 'active',
-        createdAt: '2025-08-28T10:00:00Z',
-        updatedAt: '2025-08-28T10:00:00Z',
-        controls: {
-          requireAuth: true,
-          freeze: false,
-          clawback: false,
-          transferFeeBps: 0
-        },
-        registry: {
-          isin: 'US0378331005',
-          jurisdiction: 'US',
-          micaClass: 'Utility Token'
-        }
+      // Transform API response to match our Asset interface
+      const transformedAsset: Asset = {
+        id: (data as any).id || assetId,
+        assetRef: (data as any).assetRef || '',
+        ledger: (data as any).ledger || '',
+        network: (data as any).network || '',
+        issuer: (data as any).issuer || '',
+        code: (data as any).code || '',
+        decimals: (data as any).decimals || 0,
+        complianceMode: (data as any).complianceMode || 'RECORD_ONLY',
+        status: (data as any).status || 'draft',
+        createdAt: (data as any).createdAt || new Date().toISOString(),
+        updatedAt: (data as any).updatedAt,
+        controls: (data as any).controls,
+        registry: (data as any).registry
       }
       
-      setAsset(mockAsset)
+      setAsset(transformedAsset)
     } catch (err: any) {
       console.error('Error fetching asset:', err)
       setError(err.message || 'Failed to fetch asset')
@@ -83,15 +100,90 @@ export default function AssetDetailsPage() {
     }
   }
 
+  const showConfirmationDialog = (action: string, newStatus: 'active' | 'paused' | 'retired') => {
+    const getDialogConfig = () => {
+      switch (newStatus) {
+        case 'active':
+          return {
+            title: 'Activate Asset',
+            message: `Are you sure you want to activate ${asset?.code}? This will make it available for token issuance.`,
+            variant: 'info' as const
+          }
+        case 'paused':
+          return {
+            title: 'Pause Asset',
+            message: `Are you sure you want to pause ${asset?.code}? This will temporarily disable token issuance.`,
+            variant: 'warning' as const
+          }
+        case 'retired':
+          return {
+            title: 'Retire Asset',
+            message: `Are you sure you want to retire ${asset?.code}? This action cannot be undone and will permanently disable the asset.`,
+            variant: 'danger' as const
+          }
+        default:
+          return {
+            title: 'Change Status',
+            message: `Are you sure you want to change the status of ${asset?.code}?`,
+            variant: 'info' as const
+          }
+      }
+    }
+
+    const config = getDialogConfig()
+    setConfirmationDialog({
+      isOpen: true,
+      action: newStatus,
+      title: config.title,
+      message: config.message,
+      variant: config.variant
+    })
+  }
+
   const handleStatusChange = async (newStatus: 'active' | 'paused' | 'retired') => {
     if (!asset) return
     
     try {
-      // TODO: Replace with actual API call
       console.log(`Changing asset ${asset.id} status to ${newStatus}`)
+
+      // Call the backend API to update the asset status
+      const { data, error } = await api.PUT(`/v1/assets/${asset.id}` as any, {
+        body: {
+          status: newStatus
+        }
+      })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to update asset status')
+      }
+
+      if (!data) {
+        throw new Error('No response data received')
+      }
+
+      console.log('Asset status updated successfully:', data)
       
-      setAsset(prev => prev ? { ...prev, status: newStatus } : null)
+      // Update local state with the new data from the API
+      const updatedAsset: Asset = {
+        ...asset,
+        status: (data as any).status || newStatus,
+        updatedAt: (data as any).updatedAt || new Date().toISOString()
+      }
+      
+      setAsset(updatedAsset)
+      
+      // Show success message
+      const statusLabels = {
+        'active': 'activated',
+        'paused': 'paused',
+        'retired': 'retired'
+      }
+      setSuccessMessage(`Asset successfully ${statusLabels[newStatus]}`)
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err: any) {
+      console.error('Error updating asset status:', err)
       setError(`Failed to update status: ${err.message}`)
     }
   }
@@ -175,7 +267,7 @@ export default function AssetDetailsPage() {
           )}
           {asset.status === 'draft' && (
             <button
-              onClick={() => handleStatusChange('active')}
+              onClick={() => showConfirmationDialog('activate', 'active')}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Activate
@@ -183,7 +275,7 @@ export default function AssetDetailsPage() {
           )}
           {asset.status === 'active' && (
             <button
-              onClick={() => handleStatusChange('paused')}
+              onClick={() => showConfirmationDialog('pause', 'paused')}
               className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
             >
               Pause
@@ -191,7 +283,7 @@ export default function AssetDetailsPage() {
           )}
           {(asset.status === 'active' || asset.status === 'paused') && (
             <button
-              onClick={() => handleStatusChange('retired')}
+              onClick={() => showConfirmationDialog('retire', 'retired')}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               Retire
@@ -199,6 +291,26 @@ export default function AssetDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <span className="text-green-600 mr-2">✅</span>
+            <span className="text-green-800">{successMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center">
+            <span className="text-red-600 mr-2">⚠️</span>
+            <span className="text-red-800">{error}</span>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
@@ -335,7 +447,7 @@ export default function AssetDetailsPage() {
                     <p className="text-sm text-blue-700">Make this asset available for issuance</p>
                   </div>
                   <button
-                    onClick={() => handleStatusChange('active')}
+                    onClick={() => showConfirmationDialog('activate', 'active')}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     Activate
@@ -349,7 +461,7 @@ export default function AssetDetailsPage() {
                     <p className="text-sm text-yellow-700">Temporarily stop new issuances</p>
                   </div>
                   <button
-                    onClick={() => handleStatusChange('paused')}
+                    onClick={() => showConfirmationDialog('pause', 'paused')}
                     className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
                   >
                     Pause
@@ -363,7 +475,7 @@ export default function AssetDetailsPage() {
                     <p className="text-sm text-red-700">Permanently deactivate this asset</p>
                   </div>
                   <button
-                    onClick={() => handleStatusChange('retired')}
+                    onClick={() => showConfirmationDialog('retire', 'retired')}
                     className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                   >
                     Retire
@@ -433,6 +545,17 @@ export default function AssetDetailsPage() {
           )}
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmationDialog.isOpen}
+        onClose={() => setConfirmationDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => handleStatusChange(confirmationDialog.action as 'active' | 'paused' | 'retired')}
+        title={confirmationDialog.title}
+        message={confirmationDialog.message}
+        confirmText={confirmationDialog.action === 'retired' ? 'Retire Asset' : confirmationDialog.action === 'paused' ? 'Pause Asset' : 'Activate Asset'}
+        variant={confirmationDialog.variant}
+      />
     </div>
   )
 }
