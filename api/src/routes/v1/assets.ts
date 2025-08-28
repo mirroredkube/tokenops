@@ -1,34 +1,7 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
-
-// ---------- Asset Types ----------
-type Asset = {
-  id: string;                 // internal UUID
-  assetRef: string;           // CAIP-19–style string
-  ledger: "xrpl"|"stellar"|"evm"|"solana"|"algorand"|"hedera";
-  network: "mainnet"|"testnet"|"devnet";
-  issuer: string;             // r... / G... / 0x... / mint addr / tokenId / ASA id
-  code: string;               // "USD" / symbol
-  decimals: number;
-  complianceMode: "OFF"|"RECORD_ONLY"|"GATED_BEFORE";
-  controls?: {
-    requireAuth?: boolean;
-    freeze?: boolean;
-    clawback?: boolean;
-    transferFeeBps?: number;
-  };
-  registry?: {
-    isin?: string;
-    lei?: string;
-    micaClass?: string;
-    jurisdiction?: string;
-  };
-  metadata?: Record<string, any>;
-  status: "draft"|"active"|"paused"|"retired";
-  createdAt: string;
-  updatedAt: string;
-}
+import { Asset, assets, generateAssetRef, generateAssetId } from './shared.js'
 
 // ---------- Validation Schemas ----------
 const AssetCreateSchema = z.object({
@@ -53,34 +26,11 @@ const AssetCreateSchema = z.object({
   metadata: z.record(z.any()).optional()
 })
 
-const AssetUpdateSchema = AssetCreateSchema.partial()
+const AssetUpdateSchema = AssetCreateSchema.partial().extend({
+  status: z.enum(["draft", "active", "paused", "retired"]).optional()
+})
 
-// ---------- Helper Functions ----------
-function generateAssetRef(ledger: string, network: string, issuer: string, code: string): string {
-  switch (ledger) {
-    case 'xrpl':
-      return `xrpl:${network}/iou:${issuer}.${code}`
-    case 'stellar':
-      return `stellar:${network}/alphanum4:${issuer}/${code}`
-    case 'evm':
-      return `eip155:${network === 'mainnet' ? '1' : '11155111'}/erc20:${issuer}`
-    case 'solana':
-      return `solana:${network}/spl:${issuer}`
-    case 'algorand':
-      return `algorand:${network}/asa:${issuer}`
-    case 'hedera':
-      return `hedera:${network}/hts:${issuer}`
-    default:
-      throw new Error(`Unsupported ledger: ${ledger}`)
-  }
-}
 
-function generateAssetId(): string {
-  return `asset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-}
-
-// ---------- In-Memory Storage (MVP) ----------
-const assets = new Map<string, Asset>()
 
 export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
   // 1. POST /v1/assets - Create new asset
@@ -288,6 +238,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       body: {
         type: 'object',
         properties: {
+          status: { type: 'string', enum: ['draft', 'active', 'paused', 'retired'] },
           complianceMode: { type: 'string', enum: ['OFF', 'RECORD_ONLY', 'GATED_BEFORE'] },
           controls: { type: 'object' },
           registry: { type: 'object' },
@@ -322,8 +273,8 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       return reply.status(404).send({ error: 'Asset not found' })
     }
     
-    // Only allow updates to draft assets
-    if (asset.status !== 'draft') {
+    // Allow status changes and updates to draft assets
+    if (asset.status !== 'draft' && parsed.data.status === undefined) {
       return reply.status(409).send({ error: 'Can only update draft assets' })
     }
     

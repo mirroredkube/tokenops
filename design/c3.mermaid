@@ -1,0 +1,20 @@
+C4Component
+title Issuance Service — Components
+
+Container_Boundary(issuesvc, "Issuance Service") {
+  Component(preflight, "Pre-flight Checker", "Rules", "Opt-in ready, limits/reserve, compliance present, (auth if gated).")
+  Component(anchor, "Anchor Builder", "Utility", "Builds {recordId, sha256} memo/event/remark payload.")
+  Component(facade, "Adapter Facade", "API", "Uniform interface: issue(), getStatus().")
+  Component(submitter, "Tx Submitter", "Worker", "Submit tx to ledger, handle errors, backoff.")
+  Component(poller, "Status Poller", "Worker", "Poll ledger until validated/failed.")
+  Component(audit, "Audit Logger", "Writer", "Append tx + decisions to tx_log.")
+  Component(idem, "Idempotency Store", "Cache", "Prevents duplicate issuances per key.")
+}
+
+Rel(preflight, facade, "resolve ledger specifics")
+Rel(anchor, submitter, "attach memo payload (optional)")
+Rel(submitter, facade, "issue()")
+Rel(poller, facade, "getStatus()")
+Rel(submitter, audit, "write")
+Rel(poller, audit, "write")
+Rel(idem, submitter, "check/set")

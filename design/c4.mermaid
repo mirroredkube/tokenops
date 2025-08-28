@@ -1,0 +1,17 @@
+C4Component
+title Compliance Service — Components
+
+Container_Boundary(compsvc, "Compliance Service") {
+  Component(api, "Compliance API", "REST", "POST/GET/PUT records; PATCH verify.")
+  Component(canon, "Canonicalizer + Hasher", "Lib", "Stable JSON + SHA-256.")
+  Component(store, "Record Store", "Repo", "JSON, status, relationships.")
+  Component(pii, "PII Vault Client", "Lib", "Encrypt/upload docs; return handles.")
+  Component(rbac, "RBAC Policy", "Lib", "Issuer/regulator permissions, audit.")
+  Component(audit, "Audit Trail", "Writer", "Who changed what, when.")
+}
+
+Rel(api, canon, "compute hash")
+Rel(api, store, "persist")
+Rel(api, pii, "store encrypted docs")
+Rel(api, rbac, "authorize")
+Rel(api, audit, "append")

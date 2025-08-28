@@ -1,0 +1,35 @@
+C4Context
+title Token Issuance Platform — System Context
+
+Person(issuer, "Issuer (Org Admin)", "Registers assets, configures policy, runs compliance, issues tokens.")
+Person(holder, "Holder (Recipient)", "Opts in/associates and receives tokens.")
+Person(regulator, "Auditor/Regulator", "Reads reports and verifies compliance offline.")
+
+System_Boundary(platform, "Token Issuance Platform") {
+  System(api, "Issuance API (v1)", "REST+JSON", "Assets, Opt-Ins, Compliance Records, Issuances.")
+  System(web, "Issuer Console (UI)", "Web App", "Wizard for asset setup, opt-in, compliance & issuance.")
+}
+
+System_Ext(wallets, "User Wallets", "Xaman/GemWallet, Ledger, etc.", "End-user signing for TrustSet/associate.")
+System_Ext(kyc, "KYC/Screening Providers", "Optional", "Sanctions/PEP checks (hashes only stored).")
+System_Ext(storage, "Secure Object Storage", "S3/Blob", "Encrypted PII docs (off-ledger).")
+System_Ext(kms, "KMS/HSM", "Cloud KMS", "Protects issuer/server keys (if server-side signing).")
+System_Ext(obs, "Explorer/Monitoring", "XRPL explorer, logs, metrics", "Ops & audit visibility.")
+
+System_Ext(xrpl, "XRPL", "Ledger")
+System_Ext(stellar, "Stellar", "Ledger")
+System_Ext(other, "Other Ledgers", "Algorand/Hedera/Solana/EVM", "Added via adapters")
+
+Rel(issuer, web, "Uses")
+Rel(web, api, "Calls", "HTTPS")
+Rel(issuer, api, "Integrates (alt to UI)", "HTTPS")
+Rel(api, wallets, "Wallet handoff (unsigned tx → user signs)")
+Rel(api, xrpl, "Submit/Query via Adapter", "WebSocket/HTTP")
+Rel(api, stellar, "Submit/Query via Adapter")
+Rel(api, other, "Submit/Query via Adapters")
+Rel(api, storage, "Store PII docs (encrypted)")
+Rel(api, kyc, "Optional checks (results → hash only)")
+Rel(api, kms, "Encrypt/Sign, manage secrets")
+Rel(api, obs, "Emit telemetry")
+Rel(regulator, api, "Read reports (no PII)")
+Rel(holder, wallets, "Signs opt-in & receives tokens")

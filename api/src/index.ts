@@ -59,28 +59,26 @@ await app.register(authPlugin)
 // Keep the .js extensions if your dev/runtime resolves TS via tsx
 import systemRoutes from './routes/system.js'
 import tokensRoutes from './routes/tokens.js'
-import optInRoutes from './routes/opt-in.js'
 import balancesRoutes from './routes/balances.js'
 import registryRoutes from './routes/registry.js'
-import complianceRoutes from './routes/compliance.js'
 
 // New v1 routes
-import v1LedgerRoutes from './routes/v1/ledgers.js'
 import v1ComplianceRoutes from './routes/v1/compliance.js'
 import v1AssetRoutes from './routes/v1/assets.js'
+import v1OptInRoutes from './routes/v1/opt-ins.js'
+import v1IssuanceRoutes from './routes/v1/issuances.js'
 
 // Legacy routes (for backward compatibility during transition)
 await app.register(systemRoutes,     { prefix: '/system' })
 await app.register(tokensRoutes,     { prefix: '/tokens' })
-await app.register(optInRoutes,      { prefix: '/opt-in' })
 await app.register(balancesRoutes,   { prefix: '/balances' })
 await app.register(registryRoutes,   { prefix: '/registry' })
-await app.register(complianceRoutes, { prefix: '/compliance' })
 
-// New v1 routes
-await app.register(v1LedgerRoutes,   { prefix: '/v1' })
+// New v1 routes (asset-centric)
 await app.register(v1ComplianceRoutes, { prefix: '/v1' })
 await app.register(v1AssetRoutes,    { prefix: '/v1' })
+await app.register(v1OptInRoutes,    { prefix: '/v1' })
+await app.register(v1IssuanceRoutes, { prefix: '/v1' })
 
 // ----------------------------------------------------------------------------
 // Startup

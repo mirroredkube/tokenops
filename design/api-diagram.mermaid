@@ -1,0 +1,42 @@
+sequenceDiagram
+  participant UI
+  participant API
+  participant AssetSvc
+  participant OptInSvc
+  participant CompSvc
+  participant IssueSvc
+  participant Adapter as Ledger Adapter
+
+  UI->>API: POST /v1/assets
+  API->>AssetSvc: create asset (draft)
+  AssetSvc-->>API: assetId
+  UI->>API: PUT /v1/assets/{assetId} {status: active}
+  API->>AssetSvc: activate
+
+  UI->>API: GET /v1/assets/{assetId}/opt-ins/{holder}
+  API->>OptInSvc: checkPrereq()
+  OptInSvc->>Adapter: read ledger state
+  Adapter-->>OptInSvc: status
+  OptInSvc-->>API: status
+
+  UI->>API: PUT /v1/assets/{assetId}/opt-ins/{holder}
+  API->>OptInSvc: putPrereq()
+  OptInSvc->>Adapter: submit prereq tx
+  Adapter-->>OptInSvc: txId
+  OptInSvc-->>API: {txId}
+
+  UI->>API: POST /v1/compliance-records
+  API->>CompSvc: store JSON + sha256
+  CompSvc-->>API: {recordId, sha256}
+
+  UI->>API: POST /v1/assets/{assetId}/issuances {to, amount, complianceRef, anchor}
+  API->>IssueSvc: enqueue issuance
+  IssueSvc->>Adapter: preflight + submit (add memo if anchor)
+  Adapter-->>IssueSvc: txId
+  IssueSvc-->>API: {issuanceId, txId}
+
+  UI->>API: GET /v1/assets/{assetId}/issuances/{issuanceId}
+  API->>IssueSvc: status()
+  IssueSvc->>Adapter: poll
+  Adapter-->>IssueSvc: validated|failed
+  IssueSvc-->>API: status

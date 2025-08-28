@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import crypto from 'crypto'
+import { checkIdempotency, storeIdempotency } from './shared.js'
 
 // ---------- validation ----------
 const ComplianceRecordSchema = z.object({
@@ -75,6 +76,13 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
 
     const record = parsed.data
     
+    // Check idempotency
+    const idempotencyKey = req.headers['idempotency-key'] as string
+    const existingResponse = checkIdempotency(idempotencyKey)
+    if (existingResponse) {
+      return reply.status(201).send(existingResponse)
+    }
+    
     try {
       // Canonicalize JSON (sort keys, no extra whitespace)
       const canonicalJson = JSON.stringify(record, Object.keys(record).sort())
@@ -93,11 +101,18 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         record: canonicalJson
       })
       
-      return reply.status(201).send({
+      const response = {
         recordId,
         sha256: `sha256:${sha256}`,
         status: 'unverified'
-      })
+      }
+      
+      // Store for idempotency
+      if (idempotencyKey) {
+        storeIdempotency(idempotencyKey, response)
+      }
+      
+      return reply.status(201).send(response)
     } catch (error: any) {
       console.error('Error creating compliance record:', error)
       return reply.status(400).send({ error: 'Failed to create compliance record' })
@@ -153,6 +168,64 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       micaClass: 'Utility Token',
       transferRestrictions: false,
       purpose: 'Payment, Utility'
+    })
+  })
+
+  // PATCH verify compliance record
+  app.patch('/compliance-records/:recordId/verify', {
+    schema: {
+      summary: 'Verify compliance record',
+      description: 'Update compliance record status (auditor/regulator only)',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['recordId'],
+        properties: {
+          recordId: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['status'],
+        properties: {
+          status: { type: 'string', enum: ['verified', 'rejected'] },
+          reason: { type: 'string', description: 'Reason for rejection' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            recordId: { type: 'string' },
+            status: { type: 'string' },
+            verifiedAt: { type: 'string' },
+            reason: { type: 'string' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    const { recordId } = req.params as { recordId: string }
+    const { status, reason } = req.body as { status: 'verified' | 'rejected'; reason?: string }
+    
+    // For MVP, we'll return a mock response
+    // TODO: Update in database with RBAC check
+    if (!recordId.startsWith('rec_')) {
+      return reply.status(404).send({ error: 'Compliance record not found' })
+    }
+    
+    // TODO: Add RBAC check for issuer admin / regulator roles
+    // if (!hasRole(req.user, ['admin', 'regulator'])) {
+    //   return reply.status(403).send({ error: 'Insufficient permissions' })
+    // }
+    
+    return reply.send({
+      recordId,
+      status,
+      verifiedAt: new Date().toISOString(),
+      reason: status === 'rejected' ? reason : undefined
     })
   })
 }
