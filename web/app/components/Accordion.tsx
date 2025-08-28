@@ -13,7 +13,7 @@ export default function Accordion({ title, children, defaultOpen = false, step }
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
