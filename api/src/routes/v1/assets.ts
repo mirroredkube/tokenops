@@ -5,7 +5,7 @@ import { Asset, assets, generateAssetRef, generateAssetId } from './shared.js'
 
 // ---------- Validation Schemas ----------
 const AssetCreateSchema = z.object({
-  ledger: z.enum(["xrpl", "stellar", "evm", "solana", "algorand", "hedera"]),
+  ledger: z.enum(["xrpl", "hedera", "ethereum"]),
   network: z.enum(["mainnet", "testnet", "devnet"]).default("testnet"),
   issuer: z.string().min(1),
   code: z.string().min(1),
@@ -45,7 +45,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         properties: {
           ledger: { 
             type: 'string', 
-            enum: ['xrpl', 'stellar', 'evm', 'solana', 'algorand', 'hedera'],
+            enum: ['xrpl', 'hedera', 'ethereum'],
             description: 'Target ledger for the asset'
           },
           network: { 

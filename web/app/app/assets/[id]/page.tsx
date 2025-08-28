@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { api } from '@/lib/api'
 import Link from 'next/link'
 
 interface Asset {
@@ -44,7 +45,9 @@ export default function AssetDetailsPage() {
   const fetchAsset = async () => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API call
+      // TODO: Replace with actual API call when types are fixed
+      console.log('Fetching asset:', assetId)
+      
       // Mock data for testing
       const mockAsset: Asset = {
         id: assetId,
@@ -73,7 +76,8 @@ export default function AssetDetailsPage() {
       
       setAsset(mockAsset)
     } catch (err: any) {
-      setError(err.message)
+      console.error('Error fetching asset:', err)
+      setError(err.message || 'Failed to fetch asset')
     } finally {
       setLoading(false)
     }

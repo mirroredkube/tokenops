@@ -34,59 +34,48 @@ export default function AssetsPage() {
   const fetchAssets = async () => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API call when types are fixed
-      // For now, use mock data to test the UI
-      const mockAssets: Asset[] = [
-        {
-          id: 'asset_123',
-          assetRef: 'xrpl:testnet/iou:rL7uh1hrWXRknvhhCBgRbvdRytourhCaGX.COMP',
-          ledger: 'xrpl',
-          network: 'testnet',
-          issuer: 'rL7uh1hrWXRknvhhCBgRbvdRytourhCaGX',
-          code: 'COMP',
-          decimals: 6,
-          complianceMode: 'RECORD_ONLY',
-          status: 'active',
-          createdAt: '2025-08-28T10:00:00Z'
-        },
-        {
-          id: 'asset_456',
-          assetRef: 'xrpl:testnet/iou:rL7uh1hrWXRknvhhCBgRbvdRytourhCaGX.USD',
-          ledger: 'xrpl',
-          network: 'testnet',
-          issuer: 'rL7uh1hrWXRknvhhCBgRbvdRytourhCaGX',
-          code: 'USD',
-          decimals: 6,
-          complianceMode: 'GATED_BEFORE',
-          status: 'draft',
-          createdAt: '2025-08-27T15:30:00Z'
-        },
-        {
-          id: 'asset_789',
-          assetRef: 'ethereum:testnet/erc20:0x1234567890123456789012345678901234567890.USDC',
-          ledger: 'ethereum',
-          network: 'testnet',
-          issuer: '0x1234567890123456789012345678901234567890',
-          code: 'USDC',
-          decimals: 6,
-          complianceMode: 'OFF',
-          status: 'paused',
-          createdAt: '2025-08-26T09:15:00Z'
-        }
-      ]
-      
-      // Filter mock data
-      let filteredAssets = mockAssets
-      if (filters.ledger) {
-        filteredAssets = filteredAssets.filter(asset => asset.ledger === filters.ledger)
+      // Build query parameters
+      const queryParams: any = {}
+      if (filters.ledger) queryParams.ledger = filters.ledger
+      if (filters.status) queryParams.status = filters.status
+      queryParams.limit = 50
+      queryParams.offset = 0
+
+      console.log('Fetching assets with params:', queryParams)
+
+      const { data, error } = await api.GET('/v1/assets', {
+        params: { query: queryParams }
+      })
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        throw new Error((error as any).error || 'Failed to fetch assets')
       }
-      if (filters.status) {
-        filteredAssets = filteredAssets.filter(asset => asset.status === filters.status)
+
+      if (!data || !data.assets) {
+        throw new Error('No assets data received')
       }
+
+      console.log('Assets fetched successfully:', data.assets)
       
-      setAssets(filteredAssets)
+      // Transform API response to match our Asset interface
+      const transformedAssets: Asset[] = data.assets.map((asset: any) => ({
+        id: asset.id || '',
+        assetRef: asset.assetRef || '',
+        ledger: asset.ledger || '',
+        network: asset.network || '',
+        issuer: asset.issuer || '',
+        code: asset.code || '',
+        decimals: asset.decimals || 0,
+        complianceMode: asset.complianceMode || 'RECORD_ONLY',
+        status: asset.status || 'draft',
+        createdAt: asset.createdAt || new Date().toISOString(),
+        updatedAt: asset.updatedAt
+      }))
+      
+      setAssets(transformedAssets)
     } catch (err: any) {
-      setError(err.message)
+      console.error('Error fetching assets:', err)
+      setError(err.message || 'Failed to fetch assets')
     } finally {
       setLoading(false)
     }

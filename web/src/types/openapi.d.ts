@@ -1256,7 +1256,7 @@ export interface paths {
                          * @description Target ledger for the asset
                          * @enum {string}
                          */
-                        ledger: "xrpl" | "stellar" | "evm" | "solana" | "algorand" | "hedera";
+                        ledger: "xrpl" | "hedera" | "ethereum";
                         /**
                          * @description Network environment
                          * @default testnet

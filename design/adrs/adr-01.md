@@ -105,7 +105,7 @@ PATCH  /v1/compliance-records/{recordId}/verify ; verify/reject (Auditor/Regulat
 {
   id: string;                    // UUID
   assetRef: string;              // CAIP-19 style
-  ledger: "xrpl"|"stellar"|"evm"|"solana"|"algorand"|"hedera";
+  ledger: "xrpl"|"hedera"|"ethereum";
   network: "mainnet"|"testnet"|"devnet";
   issuer: string;                // r... / 0x... / mint addr
   code: string;                  // "USD" / symbol

@@ -45,7 +45,7 @@ This document outlines the comprehensive plan to align the UI/UX with our new as
 
 - **Asset Creation Page** (`/app/assets/create/page.tsx`)
   - Comprehensive asset creation form
-  - Ledger selection (XRPL, Stellar, EVM, etc.)
+  - Ledger selection (XRPL, Hedera, Ethereum)
   - Compliance mode configuration
   - Registry metadata (ISIN, LEI, MiCA, jurisdiction)
   - Ledger-specific controls (freeze, clawback, auth)

@@ -2,7 +2,7 @@
 export type Asset = {
   id: string;
   assetRef: string;
-  ledger: "xrpl"|"stellar"|"evm"|"solana"|"algorand"|"hedera";
+  ledger: "xrpl"|"hedera"|"ethereum";
   network: "mainnet"|"testnet"|"devnet";
   issuer: string;
   code: string;
@@ -77,16 +77,10 @@ export function generateAssetRef(ledger: string, network: string, issuer: string
   switch (ledger) {
     case 'xrpl':
       return `xrpl:${network}/iou:${issuer}.${code}`
-    case 'stellar':
-      return `stellar:${network}/alphanum4:${issuer}/${code}`
-    case 'evm':
-      return `eip155:${network === 'mainnet' ? '1' : '11155111'}/erc20:${issuer}`
-    case 'solana':
-      return `solana:${network}/spl:${issuer}`
-    case 'algorand':
-      return `algorand:${network}/asa:${issuer}`
     case 'hedera':
       return `hedera:${network}/hts:${issuer}`
+    case 'ethereum':
+      return `eip155:${network === 'mainnet' ? '1' : '11155111'}/erc20:${issuer}`
     default:
       throw new Error(`Unsupported ledger: ${ledger}`)
   }

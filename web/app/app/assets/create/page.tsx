@@ -48,16 +48,47 @@ export default function CreateAssetPage() {
     setError(null)
 
     try {
-      // TODO: Replace with actual API call when types are updated
-      console.log('Creating asset:', formData)
-      
-      // Mock response for now
-      const mockData = { id: 'asset_' + Date.now() }
+      // Prepare the request body, filtering out undefined values
+      const requestBody = {
+        ledger: formData.ledger,
+        network: formData.network,
+        issuer: formData.issuer,
+        code: formData.code,
+        decimals: formData.decimals,
+        complianceMode: formData.complianceMode,
+        ...(formData.controls && Object.keys(formData.controls).length > 0 && {
+          controls: Object.fromEntries(
+            Object.entries(formData.controls).filter(([_, value]) => value !== undefined)
+          )
+        }),
+        ...(formData.registry && Object.keys(formData.registry).length > 0 && {
+          registry: Object.fromEntries(
+            Object.entries(formData.registry).filter(([_, value]) => value !== undefined && value !== '')
+          )
+        })
+      }
+
+      console.log('Creating asset with payload:', requestBody)
+
+      const { data, error } = await api.POST('/v1/assets', {
+        body: requestBody
+      })
+
+      if (error) {
+        throw new Error(error.error || 'Failed to create asset')
+      }
+
+      if (!data) {
+        throw new Error('No response data received')
+      }
+
+      console.log('Asset created successfully:', data)
       
       // Redirect to asset details page
-      router.push(`/app/assets/${mockData.id}`)
+      router.push(`/app/assets/${data.id}`)
     } catch (err: any) {
-      setError(err.message)
+      console.error('Error creating asset:', err)
+      setError(err.message || 'Failed to create asset. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -262,7 +293,7 @@ export default function CreateAssetPage() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="requireAuth" className="ml-2 text-sm text-gray-700">
-                  Require Authorization (XRPL/Stellar)
+                  Require Authorization (XRPL)
                 </label>
               </div>
 
@@ -275,7 +306,7 @@ export default function CreateAssetPage() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="freeze" className="ml-2 text-sm text-gray-700">
-                  Enable Freeze (XRPL/Stellar)
+                  Enable Freeze (XRPL)
                 </label>
               </div>
 
@@ -288,7 +319,7 @@ export default function CreateAssetPage() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="clawback" className="ml-2 text-sm text-gray-700">
-                  Enable Clawback (XRPL/Stellar)
+                  Enable Clawback (XRPL)
                 </label>
               </div>
 
