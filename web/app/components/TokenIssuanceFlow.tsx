@@ -4,6 +4,7 @@ import { api, ensureJson } from '@/lib/api'
 import FormField from './FormField'
 import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
+import CustomDropdown from './CustomDropdown'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
 type Step = 'ledger-selection' | 'asset-selection' | 'trustline-check' | 'token-issuance' | 'compliance-metadata' | 'success' | 'coming-soon'
@@ -1532,29 +1533,29 @@ export default function TokenIssuanceFlow() {
               <h3 className="text-lg font-semibold mb-4">MiCA Classification</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField label="Token Classification" required>
-                  <select
+                  <CustomDropdown
                     value={complianceData.micaClassification}
-                    onChange={(e) => setComplianceData(prev => ({ ...prev, micaClassification: e.target.value as any }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="stablecoin">Stablecoin</option>
-                    <option value="security_token">Security Token</option>
-                    <option value="utility_token">Utility Token</option>
-                    <option value="asset_backed">Asset-Backed Token</option>
-                  </select>
+                    onChange={(value) => setComplianceData(prev => ({ ...prev, micaClassification: value as any }))}
+                    options={[
+                      { value: 'stablecoin', label: 'Stablecoin' },
+                      { value: 'security_token', label: 'Security Token' },
+                      { value: 'utility_token', label: 'Utility Token' },
+                      { value: 'asset_backed', label: 'Asset-Backed Token' }
+                    ]}
+                    placeholder="Select token classification"
+                  />
                 </FormField>
                 <FormField label="KYC Requirement" required>
-                  <select
+                  <CustomDropdown
                     value={complianceData.kycRequirement}
-                    onChange={(e) => setComplianceData(prev => ({ ...prev, kycRequirement: e.target.value as any }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="mandatory">Mandatory</option>
-                    <option value="optional">Optional</option>
-                    <option value="not_required">Not Required</option>
-                  </select>
+                    onChange={(value) => setComplianceData(prev => ({ ...prev, kycRequirement: value as any }))}
+                    options={[
+                      { value: 'mandatory', label: 'Mandatory' },
+                      { value: 'optional', label: 'Optional' },
+                      { value: 'not_required', label: 'Not Required' }
+                    ]}
+                    placeholder="Select KYC requirement"
+                  />
                 </FormField>
               </div>
             </div>
