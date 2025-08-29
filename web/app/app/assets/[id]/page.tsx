@@ -285,7 +285,7 @@ export default function AssetDetailsPage() {
           {asset.status === 'active' && (
             <Link
               href={`/app/issuance/new?assetId=${asset.id}`}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
               Start Issuance
             </Link>
@@ -293,7 +293,7 @@ export default function AssetDetailsPage() {
           {asset.status === 'draft' && (
             <button
               onClick={() => showConfirmationDialog('activate', 'active')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
             >
               Activate
             </button>
@@ -301,7 +301,7 @@ export default function AssetDetailsPage() {
           {asset.status === 'active' && (
             <button
               onClick={() => showConfirmationDialog('pause', 'paused')}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+              className="px-4 py-2 text-yellow-600 border border-yellow-600 rounded-lg hover:bg-yellow-50"
             >
               Pause
             </button>
@@ -309,7 +309,7 @@ export default function AssetDetailsPage() {
           {(asset.status === 'active' || asset.status === 'paused') && (
             <button
               onClick={() => showConfirmationDialog('retire', 'retired')}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50"
             >
               Retire
             </button>
@@ -475,7 +475,7 @@ export default function AssetDetailsPage() {
                   </div>
                   <button
                     onClick={() => showConfirmationDialog('activate', 'active')}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
                   >
                     Activate
                   </button>
@@ -489,7 +489,7 @@ export default function AssetDetailsPage() {
                   </div>
                   <button
                     onClick={() => showConfirmationDialog('pause', 'paused')}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                    className="px-4 py-2 text-yellow-600 border border-yellow-600 rounded-lg hover:bg-yellow-50"
                   >
                     Pause
                   </button>
@@ -503,7 +503,7 @@ export default function AssetDetailsPage() {
                   </div>
                   <button
                     onClick={() => showConfirmationDialog('retire', 'retired')}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50"
                   >
                     Retire
                   </button>
