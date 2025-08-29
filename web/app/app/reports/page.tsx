@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Download, RotateCcw, Calendar, Search, Filter, ExternalLink, Clock, CheckCircle, XCircle } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import CustomDropdown from '../../components/CustomDropdown'
 import { api } from '../../../src/lib/api'
 
@@ -27,6 +27,7 @@ interface IssuanceRecord {
 }
 
 export default function ReportsPage() {
+  const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<ReportTab>('issuances')
   const [filters, setFilters] = useState<FilterState>({
     dateRange: '30',
@@ -59,14 +60,36 @@ export default function ReportsPage() {
   }
 
   const downloadIssuancesCSV = (filters: FilterState) => {
-    // Client-side CSV generation for MVP
-    const headers = ['Date/Time', 'Asset', 'To (Holder)', 'Amount', 'Status', 'Transaction ID']
-    const csvContent = [
-      headers.join(','),
-      // TODO: Add actual data rows
-      '2024-01-01 10:00:00,USD,rHolder123...,1000.00,VALIDATED,ABC123...'
-    ].join('\n')
+    // Get the current issuances data from the query
+    const issuancesData = queryClient.getQueryData(['issuances', filters]) as any
+    const issuances = issuancesData?.items || []
     
+    const headers = ['Date/Time', 'Asset', 'To (Holder)', 'Amount', 'Status', 'Transaction ID']
+    
+    const csvRows = [headers]
+    
+    issuances.forEach((issuance: IssuanceRecord) => {
+      const row = [
+        issuance.createdAt ? new Date(issuance.createdAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : '',
+        issuance.assetRef || 'Unknown',
+        issuance.to || 'Unknown',
+        issuance.amount ? parseFloat(issuance.amount).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6
+        }) : '0',
+        issuance.status || '',
+        issuance.txId || ''
+      ]
+      csvRows.push(row)
+    })
+    
+    const csvContent = csvRows.map(row => row.join(',')).join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -77,13 +100,36 @@ export default function ReportsPage() {
   }
 
   const downloadAuthorizationsCSV = (filters: FilterState) => {
-    const headers = ['Date/Time', 'Asset', 'Holder', 'Limit', 'Status', 'Transaction ID']
-    const csvContent = [
-      headers.join(','),
-      // TODO: Add actual data rows
-      '2024-01-01 10:00:00,USD,rHolder123...,5000.00,VALIDATED,XYZ789...'
-    ].join('\n')
+    // Get the current authorizations data from the query
+    const authorizationsData = queryClient.getQueryData(['authorizations', filters]) as any
+    const authorizations = authorizationsData?.authorizations || []
     
+    const headers = ['Date/Time', 'Asset', 'Holder', 'Limit', 'Status', 'Transaction ID']
+    
+    const csvRows = [headers]
+    
+    authorizations.forEach((auth: any) => {
+      const row = [
+        auth.createdAt ? new Date(auth.createdAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : '',
+        auth.asset?.code || 'Unknown',
+        auth.holder || 'Unknown',
+        auth.limit ? parseFloat(auth.limit).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6
+        }) : '0',
+        auth.status || '',
+        auth.txId || ''
+      ]
+      csvRows.push(row)
+    })
+    
+    const csvContent = csvRows.map(row => row.join(',')).join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -94,10 +140,11 @@ export default function ReportsPage() {
   }
 
   const downloadComplianceCSV = (filters: FilterState) => {
+    // For now, use placeholder data since compliance API is not implemented yet
     const headers = ['Created', 'Record ID', 'Asset', 'Holder', 'Status', 'SHA-256', 'Verified At']
     const csvContent = [
       headers.join(','),
-      // TODO: Add actual data rows
+      // TODO: Replace with actual compliance data when API is ready
       '2024-01-01 10:00:00,COMP001,USD,rHolder123...,VERIFIED,abc123...,2024-01-01 10:05:00'
     ].join('\n')
     
