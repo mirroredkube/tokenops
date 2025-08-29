@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { ExternalLink, Eye, RefreshCw } from 'lucide-react'
 import { api } from '@/lib/api'
 import QueueTable, { QueueColumn } from './QueueTable'
@@ -23,6 +24,7 @@ interface IssuanceListResponse {
 }
 
 export default function PendingIssuancesQueue() {
+  const router = useRouter()
   const [issuances, setIssuances] = useState<Issuance[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -150,15 +152,15 @@ export default function PendingIssuancesQueue() {
   ]
 
   return (
-    <QueueTable
-      title="Pending Issuances"
-      items={issuances}
-      columns={columns}
-      emptyMessage="No pending issuances. All recent issuances have been processed."
-      viewAllLink="/app/issuances?status=submitted"
-      loading={loading}
-      maxItems={5}
-      showViewAll={true}
-    />
+          <QueueTable
+        title="Pending Issuances"
+        items={issuances}
+        columns={columns}
+        emptyMessage="No pending issuances. All recent issuances have been processed."
+        viewAllLink="/app/issuances?status=submitted"
+        loading={loading}
+        maxItems={5}
+        showViewAll={true}
+      />
   )
 }

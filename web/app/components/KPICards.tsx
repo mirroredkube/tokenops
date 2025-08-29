@@ -12,7 +12,8 @@ import {
   CheckCircle,
   XCircle,
   Database,
-  Coins
+  Coins,
+  Info
 } from 'lucide-react'
 
 interface KPIData {
@@ -91,15 +92,17 @@ export default function KPICards() {
       icon: Building2,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-50',
-      onClick: () => router.push('/app/assets')
+      onClick: () => router.push('/app/assets'),
+      tooltip: 'Number of assets currently active on the ledger'
     },
     {
-      title: 'Total Tokens',
+      title: 'Total Assets',
       value: data?.totalTokens || 0,
       icon: Database,
       color: 'bg-green-500',
       hoverColor: 'hover:bg-green-50',
-      onClick: () => router.push('/app/assets')
+      onClick: () => router.push('/app/assets'),
+      tooltip: 'Total number of assets created (active + inactive)'
     },
     {
       title: 'Total Issuances',
@@ -107,7 +110,8 @@ export default function KPICards() {
       icon: Coins,
       color: 'bg-indigo-500',
       hoverColor: 'hover:bg-indigo-50',
-      onClick: () => router.push('/app/issuances')
+      onClick: () => router.push('/app/issuances'),
+      tooltip: 'Lifetime count of all token issuance transactions'
     },
     {
       title: 'Compliance Records',
@@ -116,7 +120,8 @@ export default function KPICards() {
       icon: Shield,
       color: 'bg-purple-500',
       hoverColor: 'hover:bg-purple-50',
-      onClick: () => router.push('/app/compliance')
+      onClick: () => router.push('/app/compliance'),
+      tooltip: 'Total compliance records (verified and unverified)'
     },
     {
       title: 'Pending Issuances',
@@ -124,7 +129,8 @@ export default function KPICards() {
       icon: Clock,
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-50',
-      onClick: () => router.push('/app/issuance')
+      onClick: () => router.push('/app/issuance'),
+      tooltip: 'Number of issuances waiting for ledger validation'
     },
     {
       title: 'Active Ledger',
@@ -132,7 +138,8 @@ export default function KPICards() {
       icon: TrendingUp,
       color: 'bg-neutral-800',
       hoverColor: 'hover:bg-neutral-50',
-      onClick: () => router.push('/app/settings')
+      onClick: () => router.push('/app/settings'),
+      tooltip: 'Currently connected ledger and network'
     }
   ]
 
@@ -171,15 +178,28 @@ export default function KPICards() {
         <button
           key={index}
           onClick={card.onClick}
-          className={`bg-white p-6 rounded-lg border border-gray-200 transition-all duration-200 ${card.hoverColor} hover:shadow-lg hover:scale-105 cursor-pointer`}
+          className={`bg-white p-6 rounded-lg border border-gray-200 transition-all duration-200 ${card.hoverColor} hover:shadow-lg hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+          aria-label={`${card.title}: ${card.value}${card.tooltip ? ` - ${card.tooltip}` : ''} - click to view`}
         >
           <div className="flex items-center justify-between">
             <div className={`p-3 rounded-lg ${card.color} text-white`}>
               <card.icon className="h-6 w-6" />
             </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-600">{card.title}</p>
-              <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+            <div className="text-right flex-1">
+              <div className="flex items-center justify-end space-x-1">
+                <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                {card.tooltip && (
+                  <div className="group relative">
+                    <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                    <div className="absolute bottom-full right-0 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      {card.tooltip}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="text-2xl font-bold text-gray-900">
+                {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+              </p>
               {card.subtitle && (
                 <p className="text-xs text-gray-500 mt-1">{card.subtitle}</p>
               )}

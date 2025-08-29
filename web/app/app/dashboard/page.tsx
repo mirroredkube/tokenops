@@ -22,9 +22,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Overview of your token operations and system status</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Overview of your token operations and system status</p>
+        </div>
+        <div className="text-xs text-gray-500">
+          Updated {new Date().toLocaleTimeString()}
+        </div>
       </div>
       
       {/* KPI Cards */}
