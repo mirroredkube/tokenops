@@ -1043,7 +1043,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                                              <button
                       type="submit"
                       disabled={loading}
-                      className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                       {loading ? (
                         <>
@@ -1175,7 +1175,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                 type="button"
                                 onClick={handleOptInSubmit}
                                 disabled={loading}
-                                className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
                               >
                                 {loading ? 'Creating Trustline...' : 'Create Trustline'}
                               </button>
@@ -1189,7 +1189,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                                                                      <button
                               type="button"
                               onClick={() => setCurrentStep('compliance-metadata')}
-                              className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
+                              className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
                             >
                               Continue to Issue
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1485,7 +1485,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                       {loading ? (
                         <>
@@ -1677,7 +1677,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                       {loading ? (
                         <>
@@ -1733,7 +1733,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           href={result.trustlineExplorer}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-4 inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md"
+                          className="ml-4 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
                           View on Explorer →
                         </a>
@@ -1753,7 +1753,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           href={result.explorer}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-4 inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md"
+                          className="ml-4 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
                           View on Explorer →
                         </a>
@@ -1799,7 +1799,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={resetFlow}
-                className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                                          className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 Issue Another Token
               </button>
