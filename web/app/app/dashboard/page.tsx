@@ -7,6 +7,7 @@ import KPICards from '../../components/KPICards'
 import PendingIssuancesQueue from '../../components/PendingIssuancesQueue'
 import ComplianceToVerifyQueue from '../../components/ComplianceToVerifyQueue'
 import RecentIssuancesQueue from '../../components/RecentIssuancesQueue'
+import MultiNetworkDemo from '../../components/MultiNetworkDemo'
 
 export default function Dashboard() {
   const health = useQuery({
@@ -43,11 +44,11 @@ export default function Dashboard() {
           data={health.data || null} 
           loading={health.isLoading} 
         />
-        <XrplStatusCard 
-          data={xrpl.data || null} 
-          loading={xrpl.isLoading} 
-        />
+        <XrplStatusCard />
       </div>
+
+      {/* Multi-Network Demo */}
+      <MultiNetworkDemo />
     </div>
   )
 }
