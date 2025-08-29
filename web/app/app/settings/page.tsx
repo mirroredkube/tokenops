@@ -27,7 +27,7 @@ import {
 export default function SettingsPage() {
   const { user } = useAuth()
   const { currentLanguage, setLanguage, availableLanguages } = useLanguage()
-  const { t } = useTranslation(['settings', 'common'])
+  const { t, ready } = useTranslation(['settings', 'common'])
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -239,6 +239,27 @@ export default function SettingsPage() {
     getTwoFactorStatus()
   }, [])
 
+  // Show loading state while translations are not ready
+  if (!ready) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
+          <p className="text-gray-600 mt-2">Loading translations...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Debug: Check if translations are working
+  console.log('Translation test:', {
+    edit: t('common:actions.edit'),
+    cancel: t('common:actions.cancel'),
+    saveChanges: t('settings:actions.saveChanges'),
+    ready,
+    currentLanguage
+  })
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
@@ -265,7 +286,7 @@ export default function SettingsPage() {
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 <Edit3 className="w-4 h-4" />
-                {isEditing ? t('actions.cancel') : t('actions.edit')}
+                {isEditing ? (t('common:actions.cancel') || 'Cancel') : (t('common:actions.edit') || 'Edit')}
               </button>
             </div>
           </div>
@@ -317,16 +338,16 @@ export default function SettingsPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
                 >
                   <Save className="w-4 h-4" />
-                  {t('actions.saveChanges')}
+                  {t('settings:actions.saveChanges') || 'Save Changes'}
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-600 border border-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  {t('actions.cancel')}
+                  {t('common:actions.cancel') || 'Cancel'}
                 </button>
               </div>
             )}
@@ -364,7 +385,7 @@ export default function SettingsPage() {
                   disabled={isLoading}
                   className="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
-                  {t('actions.disable')}
+                  {t('common:actions.disable')}
                 </button>
               ) : (
                 <button 
@@ -378,7 +399,7 @@ export default function SettingsPage() {
                       Setting up...
                     </>
                   ) : (
-                    t('actions.enable')
+                    t('common:actions.enable')
                   )}
                 </button>
               )}
