@@ -13,7 +13,9 @@ import {
   Shield,
   Coins,
   Wallet,
-  FileText
+  FileText,
+  Plus,
+  CheckSquare
 } from 'lucide-react'
 
 export default function HelpPage() {
@@ -32,58 +34,58 @@ export default function HelpPage() {
   const faqItems = [
     {
       question: "What is Regula?",
-      answer: "Regula is a compliance-grade tokenization platform that allows you to issue and govern tokens with built-in compliance controls, audit trails, and role-based access. It supports multiple ledgers including XRPL, Hedera, and Ethereum."
+      answer: "Regula is a compliance-grade tokenization platform that allows you to create assets, issue tokens, and manage authorizations with built-in compliance controls, audit trails, and role-based access. It supports multiple ledgers including XRPL, with Hedera and Ethereum coming soon."
     },
     {
       question: "How do I get started?",
-      answer: "To get started, first create a trustline for your token, then use the issuance page to mint your first token. You can monitor all activity through the dashboard."
+      answer: "To get started, first create an asset, then set up authorizations for holders, and finally use the issuance page to mint tokens. You can monitor all activity through the dashboard and export reports as needed."
     },
     {
       question: "What ledgers are supported?",
-      answer: "Currently, XRPL (XRP Ledger) is fully supported with trustline management. Hedera and Ethereum adapters are coming soon."
+      answer: "Currently, XRPL (XRP Ledger) is fully supported with asset creation, authorizations, and issuance. Hedera and Ethereum adapters are in development."
     },
     {
-      question: "Is this production ready?",
-      answer: "Yes, the platform is production-ready with enterprise-grade infrastructure, monitoring, logging, and support for production deployments."
+      question: "What's the difference between Assets and Issuances?",
+      answer: "Assets are the token definitions (like a currency code and metadata), while Issuances are the actual minting of tokens to specific addresses. You create an asset once, then can issue it multiple times to different holders."
     },
     {
       question: "How do I manage compliance?",
-      answer: "Regula includes built-in metadata support, audit trails, and export capabilities for regulatory compliance. All transactions are logged and can be exported for audit purposes."
+      answer: "Regula includes built-in compliance records, audit trails, and export capabilities. All transactions are logged and can be exported for audit purposes. Use the Compliance page to verify records and the Reports page to export data."
     },
     {
       question: "Can I integrate with my existing systems?",
-      answer: "Yes, Regula provides RESTful APIs for programmatic access, making it perfect for integrations and automation with your existing systems."
+      answer: "Yes, Regula provides RESTful APIs for programmatic access. Visit the API Documentation section to explore the complete API reference with interactive testing tools."
     }
   ]
 
   const quickActions = [
     {
-      title: "Issue Your First Token",
-      description: "Learn how to create and issue tokens on supported ledgers",
+      title: "Create Asset",
+      description: "Create a new token asset with metadata and compliance settings",
+      icon: <Plus className="h-5 w-5" />,
+      href: "/app/assets/create",
+      external: false
+    },
+    {
+      title: "Start Issuance",
+      description: "Issue assets to addresses with compliance controls",
       icon: <Coins className="h-5 w-5" />,
-              href: "/app/issuance/new",
-      external: true
+      href: "/app/issuance/new",
+      external: false
     },
     {
-      title: "Create Trust Lines",
-              description: "Set up asset authorizations for XRPL token management",
+      title: "Setup Authorization",
+      description: "Create and manage asset authorizations for holders",
+      icon: <CheckSquare className="h-5 w-5" />,
+      href: "/app/authorizations",
+      external: false
+    },
+    {
+      title: "Verify Compliance",
+      description: "Review and verify compliance records",
       icon: <Shield className="h-5 w-5" />,
-      href: "/app/opt-in",
-      external: true
-    },
-    {
-      title: "View Balances",
-      description: "Check token balances and transaction history",
-      icon: <Wallet className="h-5 w-5" />,
-      href: "/app/balances",
-      external: true
-    },
-    {
-      title: "API Documentation",
-      description: "Complete API reference for developers and integrations",
-      icon: <FileText className="h-5 w-5" />,
-      href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`,
-      external: true
+      href: "/app/compliance",
+      external: false
     }
   ]
 
@@ -163,50 +165,50 @@ export default function HelpPage() {
             <div className="p-6 border-t border-gray-200">
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Step 1: Connect Your Issuer</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">Step 1: Create an Asset</h3>
                   <p className="text-gray-600 mb-2">
-                    Configure your issuer account and workspace. No mainnet funds are required for pilots.
+                    Define your token with metadata, compliance settings, and ledger configuration.
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>Set up your issuer credentials</li>
-                    <li>Configure your workspace settings</li>
-                    <li>Verify your account permissions</li>
+                    <li>Set token code, name, and description</li>
+                    <li>Configure compliance mode and metadata</li>
+                    <li>Select ledger and network settings</li>
                   </ul>
                 </div>
                 
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Step 2: Create Trust Lines</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">Step 2: Setup Authorizations</h3>
                   <p className="text-gray-600 mb-2">
-                    Establish holder limits and policies for your tokens.
+                    Create authorizations for holders to receive your tokens.
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>Define token limits and restrictions</li>
-                    <li>Add KYC/AML flags as needed</li>
-                    <li>Set transfer restrictions and compliance rules</li>
+                    <li>Select ledger and asset for authorization</li>
+                    <li>Set holder limits and restrictions</li>
+                    <li>Configure authorization parameters</li>
                   </ul>
                 </div>
                 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Step 3: Issue Tokens</h3>
                   <p className="text-gray-600 mb-2">
-                    Mint tokens with structured metadata and compliance controls.
+                    Mint tokens to authorized addresses with compliance controls.
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>Create tokens with proper metadata</li>
-                    <li>Set initial supply and distribution</li>
-                    <li>Configure compliance flags</li>
+                    <li>Select asset and target holder</li>
+                    <li>Set issuance amount and metadata</li>
+                    <li>Submit and monitor transaction status</li>
                   </ul>
                 </div>
                 
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Step 4: Monitor & Export</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">Step 4: Monitor & Report</h3>
                   <p className="text-gray-600 mb-2">
-                    Track balances and events, export audit-ready reports.
+                    Track balances, verify compliance, and export audit-ready reports.
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>Monitor real-time balances and transactions</li>
-                    <li>Export audit-ready CSV/JSON reports</li>
-                    <li>Set up alerts for important events</li>
+                    <li>Monitor outstanding supply and holder balances</li>
+                    <li>Verify compliance records and export reports</li>
+                    <li>Track system health and transaction status</li>
                   </ul>
                 </div>
               </div>
@@ -252,6 +254,78 @@ export default function HelpPage() {
           )}
         </div>
 
+        {/* API Documentation */}
+        <div className="bg-white rounded-lg border shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <button
+              onClick={() => toggleSection('api-docs')}
+              className="flex items-center justify-between w-full"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">API Documentation</h2>
+                  <p className="text-sm text-gray-600">Complete API reference for developers</p>
+                </div>
+              </div>
+              {openSections.has('api-docs') ? (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+          </div>
+          
+          {openSections.has('api-docs') && (
+            <div className="p-6 border-t border-gray-200">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">REST API Reference</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Regula provides a comprehensive REST API for programmatic access to all platform features. 
+                    The API supports asset creation, issuances, authorizations, compliance management, and reporting.
+                  </p>
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Open Interactive API Documentation
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-2">Key Endpoints</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Assets: Create and manage token definitions</li>
+                      <li>• Issuances: Mint tokens to addresses</li>
+                      <li>• Authorizations: Manage holder permissions</li>
+                      <li>• Compliance: Verify and manage records</li>
+                      <li>• Reports: Export data and analytics</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-2">Features</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Interactive documentation with testing</li>
+                      <li>• Authentication and authorization</li>
+                      <li>• Rate limiting and error handling</li>
+                      <li>• JSON request/response format</li>
+                      <li>• Webhook support for real-time updates</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Support */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
@@ -280,17 +354,16 @@ export default function HelpPage() {
             <div className="p-6 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">API Documentation</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">Documentation</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Complete REST API reference with interactive documentation, examples, and testing tools for developers and system integrators.
+                    Comprehensive guides and resources to help you use Regula effectively, including API documentation for developers.
                   </p>
                   <a
-                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#api-docs"
+                    onClick={() => toggleSection('api-docs')}
                     className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
                   >
-                    Open API Documentation
+                    View API Documentation
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
