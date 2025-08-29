@@ -80,7 +80,7 @@ export default function HelpPage() {
     },
     {
       title: "API Documentation",
-      description: "Explore the complete API reference",
+      description: "Complete API reference for developers and integrations",
       icon: <FileText className="h-5 w-5" />,
       href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`,
       external: true
@@ -280,9 +280,9 @@ export default function HelpPage() {
             <div className="p-6 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Documentation</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">API Documentation</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Comprehensive guides and API documentation to help you integrate and use Regula effectively.
+                    Complete REST API reference with interactive documentation, examples, and testing tools for developers and system integrators.
                   </p>
                   <a
                     href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`}
@@ -290,7 +290,7 @@ export default function HelpPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
                   >
-                    View API Documentation
+                    Open API Documentation
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>

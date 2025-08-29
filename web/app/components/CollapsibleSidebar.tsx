@@ -8,7 +8,6 @@ import {
   Shield, 
   Coins, 
   Wallet, 
-  FileText,
   Menu,
   X,
   User,
@@ -42,7 +41,6 @@ const navItems: NavItem[] = [
   { href: '/app/compliance', label: 'Compliance', icon: <Shield className="h-5 w-5" /> },
   { href: '/app/reports', label: 'Reports', icon: <BarChart3 className="h-5 w-5" /> },
   { href: '/app/balances', label: 'Balances', icon: <Wallet className="h-5 w-5" /> },
-  { href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`, label: 'API Docs', icon: <FileText className="h-5 w-5" /> },
 ]
 
 const bottomNavItems: NavItem[] = [
