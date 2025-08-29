@@ -5,6 +5,7 @@ import FormField from './FormField'
 import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
 import CustomDropdown from './CustomDropdown'
+import InfoPopup from './InfoPopup'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
 type Step = 'ledger-selection' | 'asset-selection' | 'authorization-setup' | 'success' | 'coming-soon'
@@ -236,6 +237,60 @@ export default function AuthorizationFlow() {
   if (currentStep === 'ledger-selection') {
     return (
       <div className="max-w-4xl mx-auto">
+        {/* Flow Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-8">
+            {/* Step 1: Select Ledger - Active */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
+                <div className="absolute inset-0 bg-gray-800 rounded-full animate-ping opacity-20"></div>
+                <svg className="w-6 h-6 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Select Ledger</div>
+                <div className="text-xs text-gray-500">Step 1</div>
+              </div>
+            </div>
+            
+            <div className="w-16 h-0.5 bg-gray-300"></div>
+            
+            {/* Step 2: Select Asset - Inactive */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 border-2 border-gray-300 text-gray-400 rounded-full flex items-center justify-center mb-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Select Asset</div>
+                <div className="text-xs text-gray-500">Step 2</div>
+              </div>
+            </div>
+            
+            <div className="w-16 h-0.5 bg-gray-300"></div>
+            
+            {/* Step 3: Authorization - Inactive */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 border-2 border-gray-300 text-gray-400 rounded-full flex items-center justify-center mb-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Authorization</div>
+                <div className="text-xs text-gray-500">Step 3</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Percentage */}
+          <div className="text-center mt-4">
+            <span className="text-sm font-medium text-gray-800">Progress: 33%</span>
+          </div>
+        </div>
+
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Select Ledger</h1>
           <p className="text-lg text-gray-600">Choose the blockchain network for your authorization</p>
@@ -282,6 +337,60 @@ export default function AuthorizationFlow() {
   if (currentStep === 'asset-selection') {
     return (
       <div className="max-w-4xl mx-auto">
+        {/* Flow Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-8">
+            {/* Step 1: Select Ledger - Completed */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Select Ledger</div>
+                <div className="text-xs text-gray-500">Step 1</div>
+              </div>
+            </div>
+            
+            <div className="w-16 h-0.5 bg-gray-800"></div>
+            
+            {/* Step 2: Select Asset - Active */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
+                <div className="absolute inset-0 bg-gray-800 rounded-full animate-ping opacity-20"></div>
+                <svg className="w-6 h-6 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Select Asset</div>
+                <div className="text-xs text-gray-500">Step 2</div>
+              </div>
+            </div>
+            
+            <div className="w-16 h-0.5 bg-gray-300"></div>
+            
+            {/* Step 3: Authorization - Inactive */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 border-2 border-gray-300 text-gray-400 rounded-full flex items-center justify-center mb-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Authorization</div>
+                <div className="text-xs text-gray-500">Step 3</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Percentage */}
+          <div className="text-center mt-4">
+            <span className="text-sm font-medium text-gray-800">Progress: 67%</span>
+          </div>
+        </div>
+
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => setCurrentStep('ledger-selection')}
@@ -364,6 +473,60 @@ export default function AuthorizationFlow() {
   if (currentStep === 'authorization-setup') {
     return (
       <div className="max-w-2xl mx-auto">
+        {/* Flow Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-8">
+            {/* Step 1: Select Ledger - Completed */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Select Ledger</div>
+                <div className="text-xs text-gray-500">Step 1</div>
+              </div>
+            </div>
+            
+            <div className="w-16 h-0.5 bg-gray-800"></div>
+            
+            {/* Step 2: Select Asset - Completed */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Select Asset</div>
+                <div className="text-xs text-gray-500">Step 2</div>
+              </div>
+            </div>
+            
+            <div className="w-16 h-0.5 bg-gray-800"></div>
+            
+            {/* Step 3: Authorization - Active */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
+                <div className="absolute inset-0 bg-gray-800 rounded-full animate-ping opacity-20"></div>
+                <svg className="w-6 h-6 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-800">Authorization</div>
+                <div className="text-xs text-gray-500">Step 3</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Percentage */}
+          <div className="text-center mt-4">
+            <span className="text-sm font-medium text-gray-800">Progress: 100%</span>
+          </div>
+        </div>
+
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => setCurrentStep('asset-selection')}
@@ -373,10 +536,58 @@ export default function AuthorizationFlow() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">Authorization Setup</h1>
             <p className="text-gray-600">Configure authorization for {selectedAsset?.code}</p>
           </div>
+          <InfoPopup title="Authorization Information">
+            {selectedLedger === 'XRPL' ? (
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">XRPL Trustlines</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Trustlines allow accounts to hold tokens from specific issuers on XRPL.
+                  </p>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p><strong>Limit:</strong> Maximum amount the holder is willing to accept from this issuer.</p>
+                    <p><strong>NoRipple:</strong> Prevents the authorization from being used in rippling transactions.</p>
+                    <p><strong>RequireAuth:</strong> Issuer must explicitly authorize the trustline before tokens can be sent.</p>
+                    <p><strong>Reserve:</strong> Each authorization consumes XRP reserve from the holder account.</p>
+                  </div>
+                </div>
+              </div>
+            ) : selectedLedger === 'HEDERA' ? (
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Hedera Token Approvals</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Token approvals allow accounts to spend tokens on behalf of other accounts.
+                  </p>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p><strong>Spender:</strong> Account that can spend tokens on behalf of the owner.</p>
+                    <p><strong>Amount:</strong> Maximum amount the spender can spend.</p>
+                    <p><strong>Token ID:</strong> Specific token that the approval applies to.</p>
+                    <p><strong>Expiry:</strong> When the approval expires (optional).</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Ethereum Token Approvals</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    ERC-20 token approvals allow contracts to spend tokens on behalf of users.
+                  </p>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p><strong>Spender:</strong> Contract address that can spend tokens.</p>
+                    <p><strong>Amount:</strong> Maximum amount the spender can spend.</p>
+                    <p><strong>Token Contract:</strong> ERC-20 token contract address.</p>
+                    <p><strong>Gas:</strong> Transaction fee for the approval.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </InfoPopup>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

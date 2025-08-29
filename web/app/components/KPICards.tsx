@@ -13,7 +13,8 @@ import {
   XCircle,
   Database,
   Coins,
-  Info
+  Info,
+  CheckSquare
 } from 'lucide-react'
 
 interface KPIData {
@@ -26,6 +27,8 @@ interface KPIData {
     total: number
   }
   pendingIssuances: number
+  totalAuthorizations: number
+  activeAuthorizations: number
 }
 
 export default function KPICards() {
@@ -66,6 +69,13 @@ export default function KPICards() {
       // Fetch pending issuances (we'll need to aggregate this)
       const pendingIssuances = 0 // TODO: Implement when we have the endpoint
 
+      // Fetch authorizations
+      const { data: authorizationsResponse } = await api.GET('/v1/authorizations?limit=1' as any, {})
+      const totalAuthorizations = authorizationsResponse?.pagination?.total || 0
+      
+      // For now, we'll set active authorizations to 0 until we have the data
+      const activeAuthorizations = 0 // TODO: Filter by VALIDATED status when we have the data
+
       return {
         activeAssets,
         totalTokens,
@@ -75,7 +85,9 @@ export default function KPICards() {
           unverified,
           total: totalComplianceRecords
         },
-        pendingIssuances
+        pendingIssuances,
+        totalAuthorizations,
+        activeAuthorizations
       }
     },
     staleTime: 30000, // 30 seconds
@@ -133,13 +145,22 @@ export default function KPICards() {
       tooltip: 'Number of asset issuances waiting for ledger validation'
     },
     {
-      title: 'Active Ledger',
-      value: 'XRPL',
-      icon: TrendingUp,
-      color: 'bg-neutral-800',
-      hoverColor: 'hover:bg-neutral-50',
-      onClick: () => router.push('/app/settings'),
-      tooltip: 'Currently connected ledger and network'
+      title: 'Active Authorizations',
+      value: data?.activeAuthorizations || 0,
+      icon: CheckSquare,
+      color: 'bg-purple-500',
+      hoverColor: 'hover:bg-purple-50',
+      onClick: () => router.push('/app/authorizations/history'),
+      tooltip: 'Number of validated asset authorizations'
+    },
+    {
+      title: 'Total Authorizations',
+      value: data?.totalAuthorizations || 0,
+      icon: CheckSquare,
+      color: 'bg-orange-500',
+      hoverColor: 'hover:bg-orange-50',
+      onClick: () => router.push('/app/authorizations/history'),
+      tooltip: 'Total number of authorization records created'
     }
   ]
 
