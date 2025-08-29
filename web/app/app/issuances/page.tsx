@@ -106,6 +106,8 @@ export default function IssuancesPage() {
         return <CheckCircle className="h-4 w-4 text-green-600" />
       case 'failed':
         return <XCircle className="h-4 w-4 text-red-600" />
+      case 'submitted':
+        return <Clock className="h-4 w-4 text-blue-600" />
       default:
         return <Clock className="h-4 w-4 text-yellow-600" />
     }
@@ -352,7 +354,7 @@ export default function IssuancesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {issuance.txId ? (
                         <a
-                          href="#"
+                          href={`https://testnet.xrpl.org/transactions/${issuance.txId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center text-blue-600 hover:text-blue-800"
