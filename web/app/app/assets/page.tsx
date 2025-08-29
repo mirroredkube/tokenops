@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import Link from 'next/link'
 import CustomDropdown from '../../components/CustomDropdown'
+import InfoPopup from '../../components/InfoPopup'
 import { trackPageView, trackAssetAction, AnalyticsEvents } from '../../lib/analytics'
 
 interface Asset {
@@ -161,15 +162,160 @@ export default function AssetsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold">Assets</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your token assets across multiple ledgers.
-          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-gray-600">
+              Manage your token assets across multiple ledgers.
+            </p>
+            <InfoPopup title="Asset Lifecycle & Documentation">
+              <div className="space-y-6">
+                {/* Asset Lifecycle Flow Diagram */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-4">Asset Lifecycle Stages</h4>
+                  <div className="relative">
+                    {/* Flow Diagram */}
+                    <div className="grid grid-cols-4 gap-4 mb-6">
+                      {/* Draft Stage */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-2">
+                          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">Draft</div>
+                          <div className="text-xs text-gray-500">Initial Setup</div>
+                        </div>
+                      </div>
+                      
+                      {/* Active Stage */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
+                          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">Active</div>
+                          <div className="text-xs text-gray-500">Live & Issuing</div>
+                        </div>
+                      </div>
+                      
+                      {/* Paused Stage */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-2">
+                          <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">Paused</div>
+                          <div className="text-xs text-gray-500">Temporarily Suspended</div>
+                        </div>
+                      </div>
+                      
+                      {/* Retired Stage */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-2">
+                          <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">Retired</div>
+                          <div className="text-xs text-gray-500">Permanently Closed</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Connecting Lines */}
+                    <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-300 -z-10"></div>
+                  </div>
+                </div>
+
+                {/* Stage Descriptions */}
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h5 className="font-medium text-gray-900 mb-2">📝 Draft</h5>
+                    <p className="text-sm text-gray-600">
+                      Asset is being configured with metadata, compliance settings, and ledger configuration. 
+                      No issuances can be made in this stage.
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <h5 className="font-medium text-gray-900 mb-2">✅ Active</h5>
+                    <p className="text-sm text-gray-600">
+                      Asset is live and ready for issuances. Holders can be authorized and tokens can be issued 
+                      to authorized addresses.
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <h5 className="font-medium text-gray-900 mb-2">⏸️ Paused</h5>
+                    <p className="text-sm text-gray-600">
+                      Asset is temporarily suspended. No new issuances can be made, but existing balances 
+                      remain intact. Can be reactivated to Active status.
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <h5 className="font-medium text-gray-900 mb-2">❌ Retired</h5>
+                    <p className="text-sm text-gray-600">
+                      Asset is permanently closed. No new issuances or authorizations can be made. 
+                      This action is irreversible.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Compliance Modes */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Compliance Modes</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <div>
+                        <div className="font-medium text-gray-900">No Compliance (OFF)</div>
+                        <div className="text-sm text-gray-600">No compliance checks or records are maintained.</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <div>
+                        <div className="font-medium text-gray-900">Record Only (RECORD_ONLY)</div>
+                        <div className="text-sm text-gray-600">Compliance records are created but no enforcement.</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <div>
+                        <div className="font-medium text-gray-900">Gated Before (GATED_BEFORE)</div>
+                        <div className="text-sm text-gray-600">Compliance verification required before issuance.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Best Practices */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Best Practices</h4>
+                  <ul className="text-sm text-gray-600 space-y-2">
+                    <li>• Always test assets in Draft mode before activating</li>
+                    <li>• Use appropriate compliance modes for your regulatory requirements</li>
+                    <li>• Monitor asset usage and consider pausing if suspicious activity is detected</li>
+                    <li>• Only retire assets when absolutely necessary, as this action is irreversible</li>
+                    <li>• Keep asset metadata up to date for audit and compliance purposes</li>
+                  </ul>
+                </div>
+              </div>
+            </InfoPopup>
+          </div>
         </div>
         <Link
-          href="/app/assets/create"          className="w-10 h-10 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors duration-200"
+          href="/app/assets/create"
+          className="w-10 h-10 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors duration-200"
           title="Create Asset"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,102 +345,79 @@ export default function AssetsPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Ledger
-            </label>
-            <CustomDropdown
-              value={filters.ledger}
-              onChange={(value) => setFilters(prev => ({ ...prev, ledger: value }))}
-              options={[
-                { value: '', label: 'All Ledgers' },
-                { value: 'xrpl', label: 'XRPL' },
-                { value: 'hedera', label: 'Hedera' },
-                { value: 'ethereum', label: 'Ethereum' }
-              ]}
-              placeholder="All Ledgers"
-            />
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Ledger:</span>
+            <div className="flex-1 min-w-0">
+              <CustomDropdown
+                value={filters.ledger}
+                onChange={(value) => setFilters(prev => ({ ...prev, ledger: value }))}
+                options={[
+                  { value: '', label: 'All Ledgers' },
+                  { value: 'xrpl', label: 'XRPL' },
+                  { value: 'hedera', label: 'Hedera' },
+                  { value: 'ethereum', label: 'Ethereum' }
+                ]}
+                className="w-full sm:w-48"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Status
-            </label>
-            <CustomDropdown
-              value={filters.status}
-              onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-              options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'draft', label: 'Draft' },
-                { value: 'active', label: 'Active' },
-                { value: 'paused', label: 'Paused' },
-                { value: 'retired', label: 'Retired' }
-              ]}
-              placeholder="All Statuses"
-            />
+
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</span>
+            <div className="flex-1 min-w-0">
+              <CustomDropdown
+                value={filters.status}
+                onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                options={[
+                  { value: '', label: 'All Statuses' },
+                  { value: 'draft', label: 'Draft' },
+                  { value: 'active', label: 'Active' },
+                  { value: 'paused', label: 'Paused' },
+                  { value: 'retired', label: 'Retired' }
+                ]}
+                className="w-full sm:w-48"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Assets List */}
-      <div className="bg-white rounded-lg border border-gray-200">
+      {/* Assets Table */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading assets...</p>
+          <div className="p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-12 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : assets.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {filters.ledger || filters.status ? 'No assets match your filters' : 'No assets yet'}
-            </h3>
-            <p className="text-gray-600 mb-6">
+          <div className="p-6 text-center">
+            <div className="text-gray-500 text-lg">No assets found</div>
+            <div className="text-gray-400 text-sm mt-2">
               {filters.ledger || filters.status 
-                ? 'Try adjusting your filters to see more assets.' 
-                : 'Create your first asset to begin issuing tokens.'
+                ? 'Try adjusting your filters' 
+                : 'Create your first asset to get started'
               }
-            </p>
-            {!filters.ledger && !filters.status && (
-              <Link
-                href="/app/assets/create"
-                className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 transition-colors duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Create Asset
-              </Link>
-            )}
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Asset
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ledger/Net
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Compliance Mode
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ledger</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Compliance</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
