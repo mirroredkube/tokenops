@@ -35,19 +35,19 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/app/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-  { href: '/app/assets', label: 'Assets', icon: <Building className="h-4 w-4" /> },
-  { href: '/app/issuance/new', label: 'Issuance', icon: <Coins className="h-4 w-4" /> },
-  { href: '/app/compliance', label: 'Compliance', icon: <Shield className="h-4 w-4" /> },
-  { href: '/app/opt-in', label: 'Opt-Ins', icon: <CheckSquare className="h-4 w-4" /> },
-  { href: '/app/reports', label: 'Reports', icon: <BarChart3 className="h-4 w-4" /> },
-  { href: '/app/balances', label: 'Balances', icon: <Wallet className="h-4 w-4" /> },
-  { href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`, label: 'API Docs', icon: <FileText className="h-4 w-4" /> },
+  { href: '/app/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+  { href: '/app/assets', label: 'Assets', icon: <Building className="h-5 w-5" /> },
+  { href: '/app/issuance/new', label: 'Issuance', icon: <Coins className="h-5 w-5" /> },
+  { href: '/app/compliance', label: 'Compliance', icon: <Shield className="h-5 w-5" /> },
+  { href: '/app/opt-in', label: 'Opt-Ins', icon: <CheckSquare className="h-5 w-5" /> },
+  { href: '/app/reports', label: 'Reports', icon: <BarChart3 className="h-5 w-5" /> },
+  { href: '/app/balances', label: 'Balances', icon: <Wallet className="h-5 w-5" /> },
+  { href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`, label: 'API Docs', icon: <FileText className="h-5 w-5" /> },
 ]
 
 const bottomNavItems: NavItem[] = [
-  { href: '/app/settings', label: 'Account Settings', icon: <Settings className="h-4 w-4" />, section: 'ACCOUNT' },
-  { href: '/app/help', label: 'Help', icon: <HelpCircle className="h-4 w-4" />, section: 'HELP' },
+  { href: '/app/settings', label: 'Account Settings', icon: <Settings className="h-5 w-5" />, section: 'ACCOUNT' },
+  { href: '/app/help', label: 'Help', icon: <HelpCircle className="h-5 w-5" />, section: 'HELP' },
 ]
 
 export default function CollapsibleSidebar() {
@@ -151,7 +151,7 @@ export default function CollapsibleSidebar() {
                     rel="noopener noreferrer"
                     className={`
                       flex items-center rounded-md text-sm font-medium transition-colors
-                      ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
+                      ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
                       ${isActive 
                         ? 'bg-emerald-900/50 text-emerald-300 border-l-2 border-emerald-500' 
                         : 'text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -173,7 +173,7 @@ export default function CollapsibleSidebar() {
                   href={item.href}
                   className={`
                     flex items-center rounded-md text-sm font-medium transition-colors
-                    ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
+                    ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
                     ${isActive 
                       ? 'bg-emerald-900/50 text-emerald-300 border-l-2 border-emerald-500' 
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -204,7 +204,7 @@ export default function CollapsibleSidebar() {
                     href={item.href}
                     className={`
                       flex items-center rounded-md text-sm font-medium transition-colors
-                      ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
+                      ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
                       text-slate-300 hover:bg-slate-700 hover:text-white
                     `}
                     onClick={() => setIsMobileOpen(false)}
@@ -230,7 +230,7 @@ export default function CollapsibleSidebar() {
                     href={item.href}
                     className={`
                       flex items-center rounded-md text-sm font-medium transition-colors
-                      ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
+                      ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
                       text-slate-300 hover:bg-slate-700 hover:text-white
                     `}
                     onClick={() => setIsMobileOpen(false)}
@@ -246,7 +246,7 @@ export default function CollapsibleSidebar() {
             <div className={`border-t border-slate-700 ${isCollapsed ? 'p-2' : 'p-3'}`}>
               <div className={`
                 flex items-center rounded-md text-sm font-medium transition-colors
-                ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
+                ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
                 text-slate-300
               `}>
                 <div className="flex-shrink-0">
@@ -266,7 +266,7 @@ export default function CollapsibleSidebar() {
                 onClick={handleLogout}
                 className={`
                   w-full flex items-center rounded-md text-sm font-medium transition-colors mt-2
-                  ${isCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'}
+                  ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
                   text-slate-300 hover:bg-slate-700 hover:text-white
                 `}
               >
