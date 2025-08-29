@@ -420,7 +420,7 @@ export default function AuthorizationFlow() {
             <p className="text-gray-600 mb-4">{assetsError}</p>
             <button
               onClick={fetchAssets}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
               Try Again
             </button>
@@ -436,7 +436,7 @@ export default function AuthorizationFlow() {
             <p className="text-gray-600 mb-4">Create an asset first to set up authorizations</p>
             <button
               onClick={() => window.location.href = '/app/assets/create'}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
               Create Asset
             </button>
@@ -692,11 +692,11 @@ export default function AuthorizationFlow() {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="px-8 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-600 border-t-transparent"></div>
                     Creating Authorization...
                   </>
                 ) : (
@@ -749,7 +749,7 @@ export default function AuthorizationFlow() {
                           href={result.explorer}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-4 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-sm hover:shadow-md"
+                          className="ml-4 inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
                           View on Explorer →
                         </a>
@@ -772,7 +772,7 @@ export default function AuthorizationFlow() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                              <button
                  onClick={() => window.location.href = '/app/authorizations'}
-                 className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-sm hover:shadow-md"
+                 className="px-6 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
                >
                  View All Authorizations
                </button>
@@ -817,7 +817,7 @@ export default function AuthorizationFlow() {
           </p>
           <button
             onClick={() => setCurrentStep('ledger-selection')}
-            className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
+            className="px-6 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200"
           >
             ← Back to Ledger Selection
           </button>
