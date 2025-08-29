@@ -140,14 +140,40 @@ export default function ReportsPage() {
   }
 
   const downloadComplianceCSV = (filters: FilterState) => {
-    // For now, use placeholder data since compliance API is not implemented yet
-    const headers = ['Created', 'Record ID', 'Asset', 'Holder', 'Status', 'SHA-256', 'Verified At']
-    const csvContent = [
-      headers.join(','),
-      // TODO: Replace with actual compliance data when API is ready
-      '2024-01-01 10:00:00,COMP001,USD,rHolder123...,VERIFIED,abc123...,2024-01-01 10:05:00'
-    ].join('\n')
+    // Get the current compliance data from the query
+    const complianceData = queryClient.getQueryData(['compliance-records', filters]) as any
+    const records = complianceData?.records || []
     
+    const headers = ['Created', 'Record ID', 'Asset', 'Holder', 'Status', 'SHA-256', 'Verified At']
+    
+    const csvRows = [headers]
+    
+    records.forEach((record: any) => {
+      const row = [
+        record.createdAt ? new Date(record.createdAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : '',
+        record.recordId || '',
+        record.assetRef || '',
+        record.holder || '',
+        record.status || '',
+        record.sha256 || '',
+        record.verifiedAt ? new Date(record.verifiedAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : ''
+      ]
+      csvRows.push(row)
+    })
+    
+    const csvContent = csvRows.map(row => row.join(',')).join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -215,12 +241,21 @@ export default function ReportsPage() {
             <CustomDropdown
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
-              options={[
-                { value: 'all', label: 'All Statuses' },
-                { value: 'SUBMITTED', label: 'Submitted' },
-                { value: 'VALIDATED', label: 'Validated' },
-                { value: 'FAILED', label: 'Failed' }
-              ]}
+              options={
+                activeTab === 'compliance' 
+                  ? [
+                      { value: 'all', label: 'All Statuses' },
+                      { value: 'UNVERIFIED', label: 'Unverified' },
+                      { value: 'VERIFIED', label: 'Verified' },
+                      { value: 'REJECTED', label: 'Rejected' }
+                    ]
+                  : [
+                      { value: 'all', label: 'All Statuses' },
+                      { value: 'SUBMITTED', label: 'Submitted' },
+                      { value: 'VALIDATED', label: 'Validated' },
+                      { value: 'FAILED', label: 'Failed' }
+                    ]
+              }
               className="w-40"
             />
           </div>
@@ -625,13 +660,173 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
 }
 
 function ComplianceReport({ filters }: { filters: FilterState }) {
-  return (
-    <div className="p-6">
-      <div className="text-center py-12">
-        <div className="text-gray-500 text-lg">Compliance Report</div>
-        <div className="text-gray-400 text-sm mt-2">Filters: {JSON.stringify(filters)}</div>
-        <div className="text-gray-400 text-sm">Coming soon...</div>
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['compliance-records', filters],
+    queryFn: async () => {
+      const params: any = {
+        page: 1,
+        limit: 100
+      }
+      
+      if (filters.status !== 'all') {
+        params.status = filters.status
+      }
+      
+      if (filters.holder) {
+        params.holder = filters.holder
+      }
+
+      const response = await api.GET('/v1/compliance-records', { params: { query: params } })
+      return response.data
+    }
+  })
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'VERIFIED':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'REJECTED':
+        return <XCircle className="h-4 w-4 text-red-500" />
+      case 'UNVERIFIED':
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      default:
+        return <Clock className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+    switch (status) {
+      case 'VERIFIED':
+        return `${baseClasses} bg-green-100 text-green-800`
+      case 'REJECTED':
+        return `${baseClasses} bg-red-100 text-red-800`
+      case 'UNVERIFIED':
+        return `${baseClasses} bg-yellow-100 text-yellow-800`
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-800`
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-8">
+          <div className="text-red-500 text-lg">Error loading compliance records</div>
+          <div className="text-gray-400 text-sm mt-2">Please try again later</div>
+        </div>
+      </div>
+    )
+  }
+
+  const records = data?.records || []
+
+  return (
+    <div className="overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900">Compliance Report</h3>
+        <p className="text-sm text-gray-600 mt-1">
+          {records.length} compliance record{records.length !== 1 ? 's' : ''} found
+        </p>
+      </div>
+
+      {records.length === 0 ? (
+        <div className="p-6 text-center">
+          <div className="text-gray-500 text-lg">No compliance records found</div>
+          <div className="text-gray-400 text-sm mt-2">Try adjusting your filters</div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Record ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holder</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SHA-256</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verified At</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {records.map((record: any) => (
+                <tr key={record.id || 'unknown'} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {record.createdAt ? formatDate(record.createdAt) : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900 font-mono">
+                      {record.recordId || 'Unknown'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {record.assetRef || 'Unknown'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 font-mono">
+                      {record.holder ? (
+                        record.holder.length > 20 
+                          ? `${record.holder.substring(0, 10)}...${record.holder.substring(record.holder.length - 10)}`
+                          : record.holder
+                      ) : 'Unknown'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {record.status ? (
+                      <span className={getStatusBadge(record.status)}>
+                        {getStatusIcon(record.status)}
+                        <span className="ml-1">{record.status}</span>
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 font-mono">
+                      {record.sha256 ? (
+                        record.sha256.length > 20 
+                          ? `${record.sha256.substring(0, 10)}...${record.sha256.substring(record.sha256.length - 10)}`
+                          : record.sha256
+                      ) : '-'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {record.verifiedAt ? formatDate(record.verifiedAt) : '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
