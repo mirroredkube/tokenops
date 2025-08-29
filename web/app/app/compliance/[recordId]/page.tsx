@@ -13,6 +13,8 @@ import {
   Copy,
   ExternalLink
 } from 'lucide-react'
+import CustomDropdown from '../../../components/CustomDropdown'
+import ModernTooltip from '../../../components/ModernTooltip'
 
 interface ComplianceRecord {
   id: string
@@ -281,17 +283,18 @@ export default function ComplianceRecordPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Verification Status
               </label>
-              <select
+              <CustomDropdown
                 value={verifyData.status}
-                onChange={(e) => setVerifyData(prev => ({ 
+                onChange={(value) => setVerifyData(prev => ({ 
                   ...prev, 
-                  status: e.target.value as 'VERIFIED' | 'REJECTED' 
+                  status: value as 'VERIFIED' | 'REJECTED' 
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="VERIFIED">Verified</option>
-                <option value="REJECTED">Rejected</option>
-              </select>
+                options={[
+                  { value: 'VERIFIED', label: 'Verified' },
+                  { value: 'REJECTED', label: 'Rejected' }
+                ]}
+                placeholder="Select verification status"
+              />
             </div>
             
             {verifyData.status === 'REJECTED' && (
@@ -377,10 +380,12 @@ export default function ComplianceRecordPage() {
             <div>
               <label className="block text-sm font-medium text-gray-500">SHA256 Hash</label>
               <div className="flex items-center gap-2 mt-1">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono">{record.sha256}</code>
+                <ModernTooltip content={record.sha256}>
+                  <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono truncate max-w-xs block">{record.sha256}</code>
+                </ModernTooltip>
                 <button
                   onClick={() => copyToClipboard(record.sha256)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                 >
                   <Copy className="h-4 w-4" />
                 </button>
