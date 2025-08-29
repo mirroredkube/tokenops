@@ -1,15 +1,99 @@
-// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model Asset {
+  id                String             @id @default(cuid())
+  assetRef          String             @unique
+  ledger            AssetLedger
+  network           AssetNetwork
+  issuer            String
+  code              String
+  decimals          Int
+  complianceMode    ComplianceMode     @default(RECORD_ONLY)
+  controls          Json?
+  registry          Json?
+  metadata          Json?
+  status            AssetStatus        @default(DRAFT)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  complianceRecords ComplianceRecord[]
+  issuances         Issuance[]
+
+  @@index([ledger, network])
+  @@index([status])
+  @@index([createdAt])
 }
 
-// ---------- Asset Management ----------
+model Issuance {
+  id            String   @id @default(cuid())
+  assetId       String
+  to            String
+  amount        String
+  complianceRef Json?
+  anchor        Boolean  @default(true)
+  txId          String?
+  explorer      String?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ComplianceRecord {
+  id                   String           @id @default(cuid())
+  recordId             String           @unique
+  assetId              String
+  holder               String
+  sha256               String
+  status               ComplianceStatus @default(UNVERIFIED)
+  verifiedAt           DateTime?
+  verifiedBy           String?
+  reason               String?
+  isin                 String?
+  legalIssuer          String?
+  jurisdiction         String?
+  micaClass            String?
+  kycRequirement       String?
+  transferRestrictions Boolean          @default(false)
+  purpose              String?
+  docs                 Json?
+  consentTs            DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  asset                Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([status])
+  @@index([holder])
+  @@index([createdAt])
+  @@index([recordId])
+}
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String?
+  sub              String   @unique
+  role             String   @default("user")
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([email])
+  @@index([sub])
+}
+
 enum AssetLedger {
   XRPL
   HEDERA
@@ -35,62 +119,8 @@ enum AssetStatus {
   RETIRED
 }
 
-// ---------- Asset Management ----------
-model Asset {
-  id             String         @id @default(cuid())
-  assetRef       String         @unique
-  ledger         AssetLedger
-  network        AssetNetwork
-  issuer         String
-  code           String
-  decimals       Int
-  complianceMode ComplianceMode @default(RECORD_ONLY)
-  controls       Json?          // JSONB on Postgres
-  registry       Json?          // JSONB on Postgres
-  metadata       Json?          // JSONB on Postgres
-  status         AssetStatus    @default(DRAFT)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  issuances      Issuance[]
-
-  @@index([ledger, network])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model Issuance {
-  id             String   @id @default(cuid())
-  assetId        String
-  to             String
-  amount         String
-  complianceRef  Json?    // JSONB on Postgres
-  anchor         Boolean  @default(true)
-  txId           String?
-  explorer       String?
-  status         String   @default("pending")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
-  @@index([assetId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-// ---------- User Management ----------
-model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  name          String?
-  sub           String   @unique // OAuth sub from Google
-  role          String   @default("user") // "admin" or "user"
-  twoFactorSecret String? // Encrypted 2FA secret
-  twoFactorEnabled Boolean @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([email])
-  @@index([sub])
+enum ComplianceStatus {
+  UNVERIFIED
+  VERIFIED
+  REJECTED
 }

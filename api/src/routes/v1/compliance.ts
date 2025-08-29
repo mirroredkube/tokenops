@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import crypto from 'crypto'
 import { checkIdempotency, storeIdempotency } from './shared.js'
+import prisma from '../../db/client.js'
 
 // ---------- validation ----------
 const ComplianceRecordSchema = z.object({
@@ -22,7 +23,117 @@ const ComplianceRecordSchema = z.object({
   consentTs: z.string().datetime().optional()
 })
 
+const ComplianceVerifySchema = z.object({
+  status: z.enum(['VERIFIED', 'REJECTED']),
+  reason: z.string().optional()
+})
+
 export default async function complianceRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
+  // GET list compliance records
+  app.get('/compliance-records', {
+    schema: {
+      summary: 'List compliance records',
+      description: 'Get paginated list of compliance records with filters',
+      tags: ['v1'],
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'number', minimum: 1, default: 1 },
+          limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
+          status: { type: 'string', enum: ['UNVERIFIED', 'VERIFIED', 'REJECTED'] },
+          assetId: { type: 'string' },
+          holder: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            records: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  recordId: { type: 'string' },
+                  assetId: { type: 'string' },
+                  assetRef: { type: 'string' },
+                  holder: { type: 'string' },
+                  status: { type: 'string' },
+                  sha256: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  verifiedAt: { type: 'string' },
+                  verifiedBy: { type: 'string' }
+                }
+              }
+            },
+            pagination: {
+              type: 'object',
+              properties: {
+                page: { type: 'number' },
+                limit: { type: 'number' },
+                total: { type: 'number' },
+                pages: { type: 'number' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    const { page = 1, limit = 20, status, assetId, holder } = req.query as any
+    
+    try {
+      const where: any = {}
+      if (status) where.status = status
+      if (assetId) where.assetId = assetId
+      if (holder) where.holder = { contains: holder, mode: 'insensitive' }
+      
+      const [records, total] = await Promise.all([
+        prisma.complianceRecord.findMany({
+          where,
+          include: {
+            asset: {
+              select: {
+                assetRef: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit
+        }),
+        prisma.complianceRecord.count({ where })
+      ])
+      
+      const formattedRecords = records.map((record: any) => ({
+        id: record.id,
+        recordId: record.recordId,
+        assetId: record.assetId,
+        assetRef: record.asset.assetRef,
+        holder: record.holder,
+        status: record.status,
+        sha256: record.sha256,
+        createdAt: record.createdAt.toISOString(),
+        verifiedAt: record.verifiedAt?.toISOString(),
+        verifiedBy: record.verifiedBy
+      }))
+      
+      return reply.send({
+        records: formattedRecords,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      })
+    } catch (error: any) {
+      console.error('Error fetching compliance records:', error)
+      return reply.status(500).send({ error: 'Failed to fetch compliance records' })
+    }
+  })
+
   // POST create compliance record
   app.post('/compliance-records', {
     schema: {
@@ -84,6 +195,15 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
     
     try {
+      // Verify asset exists
+      const asset = await prisma.asset.findUnique({
+        where: { id: record.assetId }
+      })
+      
+      if (!asset) {
+        return reply.status(400).send({ error: 'Asset not found' })
+      }
+      
       // Canonicalize JSON (sort keys, no extra whitespace)
       const canonicalJson = JSON.stringify(record, Object.keys(record).sort())
       
@@ -93,18 +213,29 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       // Generate record ID
       const recordId = `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       
-      // For MVP, we'll just return the hash and ID
-      // TODO: Store in database
-      console.log('Compliance record created:', {
-        recordId,
-        sha256,
-        record: canonicalJson
+      // Create compliance record in database
+      const complianceRecord = await prisma.complianceRecord.create({
+        data: {
+          recordId,
+          assetId: record.assetId,
+          holder: record.holder,
+          sha256: `sha256:${sha256}`,
+          isin: record.isin,
+          legalIssuer: record.legalIssuer,
+          jurisdiction: record.jurisdiction,
+          micaClass: record.micaClass,
+          kycRequirement: record.kycRequirement,
+          transferRestrictions: record.transferRestrictions,
+          purpose: record.purpose,
+          docs: record.docs,
+          consentTs: record.consentTs ? new Date(record.consentTs) : null
+        }
       })
       
       const response = {
-        recordId,
-        sha256: `sha256:${sha256}`,
-        status: 'unverified'
+        recordId: complianceRecord.recordId,
+        sha256: complianceRecord.sha256,
+        status: complianceRecord.status.toLowerCase()
       }
       
       // Store for idempotency
@@ -123,7 +254,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
   app.get('/compliance-records/:recordId', {
     schema: {
       summary: 'Get compliance record',
-      description: 'Fetch compliance record (redacted for privacy)',
+      description: 'Fetch compliance record details',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -136,15 +267,28 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         200: {
           type: 'object',
           properties: {
+            id: { type: 'string' },
             recordId: { type: 'string' },
+            assetId: { type: 'string' },
+            assetRef: { type: 'string' },
+            holder: { type: 'string' },
             sha256: { type: 'string' },
             status: { type: 'string' },
-            // Redacted fields for privacy
-            assetId: { type: 'string' },
+            verifiedAt: { type: 'string' },
+            verifiedBy: { type: 'string' },
+            reason: { type: 'string' },
+            // Compliance metadata
+            isin: { type: 'string' },
+            legalIssuer: { type: 'string' },
             jurisdiction: { type: 'string' },
             micaClass: { type: 'string' },
+            kycRequirement: { type: 'string' },
             transferRestrictions: { type: 'boolean' },
-            purpose: { type: 'string' }
+            purpose: { type: 'string' },
+            docs: { type: 'array' },
+            consentTs: { type: 'string' },
+            createdAt: { type: 'string' },
+            updatedAt: { type: 'string' }
           }
         },
         404: { type: 'object', properties: { error: { type: 'string' } } }
@@ -153,22 +297,49 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
   }, async (req, reply) => {
     const { recordId } = req.params as { recordId: string }
     
-    // For MVP, we'll return a mock response
-    // TODO: Fetch from database
-    if (!recordId.startsWith('rec_')) {
-      return reply.status(404).send({ error: 'Compliance record not found' })
+    try {
+      const record = await prisma.complianceRecord.findUnique({
+        where: { recordId },
+        include: {
+          asset: {
+            select: {
+              assetRef: true
+            }
+          }
+        }
+      })
+      
+      if (!record) {
+        return reply.status(404).send({ error: 'Compliance record not found' })
+      }
+      
+      return reply.send({
+        id: record.id,
+        recordId: record.recordId,
+        assetId: record.assetId,
+        assetRef: record.asset.assetRef,
+        holder: record.holder,
+        sha256: record.sha256,
+        status: record.status,
+        verifiedAt: record.verifiedAt?.toISOString(),
+        verifiedBy: record.verifiedBy,
+        reason: record.reason,
+        isin: record.isin,
+        legalIssuer: record.legalIssuer,
+        jurisdiction: record.jurisdiction,
+        micaClass: record.micaClass,
+        kycRequirement: record.kycRequirement,
+        transferRestrictions: record.transferRestrictions,
+        purpose: record.purpose,
+        docs: record.docs,
+        consentTs: record.consentTs?.toISOString(),
+        createdAt: record.createdAt.toISOString(),
+        updatedAt: record.updatedAt.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error fetching compliance record:', error)
+      return reply.status(500).send({ error: 'Failed to fetch compliance record' })
     }
-    
-    return reply.send({
-      recordId,
-      sha256: 'sha256:mock_hash_for_mvp',
-      status: 'unverified',
-      assetId: 'asset_123',
-      jurisdiction: 'DE',
-      micaClass: 'Utility Token',
-      transferRestrictions: false,
-      purpose: 'Payment, Utility'
-    })
   })
 
   // PATCH verify compliance record
@@ -188,7 +359,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         type: 'object',
         required: ['status'],
         properties: {
-          status: { type: 'string', enum: ['verified', 'rejected'] },
+          status: { type: 'string', enum: ['VERIFIED', 'REJECTED'] },
           reason: { type: 'string', description: 'Reason for rejection' }
         }
       },
@@ -208,24 +379,49 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
   }, async (req, reply) => {
     const { recordId } = req.params as { recordId: string }
-    const { status, reason } = req.body as { status: 'verified' | 'rejected'; reason?: string }
+    const parsed = ComplianceVerifySchema.safeParse(req.body)
     
-    // For MVP, we'll return a mock response
-    // TODO: Update in database with RBAC check
-    if (!recordId.startsWith('rec_')) {
-      return reply.status(404).send({ error: 'Compliance record not found' })
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Invalid request body' })
     }
     
-    // TODO: Add RBAC check for issuer admin / regulator roles
-    // if (!hasRole(req.user, ['admin', 'regulator'])) {
-    //   return reply.status(403).send({ error: 'Insufficient permissions' })
-    // }
+    const { status, reason } = parsed.data
     
-    return reply.send({
-      recordId,
-      status,
-      verifiedAt: new Date().toISOString(),
-      reason: status === 'rejected' ? reason : undefined
-    })
+    try {
+      // Check if record exists
+      const existingRecord = await prisma.complianceRecord.findUnique({
+        where: { recordId }
+      })
+      
+      if (!existingRecord) {
+        return reply.status(404).send({ error: 'Compliance record not found' })
+      }
+      
+      // TODO: Add RBAC check for issuer admin / regulator roles
+      // if (!hasRole(req.user, ['admin', 'regulator'])) {
+      //   return reply.status(403).send({ error: 'Insufficient permissions' })
+      // }
+      
+      // Update the record
+      const updatedRecord = await prisma.complianceRecord.update({
+        where: { recordId },
+        data: {
+          status,
+          verifiedAt: new Date(),
+          verifiedBy: 'system', // TODO: Get from auth context
+          reason: status === 'REJECTED' ? reason : null
+        }
+      })
+      
+      return reply.send({
+        recordId: updatedRecord.recordId,
+        status: updatedRecord.status,
+        verifiedAt: updatedRecord.verifiedAt?.toISOString(),
+        reason: updatedRecord.reason
+      })
+    } catch (error: any) {
+      console.error('Error updating compliance record:', error)
+      return reply.status(500).send({ error: 'Failed to update compliance record' })
+    }
   })
 }

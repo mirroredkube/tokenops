@@ -467,4 +467,84 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       return reply.status(502).send({ error: 'Ledger connection error' })
     }
   })
+
+  // 4. GET /v1/issuances/by-compliance/:recordId - List issuances by compliance record
+  app.get('/issuances/by-compliance/:recordId', {
+    schema: {
+      summary: 'List issuances that reference a compliance record',
+      description: 'Get all issuances that reference a specific compliance record',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['recordId'],
+        properties: {
+          recordId: { type: 'string', description: 'Compliance record ID' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            issuances: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  assetId: { type: 'string' },
+                  assetRef: { type: 'string' },
+                  to: { type: 'string' },
+                  amount: { type: 'string' },
+                  txId: { type: 'string' },
+                  explorer: { type: 'string' },
+                  status: { type: 'string' },
+                  createdAt: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    const { recordId } = req.params as { recordId: string }
+    
+    try {
+      // Find issuances that reference this compliance record
+      const issuances = await prisma.issuance.findMany({
+        where: {
+          complianceRef: {
+            path: ['recordId'],
+            equals: recordId
+          }
+        },
+        include: {
+          asset: {
+            select: {
+              assetRef: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+      
+      return reply.send({
+        issuances: issuances.map(issuance => ({
+          id: issuance.id,
+          assetId: issuance.assetId,
+          assetRef: issuance.asset.assetRef,
+          to: issuance.to,
+          amount: issuance.amount,
+          txId: issuance.txId,
+          explorer: issuance.explorer,
+          status: issuance.status,
+          createdAt: issuance.createdAt.toISOString()
+        }))
+      })
+    } catch (error: any) {
+      console.error('Error fetching issuances by compliance record:', error)
+      return reply.status(500).send({ error: 'Failed to fetch issuances' })
+    }
+  })
 }
