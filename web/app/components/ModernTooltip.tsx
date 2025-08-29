@@ -9,14 +9,8 @@ interface ModernTooltipProps {
 
 export default function ModernTooltip({ children, content }: ModernTooltipProps) {
   const [isVisible, setIsVisible] = useState(false)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
 
-  const handleMouseEnter = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    setPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.top - 10
-    })
+  const handleMouseEnter = () => {
     setIsVisible(true)
   }
 
@@ -31,8 +25,8 @@ export default function ModernTooltip({ children, content }: ModernTooltipProps)
         <div
           className="absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg whitespace-nowrap pointer-events-none transform -translate-x-1/2 -translate-y-full"
           style={{
-            left: position.x,
-            top: position.y,
+            left: '50%',
+            top: '-10px',
           }}
         >
           {content}

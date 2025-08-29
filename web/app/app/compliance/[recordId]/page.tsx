@@ -224,6 +224,12 @@ export default function ComplianceRecordPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Title */}
+      <div className="border-b border-gray-200 pb-4">
+        <h1 className="text-2xl font-bold text-gray-900">Compliance Record Details</h1>
+        <p className="text-sm text-gray-600 mt-1">View and manage compliance record information</p>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -332,19 +338,21 @@ export default function ComplianceRecordPage() {
       )}
 
       {/* Record Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Basic Information */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 lg:col-span-2">
           <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
           
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-500">Record ID</label>
               <div className="flex items-center gap-2 mt-1">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">{record.recordId}</code>
+                <ModernTooltip content={record.recordId}>
+                  <code className="text-sm bg-gray-100 px-2 py-1 rounded truncate max-w-md block no-native-tooltip" title="">{record.recordId}</code>
+                </ModernTooltip>
                 <button
                   onClick={() => copyToClipboard(record.recordId)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                 >
                   <Copy className="h-4 w-4" />
                 </button>
@@ -354,10 +362,12 @@ export default function ComplianceRecordPage() {
             <div>
               <label className="block text-sm font-medium text-gray-500">Asset Reference</label>
               <div className="flex items-center gap-2 mt-1">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">{record.assetRef}</code>
+                <ModernTooltip content={record.assetRef}>
+                  <code className="text-sm bg-gray-100 px-2 py-1 rounded truncate max-w-md block no-native-tooltip" title="">{record.assetRef}</code>
+                </ModernTooltip>
                 <button
                   onClick={() => copyToClipboard(record.assetRef)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                 >
                   <Copy className="h-4 w-4" />
                 </button>
@@ -367,10 +377,12 @@ export default function ComplianceRecordPage() {
             <div>
               <label className="block text-sm font-medium text-gray-500">Holder Address</label>
               <div className="flex items-center gap-2 mt-1">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono">{record.holder}</code>
+                <ModernTooltip content={record.holder}>
+                  <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono truncate max-w-md block no-native-tooltip" title="">{record.holder}</code>
+                </ModernTooltip>
                 <button
                   onClick={() => copyToClipboard(record.holder)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                 >
                   <Copy className="h-4 w-4" />
                 </button>
@@ -381,7 +393,7 @@ export default function ComplianceRecordPage() {
               <label className="block text-sm font-medium text-gray-500">SHA256 Hash</label>
               <div className="flex items-center gap-2 mt-1">
                 <ModernTooltip content={record.sha256}>
-                  <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono truncate max-w-xs block">{record.sha256}</code>
+                  <code className="text-sm bg-gray-100 px-2 py-1 rounded font-mono truncate max-w-md block no-native-tooltip" title="">{record.sha256}</code>
                 </ModernTooltip>
                 <button
                   onClick={() => copyToClipboard(record.sha256)}

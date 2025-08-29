@@ -5,6 +5,32 @@
 /* Optional: slightly tighter, more B2B look */
 :root { font-feature-settings: "cv02","cv03","cv04","cv11"; }
 
+/* Disable native browser tooltips */
+.no-native-tooltip {
+  pointer-events: auto !important;
+}
+
+.no-native-tooltip::before,
+.no-native-tooltip::after {
+  display: none !important;
+}
+
+/* Disable native tooltips on truncated elements */
+.truncate {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Prevent browser from showing tooltips on truncated text */
+code.truncate,
+.truncate {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 @layer utilities {
     @keyframes float {
       0%, 100% { transform: translateY(0) }

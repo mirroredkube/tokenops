@@ -263,21 +263,21 @@ export default function CompliancePage() {
                     <tr key={record.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <ModernTooltip content={record.recordId}>
-                          <div className="truncate">
+                          <div className="truncate no-native-tooltip" title="">
                             <div className="text-sm font-medium text-gray-900 truncate">{record.recordId}</div>
                           </div>
                         </ModernTooltip>
                       </td>
                       <td className="px-4 py-3">
                         <ModernTooltip content={record.assetRef}>
-                          <div className="truncate">
+                          <div className="truncate no-native-tooltip" title="">
                             <div className="text-sm font-medium text-gray-900 truncate">{record.assetRef}</div>
                           </div>
                         </ModernTooltip>
                       </td>
                       <td className="px-4 py-3">
                         <ModernTooltip content={record.holder}>
-                          <div className="truncate">
+                          <div className="truncate no-native-tooltip" title="">
                             <div className="text-sm font-medium text-gray-900 truncate font-mono">{record.holder}</div>
                           </div>
                         </ModernTooltip>
@@ -290,7 +290,7 @@ export default function CompliancePage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         <ModernTooltip content={formatDate(record.createdAt)}>
-                          <div className="truncate">
+                          <div className="truncate no-native-tooltip" title="">
                             {formatDate(record.createdAt)}
                           </div>
                         </ModernTooltip>
@@ -298,10 +298,9 @@ export default function CompliancePage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => router.push(`/app/compliance/${record.recordId}`)}
-                          className="inline-flex items-center justify-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors duration-200 border border-gray-200 hover:border-gray-300 whitespace-nowrap"
-                          title="View Details"
+                          className="inline-flex items-center justify-center px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors duration-200 border border-gray-200 hover:border-gray-300 whitespace-nowrap"
                         >
-                          <Eye className="w-4 h-4 mr-1" />
+                          <Eye className="w-3 h-3 mr-1" />
                           View
                         </button>
                       </td>
