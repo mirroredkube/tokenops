@@ -140,7 +140,7 @@ export default function IssuancesPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+    const baseClasses = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
     switch (status.toLowerCase()) {
       case 'validated':
         return `${baseClasses} bg-green-100 text-green-800`
@@ -340,7 +340,16 @@ export default function IssuancesPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="min-w-full">
+              <colgroup>
+                <col className="w-20" /> {/* Currency */}
+                <col className="w-24" /> {/* Amount */}
+                <col className="w-32" /> {/* Destination */}
+                <col className="w-48" /> {/* Status */}
+                <col className="w-32" /> {/* Transaction */}
+                <col className="w-32" /> {/* Date */}
+                <col className="w-24" /> {/* Actions */}
+              </colgroup>
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -384,27 +393,29 @@ export default function IssuancesPage() {
                         </div>
                       </ModernTooltip>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <span className={getStatusBadge(issuance.status)}>
-                          {getStatusIcon(issuance.status)}
-                          <span className="ml-1">{getStatusText(issuance.status)}</span>
-                        </span>
-                        {issuance.status === 'submitted' && (
-                          <button
-                            onClick={() => handleRefreshStatus(issuance.id, issuance.assetId)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Refresh status from ledger"
-                          >
-                            <RefreshCw className="h-3 w-3" />
-                          </button>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <span className={getStatusBadge(issuance.status)}>
+                            {getStatusIcon(issuance.status)}
+                            <span className="ml-1 text-xs">{getStatusText(issuance.status)}</span>
+                          </span>
+                          {issuance.status === 'submitted' && (
+                            <button
+                              onClick={() => handleRefreshStatus(issuance.id, issuance.assetId)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              title="Refresh status from ledger"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                        {issuance.updatedAt && (
+                          <div className="text-xs text-gray-500">
+                            Last checked: {formatDate(issuance.updatedAt)}
+                          </div>
                         )}
                       </div>
-                      {issuance.updatedAt && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Last checked: {formatDate(issuance.updatedAt)}
-                        </div>
-                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {issuance.txId ? (
@@ -431,10 +442,10 @@ export default function IssuancesPage() {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => router.push(`/app/assets/${issuance.assetId}`)}
-                        className="inline-flex items-center justify-center px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors duration-200 border border-gray-200 hover:border-gray-300 whitespace-nowrap"
+                        className="inline-flex items-center justify-center px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors duration-200 border border-gray-200 hover:border-gray-300"
+                        title="View Asset"
                       >
-                        <Eye className="w-3 h-3 mr-1" />
-                        View Asset
+                        <Eye className="w-3 h-3" />
                       </button>
                     </td>
                   </tr>
