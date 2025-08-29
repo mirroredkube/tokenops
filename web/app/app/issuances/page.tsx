@@ -11,10 +11,12 @@ import {
   ChevronRight,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  HelpCircle
 } from 'lucide-react'
 import ModernTooltip from '../../components/ModernTooltip'
 import CustomDropdown from '../../components/CustomDropdown'
+import InfoPopup from '../../components/InfoPopup'
 
 interface Issuance {
   id: string
@@ -160,9 +162,86 @@ export default function IssuancesPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
+            <div className="flex items-center gap-2 mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Status
+              </label>
+              <InfoPopup title="Issuance Status Meanings">
+                <div className="space-y-4">
+                  {/* Status Definitions */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <Clock className="h-5 w-5 text-yellow-600" />
+                      <div>
+                        <div className="font-semibold text-yellow-800">Pending</div>
+                        <div className="text-sm text-yellow-700">Created but not yet submitted to blockchain</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <div className="font-semibold text-blue-800">Submitted</div>
+                        <div className="text-sm text-blue-700">Transaction sent to XRPL network, waiting for validation</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <div className="font-semibold text-green-800">Validated</div>
+                        <div className="text-sm text-green-700">Successfully confirmed and tokens issued</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                      <XCircle className="h-5 w-5 text-red-600" />
+                      <div>
+                        <div className="font-semibold text-red-800">Failed</div>
+                        <div className="text-sm text-red-700">Transaction failed, no tokens issued</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Flow Diagram */}
+                  <div className="border-t pt-4">
+                    <h4 className="font-semibold text-gray-900 mb-3">Typical Issuance Flow:</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <Clock className="h-4 w-4 text-yellow-600" />
+                          </div>
+                          <div className="font-medium text-gray-700">Pending</div>
+                        </div>
+                        <div className="flex-1 h-0.5 bg-gray-300 mx-4"></div>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <Clock className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="font-medium text-gray-700">Submitted</div>
+                        </div>
+                        <div className="flex-1 h-0.5 bg-gray-300 mx-4"></div>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          </div>
+                          <div className="font-medium text-gray-700">Validated</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Info */}
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <div className="text-sm text-blue-800">
+                      <strong>Note:</strong> Most transactions complete in 3-5 seconds on XRPL. 
+                      Failed transactions may need to be retried.
+                    </div>
+                  </div>
+                </div>
+              </InfoPopup>
+            </div>
             <CustomDropdown
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
@@ -175,7 +254,6 @@ export default function IssuancesPage() {
               ]}
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Asset ID
