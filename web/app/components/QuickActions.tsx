@@ -46,7 +46,7 @@ export default function QuickActions({
             },
             {
               id: 'authorizations',
-              title: 'Manage Authorizations',
+              title: 'Setup Authorization',
               description: 'Create and manage asset authorizations',
               icon: CheckSquare,
               href: '/app/authorizations',
@@ -79,7 +79,7 @@ export default function QuickActions({
         <p className="text-sm text-gray-600">Common tasks to get started</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((action) => {
           const Icon = action.icon
           return (

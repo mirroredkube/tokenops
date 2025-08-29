@@ -28,7 +28,6 @@ interface KPIData {
   }
   pendingIssuances: number
   totalAuthorizations: number
-  activeAuthorizations: number
 }
 
 export default function KPICards() {
@@ -73,9 +72,6 @@ export default function KPICards() {
       const { data: authorizationsResponse } = await api.GET('/v1/authorizations?limit=1' as any, {})
       const totalAuthorizations = authorizationsResponse?.pagination?.total || 0
       
-      // For now, we'll set active authorizations to 0 until we have the data
-      const activeAuthorizations = 0 // TODO: Filter by VALIDATED status when we have the data
-
       return {
         activeAssets,
         totalTokens,
@@ -86,8 +82,7 @@ export default function KPICards() {
           total: totalComplianceRecords
         },
         pendingIssuances,
-        totalAuthorizations,
-        activeAuthorizations
+        totalAuthorizations
       }
     },
     staleTime: 30000, // 30 seconds
@@ -144,15 +139,7 @@ export default function KPICards() {
       onClick: () => router.push('/app/issuance/history?status=submitted'),
       tooltip: 'Number of asset issuances waiting for ledger validation'
     },
-    {
-      title: 'Active Authorizations',
-      value: data?.activeAuthorizations || 0,
-      icon: CheckSquare,
-      color: 'bg-purple-500',
-      hoverColor: 'hover:bg-purple-50',
-      onClick: () => router.push('/app/authorizations/history'),
-      tooltip: 'Number of validated asset authorizations'
-    },
+    
     {
       title: 'Total Authorizations',
       value: data?.totalAuthorizations || 0,
