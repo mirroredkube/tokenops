@@ -205,7 +205,7 @@ export default function CompliancePage() {
 
         {loading ? (
           <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
             <p className="mt-2 text-gray-600">Loading compliance records...</p>
           </div>
         ) : error ? (
@@ -216,7 +216,7 @@ export default function CompliancePage() {
             <p className="text-red-600">{error}</p>
             <button
               onClick={fetchRecords}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="mt-2 px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
               Retry
             </button>

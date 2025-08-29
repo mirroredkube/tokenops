@@ -187,7 +187,7 @@ export default function ComplianceRecordPage() {
           </button>
         </div>
         <div className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading compliance record...</p>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function ComplianceRecordPage() {
           <p className="text-red-600">{error || 'Compliance record not found'}</p>
           <button
             onClick={fetchRecord}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-2 px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
           >
             Retry
           </button>
@@ -251,7 +251,7 @@ export default function ComplianceRecordPage() {
           {record.status === 'UNVERIFIED' && (
             <button
               onClick={() => setShowVerifyForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-neutral-800 hover:bg-neutral-900"
+              className="inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
               Verify Record
             </button>
@@ -322,7 +322,7 @@ export default function ComplianceRecordPage() {
               <button
                 onClick={handleVerify}
                 disabled={verifying || (verifyData.status === 'REJECTED' && !verifyData.reason.trim())}
-                className="px-4 py-2 bg-neutral-800 text-white rounded-md hover:bg-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {verifying ? 'Verifying...' : 'Submit Verification'}
               </button>
