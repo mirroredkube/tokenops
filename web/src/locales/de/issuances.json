@@ -1,0 +1,58 @@
+{
+  "title": "Emissionen",
+  "description": "Token an autorisierte Inhaber ausgeben",
+  "newIssuance": "Neue Emission",
+  "issuanceHistory": "Emissionshistorie",
+  "issuanceFlow": "Emissionsablauf",
+  "tokenIssuance": "Token-Emission",
+  "fields": {
+    "asset": "Asset",
+    "holder": "Inhaber",
+    "amount": "Betrag",
+    "status": "Status",
+    "transaction": "Transaktion",
+    "dateTime": "Datum/Zeit",
+    "to": "An (Inhaber)",
+    "transactionId": "Transaktions-ID"
+  },
+  "actions": {
+    "startIssuance": "Emission starten",
+    "issueToken": "Token ausgeben",
+    "continueToIssue": "Mit Emission fortfahren",
+    "createTrustline": "Trustline erstellen",
+    "checkAndConfigureTrustline": "Trustline prüfen & konfigurieren",
+    "issueAnotherToken": "Weiteren Token ausgeben",
+    "viewOnExplorer": "Im Explorer anzeigen",
+    "viewHistory": "Historie anzeigen"
+  },
+  "steps": {
+    "selectAsset": "Asset auswählen",
+    "configureTrustline": "Trustline konfigurieren",
+    "issueToken": "Token ausgeben",
+    "step1": "Schritt 1",
+    "step2": "Schritt 2",
+    "step3": "Schritt 3",
+    "progress": "Fortschritt"
+  },
+  "messages": {
+    "issuanceCreatedSuccessfully": "Emission erfolgreich erstellt!",
+    "yourIssuanceHasBeenSubmitted": "Ihre Emission wurde an {{ledger}} übermittelt und in der Datenbank gespeichert.",
+    "transactionDetails": "Transaktionsdetails",
+    "transactionId": "Transaktions-ID:",
+    "issuanceId": "Emissions-ID:",
+    "viewAllIssuances": "Alle Emissionen anzeigen",
+    "createAnotherIssuance": "Weitere Emission erstellen",
+    "noActiveAssetsFound": "Keine aktiven Assets gefunden",
+    "createAssetFirst": "Erstellen Sie zuerst ein Asset, um Emissionen einzurichten",
+    "tryAgain": "Erneut versuchen",
+    "comingSoon": "Demnächst verfügbar",
+    "issuanceSupportUnderDevelopment": "Emissionsunterstützung für {{ledger}} wird derzeit entwickelt.",
+    "backToAssetSelection": "Zurück zur Asset-Auswahl"
+  },
+  "status": {
+    "submitted": "Eingereicht",
+    "validated": "Validiert",
+    "failed": "Fehlgeschlagen",
+    "expired": "Abgelaufen"
+  }
+}

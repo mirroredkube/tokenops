@@ -1,0 +1,48 @@
+{
+  "title": "Kontoeinstellungen",
+  "description": "Verwalten Sie Ihre Kontoeinstellungen und Sicherheitseinstellungen",
+  "profile": "Profil",
+  "security": "Sicherheit",
+  "notifications": "Benachrichtigungen",
+  "preferences": "Einstellungen",
+  "fields": {
+    "name": "Name",
+    "email": "E-Mail",
+    "timezone": "Zeitzone",
+    "language": "Sprache",
+    "twoFactorAuth": "Zwei-Faktor-Authentifizierung",
+    "emailNotifications": "E-Mail-Benachrichtigungen",
+    "pushNotifications": "Push-Benachrichtigungen"
+  },
+  "actions": {
+    "saveChanges": "Änderungen speichern",
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren",
+    "verify": "Verifizieren",
+    "verifyAndEnable": "Verifizieren & Aktivieren",
+    "setup2FA": "2FA einrichten",
+    "verifyCode": "Code verifizieren"
+  },
+  "messages": {
+    "changesSavedSuccessfully": "Änderungen erfolgreich gespeichert",
+    "twoFactorAuthEnabled": "Zwei-Faktor-Authentifizierung wurde aktiviert",
+    "twoFactorAuthDisabled": "Zwei-Faktor-Authentifizierung wurde deaktiviert",
+    "verificationCodeSent": "Verifizierungscode an Ihre E-Mail gesendet",
+    "invalidVerificationCode": "Ungültiger Verifizierungscode",
+    "setup2FAMessage": "Scannen Sie den QR-Code mit Ihrer Authenticator-App, um die Zwei-Faktor-Authentifizierung einzurichten",
+    "enterVerificationCode": "Geben Sie den 6-stelligen Verifizierungscode aus Ihrer Authenticator-App ein"
+  },
+  "languages": {
+    "english": "Englisch",
+    "german": "Deutsch"
+  },
+  "timezones": {
+    "utc": "UTC",
+    "est": "Ostzeit",
+    "cst": "Zentralzeit",
+    "mst": "Bergzeit",
+    "pst": "Pazifikzeit",
+    "cet": "Mitteleuropäische Zeit",
+    "eet": "Osteuropäische Zeit"
+  }
+}

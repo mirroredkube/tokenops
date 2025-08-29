@@ -1,0 +1,48 @@
+{
+  "title": "Account Settings",
+  "description": "Manage your account preferences and security settings",
+  "profile": "Profile",
+  "security": "Security",
+  "notifications": "Notifications",
+  "preferences": "Preferences",
+  "fields": {
+    "name": "Name",
+    "email": "Email",
+    "timezone": "Timezone",
+    "language": "Language",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "emailNotifications": "Email Notifications",
+    "pushNotifications": "Push Notifications"
+  },
+  "actions": {
+    "saveChanges": "Save Changes",
+    "enable": "Enable",
+    "disable": "Disable",
+    "verify": "Verify",
+    "verifyAndEnable": "Verify & Enable",
+    "setup2FA": "Setup 2FA",
+    "verifyCode": "Verify Code"
+  },
+  "messages": {
+    "changesSavedSuccessfully": "Changes saved successfully",
+    "twoFactorAuthEnabled": "Two-factor authentication has been enabled",
+    "twoFactorAuthDisabled": "Two-factor authentication has been disabled",
+    "verificationCodeSent": "Verification code sent to your email",
+    "invalidVerificationCode": "Invalid verification code",
+    "setup2FAMessage": "Scan the QR code with your authenticator app to set up two-factor authentication",
+    "enterVerificationCode": "Enter the 6-digit verification code from your authenticator app"
+  },
+  "languages": {
+    "english": "English",
+    "german": "German"
+  },
+  "timezones": {
+    "utc": "UTC",
+    "est": "Eastern Time",
+    "cst": "Central Time",
+    "mst": "Mountain Time",
+    "pst": "Pacific Time",
+    "cet": "Central European Time",
+    "eet": "Eastern European Time"
+  }
+}

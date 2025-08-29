@@ -1,0 +1,48 @@
+{
+  "title": "Balances",
+  "description": "View outstanding supply and holder breakdown for your assets",
+  "outstanding": "Outstanding",
+  "holderLookup": "Holder Lookup",
+  "outstandingView": "Outstanding View",
+  "holderLookupView": "Holder Lookup View",
+  "fields": {
+    "asset": "Asset:",
+    "selectAsset": "Select an asset",
+    "holderAddress": "Holder Address:",
+    "enterXrplAddress": "Enter XRPL address (e.g., r...)",
+    "holder": "Holder",
+    "balance": "Balance",
+    "lastUpdated": "Last Updated",
+    "explorer": "Explorer",
+    "xrpBalance": "XRP Balance",
+    "reserve": "Reserve",
+    "assets": "Assets",
+    "outstandingSupply": "Outstanding Supply",
+    "holders": "Holders",
+    "averageHolding": "Average Holding"
+  },
+  "actions": {
+    "refreshFromLedger": "Refresh from Ledger",
+    "downloadCSV": "Download CSV"
+  },
+  "messages": {
+    "selectAssetToViewOutstanding": "Select an asset to view outstanding supply",
+    "enterHolderAddressToView": "Enter a holder address to view their balances",
+    "noHoldersFound": "No holders found",
+    "noOutstandingSupply": "No outstanding supply for this asset",
+    "noAssetsFoundForHolder": "No assets found for this holder",
+    "errorLoadingOutstandingBalances": "Error loading outstanding balances",
+    "errorLoadingHolderLookupData": "Error loading holder lookup data",
+    "pleaseTryAgainLater": "Please try again later",
+    "holdersWithBalanceGreaterThanZero": "{{count}} holder{{plural}} with balance > 0",
+    "assetCount": "{{count}} asset{{plural}}"
+  },
+  "kpis": {
+    "outstandingSupply": "Outstanding Supply",
+    "holders": "Holders",
+    "averageHolding": "Average Holding",
+    "xrpBalance": "XRP Balance",
+    "reserve": "Reserve",
+    "assets": "Assets"
+  }
+}

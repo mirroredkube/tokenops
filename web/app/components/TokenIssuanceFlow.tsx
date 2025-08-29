@@ -136,7 +136,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       const { data, error } = await api.GET('/v1/assets', {
         params: {
           query: {
-            ledger: selectedLedger.toLowerCase(),
+            ledger: selectedLedger.toLowerCase() as 'xrpl' | 'hedera' | 'ethereum',
             status: 'active',
             limit: 50,
             offset: 0

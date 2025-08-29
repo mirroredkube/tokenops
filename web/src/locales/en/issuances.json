@@ -1,0 +1,58 @@
+{
+  "title": "Issuances",
+  "description": "Issue tokens to authorized holders",
+  "newIssuance": "New Issuance",
+  "issuanceHistory": "Issuance History",
+  "issuanceFlow": "Issuance Flow",
+  "tokenIssuance": "Token Issuance",
+  "fields": {
+    "asset": "Asset",
+    "holder": "Holder",
+    "amount": "Amount",
+    "status": "Status",
+    "transaction": "Transaction",
+    "dateTime": "Date/Time",
+    "to": "To (Holder)",
+    "transactionId": "Transaction ID"
+  },
+  "actions": {
+    "startIssuance": "Start Issuance",
+    "issueToken": "Issue Token",
+    "continueToIssue": "Continue to Issue",
+    "createTrustline": "Create Trustline",
+    "checkAndConfigureTrustline": "Check & Configure Trustline",
+    "issueAnotherToken": "Issue Another Token",
+    "viewOnExplorer": "View on Explorer",
+    "viewHistory": "View History"
+  },
+  "steps": {
+    "selectAsset": "Select Asset",
+    "configureTrustline": "Configure Trustline",
+    "issueToken": "Issue Token",
+    "step1": "Step 1",
+    "step2": "Step 2",
+    "step3": "Step 3",
+    "progress": "Progress"
+  },
+  "messages": {
+    "issuanceCreatedSuccessfully": "Issuance created successfully!",
+    "yourIssuanceHasBeenSubmitted": "Your issuance has been submitted to {{ledger}} and recorded in the database.",
+    "transactionDetails": "Transaction Details",
+    "transactionId": "Transaction ID:",
+    "issuanceId": "Issuance ID:",
+    "viewAllIssuances": "View All Issuances",
+    "createAnotherIssuance": "Create Another Issuance",
+    "noActiveAssetsFound": "No active assets found",
+    "createAssetFirst": "Create an asset first to set up issuances",
+    "tryAgain": "Try Again",
+    "comingSoon": "Coming Soon",
+    "issuanceSupportUnderDevelopment": "Issuance support for {{ledger}} is currently under development.",
+    "backToAssetSelection": "Back to Asset Selection"
+  },
+  "status": {
+    "submitted": "Submitted",
+    "validated": "Validated",
+    "failed": "Failed",
+    "expired": "Expired"
+  }
+}

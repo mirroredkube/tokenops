@@ -1,6 +1,8 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import CustomDropdown from '../../components/CustomDropdown'
@@ -24,12 +26,14 @@ import {
 
 export default function SettingsPage() {
   const { user } = useAuth()
+  const { currentLanguage, setLanguage, availableLanguages } = useLanguage()
+  const { t } = useTranslation(['settings', 'common'])
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     timezone: 'UTC',
-    language: 'English',
+    language: currentLanguage === 'en' ? 'English' : 'German',
     notifications: {
       email: true,
       push: false,
@@ -238,8 +242,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-        <p className="text-gray-600 mt-2">Manage your account preferences and security settings</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+        <p className="text-gray-600 mt-2">{t('description')}</p>
       </div>
 
       <div className="space-y-8">
@@ -252,7 +256,7 @@ export default function SettingsPage() {
                   {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('profile')}</h2>
                   <p className="text-sm text-gray-600">Update your personal details</p>
                 </div>
               </div>
@@ -261,7 +265,7 @@ export default function SettingsPage() {
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 <Edit3 className="w-4 h-4" />
-                {isEditing ? 'Cancel' : 'Edit'}
+                {isEditing ? t('actions.cancel') : t('actions.edit')}
               </button>
             </div>
           </div>
@@ -270,7 +274,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
+                  {t('fields.name')}
                 </label>
                 {isEditing ? (
                   <input
@@ -290,7 +294,7 @@ export default function SettingsPage() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
+                  {t('fields.email')}
                 </label>
                 {isEditing ? (
                   <input
@@ -316,13 +320,13 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
-                  Save Changes
+                  {t('actions.saveChanges')}
                 </button>
                 <button
                   onClick={handleCancel}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  {t('actions.cancel')}
                 </button>
               </div>
             )}
@@ -337,7 +341,7 @@ export default function SettingsPage() {
                 <Shield className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Security</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t('security')}</h2>
                 <p className="text-sm text-gray-600">Manage your account security settings</p>
               </div>
             </div>
@@ -346,7 +350,7 @@ export default function SettingsPage() {
           <div className="p-6 space-y-4">
             <div className="flex items-center justify-between py-3">
               <div>
-                <h3 className="font-medium text-gray-900">Two-Factor Authentication</h3>
+                <h3 className="font-medium text-gray-900">{t('fields.twoFactorAuth')}</h3>
                 <p className="text-sm text-gray-600">
                   {twoFactorEnabled 
                     ? 'Two-factor authentication is enabled for your account' 
@@ -360,7 +364,7 @@ export default function SettingsPage() {
                   disabled={isLoading}
                   className="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
-                  Disable
+                  {t('actions.disable')}
                 </button>
               ) : (
                 <button 
@@ -374,7 +378,7 @@ export default function SettingsPage() {
                       Setting up...
                     </>
                   ) : (
-                    'Enable'
+                    t('actions.enable')
                   )}
                 </button>
               )}
@@ -604,7 +608,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Timezone
+                  {t('fields.timezone')}
                 </label>
                 <CustomDropdown
                   value={formData.timezone}
@@ -625,15 +629,19 @@ export default function SettingsPage() {
               
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Language
+                  {t('fields.language')}
                 </label>
                 <CustomDropdown
-                  value={formData.language}
-                  onChange={(value) => setFormData(prev => ({ ...prev, language: value }))}
-                  options={[
-                    { value: 'English', label: 'English' },
-                    { value: 'German', label: 'Deutsch' }
-                  ]}
+                  value={currentLanguage === 'en' ? 'English' : 'German'}
+                  onChange={(value) => {
+                    const lang = value === 'English' ? 'en' : 'de'
+                    setLanguage(lang)
+                    setFormData(prev => ({ ...prev, language: value }))
+                  }}
+                  options={availableLanguages.map(lang => ({
+                    value: lang.label,
+                    label: lang.label
+                  }))}
                   className="w-full"
                 />
               </div>

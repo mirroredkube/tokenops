@@ -1,0 +1,51 @@
+{
+  "title": "Compliance-Verwaltung",
+  "description": "Compliance-Datensätze für regulatorische Überwachung anzeigen und verifizieren.",
+  "complianceRecordDetails": "Compliance-Datensatz-Details",
+  "viewAndManageCompliance": "Compliance-Datensatz-Informationen anzeigen und verwalten",
+  "verifyRecord": "Datensatz verifizieren",
+  "verifyComplianceRecord": "Compliance-Datensatz verifizieren",
+  "submitVerification": "Verifizierung einreichen",
+  "verifying": "Verifizierung läuft...",
+  "fields": {
+    "recordId": "Datensatz-ID",
+    "asset": "Asset",
+    "holder": "Inhaber",
+    "status": "Status",
+    "sha256": "SHA-256",
+    "verifiedAt": "Verifiziert am",
+    "created": "Erstellt",
+    "verified": "Verifiziert",
+    "verifiedBy": "Verifiziert von",
+    "rejectionReason": "Ablehnungsgrund"
+  },
+  "actions": {
+    "backToCompliance": "Zurück zur Compliance",
+    "retry": "Erneut versuchen",
+    "viewOnExplorer": "Im Explorer anzeigen"
+  },
+  "messages": {
+    "thisRecordHasBeenReferenced": "Dieser Datensatz wurde von {{count}} Emission(en) referenziert",
+    "changingVerificationStatus": "Das Ändern des Verifizierungsstatus beeinflusst bestehende Emissionen nicht, kann aber zukünftige Compliance-Prüfungen beeinträchtigen.",
+    "verificationStatus": "Verifizierungsstatus",
+    "reasonForRejection": "Grund für Ablehnung",
+    "provideReasonForRejecting": "Geben Sie einen Grund für die Ablehnung dieses Compliance-Datensatzes an...",
+    "complianceRecordNotFound": "Compliance-Datensatz nicht gefunden",
+    "loadingComplianceRecord": "Compliance-Datensatz wird geladen...",
+    "errorLoadingComplianceRecords": "Fehler beim Laden der Compliance-Datensätze",
+    "noComplianceRecordsFound": "Keine Compliance-Datensätze gefunden",
+    "complianceRecordsWillAppear": "Compliance-Datensätze werden hier angezeigt, sobald sie erstellt wurden.",
+    "tryAdjustingYourFilters": "Versuchen Sie, Ihre Filter anzupassen, um mehr Ergebnisse zu sehen."
+  },
+  "status": {
+    "unverified": "Nicht verifiziert",
+    "verified": "Verifiziert",
+    "rejected": "Abgelehnt"
+  },
+  "filters": {
+    "allStatuses": "Alle Status",
+    "unverified": "Nicht verifiziert",
+    "verified": "Verifiziert",
+    "rejected": "Abgelehnt"
+  }
+}

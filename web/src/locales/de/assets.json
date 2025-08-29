@@ -1,0 +1,69 @@
+{
+  "title": "Assets",
+  "description": "Verwalten Sie Ihre Token-Assets über mehrere Ledger hinweg.",
+  "createAsset": "Asset erstellen",
+  "createAssetDraft": "Asset erstellen (Entwurf)",
+  "assetDetails": "Asset-Details",
+  "assetDetailsAndConfiguration": "Asset-Details und Konfiguration",
+  "assetReference": "Asset-Referenz",
+  "basicInformation": "Grundinformationen",
+  "registryInformation": "Register-Informationen",
+  "lifecycleActions": "Lebenszyklus-Aktionen",
+  "ledgerControls": "Ledger-Steuerungen",
+  "activity": "Aktivität",
+  "comingSoon": "Demnächst verfügbar",
+  "authorizationsAndIssuancesComing": "Autorisierungen und Emissionen kommen in Phase 2",
+  "viewAuthorizationStatus": "Sie können hier den Autorisierungsstatus und die Emissionshistorie anzeigen.",
+  "fields": {
+    "issuerAddress": "Emittenten-Adresse",
+    "decimals": "Dezimalstellen",
+    "complianceMode": "Compliance-Modus",
+    "created": "Erstellt",
+    "isin": "ISIN",
+    "lei": "LEI",
+    "jurisdiction": "Gerichtsbarkeit",
+    "micaClassification": "MiCA-Klassifizierung"
+  },
+  "complianceModes": {
+    "noCompliance": "Keine Compliance",
+    "recordOnly": "Nur Aufzeichnung",
+    "gatedBefore": "Vorher geprüft"
+  },
+  "actions": {
+    "startIssuance": "Emission starten",
+    "activate": "Aktivieren",
+    "pause": "Pausieren",
+    "retire": "Zurückziehen",
+    "activateAsset": "Asset aktivieren",
+    "pauseAsset": "Asset pausieren",
+    "retireAsset": "Asset zurückziehen"
+  },
+  "messages": {
+    "activateAssetMessage": "Sind Sie sicher, dass Sie {{code}} aktivieren möchten? Dies macht es für Token-Emissionen verfügbar.",
+    "pauseAssetMessage": "Sind Sie sicher, dass Sie {{code}} pausieren möchten? Dies deaktiviert Token-Emissionen vorübergehend.",
+    "retireAssetMessage": "Sind Sie sicher, dass Sie {{code}} zurückziehen möchten? Diese Aktion kann nicht rückgängig gemacht werden und deaktiviert das Asset dauerhaft.",
+    "assetSuccessfullyActivated": "Asset erfolgreich aktiviert",
+    "assetSuccessfullyPaused": "Asset erfolgreich pausiert",
+    "assetSuccessfullyRetired": "Asset erfolgreich zurückgezogen",
+    "assetCanNoLongerBeEdited": "Dieses Asset kann nicht mehr bearbeitet werden. Nur Lebenszyklus-Aktionen sind verfügbar.",
+    "makeAssetAvailableForIssuance": "Asset für Emissionen verfügbar machen",
+    "temporarilyStopNewIssuances": "Neue Emissionen vorübergehend stoppen",
+    "permanentlyDeactivateAsset": "Asset dauerhaft deaktivieren"
+  },
+  "controls": {
+    "requireAuthorization": "Autorisierung erforderlich",
+    "requireAuthorizationDesc": "Inhaber müssen autorisiert sein, um dieses Asset zu halten",
+    "freeze": "Einfrieren",
+    "freezeDesc": "Einfrieren von Inhaber-Konten erlauben",
+    "clawback": "Rückforderung",
+    "clawbackDesc": "Rückforderung von Token von Inhabern erlauben",
+    "transferFee": "Übertragungsgebühr",
+    "transferFeeDesc": "Bei Übertragungen erhobene Gebühr (Basis-Punkte)"
+  },
+  "status": {
+    "draft": "Entwurf",
+    "active": "Aktiv",
+    "paused": "Pausiert",
+    "retired": "Zurückgezogen"
+  }
+}

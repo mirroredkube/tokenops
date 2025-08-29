@@ -1,0 +1,68 @@
+{
+  "title": "Reports",
+  "description": "Generate reports and export data for compliance and analysis",
+  "issuances": "Issuances",
+  "authorizations": "Authorizations",
+  "compliance": "Compliance",
+  "issuancesReport": "Issuances Report",
+  "authorizationsReport": "Authorizations Report",
+  "complianceReport": "Compliance Report",
+  "fields": {
+    "dateTime": "Date/Time",
+    "asset": "Asset",
+    "holder": "Holder",
+    "to": "To (Holder)",
+    "amount": "Amount",
+    "limit": "Limit",
+    "status": "Status",
+    "transaction": "Transaction",
+    "transactionId": "Transaction ID",
+    "created": "Created",
+    "recordId": "Record ID",
+    "sha256": "SHA-256",
+    "verifiedAt": "Verified At"
+  },
+  "actions": {
+    "downloadCSV": "Download CSV",
+    "reset": "Reset"
+  },
+  "filters": {
+    "date": "Date:",
+    "last7Days": "Last 7 days",
+    "last30Days": "Last 30 days",
+    "last90Days": "Last 90 days",
+    "customRange": "Custom range",
+    "status": "Status:",
+    "allStatuses": "All Statuses",
+    "submitted": "Submitted",
+    "validated": "Validated",
+    "failed": "Failed",
+    "unverified": "Unverified",
+    "verified": "Verified",
+    "rejected": "Rejected",
+    "holder": "Holder:",
+    "searchHolderAddress": "Search holder address..."
+  },
+  "messages": {
+    "totalRecords": "{{count}} total records",
+    "issuancesFound": "{{count}} issuance{{plural}} found",
+    "authorizationsFound": "{{count}} authorization{{plural}} found",
+    "complianceRecordsFound": "{{count}} compliance record{{plural}} found",
+    "noIssuancesFound": "No issuances found",
+    "noAuthorizationsFound": "No authorizations found",
+    "noComplianceRecordsFound": "No compliance records found",
+    "tryAdjustingYourFilters": "Try adjusting your filters",
+    "errorLoadingIssuances": "Error loading issuances",
+    "errorLoadingAuthorizations": "Error loading authorizations",
+    "errorLoadingComplianceRecords": "Error loading compliance records",
+    "pleaseTryAgainLater": "Please try again later"
+  },
+  "status": {
+    "submitted": "Submitted",
+    "validated": "Validated",
+    "failed": "Failed",
+    "unverified": "Unverified",
+    "verified": "Verified",
+    "rejected": "Rejected"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "title": "Berichte",
+  "description": "Berichte generieren und Daten für Compliance und Analyse exportieren",
+  "issuances": "Emissionen",
+  "authorizations": "Autorisierungen",
+  "compliance": "Compliance",
+  "issuancesReport": "Emissionsbericht",
+  "authorizationsReport": "Autorisierungsbericht",
+  "complianceReport": "Compliance-Bericht",
+  "fields": {
+    "dateTime": "Datum/Zeit",
+    "asset": "Asset",
+    "holder": "Inhaber",
+    "to": "An (Inhaber)",
+    "amount": "Betrag",
+    "limit": "Limit",
+    "status": "Status",
+    "transaction": "Transaktion",
+    "transactionId": "Transaktions-ID",
+    "created": "Erstellt",
+    "recordId": "Datensatz-ID",
+    "sha256": "SHA-256",
+    "verifiedAt": "Verifiziert am"
+  },
+  "actions": {
+    "downloadCSV": "CSV herunterladen",
+    "reset": "Zurücksetzen"
+  },
+  "filters": {
+    "date": "Datum:",
+    "last7Days": "Letzte 7 Tage",
+    "last30Days": "Letzte 30 Tage",
+    "last90Days": "Letzte 90 Tage",
+    "customRange": "Benutzerdefinierter Bereich",
+    "status": "Status:",
+    "allStatuses": "Alle Status",
+    "submitted": "Eingereicht",
+    "validated": "Validiert",
+    "failed": "Fehlgeschlagen",
+    "unverified": "Nicht verifiziert",
+    "verified": "Verifiziert",
+    "rejected": "Abgelehnt",
+    "holder": "Inhaber:",
+    "searchHolderAddress": "Inhaber-Adresse suchen..."
+  },
+  "messages": {
+    "totalRecords": "{{count}} Datensätze insgesamt",
+    "issuancesFound": "{{count}} Emission{{plural}} gefunden",
+    "authorizationsFound": "{{count}} Autorisierung{{plural}} gefunden",
+    "complianceRecordsFound": "{{count}} Compliance-Datensatz{{plural}} gefunden",
+    "noIssuancesFound": "Keine Emissionen gefunden",
+    "noAuthorizationsFound": "Keine Autorisierungen gefunden",
+    "noComplianceRecordsFound": "Keine Compliance-Datensätze gefunden",
+    "tryAdjustingYourFilters": "Versuchen Sie, Ihre Filter anzupassen",
+    "errorLoadingIssuances": "Fehler beim Laden der Emissionen",
+    "errorLoadingAuthorizations": "Fehler beim Laden der Autorisierungen",
+    "errorLoadingComplianceRecords": "Fehler beim Laden der Compliance-Datensätze",
+    "pleaseTryAgainLater": "Bitte versuchen Sie es später erneut"
+  },
+  "status": {
+    "submitted": "Eingereicht",
+    "validated": "Validiert",
+    "failed": "Fehlgeschlagen",
+    "unverified": "Nicht verifiziert",
+    "verified": "Verifiziert",
+    "rejected": "Abgelehnt"
+  }
+}

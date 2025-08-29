@@ -1,0 +1,48 @@
+{
+  "title": "Salden",
+  "description": "Ausstehende Versorgung und Inhaber-Aufschlüsselung für Ihre Assets anzeigen",
+  "outstanding": "Ausstehend",
+  "holderLookup": "Inhaber-Suche",
+  "outstandingView": "Ausstehende Ansicht",
+  "holderLookupView": "Inhaber-Suche-Ansicht",
+  "fields": {
+    "asset": "Asset:",
+    "selectAsset": "Asset auswählen",
+    "holderAddress": "Inhaber-Adresse:",
+    "enterXrplAddress": "XRPL-Adresse eingeben (z.B. r...)",
+    "holder": "Inhaber",
+    "balance": "Saldo",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "explorer": "Explorer",
+    "xrpBalance": "XRP-Saldo",
+    "reserve": "Reserve",
+    "assets": "Assets",
+    "outstandingSupply": "Ausstehende Versorgung",
+    "holders": "Inhaber",
+    "averageHolding": "Durchschnittlicher Bestand"
+  },
+  "actions": {
+    "refreshFromLedger": "Vom Ledger aktualisieren",
+    "downloadCSV": "CSV herunterladen"
+  },
+  "messages": {
+    "selectAssetToViewOutstanding": "Wählen Sie ein Asset aus, um die ausstehende Versorgung anzuzeigen",
+    "enterHolderAddressToView": "Geben Sie eine Inhaber-Adresse ein, um deren Salden anzuzeigen",
+    "noHoldersFound": "Keine Inhaber gefunden",
+    "noOutstandingSupply": "Keine ausstehende Versorgung für dieses Asset",
+    "noAssetsFoundForHolder": "Keine Assets für diesen Inhaber gefunden",
+    "errorLoadingOutstandingBalances": "Fehler beim Laden der ausstehenden Salden",
+    "errorLoadingHolderLookupData": "Fehler beim Laden der Inhaber-Suchdaten",
+    "pleaseTryAgainLater": "Bitte versuchen Sie es später erneut",
+    "holdersWithBalanceGreaterThanZero": "{{count}} Inhaber{{plural}} mit Saldo > 0",
+    "assetCount": "{{count}} Asset{{plural}}"
+  },
+  "kpis": {
+    "outstandingSupply": "Ausstehende Versorgung",
+    "holders": "Inhaber",
+    "averageHolding": "Durchschnittlicher Bestand",
+    "xrpBalance": "XRP-Saldo",
+    "reserve": "Reserve",
+    "assets": "Assets"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "title": "Autorisierungen",
+  "description": "Inhaber-Autorisierungen für Ihre Assets verwalten",
+  "newAuthorization": "Neue Autorisierung",
+  "authorizationHistory": "Autorisierungs-Historie",
+  "authorizationFlow": "Autorisierungsablauf",
+  "setupAuthorization": "Autorisierung einrichten",
+  "fields": {
+    "asset": "Asset",
+    "holder": "Inhaber",
+    "limit": "Limit",
+    "status": "Status",
+    "transaction": "Transaktion",
+    "dateTime": "Datum/Zeit",
+    "transactionId": "Transaktions-ID"
+  },
+  "actions": {
+    "createAuthorization": "Autorisierung erstellen",
+    "creatingAuthorization": "Autorisierung wird erstellt...",
+    "viewAllAuthorizations": "Alle Autorisierungen anzeigen",
+    "createAnotherAuthorization": "Weitere Autorisierung erstellen",
+    "viewHistory": "Historie anzeigen"
+  },
+  "steps": {
+    "selectLedger": "Ledger auswählen",
+    "selectAsset": "Asset auswählen",
+    "authorization": "Autorisierung",
+    "step1": "Schritt 1",
+    "step2": "Schritt 2",
+    "step3": "Schritt 3",
+    "progress": "Fortschritt"
+  },
+  "messages": {
+    "authorizationCreatedSuccessfully": "Autorisierung erfolgreich erstellt!",
+    "yourAuthorizationHasBeenSubmitted": "Ihre Autorisierung wurde an {{ledger}} übermittelt und in der Datenbank gespeichert.",
+    "transactionDetails": "Transaktionsdetails",
+    "transactionId": "Transaktions-ID:",
+    "authorizationId": "Autorisierungs-ID:",
+    "noActiveAssetsFound": "Keine aktiven Assets gefunden",
+    "createAssetFirst": "Erstellen Sie zuerst ein Asset, um Autorisierungen einzurichten",
+    "tryAgain": "Erneut versuchen",
+    "comingSoon": "Demnächst verfügbar",
+    "authorizationSupportUnderDevelopment": "Autorisierungsunterstützung für {{ledger}} wird derzeit entwickelt.",
+    "backToLedgerSelection": "Zurück zur Ledger-Auswahl"
+  },
+  "status": {
+    "submitted": "Eingereicht",
+    "validated": "Validiert",
+    "failed": "Fehlgeschlagen",
+    "expired": "Abgelaufen"
+  }
+}

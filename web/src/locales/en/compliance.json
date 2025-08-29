@@ -1,0 +1,51 @@
+{
+  "title": "Compliance Management",
+  "description": "View and verify compliance records for regulatory oversight.",
+  "complianceRecordDetails": "Compliance Record Details",
+  "viewAndManageCompliance": "View and manage compliance record information",
+  "verifyRecord": "Verify Record",
+  "verifyComplianceRecord": "Verify Compliance Record",
+  "submitVerification": "Submit Verification",
+  "verifying": "Verifying...",
+  "fields": {
+    "recordId": "Record ID",
+    "asset": "Asset",
+    "holder": "Holder",
+    "status": "Status",
+    "sha256": "SHA-256",
+    "verifiedAt": "Verified At",
+    "created": "Created",
+    "verified": "Verified",
+    "verifiedBy": "Verified By",
+    "rejectionReason": "Rejection Reason"
+  },
+  "actions": {
+    "backToCompliance": "Back to Compliance",
+    "retry": "Retry",
+    "viewOnExplorer": "View on Explorer"
+  },
+  "messages": {
+    "thisRecordHasBeenReferenced": "This record has been referenced by {{count}} issuance(s)",
+    "changingVerificationStatus": "Changing the verification status will not affect existing issuances, but may impact future compliance checks.",
+    "verificationStatus": "Verification Status",
+    "reasonForRejection": "Reason for Rejection",
+    "provideReasonForRejecting": "Provide a reason for rejecting this compliance record...",
+    "complianceRecordNotFound": "Compliance record not found",
+    "loadingComplianceRecord": "Loading compliance record...",
+    "errorLoadingComplianceRecords": "Error loading compliance records",
+    "noComplianceRecordsFound": "No compliance records found",
+    "complianceRecordsWillAppear": "Compliance records will appear here once created.",
+    "tryAdjustingYourFilters": "Try adjusting your filters to see more results."
+  },
+  "status": {
+    "unverified": "Unverified",
+    "verified": "Verified",
+    "rejected": "Rejected"
+  },
+  "filters": {
+    "allStatuses": "All Statuses",
+    "unverified": "Unverified",
+    "verified": "Verified",
+    "rejected": "Rejected"
+  }
+}

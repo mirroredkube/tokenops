@@ -1,0 +1,52 @@
+{
+  "title": "Authorizations",
+  "description": "Manage holder authorizations for your assets",
+  "newAuthorization": "New Authorization",
+  "authorizationHistory": "Authorization History",
+  "authorizationFlow": "Authorization Flow",
+  "setupAuthorization": "Setup Authorization",
+  "fields": {
+    "asset": "Asset",
+    "holder": "Holder",
+    "limit": "Limit",
+    "status": "Status",
+    "transaction": "Transaction",
+    "dateTime": "Date/Time",
+    "transactionId": "Transaction ID"
+  },
+  "actions": {
+    "createAuthorization": "Create Authorization",
+    "creatingAuthorization": "Creating Authorization...",
+    "viewAllAuthorizations": "View All Authorizations",
+    "createAnotherAuthorization": "Create Another Authorization",
+    "viewHistory": "View History"
+  },
+  "steps": {
+    "selectLedger": "Select Ledger",
+    "selectAsset": "Select Asset",
+    "authorization": "Authorization",
+    "step1": "Step 1",
+    "step2": "Step 2",
+    "step3": "Step 3",
+    "progress": "Progress"
+  },
+  "messages": {
+    "authorizationCreatedSuccessfully": "Authorization Created Successfully!",
+    "yourAuthorizationHasBeenSubmitted": "Your authorization has been submitted to {{ledger}} and recorded in the database.",
+    "transactionDetails": "Transaction Details",
+    "transactionId": "Transaction ID:",
+    "authorizationId": "Authorization ID:",
+    "noActiveAssetsFound": "No active assets found",
+    "createAssetFirst": "Create an asset first to set up authorizations",
+    "tryAgain": "Try Again",
+    "comingSoon": "Coming Soon",
+    "authorizationSupportUnderDevelopment": "Authorization support for {{ledger}} is currently under development.",
+    "backToLedgerSelection": "Back to Ledger Selection"
+  },
+  "status": {
+    "submitted": "Submitted",
+    "validated": "Validated",
+    "failed": "Failed",
+    "expired": "Expired"
+  }
+}

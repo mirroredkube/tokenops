@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from 'react-i18next'
 import { 
   LayoutDashboard, 
   Shield, 
@@ -33,27 +34,28 @@ interface NavItem {
   subItems?: NavItem[]
 }
 
-const navItems: NavItem[] = [
-  { href: '/app/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { href: '/app/assets', label: 'Assets', icon: <Building className="h-5 w-5" /> },
-  { href: '/app/issuance/new', label: 'Issuances', icon: <Coins className="h-5 w-5" /> },
-  { href: '/app/authorizations', label: 'Authorizations', icon: <CheckSquare className="h-5 w-5" /> },
-  { href: '/app/compliance', label: 'Compliance', icon: <Shield className="h-5 w-5" /> },
-  { href: '/app/reports', label: 'Reports', icon: <BarChart3 className="h-5 w-5" /> },
-  { href: '/app/balances', label: 'Balances', icon: <Wallet className="h-5 w-5" /> },
-]
-
-const bottomNavItems: NavItem[] = [
-  { href: '/app/settings', label: 'Account Settings', icon: <Settings className="h-5 w-5" />, section: 'ACCOUNT' },
-  { href: '/app/help', label: 'Help', icon: <HelpCircle className="h-5 w-5" />, section: 'HELP' },
-]
-
 export default function CollapsibleSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const { t } = useTranslation(['common'])
 
   const pathname = usePathname()
   const { user, logout } = useAuth()
+
+  const navItems: NavItem[] = [
+    { href: '/app/dashboard', label: t('navigation.dashboard'), icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: '/app/assets', label: t('navigation.assets'), icon: <Building className="h-5 w-5" /> },
+    { href: '/app/issuance/new', label: t('navigation.issuances'), icon: <Coins className="h-5 w-5" /> },
+    { href: '/app/authorizations', label: t('navigation.authorizations'), icon: <CheckSquare className="h-5 w-5" /> },
+    { href: '/app/compliance', label: t('navigation.compliance'), icon: <Shield className="h-5 w-5" /> },
+    { href: '/app/reports', label: t('navigation.reports'), icon: <BarChart3 className="h-5 w-5" /> },
+    { href: '/app/balances', label: t('navigation.balances'), icon: <Wallet className="h-5 w-5" /> },
+  ]
+
+  const bottomNavItems: NavItem[] = [
+    { href: '/app/settings', label: t('navigation.settings'), icon: <Settings className="h-5 w-5" />, section: 'ACCOUNT' },
+    { href: '/app/help', label: t('navigation.help'), icon: <HelpCircle className="h-5 w-5" />, section: 'HELP' },
+  ]
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed)
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen)

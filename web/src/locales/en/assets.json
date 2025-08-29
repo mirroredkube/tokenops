@@ -1,0 +1,69 @@
+{
+  "title": "Assets",
+  "description": "Manage your token assets across multiple ledgers.",
+  "createAsset": "Create Asset",
+  "createAssetDraft": "Create Asset (Draft)",
+  "assetDetails": "Asset Details",
+  "assetDetailsAndConfiguration": "Asset details and configuration",
+  "assetReference": "Asset Reference",
+  "basicInformation": "Basic Information",
+  "registryInformation": "Registry Information",
+  "lifecycleActions": "Lifecycle Actions",
+  "ledgerControls": "Ledger Controls",
+  "activity": "Activity",
+  "comingSoon": "Coming Soon",
+  "authorizationsAndIssuancesComing": "Authorizations and Issuances coming in Phase 2",
+  "viewAuthorizationStatus": "You'll be able to view authorization status and issuance history here.",
+  "fields": {
+    "issuerAddress": "Issuer Address",
+    "decimals": "Decimals",
+    "complianceMode": "Compliance Mode",
+    "created": "Created",
+    "isin": "ISIN",
+    "lei": "LEI",
+    "jurisdiction": "Jurisdiction",
+    "micaClassification": "MiCA Classification"
+  },
+  "complianceModes": {
+    "noCompliance": "No Compliance",
+    "recordOnly": "Record Only",
+    "gatedBefore": "Gated Before"
+  },
+  "actions": {
+    "startIssuance": "Start Issuance",
+    "activate": "Activate",
+    "pause": "Pause",
+    "retire": "Retire",
+    "activateAsset": "Activate Asset",
+    "pauseAsset": "Pause Asset",
+    "retireAsset": "Retire Asset"
+  },
+  "messages": {
+    "activateAssetMessage": "Are you sure you want to activate {{code}}? This will make it available for token issuance.",
+    "pauseAssetMessage": "Are you sure you want to pause {{code}}? This will temporarily disable token issuance.",
+    "retireAssetMessage": "Are you sure you want to retire {{code}}? This action cannot be undone and will permanently disable the asset.",
+    "assetSuccessfullyActivated": "Asset successfully activated",
+    "assetSuccessfullyPaused": "Asset successfully paused",
+    "assetSuccessfullyRetired": "Asset successfully retired",
+    "assetCanNoLongerBeEdited": "This asset can no longer be edited. Only lifecycle actions are available.",
+    "makeAssetAvailableForIssuance": "Make this asset available for issuance",
+    "temporarilyStopNewIssuances": "Temporarily stop new issuances",
+    "permanentlyDeactivateAsset": "Permanently deactivate this asset"
+  },
+  "controls": {
+    "requireAuthorization": "Require Authorization",
+    "requireAuthorizationDesc": "Holders must be authorized to hold this asset",
+    "freeze": "Freeze",
+    "freezeDesc": "Allow freezing of holder accounts",
+    "clawback": "Clawback",
+    "clawbackDesc": "Allow clawback of tokens from holders",
+    "transferFee": "Transfer Fee",
+    "transferFeeDesc": "Fee charged on transfers (basis points)"
+  },
+  "status": {
+    "draft": "Draft",
+    "active": "Active",
+    "paused": "Paused",
+    "retired": "Retired"
+  }
+}
