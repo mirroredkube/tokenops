@@ -251,7 +251,7 @@ export default function ComplianceRecordPage() {
           {record.status === 'UNVERIFIED' && (
             <button
               onClick={() => setShowVerifyForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-neutral-800 hover:bg-neutral-900"
             >
               Verify Record
             </button>
@@ -312,7 +312,7 @@ export default function ComplianceRecordPage() {
                   value={verifyData.reason}
                   onChange={(e) => setVerifyData(prev => ({ ...prev, reason: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:border-transparent"
                   placeholder="Provide a reason for rejecting this compliance record..."
                 />
               </div>
@@ -322,13 +322,13 @@ export default function ComplianceRecordPage() {
               <button
                 onClick={handleVerify}
                 disabled={verifying || (verifyData.status === 'REJECTED' && !verifyData.reason.trim())}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-neutral-800 text-white rounded-md hover:bg-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {verifying ? 'Verifying...' : 'Submit Verification'}
               </button>
               <button
                 onClick={() => setShowVerifyForm(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 border border-neutral-200 text-neutral-700 rounded-md hover:bg-neutral-50"
               >
                 Cancel
               </button>
