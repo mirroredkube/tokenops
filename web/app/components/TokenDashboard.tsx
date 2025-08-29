@@ -1,12 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import LedgerLogo from './LedgerLogo'
-import { TokenIcon, IssuanceIcon } from './FancyStatIcons'
 import { api } from '@/lib/api'
 
 interface TokenStats {
-  totalTokens: number
-  totalIssuances: number
   recentTransactions: Array<{
     id: string
     currencyCode: string
@@ -24,18 +20,12 @@ export default function TokenDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch assets and issuances from new v1 endpoints
-        const [assetsResponse, issuancesResponse] = await Promise.all([
-          api.GET('/v1/assets' as any, { params: { query: { limit: '50', offset: '0' } } }),
-          api.GET('/v1/issuances' as any, { params: { query: { limit: '50', offset: '0' } } })
-        ])
+        // Fetch issuances from new v1 endpoints
+        const issuancesResponse = await api.GET('/v1/issuances' as any, { params: { query: { limit: '50', offset: '0' } } })
 
-        const assets = assetsResponse.data?.assets || assetsResponse.data?.items || []
         const issuances = issuancesResponse.data?.items || []
 
         setStats({
-          totalTokens: assets.length,
-          totalIssuances: issuances.length,
           recentTransactions: issuances.slice(0, 10).map((issuance: any) => ({
             id: issuance.id,
             currencyCode: issuance.assetRef?.split(':').pop()?.split('.').pop() || 'Unknown',
@@ -48,8 +38,6 @@ export default function TokenDashboard() {
       } catch (err) {
         console.error('Error fetching token data:', err)
         setStats({
-          totalTokens: 0,
-          totalIssuances: 0,
           recentTransactions: []
         })
       } finally {
@@ -63,11 +51,6 @@ export default function TokenDashboard() {
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="h-24 bg-gray-200 rounded-lg"></div>
-          <div className="h-24 bg-gray-200 rounded-lg"></div>
-          <div className="h-24 bg-gray-200 rounded-lg"></div>
-        </div>
         <div className="h-64 bg-gray-200 rounded-lg"></div>
       </div>
     )
@@ -77,42 +60,6 @@ export default function TokenDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Total Tokens */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <TokenIcon size="md" />
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">Total Tokens</p>
-              <p className="text-2xl font-semibold">{stats.totalTokens}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Issuances */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <IssuanceIcon size="md" />
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">Total Issuances</p>
-              <p className="text-2xl font-semibold">{stats.totalIssuances}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Ledger */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <LedgerLogo type="XRPL" size="md" />
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">Active Ledger</p>
-              <p className="text-2xl font-semibold">XRPL</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Recent Transactions */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
