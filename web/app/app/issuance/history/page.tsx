@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
-import { Eye, RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { Eye, RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle, Plus } from 'lucide-react'
 import CustomDropdown from '../../../components/CustomDropdown'
 import InfoPopup from '../../../components/InfoPopup'
 
@@ -196,42 +196,46 @@ export default function IssuanceHistoryPage() {
           <p className="text-gray-600 mt-1">View and manage all asset issuance transactions</p>
         </div>
         <div className="flex items-center space-x-2">
-          <InfoPopup
-            title="Issuance Statuses"
-            content={
-              <div className="space-y-4">
-                <p>Understanding the different states of an asset issuance:</p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                    <span><strong>Pending:</strong> Issuance created but not yet submitted to ledger</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <span><strong>Submitted:</strong> Issuance submitted to ledger, waiting for validation</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span><strong>Validated:</strong> Issuance successfully validated on the ledger</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <XCircle className="h-4 w-4 text-red-600" />
-                    <span><strong>Failed:</strong> Issuance failed on the ledger</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
-                    <span><strong>Expired:</strong> Issuance expired before validation</span>
-                  </div>
+          <button
+            onClick={() => router.push('/app/issuance/new')}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Issuance
+          </button>
+          <InfoPopup title="Issuance Statuses">
+            <div className="space-y-4">
+              <p>Understanding the different states of an asset issuance:</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                  <span><strong>Pending:</strong> Issuance created but not yet submitted to ledger</span>
                 </div>
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> There may be a delay between submission and ledger validation. 
-                    Use the refresh button to check the latest status.
-                  </p>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <span><strong>Submitted:</strong> Issuance submitted to ledger, waiting for validation</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span><strong>Validated:</strong> Issuance successfully validated on the ledger</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <XCircle className="h-4 w-4 text-red-600" />
+                  <span><strong>Failed:</strong> Issuance failed on the ledger</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <span><strong>Expired:</strong> Issuance expired before validation</span>
                 </div>
               </div>
-            }
-          />
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> There may be a delay between submission and ledger validation. 
+                  Use the refresh button to check the latest status.
+                </p>
+              </div>
+            </div>
+          </InfoPopup>
         </div>
       </div>
 
