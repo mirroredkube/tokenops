@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock } from 'lucide-react'
+import CustomDropdown from '../../components/CustomDropdown'
 
 interface ComplianceRecord {
   id: string
@@ -26,6 +27,43 @@ interface ComplianceListResponse {
     total: number
     pages: number
   }
+}
+
+// Modern Tooltip Component
+function ModernTooltip({ children, content }: { children: React.ReactNode; content: string }) {
+  const [isVisible, setIsVisible] = useState(false)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10
+    })
+    setIsVisible(true)
+  }
+
+  const handleMouseLeave = () => {
+    setIsVisible(false)
+  }
+
+  return (
+    <div className="relative inline-block w-full" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      {children}
+      {isVisible && (
+        <div
+          className="absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg whitespace-nowrap pointer-events-none transform -translate-x-1/2 -translate-y-full"
+          style={{
+            left: position.x,
+            top: position.y,
+          }}
+        >
+          {content}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function CompliancePage() {
@@ -149,16 +187,17 @@ export default function CompliancePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Status
             </label>
-            <select
+            <CustomDropdown
               value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            >
-              <option value="">All Statuses</option>
-              <option value="UNVERIFIED">Unverified</option>
-              <option value="VERIFIED">Verified</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
+              onChange={(value) => handleFilterChange('status', value)}
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'UNVERIFIED', label: 'Unverified' },
+                { value: 'VERIFIED', label: 'Verified' },
+                { value: 'REJECTED', label: 'Rejected' }
+              ]}
+              placeholder="All Statuses"
+            />
           </div>
           
           <div>
@@ -170,7 +209,7 @@ export default function CompliancePage() {
               value={filters.assetId}
               onChange={(e) => handleFilterChange('assetId', e.target.value)}
               placeholder="Filter by asset ID"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
             />
           </div>
           
@@ -183,7 +222,7 @@ export default function CompliancePage() {
               value={filters.holder}
               onChange={(e) => handleFilterChange('holder', e.target.value)}
               placeholder="Filter by holder address"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
             />
           </div>
         </div>
@@ -232,28 +271,25 @@ export default function CompliancePage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full divide-y divide-gray-200" style={{ minWidth: '1000px' }}>
+              <table className="w-full table-fixed divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Record ID
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Asset
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Holder
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                      Hash
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Created
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                       Actions
                     </th>
                   </tr>
@@ -261,34 +297,47 @@ export default function CompliancePage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {records.map((record) => (
                     <tr key={record.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {truncateHash(record.recordId, 12)}
+                      <td className="px-4 py-3">
+                        <ModernTooltip content={record.recordId}>
+                          <div className="truncate">
+                            <div className="text-sm font-medium text-gray-900 truncate">{record.recordId}</div>
+                          </div>
+                        </ModernTooltip>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        {truncateHash(record.assetRef, 8)}
+                      <td className="px-4 py-3">
+                        <ModernTooltip content={record.assetRef}>
+                          <div className="truncate">
+                            <div className="text-sm font-medium text-gray-900 truncate">{record.assetRef}</div>
+                          </div>
+                        </ModernTooltip>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-mono">
-                        {truncateHash(record.holder, 8)}
+                      <td className="px-4 py-3">
+                        <ModernTooltip content={record.holder}>
+                          <div className="truncate">
+                            <div className="text-sm font-medium text-gray-900 truncate font-mono">{record.holder}</div>
+                          </div>
+                        </ModernTooltip>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-4 py-3">
                         <span className={getStatusBadge(record.status)}>
                           {getStatusIcon(record.status)}
-                          <span className="ml-1">{record.status.toLowerCase()}</span>
+                          <span className="ml-1 text-xs">{record.status.toLowerCase()}</span>
                         </span>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-mono">
-                        {truncateHash(record.sha256, 8)}
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        <ModernTooltip content={formatDate(record.createdAt)}>
+                          <div className="truncate">
+                            {formatDate(record.createdAt)}
+                          </div>
+                        </ModernTooltip>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(record.createdAt)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
+                      <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => router.push(`/compliance/${record.recordId}`)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                          className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors duration-200"
+                          title="View Details"
                         >
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
+                          <Eye className="w-4 h-4" />
                         </button>
                       </td>
                     </tr>
