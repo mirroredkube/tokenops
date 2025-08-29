@@ -37,7 +37,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/app/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
   { href: '/app/assets', label: 'Assets', icon: <Building className="h-5 w-5" /> },
-  { href: '/app/issuance/new', label: 'Issuance', icon: <Coins className="h-5 w-5" /> },
+  { href: '/app/issuance/new', label: 'Issuances', icon: <Coins className="h-5 w-5" /> },
   { href: '/app/compliance', label: 'Compliance', icon: <Shield className="h-5 w-5" /> },
   { href: '/app/opt-in', label: 'Authorizations', icon: <CheckSquare className="h-5 w-5" /> },
   { href: '/app/reports', label: 'Reports', icon: <BarChart3 className="h-5 w-5" /> },
