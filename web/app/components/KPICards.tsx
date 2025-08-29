@@ -48,9 +48,7 @@ export default function KPICards() {
 
       // Fetch compliance records
       const { data: complianceResponse } = await api.GET('/v1/compliance-records?limit=100&page=1' as any, {})
-      console.log('🔍 Compliance API response:', complianceResponse)
       const complianceRecords = complianceResponse?.records || []
-      console.log('🔍 Compliance records:', complianceRecords)
       
       // Count by status - handle both uppercase and lowercase
       let verified = 0
@@ -58,12 +56,10 @@ export default function KPICards() {
       
       complianceRecords.forEach((record: any) => {
         const status = record.status?.toUpperCase()
-        console.log('🔍 Record status:', record.status, '->', status)
         if (status === 'VERIFIED') verified++
         else if (status === 'UNVERIFIED') unverified++
       })
       
-      console.log('🔍 Final counts - Verified:', verified, 'Unverified:', unverified)
       const totalComplianceRecords = complianceResponse?.pagination?.total || complianceRecords.length
 
       // Fetch pending issuances (we'll need to aggregate this)
@@ -111,7 +107,7 @@ export default function KPICards() {
       icon: Coins,
       color: 'bg-indigo-500',
       hoverColor: 'hover:bg-indigo-50',
-      onClick: () => router.push('/app/issuance')
+      onClick: () => router.push('/app/issuances')
     },
     {
       title: 'Compliance Records',
