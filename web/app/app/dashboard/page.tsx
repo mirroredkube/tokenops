@@ -1,10 +1,12 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import TokenDashboard from '../../components/TokenDashboard'
 import ServiceHealthCard from '../../components/ServiceHealthCard'
 import XrplStatusCard from '../../components/XrplStatusCard'
 import KPICards from '../../components/KPICards'
+import PendingIssuancesQueue from '../../components/PendingIssuancesQueue'
+import ComplianceToVerifyQueue from '../../components/ComplianceToVerifyQueue'
+import RecentIssuancesQueue from '../../components/RecentIssuancesQueue'
 
 export default function Dashboard() {
   const health = useQuery({
@@ -26,8 +28,14 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <KPICards />
       
-      {/* Token Dashboard */}
-      <TokenDashboard />
+      {/* Actionable Queues */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PendingIssuancesQueue />
+        <ComplianceToVerifyQueue />
+      </div>
+      
+      {/* Recent Issuances */}
+      <RecentIssuancesQueue />
       
       {/* System Status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
