@@ -8,6 +8,7 @@ import PendingIssuancesQueue from '../../components/PendingIssuancesQueue'
 import ComplianceToVerifyQueue from '../../components/ComplianceToVerifyQueue'
 import RecentIssuancesQueue from '../../components/RecentIssuancesQueue'
 import MultiNetworkDemo from '../../components/MultiNetworkDemo'
+import QuickActions from '../../components/QuickActions'
 
 export default function Dashboard() {
   const health = useQuery({
@@ -28,6 +29,9 @@ export default function Dashboard() {
       
       {/* KPI Cards */}
       <KPICards />
+      
+      {/* Quick Actions */}
+      <QuickActions />
       
       {/* Actionable Queues */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
