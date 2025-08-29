@@ -4,6 +4,7 @@ import { getLedgerAdapter } from '../../adapters/index.js'
 import { currencyToHex, isHexCurrency } from '../../utils/currency.js'
 import { Asset, assets, issuances, validateAsset, generateIssuanceId, checkIdempotency, storeIdempotency } from './shared.js'
 import prisma from '../../db/client.js'
+import { issuanceWatcher } from '../../lib/issuanceWatcher.js'
 
 // ---------- Validation Schemas ----------
 const IssuanceSchema = z.object({
@@ -298,7 +299,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
   app.get('/assets/:assetId/issuances/:issuanceId', {
     schema: {
       summary: 'Get issuance status',
-      description: 'Fetch issuance details and transaction status',
+      description: 'Fetch issuance details and transaction status with optional refresh',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -306,6 +307,12 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         properties: {
           assetId: { type: 'string', description: 'Asset ID' },
           issuanceId: { type: 'string', description: 'Issuance ID' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          refresh: { type: 'boolean', description: 'Refresh status from ledger' }
         }
       },
       response: {
@@ -327,7 +334,11 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
             txId: { type: 'string' },
             explorer: { type: 'string' },
             status: { type: 'string' },
-            createdAt: { type: 'string' }
+            validatedAt: { type: 'string' },
+            validatedLedgerIndex: { type: 'number' },
+            failureCode: { type: 'string' },
+            createdAt: { type: 'string' },
+            updatedAt: { type: 'string' }
           }
         },
         404: { type: 'object', properties: { error: { type: 'string' } } }
@@ -335,6 +346,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
     }
   }, async (req, reply) => {
     const { assetId, issuanceId } = req.params as { assetId: string; issuanceId: string }
+    const { refresh } = req.query as { refresh?: boolean }
     
     try {
       // Validate asset exists
@@ -348,6 +360,23 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         return reply.status(404).send({ error: 'Issuance not found' })
       }
       
+      // If refresh is requested and status is submitted, check ledger
+      if (refresh && issuance.status === 'submitted' && issuance.txId) {
+        await issuanceWatcher.refreshIssuanceStatus(issuanceId)
+        
+        // Fetch updated issuance data
+        const updatedIssuance = await prisma.issuance.findUnique({
+          where: { id: issuanceId }
+        })
+        if (updatedIssuance) {
+          issuance.status = updatedIssuance.status
+          issuance.validatedAt = updatedIssuance.validatedAt
+          issuance.validatedLedgerIndex = updatedIssuance.validatedLedgerIndex
+          issuance.failureCode = updatedIssuance.failureCode
+          issuance.updatedAt = updatedIssuance.updatedAt
+        }
+      }
+      
       return reply.send({
         issuanceId: issuance.id,
         assetId: issuance.assetId,
@@ -358,7 +387,11 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         txId: issuance.txId,
         explorer: issuance.explorer,
         status: issuance.status,
-        createdAt: issuance.createdAt.toISOString()
+        validatedAt: issuance.validatedAt?.toISOString(),
+        validatedLedgerIndex: issuance.validatedLedgerIndex ? Number(issuance.validatedLedgerIndex) : undefined,
+        failureCode: issuance.failureCode,
+        createdAt: issuance.createdAt.toISOString(),
+        updatedAt: issuance.updatedAt.toISOString()
       })
     } catch (error: any) {
       console.error('Error getting issuance:', error)

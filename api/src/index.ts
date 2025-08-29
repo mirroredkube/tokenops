@@ -63,6 +63,9 @@ import v1AssetRoutes from './routes/v1/assets.js'
 import v1OptInRoutes from './routes/v1/opt-ins.js'
 import v1IssuanceRoutes from './routes/v1/issuances.js'
 
+// Background jobs
+import { startIssuanceWatcherJob } from './jobs/issuanceWatcherJob.js'
+
 // Essential routes (no v1 equivalent)
 await app.register(systemRoutes,     { prefix: '/system' })
 await app.register(balancesRoutes,   { prefix: '/balances' })
@@ -80,6 +83,9 @@ await app.ready()
 app.log.info(`Swagger UI: /docs`)
 app.log.info(`OpenAPI JSON: /docs/json`)
 app.log.info({ uiOrigin }, 'CORS configured for UI origin')
+
+// Start background jobs
+await startIssuanceWatcherJob()
 
 app.listen({ port, host: '0.0.0.0' }).catch((err) => {
   app.log.error(err)

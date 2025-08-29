@@ -31,18 +31,21 @@ model Asset {
 }
 
 model Issuance {
-  id            String   @id @default(cuid())
-  assetId       String
-  to            String
-  amount        String
-  complianceRef Json?
-  anchor        Boolean  @default(true)
-  txId          String?
-  explorer      String?
-  status        String   @default("pending")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  assetId             String
+  to                  String
+  amount              String
+  complianceRef       Json?
+  anchor              Boolean  @default(true)
+  txId                String?
+  explorer            String?
+  status              String   @default("pending")
+  validatedAt         DateTime?
+  validatedLedgerIndex BigInt?
+  failureCode         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  asset               Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId])
   @@index([status])

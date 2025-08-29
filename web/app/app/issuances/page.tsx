@@ -12,7 +12,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  HelpCircle
+  HelpCircle,
+  RefreshCw
 } from 'lucide-react'
 import ModernTooltip from '../../components/ModernTooltip'
 import CustomDropdown from '../../components/CustomDropdown'
@@ -26,7 +27,11 @@ interface Issuance {
   amount: string
   txId?: string
   status: string
+  validatedAt?: string
+  validatedLedgerIndex?: number
+  failureCode?: string
   createdAt: string
+  updatedAt: string
 }
 
 interface IssuanceListResponse {
@@ -100,6 +105,27 @@ export default function IssuancesPage() {
     setPagination(prev => ({ ...prev, page }))
   }
 
+  const handleRefreshStatus = async (issuanceId: string, assetId: string) => {
+    try {
+      // Call the API with refresh=true to trigger status check
+      const { data, error } = await api.GET(`/v1/assets/${assetId}/issuances/${issuanceId}?refresh=true` as any, {})
+      
+      if (error) {
+        throw new Error(error.error || 'Failed to refresh status')
+      }
+
+      // Update the issuance in the list
+      setIssuances(prev => prev.map(issuance => 
+        issuance.id === issuanceId 
+          ? { ...issuance, ...data }
+          : issuance
+      ))
+    } catch (err: any) {
+      console.error('Error refreshing status:', err)
+      // Could show a toast notification here
+    }
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'validated':
@@ -121,9 +147,22 @@ export default function IssuancesPage() {
       case 'failed':
         return `${baseClasses} bg-red-100 text-red-800`
       case 'submitted':
-        return `${baseClasses} bg-blue-100 text-blue-800`
-      default:
         return `${baseClasses} bg-yellow-100 text-yellow-800`
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-800`
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'validated':
+        return 'Confirmed on ledger'
+      case 'failed':
+        return 'Not confirmed (e.g., expired). See explorer.'
+      case 'submitted':
+        return 'Awaiting ledger validation (≈ 3–5s)'
+      default:
+        return status
     }
   }
 
@@ -346,10 +385,26 @@ export default function IssuancesPage() {
                       </ModernTooltip>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getStatusBadge(issuance.status)}>
-                        {getStatusIcon(issuance.status)}
-                        <span className="ml-1">{issuance.status}</span>
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className={getStatusBadge(issuance.status)}>
+                          {getStatusIcon(issuance.status)}
+                          <span className="ml-1">{getStatusText(issuance.status)}</span>
+                        </span>
+                        {issuance.status === 'submitted' && (
+                          <button
+                            onClick={() => handleRefreshStatus(issuance.id, issuance.assetId)}
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            title="Refresh status from ledger"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                      {issuance.updatedAt && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Last checked: {formatDate(issuance.updatedAt)}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {issuance.txId ? (
