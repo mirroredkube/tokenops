@@ -361,7 +361,7 @@ export default function CreateAssetPage() {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating Asset...' : 'Create Asset (Draft)'}
           </button>
