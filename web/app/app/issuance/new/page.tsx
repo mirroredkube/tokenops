@@ -1,10 +1,12 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { History } from 'lucide-react'
 import TokenIssuanceFlow from '../../../components/TokenIssuanceFlow'
 
 export default function NewIssuancePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const assetId = searchParams.get('assetId')
 
   return (
     <div>
@@ -18,7 +20,7 @@ export default function NewIssuancePage() {
           View History
         </button>
       </div>
-      <TokenIssuanceFlow />
+      <TokenIssuanceFlow preSelectedAssetId={assetId} />
     </div>
   )
 }

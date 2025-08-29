@@ -373,7 +373,7 @@ export default function AssetsPage() {
                         {/* Issue Action */}
                         {asset.status === 'active' && (
                           <Link
-                            href={`/app/issuance?assetId=${asset.id}`}
+                            href={`/app/issuance/new?assetId=${asset.id}`}
                             className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors duration-200"
                             title="Issue Tokens"
                           >

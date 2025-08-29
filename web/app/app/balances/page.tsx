@@ -134,7 +134,7 @@ export default function BalancesPage() {
               
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-medium text-blue-800">Trustlines</span>
+                  <span className="font-medium text-blue-800">Authorizations</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{res.trustLines?.length || 0}</div>
               </div>
@@ -152,7 +152,7 @@ export default function BalancesPage() {
           {res.trustLines && res.trustLines.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Trustlines & Balances</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Authorizations & Balances</h3>
               </div>
               
               <div className="overflow-x-auto">
@@ -237,8 +237,8 @@ export default function BalancesPage() {
           {res.trustLines && res.trustLines.length === 0 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
               <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Trustlines Found</h3>
-              <p className="text-gray-500">This account has no trustlines for the specified criteria.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Authorizations Found</h3>
+              <p className="text-gray-500">This account has no authorizations for the specified criteria.</p>
             </div>
           )}
         </div>

@@ -61,12 +61,12 @@ export default function HelpPage() {
       title: "Issue Your First Token",
       description: "Learn how to create and issue tokens on supported ledgers",
       icon: <Coins className="h-5 w-5" />,
-      href: "/app/issuance",
+              href: "/app/issuance/new",
       external: true
     },
     {
       title: "Create Trust Lines",
-      description: "Set up trustlines for XRPL token management",
+              description: "Set up asset authorizations for XRPL token management",
       icon: <Shield className="h-5 w-5" />,
       href: "/app/opt-in",
       external: true

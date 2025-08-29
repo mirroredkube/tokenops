@@ -284,7 +284,7 @@ export default function AssetDetailsPage() {
         <div className="flex items-center gap-3">
           {asset.status === 'active' && (
             <Link
-              href={`/app/issuance?assetId=${asset.id}`}
+              href={`/app/issuance/new?assetId=${asset.id}`}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
             >
               Start Issuance
@@ -454,8 +454,8 @@ export default function AssetDetailsPage() {
           <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Activity</h3>
             <div className="text-center py-8">
-              <p className="text-gray-600 mb-2">Opt-Ins and Issuances coming in Phase 2</p>
-              <p className="text-sm text-gray-500">You'll be able to view opt-in status and issuance history here.</p>
+                              <p className="text-gray-600 mb-2">Authorizations and Issuances coming in Phase 2</p>
+                <p className="text-sm text-gray-500">You'll be able to view authorization status and issuance history here.</p>
             </div>
           </div>
         </div>

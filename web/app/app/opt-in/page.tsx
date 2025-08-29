@@ -35,8 +35,8 @@ export default function ManageAuthorizationsPage() {
   const fetchOptIns = async () => {
     setLoading(true)
     try {
-      // TODO: Implement API endpoint to fetch existing opt-ins
-      // const { data, error } = await api.GET('/opt-in')
+      // TODO: Implement API endpoint to fetch existing authorizations
+      // const { data, error } = await api.GET('/authorizations')
       // if (error) throw new Error(error.error)
       // setOptIns(data.optIns || [])
 
@@ -69,7 +69,7 @@ export default function ManageAuthorizationsPage() {
     try {
       // TODO: Replace with actual API call when asset selection is implemented
       // For now, show success message
-      console.log('Opt-in creation:', formData)
+      console.log('Authorization creation:', formData)
 
       setSuccess('Authorization created successfully!')
       setFormData({
@@ -90,7 +90,7 @@ export default function ManageAuthorizationsPage() {
 
   const handleAuthorizeOptIn = async (optInId: string) => {
     try {
-      // Note: Authorization is handled differently in the new Opt-In system
+      // Note: Authorization approval is handled differently in the new system
       // This would need to be implemented based on the specific ledger requirements
       setSuccess('Authorization approval not yet implemented in new system')
       // fetchOptIns() // Refresh the list
@@ -216,7 +216,7 @@ export default function ManageAuthorizationsPage() {
           </form>
         </div>
 
-        {/* Existing Trustlines */}
+        {/* Existing Authorizations */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Existing Authorizations</h2>
           

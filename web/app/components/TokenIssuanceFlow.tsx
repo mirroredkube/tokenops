@@ -70,7 +70,11 @@ interface IssuanceResult {
   complianceRecord?: ComplianceRecord
 }
 
-export default function TokenIssuanceFlow() {
+interface TokenIssuanceFlowProps {
+  preSelectedAssetId?: string | null
+}
+
+export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceFlowProps) {
   const [currentStep, setCurrentStep] = useState<Step>('ledger-selection')
   const [selectedLedger, setSelectedLedger] = useState<LedgerType>('XRPL')
   const [assets, setAssets] = useState<Asset[]>([])
@@ -164,9 +168,30 @@ export default function TokenIssuanceFlow() {
       
       setAssets(transformedAssets)
       
-      // Auto-select if only one asset
-      if (transformedAssets.length === 1) {
-        setSelectedAsset(transformedAssets[0])
+      // Auto-select pre-selected asset if provided
+      if (preSelectedAssetId) {
+        const preSelectedAsset = transformedAssets.find(asset => asset.id === preSelectedAssetId)
+        if (preSelectedAsset) {
+          setSelectedAsset(preSelectedAsset)
+          // Auto-proceed to next step
+          setCurrentStep('trustline-check')
+          // Update trustline check data with asset info
+          setTrustlineCheckData(prev => ({
+            ...prev,
+            currencyCode: preSelectedAsset.code,
+            issuerAddress: preSelectedAsset.issuer
+          }))
+          // Update token data with asset info
+          setTokenData(prev => ({
+            ...prev,
+            currencyCode: preSelectedAsset.code
+          }))
+        }
+      } else {
+        // Auto-select if only one asset (original behavior)
+        if (transformedAssets.length === 1) {
+          setSelectedAsset(transformedAssets[0])
+        }
       }
     } catch (err: any) {
       console.error('Error fetching assets:', err)
@@ -176,12 +201,22 @@ export default function TokenIssuanceFlow() {
     }
   }
 
-  // Fetch assets when entering asset selection step
+  // Handle pre-selected asset ID
   useEffect(() => {
-    if (currentStep === 'asset-selection' && selectedLedger) {
+    if (preSelectedAssetId) {
+      // Skip ledger selection and go directly to asset selection
+      setCurrentStep('asset-selection')
+      // Fetch assets to find the pre-selected one
       fetchAssets()
     }
-  }, [currentStep, selectedLedger])
+  }, [preSelectedAssetId])
+
+  // Fetch assets when entering asset selection step
+  useEffect(() => {
+    if (currentStep === 'asset-selection' && selectedLedger && !preSelectedAssetId) {
+      fetchAssets()
+    }
+  }, [currentStep, selectedLedger, preSelectedAssetId])
 
   const ledgers: { type: LedgerType; name: string; description: string; status: 'live' | 'beta' | 'coming-soon' }[] = [
     {
@@ -252,12 +287,12 @@ export default function TokenIssuanceFlow() {
         throw new Error('Invalid holder address format. Must be a valid XRPL address starting with "r"')
       }
 
-      // Use the real opt-in check API
+              // Use the real authorization check API
       console.log('Selected asset:', selectedAsset)
       console.log('Asset ID being used:', selectedAsset.id)
       console.log('Checking trustline for:', trustlineCheckData)
       
-      const apiUrl = `/v1/assets/${selectedAsset.id}/opt-ins/${trustlineCheckData.holderAddress}`
+      const apiUrl = `/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}`
       console.log('API URL:', apiUrl)
       
       const { data, error } = await api.GET(apiUrl as any, {})
@@ -302,13 +337,13 @@ export default function TokenIssuanceFlow() {
         throw new Error('Invalid holder address format. Must be a valid XRPL address starting with "r"')
       }
 
-      // Use the real opt-in setup API
+      // Use the real authorization setup API
       console.log('Creating trustline for asset:', selectedAsset)
       console.log('Trustline data:', trustlineData)
       console.log('Holder address being used:', trustlineCheckData.holderAddress)
       console.log('Holder address type:', typeof trustlineCheckData.holderAddress)
       
-      const apiUrl = `/v1/assets/${selectedAsset.id}/opt-ins/${trustlineCheckData.holderAddress}`
+      const apiUrl = `/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}`
       console.log('API URL:', apiUrl)
       
       const { data, error } = await api.PUT(apiUrl as any, {
@@ -341,7 +376,7 @@ export default function TokenIssuanceFlow() {
 
       setCurrentStep('compliance-metadata')
     } catch (err: any) {
-      console.error('Opt-in submit error:', err)
+      console.error('Authorization submit error:', err)
       setError(err.message || 'Failed to create trustline')
     } finally {
       setLoading(false)
@@ -540,7 +575,7 @@ export default function TokenIssuanceFlow() {
               },
               { 
                 step: 'trustline-check', 
-                label: 'Opt-In', 
+                label: 'Authorization', 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -1220,7 +1255,7 @@ export default function TokenIssuanceFlow() {
                     </svg>
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-1">Trust Management</h3>
-                  <p className="text-sm text-gray-600">Manage trustlines and permissions</p>
+                  <p className="text-sm text-gray-600">Manage authorizations and permissions</p>
                 </div>
                 
                 <div className="text-center">
@@ -1637,7 +1672,7 @@ export default function TokenIssuanceFlow() {
                       onClick={() => setCurrentStep('trustline-check')}
                       className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
                     >
-                      ← Back to Opt-In
+                      ← Back to Authorization
                     </button>
                     <button
                       type="submit"

@@ -5,7 +5,7 @@ import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../../utils/cu
 import { Asset, assets, validateAsset } from './shared.js'
 
 // ---------- Validation Schemas ----------
-const OptInParamsSchema = z.object({
+const AuthorizationParamsSchema = z.object({
   params: z.object({
     limit: z.string().regex(/^[0-9]{1,16}$/).optional(),
     holderSecret: z.string().regex(/^s[a-zA-Z0-9]{24,34}$/).optional() // Optional now, will be validated based on mode
@@ -15,12 +15,12 @@ const OptInParamsSchema = z.object({
   }).optional()
 })
 
-export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
-  // 1. GET /v1/assets/{assetId}/opt-ins/{holder} - Check opt-in status
-  app.get('/assets/:assetId/opt-ins/:holder', {
+export default async function authorizationRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
+  // 1. GET /v1/assets/{assetId}/authorizations/{holder} - Check authorization status
+  app.get('/assets/:assetId/authorizations/:holder', {
     schema: {
-      summary: 'Get opt-in status for a holder and asset',
-      description: 'Check if a holder has opted into an asset (XRPL = trustline)',
+      summary: 'Get authorization status for a holder and asset',
+      description: 'Check if a holder has been authorized for an asset (XRPL = trustline)',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -99,7 +99,7 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
         }
       })
     } catch (error: any) {
-      console.error('Error checking opt-in status:', error)
+      console.error('Error checking authorization status:', error)
       
       if (error.message === 'Asset not found') {
         return reply.status(404).send({ error: 'Asset not found' })
@@ -112,11 +112,11 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
     }
   })
 
-  // 2. PUT /v1/assets/{assetId}/opt-ins/{holder} - Create/update opt-in
-  app.put('/assets/:assetId/opt-ins/:holder', {
+  // 2. PUT /v1/assets/{assetId}/authorizations/{holder} - Create/update authorization
+  app.put('/assets/:assetId/authorizations/:holder', {
     schema: {
-      summary: 'Create or update opt-in for a holder and asset',
-      description: 'Create trustline (XRPL) or equivalent opt-in mechanism',
+      summary: 'Create or update authorization for a holder and asset',
+      description: 'Create trustline (XRPL) or equivalent authorization mechanism',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -161,7 +161,7 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
     }
   }, async (req, reply) => {
     const { assetId, holder } = req.params as { assetId: string; holder: string }
-    const body = OptInParamsSchema.safeParse(req.body)
+    const body = AuthorizationParamsSchema.safeParse(req.body)
     
     if (!body.success) {
       return reply.status(400).send({ error: 'Invalid request body' })
@@ -225,7 +225,7 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
         status: 'submitted'
       })
     } catch (error: any) {
-      console.error('Error creating opt-in:', error)
+      console.error('Error creating authorization:', error)
       
       if (error.message === 'Asset not found') {
         return reply.status(404).send({ error: 'Asset not found' })
@@ -244,11 +244,11 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
     }
   })
 
-  // 3. DELETE /v1/assets/{assetId}/opt-ins/{holder} - Remove opt-in
-  app.delete('/assets/:assetId/opt-ins/:holder', {
+  // 3. DELETE /v1/assets/{assetId}/authorizations/{holder} - Remove authorization
+  app.delete('/assets/:assetId/authorizations/:holder', {
     schema: {
-      summary: 'Remove opt-in for a holder and asset',
-      description: 'Remove trustline (XRPL) or equivalent opt-in mechanism',
+      summary: 'Remove authorization for a holder and asset',
+      description: 'Remove trustline (XRPL) or equivalent authorization mechanism',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -281,7 +281,7 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
       const asset = await validateAsset(assetId)
       
       // For MVP, we'll return a mock response
-      // TODO: Implement actual opt-in removal
+      // TODO: Implement actual authorization removal
       return reply.send({
         assetId: asset.id,
         holder,
@@ -289,7 +289,7 @@ export default async function optInRoutes(app: FastifyInstance, _opts: FastifyPl
         status: 'submitted'
       })
     } catch (error: any) {
-      console.error('Error removing opt-in:', error)
+      console.error('Error removing authorization:', error)
       
       if (error.message === 'Asset not found') {
         return reply.status(404).send({ error: 'Asset not found' })
