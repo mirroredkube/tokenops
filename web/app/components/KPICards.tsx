@@ -110,7 +110,7 @@ export default function KPICards() {
       icon: Coins,
       color: 'bg-indigo-500',
       hoverColor: 'hover:bg-indigo-50',
-      onClick: () => router.push('/app/issuances'),
+      onClick: () => router.push('/app/issuance/history'),
       tooltip: 'Lifetime count of all asset issuance transactions'
     },
     {
@@ -129,7 +129,7 @@ export default function KPICards() {
       icon: Clock,
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-50',
-      onClick: () => router.push('/app/issuance'),
+      onClick: () => router.push('/app/issuance/history?status=submitted'),
       tooltip: 'Number of asset issuances waiting for ledger validation'
     },
     {

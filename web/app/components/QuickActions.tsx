@@ -29,9 +29,9 @@ export default function QuickActions({
     {
       id: 'start-issuance',
       title: 'Start Issuance',
-      description: 'Issue tokens to an address',
+      description: 'Issue assets to an address',
       icon: Coins,
-      href: '/app/issuance',
+      href: '/app/issuance/new',
       disabled: !canStartIssuance,
       color: 'slate'
     },

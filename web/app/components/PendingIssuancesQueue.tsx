@@ -157,7 +157,7 @@ export default function PendingIssuancesQueue() {
         items={issuances}
         columns={columns}
         emptyMessage="No pending issuances. All recent issuances have been processed."
-        viewAllLink="/app/issuances?status=submitted"
+        viewAllLink="/app/issuance/history?status=submitted"
         loading={loading}
         maxItems={5}
         showViewAll={true}

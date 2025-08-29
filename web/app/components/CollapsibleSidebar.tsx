@@ -19,7 +19,9 @@ import {
   LogOut,
   Building,
   CheckSquare,
-  BarChart3
+  BarChart3,
+  Plus,
+  Clock
 } from 'lucide-react'
 
 const BRAND = 'Regula'
@@ -29,12 +31,21 @@ interface NavItem {
   label: string
   icon: React.ReactNode
   section?: string
+  subItems?: NavItem[]
 }
 
 const navItems: NavItem[] = [
   { href: '/app/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
   { href: '/app/assets', label: 'Assets', icon: <Building className="h-4 w-4" /> },
-  { href: '/app/issuance', label: 'Token Issuance', icon: <Coins className="h-4 w-4" /> },
+  { 
+    href: '/app/issuance', 
+    label: 'Issuance', 
+    icon: <Coins className="h-4 w-4" />,
+    subItems: [
+      { href: '/app/issuance/new', label: 'New Issuance', icon: <Plus className="h-4 w-4" /> },
+      { href: '/app/issuance/history', label: 'Issuance History', icon: <Clock className="h-4 w-4" /> }
+    ]
+  },
   { href: '/app/compliance', label: 'Compliance', icon: <Shield className="h-4 w-4" /> },
   { href: '/app/opt-in', label: 'Opt-Ins', icon: <CheckSquare className="h-4 w-4" /> },
   { href: '/app/reports', label: 'Reports', icon: <BarChart3 className="h-4 w-4" /> },
@@ -50,11 +61,20 @@ const bottomNavItems: NavItem[] = [
 export default function CollapsibleSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
   const pathname = usePathname()
   const { user, logout } = useAuth()
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed)
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen)
+  
+  const toggleSubMenu = (itemLabel: string) => {
+    setExpandedItems(prev => 
+      prev.includes(itemLabel) 
+        ? prev.filter(label => label !== itemLabel)
+        : [...prev, itemLabel]
+    )
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -133,8 +153,10 @@ export default function CollapsibleSidebar() {
           {/* Main Navigation */}
           <nav className={`flex-1 space-y-1 ${isCollapsed ? 'p-2' : 'p-3'}`}>
             {navItems.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               const isExternal = item.href.startsWith('http')
+              const hasSubItems = item.subItems && item.subItems.length > 0
+              const isExpanded = expandedItems.includes(item.label)
               
               if (isExternal) {
                 return (
@@ -157,6 +179,83 @@ export default function CollapsibleSidebar() {
                     {!isCollapsed && <span>{item.label}</span>}
                   </a>
                 )
+              }
+              
+              if (hasSubItems) {
+                if (isCollapsed) {
+                  // When collapsed, go directly to the first sub-item (most common action)
+                  const defaultSubItem = item.subItems![0]
+                  const isDefaultActive = pathname === defaultSubItem.href
+                  
+                  return (
+                    <Link
+                      key={item.href}
+                      href={defaultSubItem.href}
+                      className={`
+                        flex items-center justify-center rounded-md text-sm font-medium transition-colors
+                        p-2
+                        ${isDefaultActive 
+                          ? 'bg-emerald-900/50 text-emerald-300 border-l-2 border-emerald-500' 
+                          : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                        }
+                      `}
+                      onClick={() => setIsMobileOpen(false)}
+                      title={`${item.label} - ${defaultSubItem.label}`}
+                    >
+                      <div className="flex-shrink-0">{item.icon}</div>
+                    </Link>
+                  )
+                } else {
+                  // When expanded, show normal sub-menu
+                  return (
+                    <div key={item.href}>
+                      <button
+                        onClick={() => toggleSubMenu(item.label)}
+                        className={`
+                          w-full flex items-center justify-between rounded-md text-sm font-medium transition-colors
+                          gap-3 px-3 py-2
+                          ${isActive 
+                            ? 'bg-emerald-900/50 text-emerald-300 border-l-2 border-emerald-500' 
+                            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">{item.icon}</div>
+                          <span>{item.label}</span>
+                        </div>
+                        <ChevronRight 
+                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+                        />
+                      </button>
+                      {isExpanded && (
+                        <div className="ml-6 mt-1 space-y-1">
+                          {item.subItems!.map((subItem) => {
+                            const isSubActive = pathname === subItem.href
+                            return (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                className={`
+                                  flex items-center rounded-md text-sm font-medium transition-colors
+                                  gap-3 px-3 py-2
+                                  ${isSubActive 
+                                    ? 'bg-emerald-900/30 text-emerald-200' 
+                                    : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                                  }
+                                `}
+                                onClick={() => setIsMobileOpen(false)}
+                              >
+                                <div className="flex-shrink-0">{subItem.icon}</div>
+                                <span>{subItem.label}</span>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
               }
               
               return (
