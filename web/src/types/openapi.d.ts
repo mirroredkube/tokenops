@@ -1109,6 +1109,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/authorizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all authorizations
+         * @description Get a paginated list of all authorization records
+         */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    offset?: number;
+                    status?: "PENDING" | "SUBMITTED" | "VALIDATED" | "FAILED" | "EXPIRED";
+                    assetId?: string;
+                    holder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            authorizations?: {
+                                id?: string;
+                                assetId?: string;
+                                holder?: string;
+                                limit?: string;
+                                txId?: string;
+                                explorer?: string;
+                                status?: string;
+                                validatedAt?: string;
+                                noRipple?: boolean;
+                                requireAuth?: boolean;
+                                createdAt?: string;
+                                updatedAt?: string;
+                                asset?: {
+                                    id?: string;
+                                    code?: string;
+                                    assetRef?: string;
+                                    ledger?: string;
+                                    network?: string;
+                                };
+                            }[];
+                            pagination?: {
+                                total?: number;
+                                limit?: number;
+                                offset?: number;
+                                hasMore?: boolean;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/assets/{assetId}/authorizations/{holder}": {
         parameters: {
             query?: never;

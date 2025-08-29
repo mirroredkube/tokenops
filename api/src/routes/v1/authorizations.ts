@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../../utils/currency.js'
 import { Asset, assets, validateAsset } from './shared.js'
+import prisma from '../../db/client.js'
 
 // ---------- Validation Schemas ----------
 const AuthorizationParamsSchema = z.object({
@@ -16,6 +17,121 @@ const AuthorizationParamsSchema = z.object({
 })
 
 export default async function authorizationRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
+  // 0. GET /v1/authorizations - List all authorizations
+  app.get('/authorizations', {
+    schema: {
+      summary: 'List all authorizations',
+      description: 'Get a paginated list of all authorization records',
+      tags: ['v1'],
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
+          offset: { type: 'number', default: 0, minimum: 0 },
+          status: { type: 'string', enum: ['PENDING', 'SUBMITTED', 'VALIDATED', 'FAILED', 'EXPIRED'] },
+          assetId: { type: 'string' },
+          holder: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            authorizations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  assetId: { type: 'string' },
+                  holder: { type: 'string' },
+                  limit: { type: 'string' },
+                  txId: { type: 'string' },
+                  explorer: { type: 'string' },
+                  status: { type: 'string' },
+                  validatedAt: { type: 'string' },
+                  noRipple: { type: 'boolean' },
+                  requireAuth: { type: 'boolean' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                  asset: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      code: { type: 'string' },
+                      assetRef: { type: 'string' },
+                      ledger: { type: 'string' },
+                      network: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            pagination: {
+              type: 'object',
+              properties: {
+                total: { type: 'number' },
+                limit: { type: 'number' },
+                offset: { type: 'number' },
+                hasMore: { type: 'boolean' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    const { limit = 20, offset = 0, status, assetId, holder } = req.query as {
+      limit?: number
+      offset?: number
+      status?: string
+      assetId?: string
+      holder?: string
+    }
+    
+    try {
+      // Build where clause
+      const where: any = {}
+      if (status) where.status = status
+      if (assetId) where.assetId = assetId
+      if (holder) where.holder = holder
+      
+      // Get authorizations with asset details
+      const [authorizations, total] = await Promise.all([
+        prisma.authorization.findMany({
+          where,
+          include: {
+            asset: {
+              select: {
+                id: true,
+                code: true,
+                assetRef: true,
+                ledger: true,
+                network: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+          skip: offset
+        }),
+        prisma.authorization.count({ where })
+      ])
+      
+      return reply.send({
+        authorizations,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total
+        }
+      })
+    } catch (error: any) {
+      console.error('Error fetching authorizations:', error)
+      return reply.status(500).send({ error: 'Failed to fetch authorizations' })
+    }
+  })
   // 1. GET /v1/assets/{assetId}/authorizations/{holder} - Check authorization status
   app.get('/assets/:assetId/authorizations/:holder', {
     schema: {
@@ -217,12 +333,32 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         holderSecret: holderSecret!
       })
       
+      // Record authorization in database
+      const authorization = await prisma.authorization.create({
+        data: {
+          assetId: asset.id,
+          holder,
+          limit,
+          txId: result.txHash,
+          status: 'SUBMITTED',
+          explorer: `https://testnet.xrpl.org/transactions/${result.txHash}`,
+          noRipple: false, // TODO: Add to request body
+          requireAuth: false, // TODO: Add to request body
+          metadata: {
+            ledger: asset.ledger,
+            network: asset.network,
+            currencyCode: asset.code
+          }
+        }
+      })
+      
       return reply.status(202).send({
         assetId: asset.id,
         assetRef: asset.assetRef,
         holder,
         txId: result.txHash,
-        status: 'submitted'
+        status: 'submitted',
+        authorizationId: authorization.id
       })
     } catch (error: any) {
       console.error('Error creating authorization:', error)

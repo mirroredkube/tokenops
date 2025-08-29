@@ -24,6 +24,7 @@ model Asset {
   updatedAt         DateTime           @updatedAt
   complianceRecords ComplianceRecord[]
   issuances         Issuance[]
+  authorizations    Authorization[]
 
   @@index([ledger, network])
   @@index([status])
@@ -48,6 +49,30 @@ model Issuance {
   asset               Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Authorization {
+  id                  String   @id @default(cuid())
+  assetId             String
+  holder              String
+  limit               String
+  txId                String?
+  explorer            String?
+  status              AuthorizationStatus @default(PENDING)
+  validatedAt         DateTime?
+  validatedLedgerIndex BigInt?
+  failureCode         String?
+  noRipple            Boolean  @default(false)
+  requireAuth         Boolean  @default(false)
+  metadata            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  asset               Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([holder])
   @@index([status])
   @@index([createdAt])
 }
@@ -126,4 +151,12 @@ enum ComplianceStatus {
   UNVERIFIED
   VERIFIED
   REJECTED
+}
+
+enum AuthorizationStatus {
+  PENDING
+  SUBMITTED
+  VALIDATED
+  FAILED
+  EXPIRED
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Plus, Coins, Shield } from 'lucide-react'
+import { Plus, Coins, Shield, CheckSquare } from 'lucide-react'
 
 interface QuickActionsProps {
   canCreateAsset?: boolean
@@ -35,15 +35,24 @@ export default function QuickActions({
       disabled: !canStartIssuance,
       color: 'slate'
     },
-    {
-      id: 'verify-compliance',
-      title: 'Verify Compliance Record',
-      description: 'Review and verify compliance records',
-      icon: Shield,
-      href: '/app/compliance',
-      disabled: !canVerifyCompliance,
-      color: 'slate'
-    }
+                {
+              id: 'verify-compliance',
+              title: 'Verify Compliance Record',
+              description: 'Review and verify compliance records',
+              icon: Shield,
+              href: '/app/compliance',
+              disabled: !canVerifyCompliance,
+              color: 'slate'
+            },
+            {
+              id: 'authorizations',
+              title: 'Manage Authorizations',
+              description: 'Create and manage asset authorizations',
+              icon: CheckSquare,
+              href: '/app/authorizations',
+              disabled: false,
+              color: 'slate'
+            }
   ]
 
   const getColorClasses = (color: string, disabled: boolean) => {
