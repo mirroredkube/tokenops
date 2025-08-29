@@ -206,7 +206,7 @@ export default function ReportsPage() {
               onClick={() => setActiveTab(tab.id as ReportTab)}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-emerald-500 text-emerald-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -268,21 +268,21 @@ export default function ReportsPage() {
               value={filters.holder}
               onChange={(e) => handleFilterChange('holder', e.target.value)}
               placeholder="Search holder address..."
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={handleReset}
-              className="inline-flex items-center px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
             >
               <RotateCcw className="h-4 w-4 mr-1" />
               Reset
             </button>
             <button
               onClick={handleDownloadCSV}
-              className="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center px-3 py-1 text-sm font-medium text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
             >
               <Download className="h-4 w-4 mr-1" />
               Download CSV
@@ -343,7 +343,7 @@ function IssuancesReport({ filters }: { filters: FilterState }) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'SUBMITTED':
-        return <Clock className="h-4 w-4 text-blue-500" />
+        return <Clock className="h-4 w-4 text-emerald-500" />
       case 'VALIDATED':
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case 'FAILED':
@@ -357,7 +357,7 @@ function IssuancesReport({ filters }: { filters: FilterState }) {
     const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
     switch (status) {
       case 'SUBMITTED':
-        return `${baseClasses} bg-blue-100 text-blue-800`
+        return `${baseClasses} bg-emerald-100 text-emerald-800`
       case 'VALIDATED':
         return `${baseClasses} bg-green-100 text-green-800`
       case 'FAILED':
@@ -522,7 +522,7 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'SUBMITTED':
-        return <Clock className="h-4 w-4 text-blue-500" />
+        return <Clock className="h-4 w-4 text-emerald-500" />
       case 'VALIDATED':
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case 'FAILED':
@@ -536,7 +536,7 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
     const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
     switch (status) {
       case 'SUBMITTED':
-        return `${baseClasses} bg-blue-100 text-blue-800`
+        return `${baseClasses} bg-emerald-100 text-emerald-800`
       case 'VALIDATED':
         return `${baseClasses} bg-green-100 text-green-800`
       case 'FAILED':
