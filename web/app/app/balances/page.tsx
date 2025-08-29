@@ -1,118 +1,182 @@
 'use client'
 import { useState } from 'react'
-import { Download, Search, ToggleLeft, ToggleRight, ExternalLink, Plus } from 'lucide-react'
+import { Download, RefreshCw, ExternalLink } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import CustomDropdown from '../../components/CustomDropdown'
 import { api } from '../../../src/lib/api'
-import { useRouter } from 'next/navigation'
-
-type BalanceTab = 'holder' | 'issuer'
-
-interface HolderFilters {
-  address: string
-  showAllTrustlines: boolean
-}
 
 interface IssuerFilters {
   assetId: string
 }
 
+interface HolderBalance {
+  holder: string
+  balance: string
+  lastUpdated?: string
+  explorer?: string
+}
+
+interface OutstandingData {
+  outstandingSupply: string
+  holderCount: number
+  holders: HolderBalance[]
+}
+
 export default function BalancesPage() {
-  const [activeTab, setActiveTab] = useState<BalanceTab>('holder')
-  const [holderFilters, setHolderFilters] = useState<HolderFilters>({
-    address: '',
-    showAllTrustlines: false
-  })
-  const [issuerFilters, setIssuerFilters] = useState<IssuerFilters>({
+  const [filters, setFilters] = useState<IssuerFilters>({
     assetId: ''
   })
 
-  const handleHolderFilterChange = (key: keyof HolderFilters, value: string | boolean) => {
-    setHolderFilters(prev => ({ ...prev, [key]: value }))
-  }
+  // Fetch assets for the dropdown
+  const { data: assetsData } = useQuery({
+    queryKey: ['assets'],
+    queryFn: async () => {
+      const response = await api.GET('/v1/assets', { params: { query: { status: 'active' } } })
+      return response.data?.assets || []
+    }
+  })
 
-  const handleIssuerFilterChange = (key: keyof IssuerFilters, value: string) => {
-    setIssuerFilters(prev => ({ ...prev, [key]: value }))
+  const handleFilterChange = (key: keyof IssuerFilters, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
   }
 
   const handleDownloadCSV = () => {
-    // TODO: Implement CSV download
-    console.log('Download CSV for', activeTab, activeTab === 'holder' ? holderFilters : issuerFilters)
+    // TODO: Implement CSV download for outstanding holders
+    console.log('Download CSV for asset:', filters.assetId)
   }
 
-  const tabs = [
-    { id: 'holder', label: 'Holder Balances' },
-    { id: 'issuer', label: 'Issuer (Outstanding)' }
-  ]
+  const handleRefresh = () => {
+    // TODO: Implement refresh from ledger
+    console.log('Refresh from ledger for asset:', filters.assetId)
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Balances</h1>
-        <p className="text-gray-600 mt-1">View account balances and outstanding token supply</p>
+        <p className="text-gray-600 mt-1">View outstanding supply and holder breakdown for your assets</p>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          {tabs.map((tab) => (
+      {/* Filters */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Asset:</span>
+            <div className="flex-1 min-w-0">
+              <CustomDropdown
+                value={filters.assetId}
+                onChange={(value) => handleFilterChange('assetId', value)}
+                options={[
+                  { value: '', label: 'Select an asset' },
+                  ...(assetsData?.map((asset: any) => ({
+                    value: asset.id,
+                    label: `${asset.code} (${asset.issuer})`
+                  })) || [])
+                ]}
+                className="w-full sm:w-80"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 sm:ml-auto">
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as BalanceTab)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              onClick={handleRefresh}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors whitespace-nowrap"
             >
-              {tab.label}
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh from Ledger
             </button>
-          ))}
-        </nav>
+            <button
+              onClick={handleDownloadCSV}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors whitespace-nowrap"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download CSV
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'holder' && (
-        <HolderBalances 
-          filters={holderFilters} 
-          onFilterChange={handleHolderFilterChange}
-          onDownloadCSV={handleDownloadCSV}
-        />
-      )}
-      {activeTab === 'issuer' && (
-        <IssuerView 
-          filters={issuerFilters} 
-          onFilterChange={handleIssuerFilterChange}
-          onDownloadCSV={handleDownloadCSV}
-        />
-      )}
+      {/* Content */}
+      <IssuerOutstandingView filters={filters} onDownloadCSV={handleDownloadCSV} />
     </div>
   )
 }
 
-function HolderBalances({ 
+function IssuerOutstandingView({ 
   filters, 
-  onFilterChange, 
   onDownloadCSV 
 }: { 
-  filters: HolderFilters
-  onFilterChange: (key: keyof HolderFilters, value: string | boolean) => void
+  filters: IssuerFilters
   onDownloadCSV: () => void
 }) {
-  const router = useRouter()
-  
   const { data, isLoading, error } = useQuery({
-    queryKey: ['balances', filters.address],
+    queryKey: ['outstanding-balances', filters.assetId],
     queryFn: async () => {
-      if (!filters.address) return null
+      if (!filters.assetId) return null
       
-      const response = await api.GET('/balances/{account}', {
-        params: { path: { account: filters.address } }
-      })
-      return response.data
+      try {
+        // First, get the asset details to find the issuer
+        const assetResponse = await api.GET('/v1/assets/{assetId}', {
+          params: { path: { assetId: filters.assetId } }
+        })
+        
+        if (!assetResponse.data) {
+          throw new Error('Asset not found')
+        }
+        
+        const asset = assetResponse.data
+        const issuerAccount = asset.issuer || ''
+        
+        if (!issuerAccount) {
+          throw new Error('Asset issuer not found')
+        }
+        
+        // Now get balances for the issuer account, filtered by the asset's currency
+        const balancesResponse = await api.GET('/balances/{account}', {
+          params: { 
+            path: { account: issuerAccount },
+            query: { currency: asset.code }
+          }
+        })
+        
+        if (!balancesResponse.data || !balancesResponse.data.trustLines) {
+          return {
+            outstandingSupply: '0',
+            holderCount: 0,
+            holders: []
+          } as OutstandingData
+        }
+        
+        // Transform the data to show outstanding supply
+        // For XRPL, issuer sees negative balances for tokens held by others
+        const holders = balancesResponse.data.trustLines
+          .filter((line: any) => parseFloat(line.balance) < 0) // Only negative balances (held by others)
+          .map((line: any) => ({
+            holder: line.issuer, // The issuer field contains the holder's address
+            balance: Math.abs(parseFloat(line.balance)).toString(), // Convert negative to positive
+            lastUpdated: new Date().toISOString(), // TODO: Get actual last updated time
+            explorer: `https://testnet.xrpl.org/accounts/${line.issuer}`
+          }))
+          .sort((a: any, b: any) => parseFloat(b.balance) - parseFloat(a.balance)) // Sort by balance descending
+        
+        const outstandingSupply = holders
+          .reduce((sum: number, holder: any) => sum + parseFloat(holder.balance), 0)
+          .toString()
+        
+        return {
+          outstandingSupply,
+          holderCount: holders.length,
+          holders
+        } as OutstandingData
+        
+      } catch (error) {
+        console.error('Error fetching outstanding balances:', error)
+        throw error
+      }
     },
-    enabled: !!filters.address
+    enabled: !!filters.assetId
   })
 
   const formatBalance = (balance: string) => {
@@ -122,94 +186,33 @@ function HolderBalances({
     })
   }
 
-  const handleStartAuthorization = (currency: string, issuer: string) => {
-    // Navigate to authorizations page with prefilled data
-    router.push(`/app/authorizations?asset=${currency}&issuer=${issuer}&holder=${filters.address}`)
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
-  if (!filters.address) {
+  if (!filters.assetId) {
     return (
-      <div className="space-y-6">
-        {/* Filters */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">Holder Address:</span>
-              <input
-                type="text"
-                value={filters.address}
-                onChange={(e) => onFilterChange('address', e.target.value)}
-                placeholder="Enter XRPL address (r...)"
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-80"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
-          <div className="text-gray-500 text-lg">Enter a holder address to view balances</div>
-        </div>
+      <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
+        <div className="text-gray-500 text-lg">Select an asset to view outstanding supply</div>
       </div>
     )
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        {/* Filters */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">Holder Address:</span>
-              <input
-                type="text"
-                value={filters.address}
-                onChange={(e) => onFilterChange('address', e.target.value)}
-                placeholder="Enter XRPL address (r...)"
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-80"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onFilterChange('showAllTrustlines', !filters.showAllTrustlines)}
-                className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  filters.showAllTrustlines
-                    ? 'text-blue-700 bg-blue-50 border border-blue-200'
-                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {filters.showAllTrustlines ? (
-                  <ToggleRight className="h-4 w-4 mr-1" />
-                ) : (
-                  <ToggleLeft className="h-4 w-4 mr-1" />
-                )}
-                {filters.showAllTrustlines ? 'All Trust Lines' : 'My Assets Only'}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                onClick={onDownloadCSV}
-                className="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                <Download className="h-4 w-4 mr-1" />
-                Download CSV
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-200 rounded"></div>
-              ))}
-            </div>
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded"></div>
+            ))}
           </div>
         </div>
       </div>
@@ -218,157 +221,110 @@ function HolderBalances({
 
   if (error) {
     return (
-      <div className="space-y-6">
-        {/* Filters */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">Holder Address:</span>
-              <input
-                type="text"
-                value={filters.address}
-                onChange={(e) => onFilterChange('address', e.target.value)}
-                placeholder="Enter XRPL address (r...)"
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-80"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
-          <div className="text-red-500 text-lg">Error loading balances</div>
-          <div className="text-gray-400 text-sm mt-2">Please check the address and try again</div>
-        </div>
+      <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
+        <div className="text-red-500 text-lg">Error loading outstanding balances</div>
+        <div className="text-gray-400 text-sm mt-2">Please try again later</div>
       </div>
     )
   }
 
-  const trustLines = data?.trustLines || []
-  const xrpBalance = data?.xrpBalance || '0'
+  const outstandingData = data as OutstandingData
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Holder Address:</span>
-            <input
-              type="text"
-              value={filters.address}
-              onChange={(e) => onFilterChange('address', e.target.value)}
-              placeholder="Enter XRPL address (r...)"
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-80"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onFilterChange('showAllTrustlines', !filters.showAllTrustlines)}
-              className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                filters.showAllTrustlines
-                  ? 'text-blue-700 bg-blue-50 border border-blue-200'
-                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {filters.showAllTrustlines ? (
-                <ToggleRight className="h-4 w-4 mr-1" />
-              ) : (
-                <ToggleLeft className="h-4 w-4 mr-1" />
-              )}
-              {filters.showAllTrustlines ? 'All Trust Lines' : 'My Assets Only'}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={onDownloadCSV}
-              className="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-            >
-              <Download className="h-4 w-4 mr-1" />
-              Download CSV
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary */}
+      {/* KPIs */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">{formatBalance(xrpBalance)} XRP</div>
-            <div className="text-sm text-gray-600">XRP Balance</div>
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
+              {formatBalance(outstandingData.outstandingSupply)}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">Outstanding Supply</div>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">{trustLines.length}</div>
-            <div className="text-sm text-gray-600">Trust Lines</div>
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {outstandingData.holderCount}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">Holders</div>
+          </div>
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
+              {outstandingData.holderCount > 0 
+                ? formatBalance((parseFloat(outstandingData.outstandingSupply) / outstandingData.holderCount).toString())
+                : '0.00'
+              }
+            </div>
+            <div className="text-sm text-gray-600 mt-1">Average Holding</div>
           </div>
         </div>
       </div>
 
-      {/* Balances Table */}
+            {/* Holders Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Asset Balances</h3>
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Holder Breakdown</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {trustLines.length} trust line{trustLines.length !== 1 ? 's' : ''} found
+            {outstandingData.holders.length} holder{outstandingData.holders.length !== 1 ? 's' : ''} with balance &gt; 0
           </p>
         </div>
 
-        {trustLines.length === 0 ? (
+        {outstandingData.holders.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="text-gray-500 text-lg">No trust lines found</div>
-            <div className="text-gray-400 text-sm mt-2">This account has no asset authorizations</div>
+            <div className="text-gray-500 text-lg">No holders found</div>
+            <div className="text-gray-400 text-sm mt-2">No outstanding supply for this asset</div>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issuer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Limit</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
+                    <span className="block truncate">Holder</span>
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <span className="block truncate">Balance</span>
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <span className="block truncate">Last Updated</span>
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <span className="block truncate">Explorer</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {trustLines.map((trustline: any, index: number) => (
+                {outstandingData.holders.map((holder, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{trustline.currency}</div>
-                        <div className="text-xs text-gray-500 font-mono">{trustline.currencyHex}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 font-mono">
-                        {trustline.issuer.length > 20 
-                          ? `${trustline.issuer.substring(0, 10)}...${trustline.issuer.substring(trustline.issuer.length - 10)}`
-                          : trustline.issuer
+                    <td className="px-4 sm:px-6 py-4 min-w-0">
+                      <div className="text-sm text-gray-900 font-mono truncate" title={holder.holder}>
+                        {holder.holder.length > 20 
+                          ? `${holder.holder.substring(0, 10)}...${holder.holder.substring(holder.holder.length - 10)}`
+                          : holder.holder
                         }
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatBalance(trustline.balance)}
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-900 text-right">
+                      <span className="whitespace-nowrap">{formatBalance(holder.balance)}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatBalance(trustline.limit)}
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-900">
+                      <span className="whitespace-nowrap">
+                        {holder.lastUpdated ? formatDate(holder.lastUpdated) : '-'}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatBalance((parseFloat(trustline.limit) - parseFloat(trustline.balance)).toString())}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button
-                        onClick={() => handleStartAuthorization(trustline.currency, trustline.issuer)}
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Start Authorization
-                      </button>
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-500 w-12">
+                      {holder.explorer ? (
+                        <a
+                          href={holder.explorer}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                          title="View on Explorer"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -376,68 +332,6 @@ function HolderBalances({
             </table>
           </div>
         )}
-      </div>
-    </div>
-  )
-}
-
-function IssuerView({ 
-  filters, 
-  onFilterChange, 
-  onDownloadCSV 
-}: { 
-  filters: IssuerFilters
-  onFilterChange: (key: keyof IssuerFilters, value: string) => void
-  onDownloadCSV: () => void
-}) {
-  return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Asset:</span>
-            <CustomDropdown
-              value={filters.assetId}
-              onChange={(value) => onFilterChange('assetId', value)}
-              options={[
-                { value: '', label: 'Select an asset' },
-                { value: 'asset1', label: 'USD (rIssuer1)' },
-                { value: 'asset2', label: 'EUR (rIssuer2)' }
-              ]}
-              className="w-64"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={onDownloadCSV}
-              className="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-            >
-              <Download className="h-4 w-4 mr-1" />
-              Download CSV
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Outstanding Supply KPI */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="text-center">
-          <div className="text-3xl font-bold text-gray-900">0.000000</div>
-          <div className="text-sm text-gray-600">Outstanding Supply</div>
-        </div>
-      </div>
-
-      {/* Holders Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="p-6">
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg">Issuer View (Outstanding)</div>
-            <div className="text-gray-400 text-sm mt-2">Asset: {filters.assetId || 'Not selected'}</div>
-            <div className="text-gray-400 text-sm">Coming soon...</div>
-          </div>
-        </div>
       </div>
     </div>
   )
