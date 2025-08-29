@@ -399,100 +399,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tokens/issue": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Issue a token from issuer to holder
-         * @description Issues an IOU payment from the issuer account to the holder. Accepts 3-char codes (USD/EUR) or longer ASCII codes which are normalized (by the adapter) to 160-bit hex for XRPL. Holder must have a TrustSet with sufficient limit.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    /** @example {
-                     *       "currencyCode": "MARKS",
-                     *       "amount": "100",
-                     *       "destination": "rE5MDtonMcosLV6fpRJjib3MQiBZ8HGapw",
-                     *       "metadata": {
-                     *         "jurisdiction": "DE"
-                     *       }
-                     *     } */
-                    "application/json": {
-                        /** @description 3-char code (e.g., USD) or longer ASCII; long codes auto-convert to hex-160 by the adapter. */
-                        currencyCode: string;
-                        /** @description Token amount as a string to preserve precision. */
-                        amount: string;
-                        /** @description Holder address (r-addr on XRPL). */
-                        destination: string;
-                        /**
-                         * @description Optional arbitrary metadata encoded in a transaction Memo.
-                         * @default {}
-                         */
-                        metadata?: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            txHash?: string;
-                            explorer?: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            error?: string;
-                            hint?: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            error?: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/balances/{account}": {
         parameters: {
             query?: never;
@@ -564,405 +470,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/registry/tokens": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List token records with filtering and pagination
-         * @description Retrieves a paginated list of token records with optional filtering by symbol and ledger
-         */
-        get: {
-            parameters: {
-                query?: {
-                    symbol?: string;
-                    ledger?: "xrpl-testnet" | "xrpl-mainnet";
-                    limit?: number;
-                    cursor?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: {
-                                id: string;
-                                /** @enum {string} */
-                                ledger: "xrpl-testnet" | "xrpl-mainnet";
-                                symbol: string;
-                                supply: string;
-                                issuerAddress: string;
-                                holderAddress?: string | null;
-                                txHash: string;
-                                compliance?: {
-                                    [key: string]: unknown;
-                                } | null;
-                                /** Format: date-time */
-                                createdAt: string;
-                            }[];
-                            nextCursor?: string | null;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * Create or update a token record
-         * @description Creates a new token record or updates an existing one based on transaction hash. Idempotent operation.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        ledger: "xrpl-testnet" | "xrpl-mainnet";
-                        symbol: string;
-                        supply: string;
-                        issuerAddress: string;
-                        holderAddress?: string;
-                        txHash: string;
-                        compliance?: {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-            };
-            responses: {
-                /** @description Default Response */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            id: string;
-                            /** @enum {string} */
-                            ledger: "xrpl-testnet" | "xrpl-mainnet";
-                            symbol: string;
-                            supply: string;
-                            issuerAddress: string;
-                            holderAddress?: string | null;
-                            txHash: string;
-                            compliance?: {
-                                [key: string]: unknown;
-                            } | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/registry/tokens/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a specific token record by ID
-         * @description Retrieves a token record by its unique identifier
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            id: string;
-                            /** @enum {string} */
-                            ledger: "xrpl-testnet" | "xrpl-mainnet";
-                            symbol: string;
-                            supply: string;
-                            issuerAddress: string;
-                            holderAddress?: string | null;
-                            txHash: string;
-                            compliance?: {
-                                [key: string]: unknown;
-                            } | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/registry/tokens/{id}/report": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Export a registry record as JSON (default) or CSV
-         * @description Exports a token record in JSON or CSV format based on Accept header or format query parameter
-         */
-        get: {
-            parameters: {
-                query?: {
-                    format?: "json" | "csv";
-                };
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description JSON body or CSV file */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            id: string;
-                            /** @enum {string} */
-                            ledger: "xrpl-testnet" | "xrpl-mainnet";
-                            symbol: string;
-                            supply: string;
-                            issuerAddress: string;
-                            holderAddress?: string | null;
-                            txHash: string;
-                            compliance?: {
-                                [key: string]: unknown;
-                            } | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                        } | string;
-                    };
-                };
-                /** @description Default Response */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/registry/tokens/report": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Bulk export all token records as JSON or CSV
-         * @description Exports token records in JSON or CSV with optional filtering by symbol, ledger, and date range
-         */
-        get: {
-            parameters: {
-                query?: {
-                    symbol?: string;
-                    ledger?: "xrpl-testnet" | "xrpl-mainnet";
-                    /** @description ISO date-time lower bound (inclusive) */
-                    from?: string;
-                    /** @description ISO date-time upper bound (inclusive) */
-                    to?: string;
-                    limit?: number;
-                    format?: "json" | "csv";
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description JSON array or CSV file */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            id: string;
-                            /** @enum {string} */
-                            ledger: "xrpl-testnet" | "xrpl-mainnet";
-                            symbol: string;
-                            supply: string;
-                            issuerAddress: string;
-                            holderAddress?: string | null;
-                            txHash: string;
-                            compliance?: {
-                                [key: string]: unknown;
-                            } | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                        }[] | string;
-                    };
-                };
-                /** @description Default Response */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                            details?: {
-                                [key: string]: unknown;
-                            } | null;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/compliance-records": {
         parameters: {
             query?: never;
@@ -970,7 +477,55 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List compliance records
+         * @description Get paginated list of compliance records with filters
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    limit?: number;
+                    status?: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+                    assetId?: string;
+                    holder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            records?: {
+                                id?: string;
+                                recordId?: string;
+                                assetId?: string;
+                                assetRef?: string;
+                                holder?: string;
+                                status?: string;
+                                sha256?: string;
+                                createdAt?: string;
+                                verifiedAt?: string;
+                                verifiedBy?: string;
+                            }[];
+                            pagination?: {
+                                page?: number;
+                                limit?: number;
+                                total?: number;
+                                pages?: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
         put?: never;
         /**
          * Create compliance record
@@ -1056,7 +611,7 @@ export interface paths {
         };
         /**
          * Get compliance record
-         * @description Fetch compliance record (redacted for privacy)
+         * @description Fetch compliance record details
          */
         get: {
             parameters: {
@@ -1076,14 +631,27 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            id?: string;
                             recordId?: string;
+                            assetId?: string;
+                            assetRef?: string;
+                            holder?: string;
                             sha256?: string;
                             status?: string;
-                            assetId?: string;
+                            verifiedAt?: string;
+                            verifiedBy?: string;
+                            reason?: string;
+                            isin?: string;
+                            legalIssuer?: string;
                             jurisdiction?: string;
                             micaClass?: string;
+                            kycRequirement?: string;
                             transferRestrictions?: boolean;
                             purpose?: string;
+                            docs?: unknown[];
+                            consentTs?: string;
+                            createdAt?: string;
+                            updatedAt?: string;
                         };
                     };
                 };
@@ -1138,7 +706,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        status: "verified" | "rejected";
+                        status: "VERIFIED" | "REJECTED";
                         /** @description Reason for rejection */
                         reason?: string;
                     };
@@ -1194,13 +762,13 @@ export interface paths {
         };
         /**
          * List assets
-         * @description Get all assets with optional filtering
+         * @description List assets with optional filtering
          */
         get: {
             parameters: {
                 query?: {
-                    ledger?: string;
-                    status?: string;
+                    ledger?: "xrpl" | "hedera" | "ethereum";
+                    status?: "draft" | "active" | "paused" | "retired";
                     limit?: number;
                     offset?: number;
                 };
@@ -1480,8 +1048,8 @@ export interface paths {
         };
         post?: never;
         /**
-         * Deactivate asset
-         * @description Mark asset as retired (no new issuances)
+         * Delete asset
+         * @description Delete asset (draft assets only)
          */
         delete: {
             parameters: {
@@ -1495,19 +1063,36 @@ export interface paths {
             requestBody?: never;
             responses: {
                 /** @description Default Response */
-                200: {
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            id?: string;
-                            status?: string;
+                            error?: string;
                         };
                     };
                 };
                 /** @description Default Response */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1524,7 +1109,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/assets/{assetId}/opt-ins/{holder}": {
+    "/v1/assets/{assetId}/authorizations/{holder}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1532,8 +1117,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get opt-in status for a holder and asset
-         * @description Check if a holder has opted into an asset (XRPL = trustline)
+         * Get authorization status for a holder and asset
+         * @description Check if a holder has been authorized for an asset (XRPL = trustline)
          */
         get: {
             parameters: {
@@ -1604,8 +1189,8 @@ export interface paths {
             };
         };
         /**
-         * Create or update opt-in for a holder and asset
-         * @description Create trustline (XRPL) or equivalent opt-in mechanism
+         * Create or update authorization for a holder and asset
+         * @description Create trustline (XRPL) or equivalent authorization mechanism
          */
         put: {
             parameters: {
@@ -1684,8 +1269,8 @@ export interface paths {
         };
         post?: never;
         /**
-         * Remove opt-in for a holder and asset
-         * @description Remove trustline (XRPL) or equivalent opt-in mechanism
+         * Remove authorization for a holder and asset
+         * @description Remove trustline (XRPL) or equivalent authorization mechanism
          */
         delete: {
             parameters: {
@@ -1748,6 +1333,65 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all issuances across assets
+         * @description Get all token issuances for dashboard and reporting
+         */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: string;
+                    offset?: string;
+                    status?: "pending" | "submitted" | "validated" | "failed";
+                    assetId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items?: {
+                                id?: string;
+                                assetId?: string;
+                                assetRef?: string;
+                                to?: string;
+                                amount?: string;
+                                txId?: string;
+                                status?: string;
+                                createdAt?: string;
+                                updatedAt?: string;
+                            }[];
+                            total?: number;
+                            limit?: number;
+                            offset?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1922,11 +1566,14 @@ export interface paths {
         };
         /**
          * Get issuance status
-         * @description Fetch issuance details and transaction status
+         * @description Fetch issuance details and transaction status with optional refresh
          */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Refresh status from ledger */
+                    refresh?: boolean;
+                };
                 header?: never;
                 path: {
                     /** @description Asset ID */
@@ -1957,7 +1604,76 @@ export interface paths {
                             txId?: string;
                             explorer?: string;
                             status?: string;
+                            validatedAt?: string;
+                            validatedLedgerIndex?: number;
+                            failureCode?: string;
                             createdAt?: string;
+                            updatedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuances/by-compliance/{recordId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List issuances that reference a compliance record
+         * @description Get all issuances that reference a specific compliance record
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Compliance record ID */
+                    recordId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            issuances?: {
+                                id?: string;
+                                assetId?: string;
+                                assetRef?: string;
+                                to?: string;
+                                amount?: string;
+                                txId?: string;
+                                explorer?: string;
+                                status?: string;
+                                createdAt?: string;
+                            }[];
                         };
                     };
                 };
