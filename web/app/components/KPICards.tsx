@@ -93,7 +93,7 @@ export default function KPICards() {
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-50',
       onClick: () => router.push('/app/assets'),
-      tooltip: 'Number of assets currently active on the ledger'
+      tooltip: 'Number of digital assets currently active on the ledger'
     },
     {
       title: 'Total Assets',
@@ -102,7 +102,7 @@ export default function KPICards() {
       color: 'bg-green-500',
       hoverColor: 'hover:bg-green-50',
       onClick: () => router.push('/app/assets'),
-      tooltip: 'Total number of assets created (active + inactive)'
+      tooltip: 'Total number of digital assets created (active + inactive)'
     },
     {
       title: 'Total Issuances',
@@ -111,7 +111,7 @@ export default function KPICards() {
       color: 'bg-indigo-500',
       hoverColor: 'hover:bg-indigo-50',
       onClick: () => router.push('/app/issuances'),
-      tooltip: 'Lifetime count of all token issuance transactions'
+      tooltip: 'Lifetime count of all asset issuance transactions'
     },
     {
       title: 'Compliance Records',
@@ -130,7 +130,7 @@ export default function KPICards() {
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-50',
       onClick: () => router.push('/app/issuance'),
-      tooltip: 'Number of issuances waiting for ledger validation'
+      tooltip: 'Number of asset issuances waiting for ledger validation'
     },
     {
       title: 'Active Ledger',
