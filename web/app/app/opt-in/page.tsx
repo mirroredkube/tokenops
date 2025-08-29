@@ -14,7 +14,7 @@ interface Trustline {
   status: 'active' | 'pending' | 'failed'
 }
 
-export default function ManageOptInPage() {
+export default function ManageAuthorizationsPage() {
   const [optIns, setOptIns] = useState<Trustline[]>([])
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -71,7 +71,7 @@ export default function ManageOptInPage() {
       // For now, show success message
       console.log('Opt-in creation:', formData)
 
-      setSuccess('Opt-In created successfully!')
+      setSuccess('Authorization created successfully!')
       setFormData({
         currencyCode: '',
         limit: '',
@@ -92,7 +92,7 @@ export default function ManageOptInPage() {
     try {
       // Note: Authorization is handled differently in the new Opt-In system
       // This would need to be implemented based on the specific ledger requirements
-      setSuccess('Authorization not yet implemented in new Opt-In system')
+      setSuccess('Authorization approval not yet implemented in new system')
       // fetchOptIns() // Refresh the list
     } catch (err: any) {
       setError(err.message)
@@ -111,9 +111,9 @@ export default function ManageOptInPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Manage Opt-In</h1>
+        <h1 className="text-3xl font-bold">Asset Authorizations</h1>
         <p className="text-gray-600 mt-2">
-          Create and manage Opt-In for token issuance across multiple ledgers.
+          Create and manage asset authorizations for token issuance across multiple ledgers.
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export default function ManageOptInPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Create Trustline Form */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Create New Opt-In</h2>
+          <h2 className="text-xl font-semibold mb-4">Create New Authorization</h2>
           <form onSubmit={handleCreateOptIn} className="space-y-4">
             <FormField label="Currency Code" required>
               <input
@@ -211,24 +211,24 @@ export default function ManageOptInPage() {
               disabled={creating}
               className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {creating ? 'Creating Opt-In...' : 'Create Opt-In'}
+              {creating ? 'Creating Authorization...' : 'Create Authorization'}
             </button>
           </form>
         </div>
 
         {/* Existing Trustlines */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Existing Opt-Ins</h2>
+          <h2 className="text-xl font-semibold mb-4">Existing Authorizations</h2>
           
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading opt-ins...</p>
+              <p className="mt-2 text-gray-600">Loading authorizations...</p>
             </div>
           ) : optIns.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-600">No opt-ins found.</p>
-              <p className="text-sm text-gray-500 mt-1">Create your first opt-in to get started.</p>
+              <p className="text-gray-600">No authorizations found.</p>
+              <p className="text-sm text-gray-500 mt-1">Create your first authorization to get started.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -265,13 +265,13 @@ export default function ManageOptInPage() {
 
       {/* XRPL Trustline Information */}
       <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">XRPL Trustline Information</h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">Asset Authorization Information</h3>
         <div className="text-sm text-blue-800 space-y-2">
-          <p><strong>Trustlines</strong> allow accounts to hold tokens from specific issuers on XRPL.</p>
+          <p><strong>Asset Authorizations</strong> allow accounts to hold tokens from specific issuers on XRPL.</p>
           <p><strong>Limit:</strong> Maximum amount the holder is willing to accept from this issuer.</p>
-          <p><strong>NoRipple:</strong> Prevents the trustline from being used in rippling transactions.</p>
+          <p><strong>NoRipple:</strong> Prevents the authorization from being used in rippling transactions.</p>
           <p><strong>RequireAuth:</strong> Issuer must explicitly authorize the trustline before tokens can be sent.</p>
-          <p><strong>Reserve:</strong> Each trustline consumes XRP reserve from the holder account.</p>
+          <p><strong>Reserve:</strong> Each authorization consumes XRP reserve from the holder account.</p>
         </div>
       </div>
     </div>
