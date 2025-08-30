@@ -102,7 +102,7 @@ export default function HelpPage() {
         {/* Quick Actions */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
                 <Play className="w-5 h-5" />
               </div>
@@ -121,7 +121,7 @@ export default function HelpPage() {
                   href={action.href}
                   target={action.external ? "_blank" : undefined}
                   rel={action.external ? "noopener noreferrer" : undefined}
-                  className="flex items-start gap-1 p-4 border border-gray-200 rounded-lg hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+                  className="flex items-start gap-2 p-4 border border-gray-200 rounded-lg hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
                 >
                   <div className="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
                     {action.icon}
@@ -142,246 +142,197 @@ export default function HelpPage() {
         {/* Getting Started */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <button
-              onClick={() => toggleSection('getting-started')}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-1">
-                <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                                  <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.gettingStarted.title', 'Getting Started')}</h2>
-                <p className="text-sm text-gray-600">{t('help:sections.gettingStarted.description', 'Learn the basics of using Regula')}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white">
+                <BookOpen className="w-5 h-5" />
               </div>
-              {openSections.has('getting-started') ? (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
-          </div>
-          
-          {openSections.has('getting-started') && (
-            <div className="p-6 border-t border-gray-200">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step1.title', 'Step 1: Create an Asset')}</h3>
-                  <p className="text-gray-600 mb-2">
-                    {t('help:gettingStarted.step1.description', 'Define your token with metadata, compliance settings, and ledger configuration.')}
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>{t('help:gettingStarted.step1.items.0', 'Set token code, name, and description')}</li>
-                    <li>{t('help:gettingStarted.step1.items.1', 'Configure compliance mode and metadata')}</li>
-                    <li>{t('help:gettingStarted.step1.items.2', 'Select ledger and network settings')}</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step2.title', 'Step 2: Setup Authorizations')}</h3>
-                  <p className="text-gray-600 mb-2">
-                    {t('help:gettingStarted.step2.description', 'Create authorizations for holders to receive your tokens.')}
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>{t('help:gettingStarted.step2.items.0', 'Select ledger and asset for authorization')}</li>
-                    <li>{t('help:gettingStarted.step2.items.1', 'Set holder limits and restrictions')}</li>
-                    <li>{t('help:gettingStarted.step2.items.2', 'Configure authorization parameters')}</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step3.title', 'Step 3: Issue Tokens')}</h3>
-                  <p className="text-gray-600 mb-2">
-                    {t('help:gettingStarted.step3.description', 'Mint tokens to authorized addresses with compliance controls.')}
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>{t('help:gettingStarted.step3.items.0', 'Select asset and target holder')}</li>
-                    <li>{t('help:gettingStarted.step3.items.1', 'Set issuance amount and metadata')}</li>
-                    <li>{t('help:gettingStarted.step3.items.2', 'Submit and monitor transaction status')}</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step4.title', 'Step 4: Monitor & Report')}</h3>
-                  <p className="text-gray-600 mb-2">
-                    {t('help:gettingStarted.step4.description', 'Track balances, verify compliance, and export audit-ready reports.')}
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>{t('help:gettingStarted.step4.items.0', 'Monitor outstanding supply and holder balances')}</li>
-                    <li>{t('help:gettingStarted.step4.items.1', 'Verify compliance records and export reports')}</li>
-                    <li>{t('help:gettingStarted.step4.items.2', 'Track system health and transaction status')}</li>
-                  </ul>
-                </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.gettingStarted.title', 'Getting Started')}</h2>
+                <p className="text-sm text-gray-600">{t('help:sections.gettingStarted.description', 'Learn the basics of using Regula')}</p>
               </div>
             </div>
-          )}
+          </div>
+          
+          <div className="p-6 border-t border-gray-200">
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step1.title', 'Step 1: Create an Asset')}</h3>
+                <p className="text-gray-600 mb-2">
+                  {t('help:gettingStarted.step1.description', 'Define your token with metadata, compliance settings, and ledger configuration.')}
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>{t('help:gettingStarted.step1.items.0', 'Set token code, name, and description')}</li>
+                  <li>{t('help:gettingStarted.step1.items.1', 'Configure compliance mode and metadata')}</li>
+                  <li>{t('help:gettingStarted.step1.items.2', 'Select ledger and network settings')}</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step2.title', 'Step 2: Setup Authorizations')}</h3>
+                <p className="text-gray-600 mb-2">
+                  {t('help:gettingStarted.step2.description', 'Create authorizations for holders to receive your tokens.')}
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>{t('help:gettingStarted.step2.items.0', 'Select ledger and asset for authorization')}</li>
+                  <li>{t('help:gettingStarted.step2.items.1', 'Set holder limits and restrictions')}</li>
+                  <li>{t('help:gettingStarted.step2.items.2', 'Configure authorization parameters')}</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step3.title', 'Step 3: Issue Tokens')}</h3>
+                <p className="text-gray-600 mb-2">
+                  {t('help:gettingStarted.step3.description', 'Mint tokens to authorized addresses with compliance controls.')}
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>{t('help:gettingStarted.step3.items.0', 'Select asset and target holder')}</li>
+                  <li>{t('help:gettingStarted.step3.items.1', 'Set issuance amount and metadata')}</li>
+                  <li>{t('help:gettingStarted.step3.items.2', 'Submit and monitor transaction status')}</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('help:gettingStarted.step4.title', 'Step 4: Monitor & Report')}</h3>
+                <p className="text-gray-600 mb-2">
+                  {t('help:gettingStarted.step4.description', 'Track balances, verify compliance, and export audit-ready reports.')}
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>{t('help:gettingStarted.step4.items.0', 'Monitor outstanding supply and holder balances')}</li>
+                  <li>{t('help:gettingStarted.step4.items.1', 'Verify compliance records and export reports')}</li>
+                  <li>{t('help:gettingStarted.step4.items.2', 'Track system health and transaction status')}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* FAQ */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <button
-              onClick={() => toggleSection('faq')}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-1">
-                <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white">
-                  <HelpCircle className="w-5 h-5" />
-                </div>
-                <div>
-                                  <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.faq.title', 'Frequently Asked Questions')}</h2>
-                <p className="text-sm text-gray-600">{t('help:sections.faq.description', 'Find answers to common questions')}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white">
+                <HelpCircle className="w-5 h-5" />
               </div>
-              {openSections.has('faq') ? (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
-          </div>
-          
-          {openSections.has('faq') && (
-            <div className="p-6 border-t border-gray-200">
-              <div className="space-y-4">
-                {faqItems.map((item, index) => (
-                  <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0">
-                    <h3 className="font-medium text-gray-900 mb-2">{item.question}</h3>
-                    <p className="text-sm text-gray-600">{item.answer}</p>
-                  </div>
-                ))}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.faq.title', 'Frequently Asked Questions')}</h2>
+                <p className="text-sm text-gray-600">{t('help:sections.faq.description', 'Find answers to common questions')}</p>
               </div>
             </div>
-          )}
+          </div>
+          
+          <div className="p-6 border-t border-gray-200">
+            <div className="space-y-4">
+              {faqItems.map((item, index) => (
+                <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0">
+                  <h3 className="font-medium text-gray-900 mb-2">{item.question}</h3>
+                  <p className="text-sm text-gray-600">{item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* API Documentation */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <button
-              onClick={() => toggleSection('api-docs')}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-1">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                                  <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.apiDocs.title', 'API Documentation')}</h2>
-                <p className="text-sm text-gray-600">{t('help:sections.apiDocs.description', 'Complete API reference for developers')}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                <FileText className="w-5 h-5" />
               </div>
-              {openSections.has('api-docs') ? (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.apiDocs.title', 'API Documentation')}</h2>
+                <p className="text-sm text-gray-600">{t('help:sections.apiDocs.description', 'Complete API reference for developers')}</p>
+              </div>
+            </div>
           </div>
           
-          {openSections.has('api-docs') && (
-            <div className="p-6 border-t border-gray-200">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">{t('help:apiDocs.title', 'REST API Reference')}</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {t('help:apiDocs.description', 'Regula provides a comprehensive REST API for programmatic access to all platform features. The API supports asset creation, issuances, authorizations, compliance management, and reporting.')}
-                  </p>
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    {t('help:apiDocs.openInteractiveDocs', 'Open Interactive API Documentation')}
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
+          <div className="p-6 border-t border-gray-200">
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('help:apiDocs.title', 'REST API Reference')}</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {t('help:apiDocs.description', 'Regula provides a comprehensive REST API for programmatic access to all platform features. The API supports asset creation, issuances, authorizations, compliance management, and reporting.')}
+                </p>
+                <a
+                  href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {t('help:apiDocs.openInteractiveDocs', 'Open Interactive API Documentation')}
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">{t('help:apiDocs.keyEndpoints.title', 'Key Endpoints')}</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• {t('help:apiDocs.keyEndpoints.items.0', 'Assets: Create and manage token definitions')}</li>
+                    <li>• {t('help:apiDocs.keyEndpoints.items.1', 'Issuances: Mint tokens to addresses')}</li>
+                    <li>• {t('help:apiDocs.keyEndpoints.items.2', 'Authorizations: Manage holder permissions')}</li>
+                    <li>• {t('help:apiDocs.keyEndpoints.items.3', 'Compliance: Verify and manage records')}</li>
+                    <li>• {t('help:apiDocs.keyEndpoints.items.4', 'Reports: Export data and analytics')}</li>
+                  </ul>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">{t('help:apiDocs.keyEndpoints.title', 'Key Endpoints')}</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• {t('help:apiDocs.keyEndpoints.items.0', 'Assets: Create and manage token definitions')}</li>
-                      <li>• {t('help:apiDocs.keyEndpoints.items.1', 'Issuances: Mint tokens to addresses')}</li>
-                      <li>• {t('help:apiDocs.keyEndpoints.items.2', 'Authorizations: Manage holder permissions')}</li>
-                      <li>• {t('help:apiDocs.keyEndpoints.items.3', 'Compliance: Verify and manage records')}</li>
-                      <li>• {t('help:apiDocs.keyEndpoints.items.4', 'Reports: Export data and analytics')}</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">{t('help:apiDocs.features.title', 'Features')}</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• {t('help:apiDocs.features.items.0', 'Interactive documentation with testing')}</li>
-                      <li>• {t('help:apiDocs.features.items.1', 'Authentication and authorization')}</li>
-                      <li>• {t('help:apiDocs.features.items.2', 'Rate limiting and error handling')}</li>
-                      <li>• {t('help:apiDocs.features.items.3', 'JSON request/response format')}</li>
-                      <li>• {t('help:apiDocs.features.items.4', 'Webhook support for real-time updates')}</li>
-                    </ul>
-                  </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">{t('help:apiDocs.features.title', 'Features')}</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• {t('help:apiDocs.features.items.0', 'Interactive documentation with testing')}</li>
+                    <li>• {t('help:apiDocs.features.items.1', 'Authentication and authorization')}</li>
+                    <li>• {t('help:apiDocs.features.items.2', 'Rate limiting and error handling')}</li>
+                    <li>• {t('help:apiDocs.features.items.3', 'JSON request/response format')}</li>
+                    <li>• {t('help:apiDocs.features.items.4', 'Webhook support for real-time updates')}</li>
+                  </ul>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Support */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <button
-              onClick={() => toggleSection('support')}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-1">
-                <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white">
-                  <MessageCircle className="w-5 h-5" />
-                </div>
-                <div>
-                                  <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.support.title', 'Support & Contact')}</h2>
-                <p className="text-sm text-gray-600">{t('help:sections.support.description', 'Get help when you need it')}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white">
+                <MessageCircle className="w-5 h-5" />
               </div>
-              {openSections.has('support') ? (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{t('help:sections.support.title', 'Support & Contact')}</h2>
+                <p className="text-sm text-gray-600">{t('help:sections.support.description', 'Get help when you need it')}</p>
+              </div>
+            </div>
           </div>
           
-          {openSections.has('support') && (
-            <div className="p-6 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">{t('help:support.documentation.title', 'Documentation')}</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {t('help:support.documentation.description', 'Comprehensive guides and resources to help you use Regula effectively, including API documentation for developers.')}
-                  </p>
-                  <a
-                    href="#api-docs"
-                    onClick={() => toggleSection('api-docs')}
-                    className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
-                  >
-                    {t('help:support.documentation.viewApiDocs', 'View API Documentation')}
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">{t('help:support.contact.title', 'Contact Support')}</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {t('help:support.contact.description', 'Need help? Our support team is here to assist you with any questions or issues.')}
-                  </p>
-                  <a
-                    href="mailto:support@regula.com?subject=Regula%20Support%20Request"
-                    className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
-                  >
-                    <Mail className="w-4 h-4" />
-                    {t('help:support.contact.emailSupport', 'Email Support')}
-                  </a>
-                </div>
+          <div className="p-6 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('help:support.documentation.title', 'Documentation')}</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {t('help:support.documentation.description', 'Comprehensive guides and resources to help you use Regula effectively, including API documentation for developers.')}
+                </p>
+                <a
+                  href="#api-docs"
+                  className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
+                >
+                  {t('help:support.documentation.viewApiDocs', 'View API Documentation')}
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">{t('help:support.contact.title', 'Contact Support')}</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {t('help:support.contact.description', 'Need help? Our support team is here to assist you with any questions or issues.')}
+                </p>
+                <a
+                  href="mailto:support@regula.com?subject=Regula%20Support%20Request"
+                  className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
+                >
+                  <Mail className="w-4 h-4" />
+                  {t('help:support.contact.emailSupport', 'Email Support')}
+                </a>
               </div>
               
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -391,7 +342,7 @@ export default function HelpPage() {
                 </p>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
