@@ -62,6 +62,7 @@ import v1ComplianceRoutes from './routes/v1/compliance.js'
 import v1AssetRoutes from './routes/v1/assets.js'
 import v1AuthorizationRoutes from './routes/v1/authorizations.js'
 import v1IssuanceRoutes from './routes/v1/issuances.js'
+import v1UsersRoutes from './routes/v1/users.js'
 
 // Background jobs
 import { startIssuanceWatcherJob } from './jobs/issuanceWatcherJob.js'
@@ -75,6 +76,7 @@ await app.register(v1ComplianceRoutes, { prefix: '/v1' })
 await app.register(v1AssetRoutes,    { prefix: '/v1' })
 await app.register(v1AuthorizationRoutes,    { prefix: '/v1' })
 await app.register(v1IssuanceRoutes, { prefix: '/v1' })
+await app.register(v1UsersRoutes,    { prefix: '/v1/users' })
 
 // ----------------------------------------------------------------------------
 // Startup

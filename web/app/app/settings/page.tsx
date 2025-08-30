@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import CustomDropdown from '../../components/CustomDropdown'
+import { getUserSettings, updateUserSettings, updateUserProfile } from '@/lib/api'
 import { 
   User, 
   Mail, 
@@ -28,10 +29,11 @@ export default function SettingsPage() {
   const { user } = useAuth()
   const { currentLanguage, setLanguage, availableLanguages } = useLanguage()
   const { t, ready } = useTranslation(['settings', 'common'])
-  const [isEditing, setIsEditing] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
+  const [originalLanguage, setOriginalLanguage] = useState(currentLanguage)
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     timezone: 'UTC',
     language: currentLanguage === 'en' ? 'English' : 'German',
     notifications: {
@@ -54,6 +56,45 @@ export default function SettingsPage() {
   const [verificationError, setVerificationError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  // Load user settings and profile data on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        // Load user settings
+        const settings = await getUserSettings()
+        
+        // Set original language for cancel functionality
+        setOriginalLanguage(settings.language || currentLanguage)
+        
+        // Populate form data with user info and settings
+        setFormData(prev => ({
+          ...prev,
+          name: user?.name || '',
+          email: user?.email || '',
+          timezone: settings.timezone || 'UTC',
+          language: settings.language === 'en' ? 'English' : 'German',
+          notifications: {
+            email: settings.notifications?.email ?? true,
+            push: settings.notifications?.push ?? false,
+            security: settings.notifications?.security ?? true
+          }
+        }))
+      } catch (error) {
+        console.log('Could not load user settings, using defaults')
+        // Fallback to user data from context
+        setFormData(prev => ({
+          ...prev,
+          name: user?.name || '',
+          email: user?.email || '',
+        }))
+      }
+    }
+    
+    if (user) {
+      loadSettings()
+    }
+  }, [user, currentLanguage])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target
     if (type === 'checkbox') {
@@ -64,32 +105,62 @@ export default function SettingsPage() {
           [name]: checked
         }
       }))
+      setHasChanges(true)
     } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
       }))
+      setHasChanges(true)
     }
   }
 
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    setIsEditing(false)
+  const handleSave = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Save profile data (name, email)
+      if (user && (formData.name !== user.name || formData.email !== user.email)) {
+        await updateUserProfile({
+          name: formData.name,
+          email: formData.email
+        })
+      }
+      
+      // Language is already saved immediately when changed, so we don't need to save it again
+      
+      // Save other settings (timezone, notifications)
+      await updateUserSettings({
+        timezone: formData.timezone,
+        notifications: formData.notifications
+      })
+      
+      setHasChanges(false)
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    // Revert language to original if it was changed
+    if (originalLanguage !== currentLanguage) {
+      await setLanguage(originalLanguage)
+    }
+    
     setFormData({
       name: user?.name || '',
       email: user?.email || '',
       timezone: 'UTC',
-      language: 'English',
+      language: originalLanguage === 'en' ? 'English' : 'German',
       notifications: {
         email: true,
         push: false,
         security: true
       }
     })
-    setIsEditing(false)
+    setHasChanges(false)
   }
 
   // 2FA API Functions
@@ -271,23 +342,14 @@ export default function SettingsPage() {
         {/* Profile Information */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">{t('profile')}</h2>
-                  <p className="text-sm text-gray-600">{t('settings:descriptions.updatePersonalDetails', 'Update your personal details')}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-semibold">
+                {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
               </div>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                <Edit3 className="w-4 h-4" />
-                {isEditing ? (t('common:actions.cancel', 'Cancel') || 'Cancel') : (t('common:actions.edit', 'Edit') || 'Edit')}
-              </button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{t('profile')}</h2>
+                <p className="text-sm text-gray-600">{t('settings:descriptions.updatePersonalDetails', 'Update your personal details')}</p>
+              </div>
             </div>
           </div>
           
@@ -297,60 +359,30 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('fields.name')}
                 </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                ) : (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">{user?.name || t('common:notProvided', 'Not provided')}</span>
-                  </div>
-                )}
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('fields.email')}
                 </label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                ) : (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">{user?.email || t('common:notProvided', 'Not provided')}</span>
-                  </div>
-                )}
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
               </div>
             </div>
 
-            {isEditing && (
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  {t('settings:actions.saveChanges') || 'Save Changes'}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="px-4 py-2 text-gray-600 border border-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  {t('common:actions.cancel', 'Cancel') || 'Cancel'}
-                </button>
-              </div>
-            )}
+
           </div>
         </div>
 
@@ -633,7 +665,10 @@ export default function SettingsPage() {
                 </label>
                 <CustomDropdown
                   value={formData.timezone}
-                  onChange={(value) => setFormData(prev => ({ ...prev, timezone: value }))}
+                  onChange={(value) => {
+                    setFormData(prev => ({ ...prev, timezone: value }))
+                    setHasChanges(true)
+                  }}
                   options={[
                     { value: 'UTC', label: 'UTC' },
                     { value: 'America/New_York', label: 'Eastern Time' },
@@ -654,10 +689,13 @@ export default function SettingsPage() {
                 </label>
                 <CustomDropdown
                   value={availableLanguages.find(lang => lang.value === currentLanguage)?.label || ''}
-                  onChange={(value) => {
+                  onChange={async (value) => {
                     const lang = availableLanguages.find(l => l.label === value)?.value || 'en'
-                    setLanguage(lang)
+                    // Change language immediately
+                    await setLanguage(lang)
+                    // Track for save/cancel
                     setFormData(prev => ({ ...prev, language: value }))
+                    setHasChanges(true)
                   }}
                   options={availableLanguages.map(lang => ({
                     value: lang.label,
@@ -751,6 +789,37 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+
+        {/* Save Changes Button */}
+        <div className="bg-white rounded-lg border shadow-sm p-6">
+          <div className="flex justify-end gap-3">
+            {hasChanges && (
+              <button
+                onClick={handleCancel}
+                className="px-6 py-3 text-gray-600 border border-gray-600 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                {t('common:actions.cancel', 'Cancel') || 'Cancel'}
+              </button>
+            )}
+            <button
+              onClick={handleSave}
+              disabled={isLoading || !hasChanges}
+              className="flex items-center gap-2 px-6 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600"></div>
+                  {t('common:actions.saving', 'Saving...')}
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  {t('settings:actions.saveChanges') || 'Save Changes'}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

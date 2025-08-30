@@ -117,9 +117,23 @@ model User {
   twoFactorEnabled Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  settings         UserSettings?
 
   @@index([email])
   @@index([sub])
+}
+
+model UserSettings {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  timezone      String   @default("UTC")
+  language      String   @default("en")
+  theme         String   @default("light")
+  notifications Json     @default("{}")
+  preferences   Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum AssetLedger {

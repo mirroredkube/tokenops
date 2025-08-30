@@ -87,10 +87,22 @@ const authPlugin: FastifyPluginAsync = async (app) => {
         .filter(Boolean);
       const role: "admin" | "user" = email && admins.includes(email.toLowerCase()) ? "admin" : "user";
 
-      // Check if user has 2FA enabled
-      const dbUser = await prisma.user.findUnique({
+      // Find or create user in database
+      let dbUser = await prisma.user.findUnique({
         where: { sub }
       });
+
+      if (!dbUser) {
+        // Create new user
+        dbUser = await prisma.user.create({
+          data: {
+            email: email || '',
+            name: name || '',
+            sub,
+            role
+          }
+        });
+      }
 
       if (dbUser?.twoFactorEnabled) {
         // Store temporary session for 2FA verification
@@ -184,6 +196,88 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
   app.post("/auth/logout", async (_req, reply) => {
     reply.clearCookie("auth", { path: "/" }).send({ ok: true });
+  });
+
+  // Test user settings endpoint in auth plugin
+  app.get("/auth/me/settings", async (req, reply) => {
+    try {
+      await req.jwtVerify();
+      const jwtUser = req.user as any;
+      
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: jwtUser.sub },
+        include: {
+          settings: true
+        }
+      });
+      
+      if (!dbUser) {
+        return reply.code(404).send({ error: "User not found" });
+      }
+      
+      // Return default settings if none exist
+      const settings = dbUser.settings || {
+        timezone: "UTC",
+        language: "en",
+        theme: "light",
+        notifications: {},
+        preferences: {}
+      };
+      
+      return reply.send({ settings });
+    } catch (error) {
+      console.log('JWT verification failed in /auth/me/settings:', error);
+      return reply.code(200).send({ settings: null });
+    }
+  });
+
+  // Update user settings endpoint in auth plugin
+  app.patch("/auth/me/settings", async (req, reply) => {
+    try {
+      await req.jwtVerify();
+      const jwtUser = req.user as any;
+      const { timezone, language, theme, notifications, preferences } = req.body as {
+        timezone?: string
+        language?: string
+        theme?: string
+        notifications?: any
+        preferences?: any
+      };
+      
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: jwtUser.sub }
+      });
+      
+      if (!dbUser) {
+        return reply.code(404).send({ error: "User not found" });
+      }
+      
+      // Upsert settings (create if doesn't exist, update if it does)
+      const settings = await prisma.userSettings.upsert({
+        where: { userId: dbUser.id },
+        update: {
+          ...(timezone && { timezone }),
+          ...(language && { language }),
+          ...(theme && { theme }),
+          ...(notifications && { notifications }),
+          ...(preferences && { preferences }),
+          updatedAt: new Date()
+        },
+        create: {
+          userId: dbUser.id,
+          timezone: timezone || "UTC",
+          language: language || "en",
+          theme: theme || "light",
+          notifications: notifications || {},
+          preferences: preferences || {}
+        }
+      });
+      
+      return reply.send({ settings });
+    } catch (error) {
+      console.log('JWT verification failed in PATCH /auth/me/settings:', error);
+      return reply.code(200).send({ settings: null });
+    }
   });
 
   // 2FA endpoints
