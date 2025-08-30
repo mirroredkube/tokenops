@@ -773,10 +773,10 @@ export default function AuthorizationFlow() {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                              <button
-                 onClick={() => window.location.href = '/app/authorizations'}
+                 onClick={() => window.location.href = '/app/authorizations/history'}
                  className="px-6 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
                >
-                 View All Authorizations
+                 {t('authorizations:actions.viewHistory', 'View History')}
                </button>
               <button
                 onClick={() => {

@@ -134,7 +134,7 @@ export default function RecentIssuancesQueue() {
       items={issuances}
       columns={columns}
       emptyMessage={t('dashboard:queue.noIssuancesYet', 'No issuances yet. Once you issue a token, it will show up here.')}
-      viewAllLink="/app/issuances"
+      viewAllLink="/app/issuance/history"
       loading={loading}
       maxItems={5}
       showViewAll={true}
