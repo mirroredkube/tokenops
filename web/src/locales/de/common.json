@@ -10,6 +10,10 @@
     "settings": "Einstellungen",
     "help": "Hilfe"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Übersicht Ihrer Token-Operationen und des Systemstatus"
+  },
   "actions": {
     "create": "Erstellen",
     "edit": "Bearbeiten",

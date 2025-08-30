@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { Eye, Shield } from 'lucide-react'
 import { api } from '@/lib/api'
 import QueueTable, { QueueColumn } from './QueueTable'
@@ -23,6 +24,7 @@ interface ComplianceListResponse {
 
 export default function ComplianceToVerifyQueue() {
   const router = useRouter()
+  const { t } = useTranslation(['common', 'dashboard'])
   const [records, setRecords] = useState<ComplianceRecord[]>([])
   const [loading, setLoading] = useState(true)
 

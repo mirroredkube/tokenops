@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { Plus, Coins, Shield, CheckSquare } from 'lucide-react'
 
 interface QuickActionsProps {
@@ -15,6 +16,7 @@ export default function QuickActions({
   canVerifyCompliance = true
 }: QuickActionsProps) {
   const router = useRouter()
+  const { t, ready } = useTranslation(['common', 'dashboard'])
 
   const actions = [
     {
@@ -35,25 +37,50 @@ export default function QuickActions({
       disabled: !canStartIssuance,
       color: 'slate'
     },
-                {
-              id: 'verify-compliance',
-              title: 'Verify Compliance Record',
-              description: 'Review and verify compliance records',
-              icon: Shield,
-              href: '/app/compliance',
-              disabled: !canVerifyCompliance,
-              color: 'slate'
-            },
-            {
-              id: 'authorizations',
-              title: 'Setup Authorization',
-              description: 'Create and manage asset authorizations',
-              icon: CheckSquare,
-              href: '/app/authorizations',
-              disabled: false,
-              color: 'slate'
-            }
+    {
+      id: 'verify-compliance',
+      title: 'Verify Compliance Record',
+      description: 'Review and verify compliance records',
+      icon: Shield,
+      href: '/app/compliance',
+      disabled: !canVerifyCompliance,
+      color: 'slate'
+    },
+    {
+      id: 'authorizations',
+      title: 'Setup Authorization',
+      description: 'Create and manage asset authorizations',
+      icon: CheckSquare,
+      href: '/app/authorizations',
+      disabled: false,
+      color: 'slate'
+    }
   ]
+
+  // Show loading state if translations aren't ready
+  if (!ready) {
+    return (
+      <div className="space-y-4">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-32 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-48"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-gray-100 p-4 rounded-lg border-2 animate-pulse">
+              <div className="flex items-start space-x-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   const getColorClasses = (color: string, disabled: boolean) => {
     if (disabled) {

@@ -1,0 +1,43 @@
+{
+  "kpi": {
+    "activeAssets": "Aktive Assets",
+    "activeAssetsTooltip": "Anzahl der derzeit aktiven digitalen Assets auf dem Ledger",
+    "totalAssets": "Gesamte Assets",
+    "totalAssetsTooltip": "Gesamtzahl der erstellten digitalen Assets (aktiv + inaktiv)",
+    "totalIssuances": "Gesamte Emissionen",
+    "totalIssuancesTooltip": "Lebenszeit-Zählung aller Asset-Emissions-Transaktionen",
+    "complianceRecords": "Compliance-Datensätze",
+    "complianceRecordsTooltip": "Gesamte Compliance-Datensätze (verifiziert und nicht verifiziert)",
+    "pendingIssuances": "Ausstehende Emissionen",
+    "pendingIssuancesTooltip": "Anzahl der Asset-Emissionen, die auf Ledger-Validierung warten",
+    "totalAuthorizations": "Gesamte Autorisierungen",
+    "totalAuthorizationsTooltip": "Gesamtzahl der erstellten Autorisierungsdatensätze"
+  },
+  "quickActions": {
+    "title": "Schnellaktionen",
+    "subtitle": "Häufige Aufgaben zum Einstieg",
+    "createAsset": "Asset erstellen",
+    "createAssetDesc": "Ein neues Token-Asset erstellen",
+    "startIssuance": "Emission starten",
+    "startIssuanceDesc": "Assets an eine Adresse ausgeben",
+    "verifyCompliance": "Compliance-Datensatz verifizieren",
+    "verifyComplianceDesc": "Compliance-Datensätze überprüfen und verifizieren",
+    "setupAuthorization": "Autorisierung einrichten",
+    "setupAuthorizationDesc": "Asset-Autorisierungen erstellen und verwalten"
+  },
+  "errorMessage": "Fehler beim Laden der Dashboard-Daten. Bitte versuchen Sie, die Seite zu aktualisieren.",
+  "queue": {
+    "pendingIssuances": "Ausstehende Emissionen",
+    "complianceToVerify": "Compliance zu verifizieren",
+    "noPendingIssuances": "Keine ausstehenden Emissionen. Alle kürzlichen Emissionen wurden verarbeitet.",
+    "noUnverifiedCompliance": "Keine nicht verifizierten Compliance-Datensätze. Alle Datensätze wurden verifiziert.",
+    "viewAll": "Alle anzeigen",
+    "currency": "Währung",
+    "amount": "Betrag",
+    "destination": "Ziel",
+    "submitted": "Eingereicht",
+    "actions": "Aktionen",
+    "refreshStatus": "Status aktualisieren",
+    "viewAsset": "Asset anzeigen"
+  }
+}

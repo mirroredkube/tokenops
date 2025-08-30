@@ -10,6 +10,10 @@
     "settings": "Settings",
     "help": "Help"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Overview of your token operations and system status"
+  },
   "actions": {
     "create": "Create",
     "edit": "Edit",
@@ -97,5 +101,8 @@
     "confirmDelete": "Are you sure you want to delete this item?",
     "confirmAction": "Are you sure you want to perform this action?",
     "thisActionCannotBeUndone": "This action cannot be undone"
+  },
+  "dashboard": {
+    "overview": "Overview of your token operations and system status"
   }
 }

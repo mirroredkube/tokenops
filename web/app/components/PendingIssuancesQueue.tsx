@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { ExternalLink, Eye, RefreshCw } from 'lucide-react'
 import { api } from '@/lib/api'
 import QueueTable, { QueueColumn } from './QueueTable'
@@ -25,6 +26,7 @@ interface IssuanceListResponse {
 
 export default function PendingIssuancesQueue() {
   const router = useRouter()
+  const { t } = useTranslation(['common', 'dashboard'])
   const [issuances, setIssuances] = useState<Issuance[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -90,7 +92,7 @@ export default function PendingIssuancesQueue() {
   const columns: QueueColumn[] = [
     {
       key: 'currency',
-      label: 'Currency',
+      label: t('queue.currency'),
       width: 'w-20',
       render: (issuance: Issuance) => (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -100,7 +102,7 @@ export default function PendingIssuancesQueue() {
     },
     {
       key: 'amount',
-      label: 'Amount',
+      label: t('queue.amount'),
       width: 'w-24',
       render: (issuance: Issuance) => (
         <span className="text-sm text-gray-900">{issuance.amount}</span>

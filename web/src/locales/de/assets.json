@@ -65,5 +65,32 @@
     "active": "Aktiv",
     "paused": "Pausiert",
     "retired": "Zurückgezogen"
-  }
+  },
+  "filters": {
+    "ledger": "Ledger",
+    "status": "Status",
+    "allLedgers": "Alle Ledger",
+    "allStatuses": "Alle Status"
+  },
+  "table": {
+    "asset": "Asset",
+    "ledger": "Ledger",
+    "compliance": "Compliance",
+    "status": "Status",
+    "created": "Erstellt",
+    "actions": "Aktionen"
+  },
+  "messages": {
+    "noAssetsFound": "Keine Assets gefunden",
+    "tryAdjustingFilters": "Versuchen Sie, Ihre Filter anzupassen",
+    "createFirstAsset": "Erstellen Sie Ihr erstes Asset, um zu beginnen"
+  },
+  "actions": {
+    "viewDetails": "Details anzeigen",
+    "activateAsset": "Asset aktivieren",
+    "pauseAsset": "Asset pausieren",
+    "retireAsset": "Asset zurückziehen",
+    "issueTokens": "Token ausgeben"
+  },
+  "assetLifecycleAndDocumentation": "Asset-Lebenszyklus & Dokumentation"
 }

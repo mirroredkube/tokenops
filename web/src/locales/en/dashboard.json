@@ -1,0 +1,43 @@
+{
+  "kpi": {
+    "activeAssets": "Active Assets",
+    "activeAssetsTooltip": "Number of digital assets currently active on the ledger",
+    "totalAssets": "Total Assets",
+    "totalAssetsTooltip": "Total number of digital assets created (active + inactive)",
+    "totalIssuances": "Total Issuances",
+    "totalIssuancesTooltip": "Lifetime count of all asset issuance transactions",
+    "complianceRecords": "Compliance Records",
+    "complianceRecordsTooltip": "Total compliance records (verified and unverified)",
+    "pendingIssuances": "Pending Issuances",
+    "pendingIssuancesTooltip": "Number of asset issuances waiting for ledger validation",
+    "totalAuthorizations": "Total Authorizations",
+    "totalAuthorizationsTooltip": "Total number of authorization records created"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "subtitle": "Common tasks to get started",
+    "createAsset": "Create Asset",
+    "createAssetDesc": "Create a new token asset",
+    "startIssuance": "Start Issuance",
+    "startIssuanceDesc": "Issue assets to an address",
+    "verifyCompliance": "Verify Compliance Record",
+    "verifyComplianceDesc": "Review and verify compliance records",
+    "setupAuthorization": "Setup Authorization",
+    "setupAuthorizationDesc": "Create and manage asset authorizations"
+  },
+  "errorMessage": "Failed to load dashboard data. Please try refreshing the page.",
+  "queue": {
+    "pendingIssuances": "Pending Issuances",
+    "complianceToVerify": "Compliance to Verify",
+    "noPendingIssuances": "No pending issuances. All recent issuances have been processed.",
+    "noUnverifiedCompliance": "No unverified compliance records. All records have been verified.",
+    "viewAll": "View All",
+    "currency": "Currency",
+    "amount": "Amount",
+    "destination": "Destination",
+    "submitted": "Submitted",
+    "actions": "Actions",
+    "refreshStatus": "Refresh status",
+    "viewAsset": "View asset"
+  }
+}

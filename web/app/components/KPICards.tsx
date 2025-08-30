@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import { 
   Building2, 
@@ -32,6 +33,7 @@ interface KPIData {
 
 export default function KPICards() {
   const router = useRouter()
+  const { t, ready } = useTranslation(['common', 'dashboard'])
 
   // Fetch KPI data
   const kpiData = useQuery({
@@ -92,62 +94,81 @@ export default function KPICards() {
   const isLoading = kpiData.isLoading
   const data = kpiData.data
 
+  // Show loading state if translations aren't ready
+  if (!ready) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="bg-white p-6 rounded-lg border border-gray-200 animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
+              <div className="text-right">
+                <div className="w-20 h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="w-12 h-6 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const kpiCards = [
     {
-      title: 'Active Assets',
+      title: t('dashboard:kpi.activeAssets', 'Active Assets'),
       value: data?.activeAssets || 0,
       icon: Building2,
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-50',
       onClick: () => router.push('/app/assets'),
-      tooltip: 'Number of digital assets currently active on the ledger'
+      tooltip: t('dashboard:kpi.activeAssetsTooltip', 'Number of digital assets currently active on the ledger')
     },
     {
-      title: 'Total Assets',
+      title: t('dashboard:kpi.totalAssets', 'Total Assets'),
       value: data?.totalTokens || 0,
       icon: Database,
       color: 'bg-green-500',
       hoverColor: 'hover:bg-green-50',
       onClick: () => router.push('/app/assets'),
-      tooltip: 'Total number of digital assets created (active + inactive)'
+      tooltip: t('dashboard:kpi.totalAssetsTooltip', 'Total number of digital assets created (active + inactive)')
     },
     {
-      title: 'Total Issuances',
+      title: t('dashboard:kpi.totalIssuances', 'Total Issuances'),
       value: data?.totalIssuances || 0,
       icon: Coins,
       color: 'bg-indigo-500',
       hoverColor: 'hover:bg-indigo-50',
       onClick: () => router.push('/app/issuance/history'),
-      tooltip: 'Lifetime count of all asset issuance transactions'
+      tooltip: t('dashboard:kpi.totalIssuancesTooltip', 'Lifetime count of all asset issuance transactions')
     },
     {
-      title: 'Compliance Records',
+      title: t('dashboard:kpi.complianceRecords', 'Compliance Records'),
       value: data?.complianceRecords?.total || 0,
-      subtitle: `${data?.complianceRecords?.verified || 0} verified, ${data?.complianceRecords?.unverified || 0} unverified`,
+      subtitle: `${data?.complianceRecords?.verified || 0} ${t('common:status.verified', 'verified')}, ${data?.complianceRecords?.unverified || 0} ${t('common:status.unverified', 'unverified')}`,
       icon: Shield,
       color: 'bg-purple-500',
       hoverColor: 'hover:bg-purple-50',
       onClick: () => router.push('/app/compliance'),
-      tooltip: 'Total compliance records (verified and unverified)'
+      tooltip: t('dashboard:kpi.complianceRecordsTooltip', 'Total compliance records (verified and unverified)')
     },
     {
-      title: 'Pending Issuances',
+      title: t('dashboard:kpi.pendingIssuances', 'Pending Issuances'),
       value: data?.pendingIssuances || 0,
       icon: Clock,
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-50',
       onClick: () => router.push('/app/issuance/history?status=submitted'),
-      tooltip: 'Number of asset issuances waiting for ledger validation'
+      tooltip: t('dashboard:kpi.pendingIssuancesTooltip', 'Number of asset issuances waiting for ledger validation')
     },
     
     {
-      title: 'Total Authorizations',
+      title: t('dashboard:kpi.totalAuthorizations', 'Total Authorizations'),
       value: data?.totalAuthorizations || 0,
       icon: CheckSquare,
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-50',
       onClick: () => router.push('/app/authorizations/history'),
-      tooltip: 'Total number of authorization records created'
+      tooltip: t('dashboard:kpi.totalAuthorizationsTooltip', 'Total number of authorization records created')
     }
   ]
 
@@ -174,7 +195,7 @@ export default function KPICards() {
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
         <div className="flex items-center">
           <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
-          <span className="text-red-800">Failed to load dashboard data. Please try refreshing the page.</span>
+          <span className="text-red-800">{t('dashboard:errorMessage', 'Failed to load dashboard data. Please try refreshing the page.')}</span>
         </div>
       </div>
     )

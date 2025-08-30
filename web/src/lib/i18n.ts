@@ -5,6 +5,7 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 // Import translation files
 import enCommon from '../locales/en/common.json'
 import enAssets from '../locales/en/assets.json'
+import enDashboard from '../locales/en/dashboard.json'
 import enIssuances from '../locales/en/issuances.json'
 import enAuthorizations from '../locales/en/authorizations.json'
 import enCompliance from '../locales/en/compliance.json'
@@ -14,6 +15,7 @@ import enSettings from '../locales/en/settings.json'
 
 import deCommon from '../locales/de/common.json'
 import deAssets from '../locales/de/assets.json'
+import deDashboard from '../locales/de/dashboard.json'
 import deIssuances from '../locales/de/issuances.json'
 import deAuthorizations from '../locales/de/authorizations.json'
 import deCompliance from '../locales/de/compliance.json'
@@ -25,6 +27,7 @@ const resources = {
   en: {
     common: enCommon,
     assets: enAssets,
+    dashboard: enDashboard,
     issuances: enIssuances,
     authorizations: enAuthorizations,
     compliance: enCompliance,
@@ -35,6 +38,7 @@ const resources = {
   de: {
     common: deCommon,
     assets: deAssets,
+    dashboard: deDashboard,
     issuances: deIssuances,
     authorizations: deAuthorizations,
     compliance: deCompliance,
@@ -49,8 +53,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en',
-    debug: false,
+    debug: false, // Disable debug for production
     
     interpolation: {
       escapeValue: false, // React already escapes values
@@ -62,7 +65,21 @@ i18n
     },
     
     defaultNS: 'common',
-    ns: ['common', 'assets', 'issuances', 'authorizations', 'compliance', 'reports', 'balances', 'settings'],
+    ns: ['common', 'assets', 'dashboard', 'issuances', 'authorizations', 'compliance', 'reports', 'balances', 'settings'],
+    
+    // Ensure fallback to English for missing translations
+    fallbackLng: 'en',
+    
+    // Return key if translation is missing
+    returnEmptyString: false,
+    returnNull: false,
+    returnObjects: true,
+    
+    // Key separator for nested keys
+    keySeparator: '.',
+    
+    // Namespace separator
+    nsSeparator: ':',
   })
 
 export default i18n

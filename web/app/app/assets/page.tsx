@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import Link from 'next/link'
 import CustomDropdown from '../../components/CustomDropdown'
@@ -21,6 +22,7 @@ interface Asset {
 }
 
 export default function AssetsPage() {
+  const { t } = useTranslation(['assets', 'common'])
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -98,9 +100,9 @@ export default function AssetsPage() {
 
   const getComplianceModeLabel = (mode: string) => {
     switch (mode) {
-      case 'OFF': return 'No Compliance'
-      case 'RECORD_ONLY': return 'Record Only'
-      case 'GATED_BEFORE': return 'Gated Before'
+      case 'OFF': return t('complianceModes.noCompliance')
+      case 'RECORD_ONLY': return t('complianceModes.recordOnly')
+      case 'GATED_BEFORE': return t('complianceModes.gatedBefore')
       default: return mode
     }
   }
@@ -142,17 +144,17 @@ export default function AssetsPage() {
       
       // Show success message
       const statusLabels = {
-        'active': 'activated',
-        'paused': 'paused',
-        'retired': 'retired'
+        'active': t('messages.assetSuccessfullyActivated'),
+        'paused': t('messages.assetSuccessfullyPaused'),
+        'retired': t('messages.assetSuccessfullyRetired')
       }
-      setSuccessMessage(`Asset successfully ${statusLabels[newStatus]}`)
+      setSuccessMessage(statusLabels[newStatus])
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err: any) {
       console.error('Error updating asset status:', err)
-      setError(`Failed to update status: ${err.message}`)
+      setError(`${t('messages.operationFailed')}: ${err.message}`)
     }
   }
 
@@ -164,12 +166,12 @@ export default function AssetsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Assets</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <div className="flex items-center gap-2 mt-2">
             <p className="text-gray-600">
-              Manage your token assets across multiple ledgers.
+              {t('description')}
             </p>
-            <InfoPopup title="Asset Lifecycle & Documentation">
+            <InfoPopup title={t('assetLifecycleAndDocumentation')}>
               <div className="space-y-6">
                 {/* Asset Lifecycle Flow Diagram */}
                 <div>
@@ -316,7 +318,7 @@ export default function AssetsPage() {
         <Link
           href="/app/assets/create"
           className="w-10 h-10 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors duration-200"
-          title="Create Asset"
+          title={t('createAsset')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -348,13 +350,13 @@ export default function AssetsPage() {
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Ledger:</span>
+            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('filters.ledger')}:</span>
             <div className="flex-1 min-w-0">
               <CustomDropdown
                 value={filters.ledger}
                 onChange={(value) => setFilters(prev => ({ ...prev, ledger: value }))}
                 options={[
-                  { value: '', label: 'All Ledgers' },
+                  { value: '', label: t('filters.allLedgers') },
                   { value: 'xrpl', label: 'XRPL' },
                   { value: 'hedera', label: 'Hedera' },
                   { value: 'ethereum', label: 'Ethereum' }
@@ -365,17 +367,17 @@ export default function AssetsPage() {
           </div>
 
           <div className="flex items-center gap-3 min-w-0">
-            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</span>
+            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('filters.status')}:</span>
             <div className="flex-1 min-w-0">
               <CustomDropdown
                 value={filters.status}
                 onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
                 options={[
-                  { value: '', label: 'All Statuses' },
-                  { value: 'draft', label: 'Draft' },
-                  { value: 'active', label: 'Active' },
-                  { value: 'paused', label: 'Paused' },
-                  { value: 'retired', label: 'Retired' }
+                  { value: '', label: t('filters.allStatuses') },
+                  { value: 'draft', label: t('status.draft') },
+                  { value: 'active', label: t('status.active') },
+                  { value: 'paused', label: t('status.paused') },
+                  { value: 'retired', label: t('status.retired') }
                 ]}
                 className="w-full sm:w-48"
               />
@@ -399,11 +401,11 @@ export default function AssetsPage() {
           </div>
         ) : assets.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="text-gray-500 text-lg">No assets found</div>
+            <div className="text-gray-500 text-lg">{t('messages.noAssetsFound')}</div>
             <div className="text-gray-400 text-sm mt-2">
               {filters.ledger || filters.status 
-                ? 'Try adjusting your filters' 
-                : 'Create your first asset to get started'
+                ? t('messages.tryAdjustingFilters') 
+                : t('messages.createFirstAsset')
               }
             </div>
           </div>
@@ -412,12 +414,12 @@ export default function AssetsPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ledger</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Compliance</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.asset')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.ledger')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.compliance')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.created')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -450,7 +452,7 @@ export default function AssetsPage() {
                         <Link
                           href={`/app/assets/${asset.id}`}
                           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors duration-200"
-                          title="View Details"
+                          title={t('actions.viewDetails')}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -463,7 +465,7 @@ export default function AssetsPage() {
                           <button
                             onClick={() => handleStatusChange(asset.id, 'active')}
                             className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200"
-                            title="Activate Asset"
+                            title={t('actions.activateAsset')}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -474,7 +476,7 @@ export default function AssetsPage() {
                           <button
                             onClick={() => handleStatusChange(asset.id, 'paused')}
                             className="p-2 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-md transition-colors duration-200"
-                            title="Pause Asset"
+                            title={t('actions.pauseAsset')}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -485,7 +487,7 @@ export default function AssetsPage() {
                           <button
                             onClick={() => handleStatusChange(asset.id, 'retired')}
                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
-                            title="Retire Asset"
+                            title={t('actions.retireAsset')}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -498,7 +500,7 @@ export default function AssetsPage() {
                           <Link
                             href={`/app/issuance/new?assetId=${asset.id}`}
                             className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors duration-200"
-                            title="Issue Tokens"
+                            title={t('actions.issueTokens')}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />

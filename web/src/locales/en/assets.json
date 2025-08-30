@@ -65,5 +65,32 @@
     "active": "Active",
     "paused": "Paused",
     "retired": "Retired"
-  }
+  },
+  "filters": {
+    "ledger": "Ledger",
+    "status": "Status",
+    "allLedgers": "All Ledgers",
+    "allStatuses": "All Statuses"
+  },
+  "table": {
+    "asset": "Asset",
+    "ledger": "Ledger",
+    "compliance": "Compliance",
+    "status": "Status",
+    "created": "Created",
+    "actions": "Actions"
+  },
+  "messages": {
+    "noAssetsFound": "No assets found",
+    "tryAdjustingFilters": "Try adjusting your filters",
+    "createFirstAsset": "Create your first asset to get started"
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "activateAsset": "Activate Asset",
+    "pauseAsset": "Pause Asset",
+    "retireAsset": "Retire Asset",
+    "issueTokens": "Issue Tokens"
+  },
+  "assetLifecycleAndDocumentation": "Asset Lifecycle & Documentation"
 }

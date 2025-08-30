@@ -286,7 +286,7 @@ export default function SettingsPage() {
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 <Edit3 className="w-4 h-4" />
-                {isEditing ? (t('common:actions.cancel') || 'Cancel') : (t('common:actions.edit') || 'Edit')}
+                {isEditing ? (t('actions.cancel') || 'Cancel') : (t('actions.edit') || 'Edit')}
               </button>
             </div>
           </div>
@@ -347,7 +347,7 @@ export default function SettingsPage() {
                   onClick={handleCancel}
                   className="px-4 py-2 text-gray-600 border border-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  {t('common:actions.cancel') || 'Cancel'}
+                  {t('actions.cancel') || 'Cancel'}
                 </button>
               </div>
             )}
@@ -385,7 +385,7 @@ export default function SettingsPage() {
                   disabled={isLoading}
                   className="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
-                  {t('common:actions.disable')}
+                  {t('actions.disable') || 'Disable'}
                 </button>
               ) : (
                 <button 
@@ -399,7 +399,7 @@ export default function SettingsPage() {
                       Setting up...
                     </>
                   ) : (
-                    t('common:actions.enable')
+                    t('actions.enable') || 'Enable'
                   )}
                 </button>
               )}
