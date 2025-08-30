@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import LedgerStatusCard from './LedgerStatusCard'
@@ -18,6 +19,7 @@ interface XrplStatusData {
 }
 
 export default function MultiNetworkDemo() {
+  const { t } = useTranslation(['common', 'dashboard'])
   const [selectedLedger, setSelectedLedger] = useState('xrpl')
 
   // XRPL Testnet (real data)
@@ -209,8 +211,8 @@ export default function MultiNetworkDemo() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Multi-Ledger Demo</h2>
-        <p className="text-gray-600">This shows how the LedgerStatusCard works with multiple ledgers and networks</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('dashboard:multiLedgerDemo.title', 'Multi-Ledger Demo')}</h2>
+        <p className="text-gray-600">{t('dashboard:multiLedgerDemo.description', 'This shows how the LedgerStatusCard works with multiple ledgers and networks')}</p>
       </div>
       
       {/* Ledger Tabs */}

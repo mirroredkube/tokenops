@@ -38,6 +38,20 @@
     "submitted": "Submitted",
     "actions": "Actions",
     "refreshStatus": "Refresh status",
-    "viewAsset": "View asset"
+    "viewAsset": "View asset",
+    "recentTokenIssuances": "Recent Token Issuances",
+    "noIssuancesYet": "No issuances yet. Once you issue a token, it will show up here.",
+    "date": "Date",
+    "transaction": "Transaction"
+  },
+  "serviceHealth": {
+    "title": "Service Health",
+    "healthy": "Healthy",
+    "unhealthy": "Unhealthy",
+    "noDataAvailable": "No data available"
+  },
+  "multiLedgerDemo": {
+    "title": "Multi-Ledger Demo",
+    "description": "This shows how the LedgerStatusCard works with multiple ledgers and networks"
   }
 }

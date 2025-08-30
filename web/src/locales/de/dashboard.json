@@ -38,6 +38,20 @@
     "submitted": "Eingereicht",
     "actions": "Aktionen",
     "refreshStatus": "Status aktualisieren",
-    "viewAsset": "Asset anzeigen"
+    "viewAsset": "Asset anzeigen",
+    "recentTokenIssuances": "Kürzliche Token-Emissionen",
+    "noIssuancesYet": "Noch keine Emissionen. Sobald Sie einen Token ausgeben, wird er hier angezeigt.",
+    "date": "Datum",
+    "transaction": "Transaktion"
+  },
+  "serviceHealth": {
+    "title": "Service-Gesundheit",
+    "healthy": "Gesund",
+    "unhealthy": "Ungesund",
+    "noDataAvailable": "Keine Daten verfügbar"
+  },
+  "multiLedgerDemo": {
+    "title": "Multi-Ledger Demo",
+    "description": "Dies zeigt, wie die LedgerStatusCard mit mehreren Ledgern und Netzwerken funktioniert"
   }
 }

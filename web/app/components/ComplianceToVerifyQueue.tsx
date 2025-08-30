@@ -136,10 +136,10 @@ export default function ComplianceToVerifyQueue() {
 
   return (
     <QueueTable
-      title="Compliance to Verify"
+      title={t('dashboard:queue.complianceToVerify', 'Compliance to Verify')}
       items={records}
       columns={columns}
-      emptyMessage="No unverified compliance records. All records have been verified."
+      emptyMessage={t('dashboard:queue.noUnverifiedCompliance', 'No unverified compliance records. All records have been verified.')}
       viewAllLink="/app/compliance?status=UNVERIFIED"
       loading={loading}
       maxItems={5}

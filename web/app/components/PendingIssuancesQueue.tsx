@@ -155,10 +155,10 @@ export default function PendingIssuancesQueue() {
 
   return (
           <QueueTable
-        title="Pending Issuances"
+        title={t('dashboard:queue.pendingIssuances', 'Pending Issuances')}
         items={issuances}
         columns={columns}
-        emptyMessage="No pending issuances. All recent issuances have been processed."
+        emptyMessage={t('dashboard:queue.noPendingIssuances', 'No pending issuances. All recent issuances have been processed.')}
         viewAllLink="/app/issuance/history?status=submitted"
         loading={loading}
         maxItems={5}

@@ -27,8 +27,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Overview of your token operations and system status</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('common:dashboard.title', 'Dashboard')}</h1>
+          <p className="text-gray-600 mt-1">{t('common:dashboard.overview', 'Overview of your token operations and system status')}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-xs text-gray-500">

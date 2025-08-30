@@ -21,8 +21,8 @@ export default function QuickActions({
   const actions = [
     {
       id: 'create-asset',
-      title: 'Create Asset',
-      description: 'Create a new token asset',
+      title: t('dashboard:quickActions.createAsset', 'Create Asset'),
+      description: t('dashboard:quickActions.createAssetDesc', 'Create a new token asset'),
       icon: Plus,
       href: '/app/assets/create',
       disabled: !canCreateAsset,
@@ -30,8 +30,8 @@ export default function QuickActions({
     },
     {
       id: 'start-issuance',
-      title: 'Start Issuance',
-      description: 'Issue assets to an address',
+      title: t('dashboard:quickActions.startIssuance', 'Start Issuance'),
+      description: t('dashboard:quickActions.startIssuanceDesc', 'Issue assets to an address'),
       icon: Coins,
       href: '/app/issuance/new',
       disabled: !canStartIssuance,
@@ -39,8 +39,8 @@ export default function QuickActions({
     },
     {
       id: 'verify-compliance',
-      title: 'Verify Compliance Record',
-      description: 'Review and verify compliance records',
+      title: t('dashboard:quickActions.verifyCompliance', 'Verify Compliance Record'),
+      description: t('dashboard:quickActions.verifyComplianceDesc', 'Review and verify compliance records'),
       icon: Shield,
       href: '/app/compliance',
       disabled: !canVerifyCompliance,
@@ -48,8 +48,8 @@ export default function QuickActions({
     },
     {
       id: 'authorizations',
-      title: 'Setup Authorization',
-      description: 'Create and manage asset authorizations',
+      title: t('dashboard:quickActions.setupAuthorization', 'Setup Authorization'),
+      description: t('dashboard:quickActions.setupAuthorizationDesc', 'Create and manage asset authorizations'),
       icon: CheckSquare,
       href: '/app/authorizations',
       disabled: false,
@@ -102,8 +102,8 @@ export default function QuickActions({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-        <p className="text-sm text-gray-600">Common tasks to get started</p>
+        <h2 className="text-lg font-semibold text-gray-900">{t('dashboard:quickActions.title', 'Quick Actions')}</h2>
+        <p className="text-sm text-gray-600">{t('dashboard:quickActions.subtitle', 'Common tasks to get started')}</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

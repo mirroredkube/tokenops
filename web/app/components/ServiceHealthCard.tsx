@@ -1,3 +1,7 @@
+'use client'
+
+import { useTranslation } from 'react-i18next'
+
 interface ServiceHealthData {
   ok?: boolean
   service?: string
@@ -20,6 +24,7 @@ interface ServiceHealthCardProps {
 }
 
 export default function ServiceHealthCard({ data, loading }: ServiceHealthCardProps) {
+  const { t } = useTranslation(['common', 'dashboard'])
   if (loading) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm animate-pulse">
@@ -60,8 +65,8 @@ export default function ServiceHealthCard({ data, loading }: ServiceHealthCardPr
   if (!data) {
     return (
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4 text-gray-500">Service Health</h3>
-        <div className="text-gray-400">No data available</div>
+        <h3 className="text-lg font-semibold mb-4 text-gray-500">{t('dashboard:serviceHealth.title', 'Service Health')}</h3>
+        <div className="text-gray-400">{t('dashboard:serviceHealth.noDataAvailable', 'No data available')}</div>
       </div>
     )
   }
@@ -87,13 +92,13 @@ export default function ServiceHealthCard({ data, loading }: ServiceHealthCardPr
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Service Health</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('dashboard:serviceHealth.title', 'Service Health')}</h3>
           </div>
           <div className={`flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${
             data.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
           }`}>
             <div className={`w-2 h-2 rounded-full mr-2 ${data.ok ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            {data.ok ? 'Healthy' : 'Unhealthy'}
+            {data.ok ? t('dashboard:serviceHealth.healthy', 'Healthy') : t('dashboard:serviceHealth.unhealthy', 'Unhealthy')}
           </div>
         </div>
       </div>

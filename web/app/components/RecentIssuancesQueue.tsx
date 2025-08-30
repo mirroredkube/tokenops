@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ExternalLink } from 'lucide-react'
 import { api } from '@/lib/api'
 import QueueTable, { QueueColumn } from './QueueTable'
@@ -22,6 +23,7 @@ interface IssuanceListResponse {
 }
 
 export default function RecentIssuancesQueue() {
+  const { t } = useTranslation(['common', 'dashboard'])
   const [issuances, setIssuances] = useState<Issuance[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -68,7 +70,7 @@ export default function RecentIssuancesQueue() {
   const columns: QueueColumn[] = [
     {
       key: 'currency',
-      label: 'Currency',
+      label: t('dashboard:queue.currency', 'Currency'),
       width: 'w-20',
       render: (issuance: Issuance) => (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -78,7 +80,7 @@ export default function RecentIssuancesQueue() {
     },
     {
       key: 'amount',
-      label: 'Amount',
+      label: t('dashboard:queue.amount', 'Amount'),
       width: 'w-24',
       render: (issuance: Issuance) => (
         <span className="text-sm text-gray-900">{issuance.amount}</span>
@@ -86,7 +88,7 @@ export default function RecentIssuancesQueue() {
     },
     {
       key: 'destination',
-      label: 'Destination',
+      label: t('dashboard:queue.destination', 'Destination'),
       width: 'w-32',
       render: (issuance: Issuance) => (
         <span className="text-sm text-gray-900 font-mono">
@@ -96,7 +98,7 @@ export default function RecentIssuancesQueue() {
     },
     {
       key: 'date',
-      label: 'Date',
+      label: t('dashboard:queue.date', 'Date'),
       width: 'w-32',
       render: (issuance: Issuance) => (
         <span className="text-sm text-gray-500">
@@ -106,7 +108,7 @@ export default function RecentIssuancesQueue() {
     },
     {
       key: 'transaction',
-      label: 'Transaction',
+      label: t('dashboard:queue.transaction', 'Transaction'),
       width: 'w-32',
       render: (issuance: Issuance) => (
         issuance.txId ? (
@@ -120,7 +122,7 @@ export default function RecentIssuancesQueue() {
             <ExternalLink className="h-3 w-3 ml-1" />
           </a>
         ) : (
-          <span className="text-gray-500 text-sm">Pending</span>
+          <span className="text-gray-500 text-sm">{t('common:status.pending', 'Pending')}</span>
         )
       )
     }
@@ -128,10 +130,10 @@ export default function RecentIssuancesQueue() {
 
   return (
     <QueueTable
-      title="Recent Token Issuances"
+      title={t('dashboard:queue.recentTokenIssuances', 'Recent Token Issuances')}
       items={issuances}
       columns={columns}
-      emptyMessage="No issuances yet. Once you issue a token, it will show up here."
+      emptyMessage={t('dashboard:queue.noIssuancesYet', 'No issuances yet. Once you issue a token, it will show up here.')}
       viewAllLink="/app/issuances"
       loading={loading}
       maxItems={5}
