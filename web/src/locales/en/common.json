@@ -103,6 +103,7 @@
     "thisActionCannotBeUndone": "This action cannot be undone"
   },
   "notProvided": "Not provided",
+  "note": "Note",
   "dashboard": {
     "overview": "Overview of your token operations and system status"
   }

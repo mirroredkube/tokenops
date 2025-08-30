@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, ensureJson } from '@/lib/api'
 import FormField from './FormField'
 import TransactionResult from './TransactionResult'
@@ -75,6 +76,7 @@ interface TokenIssuanceFlowProps {
 }
 
 export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceFlowProps) {
+  const { t } = useTranslation(['issuances', 'common'])
   const [currentStep, setCurrentStep] = useState<Step>('ledger-selection')
   const [selectedLedger, setSelectedLedger] = useState<LedgerType>('XRPL')
   const [assets, setAssets] = useState<Asset[]>([])
@@ -557,7 +559,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
             {[
               { 
                 step: 'ledger-selection', 
-                label: 'Select Ledger', 
+                label: t('issuances:steps.selectLedger', 'Select Ledger'), 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -566,7 +568,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
               },
               { 
                 step: 'asset-selection', 
-                label: 'Select Asset', 
+                label: t('issuances:steps.selectAsset', 'Select Asset'), 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -575,7 +577,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
               },
               { 
                 step: 'trustline-check', 
-                label: 'Authorization', 
+                label: t('issuances:steps.authorization', 'Authorization'), 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -584,7 +586,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
               },
               { 
                 step: 'compliance-metadata', 
-                label: 'Compliance', 
+                label: t('issuances:steps.compliance', 'Compliance'), 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -593,7 +595,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
               },
               { 
                 step: 'token-issuance', 
-                label: 'Issue', 
+                label: t('issuances:steps.issue', 'Issue'), 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -602,7 +604,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
               },
               { 
                 step: 'success', 
-                label: 'Complete', 
+                label: t('issuances:steps.complete', 'Complete'), 
                 icon: (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -683,7 +685,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         <div className="mt-6 text-center">
           <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
             <span className="text-sm font-medium text-gray-600">
-              Progress: {Math.round((['ledger-selection', 'asset-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 5) * 100)}%
+              {t('issuances:steps.progress', 'Progress')}: {Math.round((['ledger-selection', 'asset-selection', 'trustline-check', 'compliance-metadata', 'token-issuance', 'success'].indexOf(currentStep) / 5) * 100)}%
             </span>
           </div>
         </div>
@@ -710,9 +712,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Select Target Ledger</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('issuances:ledgerSelection.title', 'Select Target Ledger')}</h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Choose the blockchain platform where you want to issue your token
+                {t('issuances:ledgerSelection.description', 'Choose the blockchain platform where you want to issue your token')}
               </p>
             </div>
 
@@ -729,7 +731,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search ledgers..."
+                  placeholder={t('issuances:ledgerSelection.searchPlaceholder', 'Search ledgers...')}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-white"
                 />
                 {searchQuery && (
@@ -796,7 +798,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                              </svg>
-                             Available
+                             {t('issuances:ledgerSelection.available', 'Available')}
                            </span>
                          ) : ledger.status === 'beta' ? (
                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
@@ -810,7 +812,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                              </svg>
-                             Coming Soon
+                             {t('issuances:ledgerSelection.comingSoon', 'Coming Soon')}
                            </span>
                          )}
                           
@@ -840,9 +842,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose an Active Asset</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('issuances:assetSelection.title', 'Select Asset')}</h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Select an active asset on {selectedLedger} to issue tokens
+                {t('issuances:assetSelection.description', 'Select an active asset on {{ledger}} to issue tokens', { ledger: selectedLedger })}
               </p>
             </div>
 
@@ -852,7 +854,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
               {assetsLoading && (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading assets...</p>
+                  <p className="text-gray-600">{t('issuances:trustlineDetails.loadingAssets', 'Loading assets...')}</p>
                 </div>
               )}
 
@@ -874,14 +876,14 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No active assets found</h3>
-                  <p className="text-gray-500 mb-6">You need to create an asset first before issuing tokens.</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">{t('issuances:trustlineDetails.noActiveAssetsFound', 'No active assets found')}</h3>
+                  <p className="text-gray-500 mb-6">{t('issuances:trustlineDetails.createAssetFirst', 'You need to create an asset first before issuing tokens.')}</p>
                   <a
                     href="/app/assets/create"
                     target="_blank"
                     className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                   >
-                    Create Asset
+                    {t('issuances:trustlineDetails.createAsset', 'Create Asset')}
                   </a>
                 </div>
               )}
@@ -916,7 +918,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                             <span className="font-medium text-gray-900">{asset.decimals}</span>
                           </div>
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-500">Compliance:</span>
+                            <span className="text-gray-500">{t('issuances:assetSelection.compliance', 'Compliance:')}</span>
                             <span className="font-medium text-gray-900">{asset.complianceMode}</span>
                           </div>
                         </div>
@@ -932,7 +934,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   onClick={() => setCurrentStep('ledger-selection')}
                   className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
                 >
-                  ← Back to Ledger Selection
+                  {t('issuances:trustlineDetails.backToLedgerSelection', '← Back to Ledger Selection')}
                 </button>
               </div>
             </div>
@@ -945,14 +947,14 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
           <div className="max-w-5xl mx-auto">
             {/* Header Section */}
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-semibold text-gray-900 mb-2">Trustline Configuration</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">{t('issuances:trustlineConfiguration.title', 'Trustline Configuration')}</h1>
               <p className="text-gray-600">
-                We'll verify if a trustline exists and configure one if needed for your token issuance
+                {t('issuances:trustlineConfiguration.description', 'We\'ll verify if a trustline exists and configure one if needed for your token issuance')}
               </p>
               {selectedAsset && (
                 <div className="mt-4 inline-flex items-center px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                   <span className="text-sm font-medium text-blue-800">
-                    Selected Asset: {selectedAsset.code} ({selectedAsset.network})
+                    {t('issuances:trustlineConfiguration.selectedAsset', 'Selected Asset: {{asset}} ({{network}})', { asset: selectedAsset.code, network: selectedAsset.network })}
                   </span>
                 </div>
               )}
@@ -962,8 +964,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               {/* Form Header */}
               <div className="bg-gray-800 px-8 py-6">
-                <h2 className="text-2xl font-bold text-white mb-2">Trustline Details</h2>
-                <p className="text-gray-300">Enter the basic information to check trustline status</p>
+                <h2 className="text-2xl font-bold text-white mb-2">{t('issuances:trustlineDetails.title', 'Trustline Details')}</h2>
+                <p className="text-gray-300">{t('issuances:trustlineDetails.description', 'Enter the basic information to check trustline status')}</p>
               </div>
 
               {/* Form Content */}
@@ -973,8 +975,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                    <div className="space-y-6">
                      <div className="space-y-2">
                        <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                         Currency Code
-                         <span className="text-red-500 ml-1">*</span>
+                         {t('issuances:trustlineDetails.currencyCode', 'CURRENCY CODE *')}
                        </label>
                        <input
                          type="text"
@@ -987,7 +988,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                        />
                        {selectedAsset && (
                          <p className="text-sm text-gray-500 mt-1">
-                           Currency code is set from the selected asset
+                           {t('issuances:trustlineDetails.currencyCodeHint', 'Currency code is set from the selected asset')}
                          </p>
                        )}
                      </div>
@@ -995,36 +996,34 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                        <div className="space-y-2">
                          <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                           Holder Address
-                           <span className="text-red-500 ml-1">*</span>
+                           {t('issuances:trustlineDetails.holderAddress', 'HOLDER ADDRESS *')}
                          </label>
                          <input
                            type="text"
                            value={trustlineCheckData.holderAddress}
                            onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, holderAddress: e.target.value }))}
                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
-                           placeholder="rHolder123..."
+                           placeholder={t('issuances:trustlineDetails.holderAddressPlaceholder', 'rHolder123...')}
                            required
                          />
                        </div>
                        
                        <div className="space-y-2">
                          <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                           Issuer Address
-                           <span className="text-red-500 ml-1">*</span>
+                           {t('issuances:trustlineDetails.issuerAddress', 'ISSUER ADDRESS *')}
                          </label>
                          <input
                            type="text"
                            value={trustlineCheckData.issuerAddress}
                            onChange={(e) => setTrustlineCheckData(prev => ({ ...prev, issuerAddress: e.target.value }))}
                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200 bg-gray-50"
-                           placeholder="rIssuer456..."
+                           placeholder={t('issuances:trustlineDetails.issuerAddressPlaceholder', 'rIssuer456...')}
                            required
                            readOnly={!!selectedAsset}
                          />
                          {selectedAsset && (
                            <p className="text-sm text-gray-500 mt-1">
-                             Issuer address is set from the selected asset
+                             {t('issuances:trustlineDetails.issuerAddressHint', 'Issuer address is set from the selected asset')}
                            </p>
                          )}
                        </div>
@@ -1033,13 +1032,13 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
                   {/* Action Buttons */}
                   <div className="flex items-center justify-between pt-8 border-t border-gray-100">
-                                         <button
-                       type="button"
-                       onClick={() => setCurrentStep('asset-selection')}
-                       className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
-                     >
-                      ← Back to Asset Selection
-                    </button>
+                                                             <button
+                      type="button"
+                      onClick={() => setCurrentStep('asset-selection')}
+                      className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
+                    >
+                     {t('issuances:trustlineDetails.backToAssetSelection', '← Back to Asset Selection')}
+                   </button>
                                                              <button
                       type="submit"
                       disabled={loading}
@@ -1055,7 +1054,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                           </svg>
-                          Check & Configure Trustline
+                          {t('issuances:trustlineDetails.checkAndConfigureTrustline', 'Check & Configure Trustline')}
                         </>
                       )}
                     </button>
@@ -1092,34 +1091,41 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                                                          <h3 className={`text-lg font-semibold mb-2 ${
                           trustlineCheckResult.exists ? 'text-green-800' : 'text-amber-800'
                         }`}>
-                          {trustlineCheckResult.exists ? 'Trustline Found' : '⚠️ Trustline Not Found'}
+                          {trustlineCheckResult.exists ? t('issuances:trustlineDetails.trustlineFound', 'Trustline Found') : t('issuances:trustlineDetails.trustlineNotFound', '⚠️ Trustline Not Found')}
                         </h3>
                         
                         <p className={`text-base leading-relaxed ${
                           trustlineCheckResult.exists ? 'text-green-700' : 'text-amber-700'
                         }`}>
                           {trustlineCheckResult.exists 
-                            ? `A trustline exists for ${trustlineCheckData.currencyCode} from ${trustlineCheckData.issuerAddress} with limit ${trustlineCheckResult.details?.limit || 'unknown'} and balance ${trustlineCheckResult.details?.balance || '0'}.`
-                            : `No trustline found for ${trustlineCheckData.currencyCode} from ${trustlineCheckData.issuerAddress}. Please provide additional details to create one.`
+                            ? t('issuances:trustlineDetails.trustlineFoundMessage', 'A trustline exists for {{currency}} from {{issuer}} with limit {{limit}} and balance {{balance}}.', {
+                                currency: trustlineCheckData.currencyCode,
+                                issuer: trustlineCheckData.issuerAddress,
+                                limit: trustlineCheckResult.details?.limit || 'unknown',
+                                balance: trustlineCheckResult.details?.balance || '0'
+                              })
+                            : t('issuances:trustlineDetails.trustlineNotFoundMessage', 'No trustline found for {{currency}} from {{issuer}}. Please provide additional details to create one.', {
+                                currency: trustlineCheckData.currencyCode,
+                                issuer: trustlineCheckData.issuerAddress
+                              })
                           }
                         </p>
                         
                         {/* Additional Fields for Creation */}
                         {!trustlineCheckResult.exists && (
                           <div className="mt-8 p-6 bg-white rounded-xl border border-gray-200">
-                            <h4 className="text-lg font-semibold text-gray-800 mb-4">Create New Trustline</h4>
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4">{t('issuances:trustlineDetails.createNewTrustline', 'Create New Trustline')}</h4>
                                                          <div className="space-y-6">
                                <div className="space-y-2">
                                  <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                   Trust Limit
-                                   <span className="text-red-500 ml-1">*</span>
+                                   {t('issuances:trustlineDetails.trustLimit', 'TRUST LIMIT *')}
                                  </label>
                                  <input
                                    type="text"
                                    value={trustlineData.limit}
                                    onChange={(e) => setTrustlineData(prev => ({ ...prev, limit: e.target.value }))}
                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base transition-all duration-200"
-                                   placeholder="1000000"
+                                   placeholder={t('issuances:trustlineDetails.trustLimitPlaceholder', '1000000')}
                                    required
                                  />
                                </div>
@@ -1128,24 +1134,22 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                  {allowUiSecret && devAllowRawSecret ? (
                                    <>
                                      <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                       Holder Secret (Family Seed)
-                                       <span className="text-red-500 ml-1">*</span>
+                                       {t('issuances:trustlineDetails.holderSecret', 'HOLDER SECRET (FAMILY SEED) *')}
                                      </label>
                                      <input
                                        type="password"
                                        value={trustlineData.holderSecret}
                                        onChange={(e) => setTrustlineData(prev => ({ ...prev, holderSecret: e.target.value }))}
                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
-                                       placeholder="sEd7..."
+                                       placeholder={t('issuances:trustlineDetails.holderSecretPlaceholder', 'sEd7...')}
                                        required
                                      />
-                                     <p className="text-sm text-gray-500 mt-2">Private key of the holder account</p>
+                                     <p className="text-sm text-gray-500 mt-2">{t('issuances:trustlineDetails.holderSecretHint', 'Private key of the holder account')}</p>
                                    </>
                                  ) : (
                                    <>
                                      <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                       Sign with Wallet
-                                       <span className="text-red-500 ml-1">*</span>
+                                       {t('issuances:trustlineDetails.signWithWallet', 'SIGN WITH WALLET *')}
                                      </label>
                                      <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
                                        <div className="flex items-center gap-3">
@@ -1191,7 +1195,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                               onClick={() => setCurrentStep('compliance-metadata')}
                               className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
                             >
-                              Continue to Issue
+                              {t('issuances:tokenIssuance.continueToIssue', 'Continue to Issue')}
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                               </svg>
@@ -1218,7 +1222,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Coming Soon!</h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">{t('issuances:ledgerSelection.comingSoonTitle', 'Coming Soon!')}</h1>
               <p className="text-xl text-gray-600 mb-8">
                 {selectedLedger} support is currently under development
               </p>
@@ -1276,13 +1280,13 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                 onClick={() => setCurrentStep('ledger-selection')}
                 className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200"
               >
-                ← Back to Ledger Selection
+                {t('issuances:trustlineDetails.backToLedgerSelection', '← Back to Ledger Selection')}
               </button>
               <button
                 onClick={() => window.open('https://github.com/your-repo', '_blank')}
                 className="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-all duration-200"
               >
-                Follow Development
+                {t('issuances:tokenIssuance.followDevelopment', 'Follow Development')}
               </button>
             </div>
           </div>
@@ -1299,9 +1303,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Issue Token</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('issuances:tokenIssuance.title', 'Issue Token')}</h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Now issue tokens from the issuer to the holder on {selectedLedger}.
+                {t('issuances:tokenIssuance.description', 'Now issue tokens from the issuer to the holder on {{ledger}}.', { ledger: selectedLedger })}
               </p>
             </div>
 
@@ -1309,8 +1313,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               {/* Form Header */}
               <div className="bg-gray-800 px-8 py-6">
-                <h2 className="text-2xl font-bold text-white mb-2">Token Details</h2>
-                <p className="text-gray-300">Configure the token issuance parameters</p>
+                <h2 className="text-2xl font-bold text-white mb-2">{t('issuances:tokenIssuance.tokenDetails', 'Token Details')}</h2>
+                <p className="text-gray-300">{t('issuances:tokenIssuance.configureTokenIssuance', 'Configure the token issuance parameters')}</p>
               </div>
 
               {/* Form Content */}
@@ -1321,7 +1325,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                          Currency Code (Locked)
+                          {t('issuances:tokenIssuance.currencyCodeLocked', 'Currency Code (Locked)')}
                           <span className="text-red-500 ml-1">*</span>
                         </label>
                         <div className="relative">
@@ -1345,7 +1349,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                       
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                          Amount
+                          {t('issuances:tokenIssuance.amount', 'Amount')}
                           <span className="text-red-500 ml-1">*</span>
                         </label>
                         <input
@@ -1353,7 +1357,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           value={tokenData.amount}
                           onChange={(e) => setTokenData(prev => ({ ...prev, amount: e.target.value }))}
                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-medium transition-all duration-200"
-                          placeholder="100"
+                          placeholder={t('issuances:tokenIssuance.amountPlaceholder', '100')}
                           required
                         />
                       </div>
@@ -1361,7 +1365,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                        Destination Address (Locked)
+                        {t('issuances:tokenIssuance.destinationAddressLocked', 'Destination Address (Locked)')}
                         <span className="text-red-500 ml-1">*</span>
                       </label>
                       <div className="relative">
@@ -1380,7 +1384,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           </svg>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500">Destination address locked based on trustline configuration</p>
+                                              <p className="text-xs text-gray-500">{t('issuances:tokenIssuance.destinationAddressLockedHint', 'Destination address locked based on trustline configuration')}</p>
                     </div>
                   </div>
 
@@ -1393,17 +1397,16 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-sm font-medium text-amber-800">Public On-Chain Metadata</h4>
+                        <h4 className="text-sm font-medium text-amber-800">{t('issuances:compliance.metadata.publicOnChainMetadata', 'Public On-Chain Metadata')}</h4>
                         <p className="text-sm text-amber-700 mt-1">
-                          This metadata will be stored permanently on the blockchain and is publicly visible. 
-                          Do not include sensitive information like personal data, compliance details, or private business information.
+                          {t('issuances:compliance.metadata.warningMessage', 'This metadata will be stored permanently on the blockchain and is publicly visible. Do not include sensitive information like personal data, compliance details, or private business information.')}
                         </p>
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                        Additional Metadata (JSON)
+                        {t('issuances:compliance.sections.additionalMetadata', 'Additional Metadata (JSON)')}
                       </label>
                       <textarea
                         value={tokenData.metadataRaw}
@@ -1427,7 +1430,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                         rows={4}
                         placeholder='{"description": "EUR-backed stablecoin", "website": "https://example.com", "logo": "https://example.com/logo.png"}'
                       />
-                      <p className="text-xs text-gray-500">Optional public metadata (e.g., token description, issuer website, logo URL)</p>
+                      <p className="text-xs text-gray-500">{t('issuances:compliance.metadata.description', 'Optional public metadata (e.g., token description, issuer website, logo URL)')}</p>
                     </div>
                   </div>
 
@@ -1447,23 +1450,23 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           </div>
                           <div>
                             <label htmlFor="anchor-compliance" className="text-sm font-medium text-blue-900">
-                              Anchor Compliance Data
+                              {t('issuances:compliance.sections.anchorComplianceData', 'Anchor Compliance Data')}
                             </label>
                             <p className="text-xs text-blue-700 mt-1">
-                              Include compliance record in the blockchain transaction
+                              {t('issuances:compliance.metadata.includeComplianceRecord', 'Include compliance record in the blockchain transaction')}
                             </p>
                           </div>
                         </div>
                         
                         <div className="bg-blue-100 rounded p-3 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-blue-800">Record ID:</span>
+                            <span className="text-xs font-medium text-blue-800">{t('issuances:compliance.metadata.recordId', 'Record ID:')}</span>
                             <code className="text-xs text-blue-900 bg-blue-200 px-2 py-1 rounded font-mono">
                               {complianceRecord.recordId}
                             </code>
                           </div>
                           <div className="flex items-start justify-between">
-                            <span className="text-xs font-medium text-blue-800">SHA256 Hash:</span>
+                            <span className="text-xs font-medium text-blue-800">{t('issuances:compliance.metadata.sha256Hash', 'SHA256 Hash:')}</span>
                             <code className="text-xs text-blue-900 bg-blue-200 px-2 py-1 rounded font-mono break-all max-w-xs">
                               {complianceRecord.sha256}
                             </code>
@@ -1480,7 +1483,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                       onClick={() => setCurrentStep('compliance-metadata')}
                       className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
                     >
-                      ← Back to Compliance
+                      {t('issuances:compliance.actions.backToCompliance', '← Back to Compliance')}
                     </button>
                     <button
                       type="submit"
@@ -1497,7 +1500,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                           </svg>
-                          Issue Token
+                          {t('issuances:tokenIssuance.issueToken', 'Issue Token')}
                         </>
                       )}
                     </button>
@@ -1519,18 +1522,18 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">MiCA Compliance Metadata</h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Configure compliance metadata for regulatory reporting and audit trails.
-              </p>
+                          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('issuances:compliance.title', 'MiCA Compliance Metadata')}</h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              {t('issuances:compliance.description', 'Configure compliance metadata for regulatory reporting and audit trails.')}
+            </p>
             </div>
 
             {/* Main Form Card */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               {/* Form Header */}
               <div className="bg-gray-800 px-8 py-6">
-                <h2 className="text-2xl font-bold text-white mb-2">Compliance Details</h2>
-                <p className="text-gray-300">Configure regulatory compliance information</p>
+                <h2 className="text-2xl font-bold text-white mb-2">{t('issuances:compliance.complianceDetails', 'Compliance Details')}</h2>
+                <p className="text-gray-300">{t('issuances:compliance.configureCompliance', 'Configure regulatory compliance information.')}</p>
               </div>
 
               {/* Form Content */}
@@ -1538,25 +1541,25 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                 <form onSubmit={handleComplianceSubmit} className="space-y-6">
                   {/* Basic Compliance Information */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.basicInformation', 'Basic Information')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="ISIN Code" required>
+                <FormField label={t('issuances:compliance.fields.isinCode', 'ISIN Code *')} required>
                   <input
                     type="text"
                     value={complianceData.isin}
                     onChange={(e) => setComplianceData(prev => ({ ...prev, isin: e.target.value }))}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="DE0001234567"
+                    placeholder={t('issuances:compliance.fields.isinCodePlaceholder', 'DE0001234567')}
                     required
                   />
                 </FormField>
-                <FormField label="Legal Issuer Name" required>
+                <FormField label={t('issuances:compliance.fields.legalIssuerName', 'Legal Issuer Name *')} required>
                   <input
                     type="text"
                     value={complianceData.legalIssuerName}
                     onChange={(e) => setComplianceData(prev => ({ ...prev, legalIssuerName: e.target.value }))}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="Acme Bank AG"
+                    placeholder={t('issuances:compliance.fields.legalIssuerNamePlaceholder', 'Acme Bank AG')}
                     required
                   />
                 </FormField>
@@ -1565,31 +1568,31 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
             {/* MiCA Classification */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">MiCA Classification</h3>
+              <h3 className="text-lg font-semibold mb-4">MiCA-Klassifizierung</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Token Classification" required>
+                <FormField label={t('issuances:compliance.fields.tokenClassification', 'Token Classification *')} required>
                   <CustomDropdown
                     value={complianceData.micaClassification}
                     onChange={(value) => setComplianceData(prev => ({ ...prev, micaClassification: value as any }))}
                     options={[
                       { value: 'stablecoin', label: 'Stablecoin' },
-                      { value: 'security_token', label: 'Security Token' },
-                      { value: 'utility_token', label: 'Utility Token' },
+                      { value: 'security_token', label: t('issuances:compliance.options.securityToken', 'Security Token') },
+                      { value: 'utility_token', label: t('issuances:compliance.options.utilityToken', 'Utility Token') },
                       { value: 'asset_backed', label: 'Asset-Backed Token' }
                     ]}
-                    placeholder="Select token classification"
+                    placeholder={t('issuances:compliance.fields.tokenClassificationPlaceholder', 'Select token classification')}
                   />
                 </FormField>
-                <FormField label="KYC Requirement" required>
+                <FormField label={t('issuances:compliance.fields.kycRequirement', 'KYC Requirement *')} required>
                   <CustomDropdown
                     value={complianceData.kycRequirement}
                     onChange={(value) => setComplianceData(prev => ({ ...prev, kycRequirement: value as any }))}
                     options={[
-                      { value: 'mandatory', label: 'Mandatory' },
-                      { value: 'optional', label: 'Optional' },
-                      { value: 'not_required', label: 'Not Required' }
+                      { value: 'mandatory', label: t('issuances:compliance.options.required', 'Required') },
+                      { value: 'optional', label: t('issuances:compliance.options.optional', 'Optional') },
+                      { value: 'not_required', label: t('issuances:compliance.options.notRequired', 'Not Required') }
                     ]}
-                    placeholder="Select KYC requirement"
+                    placeholder={t('issuances:compliance.fields.kycRequirementPlaceholder', 'Select KYC requirement')}
                   />
                 </FormField>
               </div>
@@ -1597,25 +1600,25 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
             {/* Jurisdiction and Purpose */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">Jurisdiction & Purpose</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.jurisdictionAndPurpose', 'Jurisdiction & Purpose')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Jurisdiction" required>
+                <FormField label={t('issuances:compliance.fields.jurisdiction', 'Jurisdiction *')} required>
                   <input
                     type="text"
                     value={complianceData.jurisdiction}
                     onChange={(e) => setComplianceData(prev => ({ ...prev, jurisdiction: e.target.value }))}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="DE, EEA, EU"
+                    placeholder={t('issuances:compliance.fields.jurisdictionPlaceholder', 'DE, EEA, EU')}
                     required
                   />
                 </FormField>
-                <FormField label="Purpose" required>
+                <FormField label={t('issuances:compliance.fields.purpose', 'Purpose *')} required>
                   <input
                     type="text"
                     value={complianceData.purpose}
                     onChange={(e) => setComplianceData(prev => ({ ...prev, purpose: e.target.value }))}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="Payment, Investment, Utility"
+                    placeholder={t('issuances:compliance.fields.purposePlaceholder', 'Payment, Investment, Utility')}
                     required
                   />
                 </FormField>
@@ -1624,7 +1627,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
             {/* Transfer Restrictions */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">Transfer Restrictions</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.transferRestrictions', 'Transfer Restrictions')}</h3>
               <div className="space-y-4">
                 <div className="flex items-center">
                   <input
@@ -1635,7 +1638,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                   />
                   <label htmlFor="transferRestrictions" className="ml-2 text-sm text-gray-700">
-                    Enable transfer restrictions
+                    {t('issuances:compliance.metadata.enableTransferRestrictions', 'Enable transfer restrictions')}
                   </label>
                 </div>
                 {complianceData.transferRestrictions && (
@@ -1654,8 +1657,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
             {/* Expiration */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">Expiration (Optional)</h3>
-              <FormField label="Expiration Date">
+              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.expiration', 'Expiration (Optional)')}</h3>
+              <FormField label={t('issuances:compliance.fields.expirationDate', 'Expiration Date')}>
                 <input
                   type="date"
                   value={complianceData.expirationDate}
@@ -1672,7 +1675,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                       onClick={() => setCurrentStep('trustline-check')}
                       className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
                     >
-                      ← Back to Authorization
+                      {t('issuances:compliance.actions.backToAuthorization', '← Back to Authorization')}
                     </button>
                     <button
                       type="submit"
@@ -1689,7 +1692,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          Continue to Issue
+                          {t('issuances:tokenIssuance.continueToIssue', 'Continue to Issue')}
                         </>
                       )}
                     </button>
@@ -1711,15 +1714,15 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">Token Issued Successfully!</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('issuances:success.title', 'Token Issued Successfully!')}</h1>
               <p className="text-lg text-gray-600">
-                Your token has been issued on {selectedLedger} and stored in the local database.
+                {t('issuances:success.description', 'Your token has been issued on {{ledger}} and stored in the local database.', { ledger: selectedLedger })}
               </p>
             </div>
 
             {/* Transaction Details */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Transaction Details</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('issuances:success.transactionDetails', 'Transaction Details')}</h2>
               <div className="space-y-4">
                 {result.trustlineTxHash && (
                   <div className="bg-gray-50 rounded-lg p-4">
@@ -1733,9 +1736,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           href={result.trustlineExplorer}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-4 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-sm hover:shadow-md"
+                          className="ml-4 inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
-                          View on Explorer →
+                          {t('issuances:success.viewOnExplorer', 'View on Explorer →')}
                         </a>
                       )}
                     </div>
@@ -1743,7 +1746,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                 )}
                 {result.txHash && (
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">Token Issuance Transaction:</p>
+                    <p className="text-sm font-semibold text-gray-700 mb-2">{t('issuances:success.tokenIssuanceTransaction', 'Token Issuance Transaction:')}</p>
                     <div className="flex items-center justify-between">
                       <code className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded font-mono break-all">
                         {result.txHash}
@@ -1753,9 +1756,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           href={result.explorer}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-4 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-sm hover:shadow-md"
+                          className="ml-4 inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
-                          View on Explorer →
+                          {t('issuances:success.viewOnExplorer', 'View on Explorer →')}
                         </a>
                       )}
                     </div>
@@ -1763,31 +1766,31 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                 )}
                 {result.complianceRecord && (
                   <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-blue-700 mb-2">Compliance Record:</p>
+                    <p className="text-sm font-semibold text-blue-700 mb-2">{t('issuances:success.complianceRecord', 'Compliance Record:')}</p>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-blue-600">Record ID:</span>
+                                                  <span className="text-sm text-blue-600">{t('issuances:success.recordId', 'Record ID:')}</span>
                         <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono">
                           {result.complianceRecord.recordId}
                         </code>
                       </div>
                       <div className="flex items-start justify-between">
-                        <span className="text-sm text-blue-600">SHA256:</span>
+                                                  <span className="text-sm text-blue-600">{t('issuances:success.sha256', 'SHA256:')}</span>
                         <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono break-all max-w-xs">
                           {result.complianceRecord.sha256}
                         </code>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-blue-600">Anchored:</span>
+                                                  <span className="text-sm text-blue-600">{t('issuances:success.anchored', 'Anchored:')}</span>
                         <span className="text-sm font-medium text-blue-700">
                           {anchorCompliance ? 'Yes' : 'No'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-blue-600">Status:</span>
-                        <span className="text-sm font-medium text-blue-700">
-                          {result.txHash && result.txHash !== 'pending' ? 'Successfully anchored' : 'Pending'}
-                        </span>
+                                                  <span className="text-sm text-blue-600">{t('issuances:success.status', 'Status:')}</span>
+                          <span className="text-sm font-medium text-blue-700">
+                            {result.txHash && result.txHash !== 'pending' ? t('issuances:success.successfullyAnchored', 'Successfully anchored') : t('issuances:success.pending', 'Pending')}
+                          </span>
                       </div>
                     </div>
                   </div>
@@ -1799,9 +1802,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={resetFlow}
-                                          className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                                          className="px-8 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                Issue Another Token
+                {t('issuances:success.issueAnotherToken', 'Issue Another Token')}
               </button>
             </div>
           </div>

@@ -72,7 +72,8 @@
     "status": "Status",
     "assetId": "Asset-ID",
     "allStatuses": "Alle Status",
-    "filterByAssetId": "Nach Asset-ID filtern"
+    "filterByAssetId": "Nach Asset-ID filtern",
+    "filterByStatus": "Nach Status filtern"
   },
   "table": {
     "currency": "Währung",
@@ -101,11 +102,176 @@
       "title": "Fehlgeschlagen",
       "description": "Transaktion fehlgeschlagen, keine Token ausgegeben"
     },
+    "expired": {
+      "title": "Abgelaufen",
+      "description": "Emission vor Validierung abgelaufen"
+    },
     "flowTitle": "Typischer Emissionsablauf:",
     "note": "Hinweis: Die meisten Transaktionen werden in 3-5 Sekunden auf XRPL abgeschlossen. Fehlgeschlagene Transaktionen müssen möglicherweise wiederholt werden."
   },
   "actions": {
     "refreshStatus": "Status vom Ledger aktualisieren",
     "viewAsset": "Asset anzeigen"
+  },
+  "pages": {
+    "newIssuance": {
+      "title": "Neue Emission",
+      "viewHistory": "Historie anzeigen"
+    },
+    "history": {
+      "title": "Emissionshistorie",
+      "description": "Alle Asset-Emissions-Transaktionen anzeigen und verwalten",
+      "newIssuance": "Neue Emission",
+      "issuanceStatuses": "Emissionsstatus",
+      "understandingStates": "Verstehen der verschiedenen Zustände einer Asset-Emission:",
+      "note": "Hinweis: Es kann eine Verzögerung zwischen Übermittlung und Ledger-Validierung geben. Verwenden Sie die Aktualisieren-Schaltfläche, um den neuesten Status zu prüfen.",
+      "noIssuancesFound": "Keine Emissionen gefunden, die Ihren Kriterien entsprechen.",
+      "showingResults": "Zeige {{start}} bis {{end}} von {{total}} Emissionen",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "refreshStatus": "Status aktualisieren"
+    }
+  },
+  "ledgerSelection": {
+    "title": "Ziel-Ledger auswählen",
+    "description": "Wählen Sie die Blockchain-Plattform, auf der Sie Ihren Token ausgeben möchten",
+    "searchPlaceholder": "Ledger suchen...",
+    "available": "Verfügbar",
+    "comingSoon": "Demnächst verfügbar",
+    "comingSoonTitle": "Demnächst verfügbar!",
+    "notAvailableYet": "Noch nicht verfügbar"
+  },
+  "steps": {
+    "selectLedger": "Ledger auswählen",
+    "selectAsset": "Asset auswählen",
+    "authorization": "Autorisierung",
+    "compliance": "Compliance",
+    "issue": "Ausgabe",
+    "complete": "Abgeschlossen",
+    "step1": "Schritt 1",
+    "step2": "Schritt 2",
+    "step3": "Schritt 3",
+    "step4": "Schritt 4",
+    "step5": "Schritt 5",
+    "step6": "Schritt 6",
+    "progress": "Fortschritt"
+  },
+  "assetSelection": {
+    "title": "Asset auswählen",
+    "description": "Wählen Sie ein aktives Asset auf {{ledger}} aus, um Token auszugeben",
+    "compliance": "Compliance:"
+  },
+  "trustlineConfiguration": {
+    "title": "Trustline-Konfiguration",
+    "description": "Wir prüfen, ob eine Trustline existiert und konfigurieren eine, falls für Ihre Token-Ausgabe erforderlich",
+    "selectedAsset": "Ausgewähltes Asset: {{asset}} ({{network}})"
+  },
+  "trustlineDetails": {
+    "title": "Trustline-Details",
+    "description": "Geben Sie die grundlegenden Informationen ein, um den Trustline-Status zu prüfen",
+    "currencyCode": "WÄHRUNGSCODE *",
+    "currencyCodeHint": "Währungscode wird vom ausgewählten Asset gesetzt",
+    "holderAddress": "INHABER-ADRESSE *",
+    "holderAddressPlaceholder": "rHolder123...",
+    "issuerAddress": "EMITTENTEN-ADRESSE *",
+    "issuerAddressPlaceholder": "rIssuer456...",
+    "issuerAddressHint": "Emittenten-Adresse wird vom ausgewählten Asset gesetzt",
+    "backToAssetSelection": "← Zurück zur Asset-Auswahl",
+    "backToLedgerSelection": "← Zurück zur Ledger-Auswahl",
+    "checkAndConfigureTrustline": "Trustline prüfen & konfigurieren",
+    "loadingAssets": "Assets werden geladen...",
+    "noActiveAssetsFound": "Keine aktiven Assets gefunden",
+    "createAssetFirst": "Sie müssen zuerst ein Asset erstellen, bevor Sie Token ausgeben können.",
+    "createAsset": "Asset erstellen",
+    "trustlineFound": "Trustline gefunden",
+    "trustlineNotFound": "⚠️ Trustline nicht gefunden",
+    "trustlineFoundMessage": "Eine Trustline existiert für {{currency}} von {{issuer}} mit Limit {{limit}} und Saldo {{balance}}.",
+    "trustlineNotFoundMessage": "Keine Trustline gefunden für {{currency}} von {{issuer}}. Bitte geben Sie zusätzliche Details ein, um eine zu erstellen.",
+    "createNewTrustline": "Neue Trustline erstellen",
+    "trustLimit": "TRUST-LIMIT *",
+    "trustLimitPlaceholder": "1000000",
+    "holderSecret": "INHABER-SECRET (FAMILY SEED) *",
+    "holderSecretPlaceholder": "sEd7...",
+    "holderSecretHint": "Privater Schlüssel des Inhaber-Kontos",
+    "signWithWallet": "MIT WALLET UNTERSCHREIBEN *"
+  },
+  "tokenIssuance": {
+    "title": "Token ausgeben",
+    "description": "Geben Sie jetzt Token vom Emittenten an den Inhaber auf {{ledger}} aus.",
+    "tokenDetails": "Token-Details",
+    "configureTokenIssuance": "Konfigurieren Sie die Token-Ausgabe-Parameter",
+    "currencyCodeLocked": "Währungscode (gesperrt)",
+    "amount": "Betrag",
+    "amountPlaceholder": "100",
+    "destinationAddressLocked": "Ziel-Adresse (gesperrt)",
+    "destinationAddressLockedHint": "Ziel-Adresse basierend auf Trustline-Konfiguration gesperrt",
+    "issueToken": "Token ausgeben",
+    "followDevelopment": "Entwicklung verfolgen",
+    "continueToIssue": "Zur Ausgabe fortfahren"
+  },
+  "compliance": {
+    "title": "MiCA-Compliance-Metadaten",
+    "description": "Konfigurieren Sie Compliance-Metadaten für regulatorische Berichterstattung und Audit-Trails.",
+    "complianceDetails": "Compliance-Details",
+    "configureCompliance": "Konfigurieren Sie regulatorische Compliance-Informationen.",
+    "basicInformation": "Grundinformationen",
+    "fields": {
+      "isinCode": "ISIN-Code",
+      "isinCodePlaceholder": "DE0001234567",
+      "legalIssuerName": "Rechtlicher Emittentenname",
+      "legalIssuerNamePlaceholder": "Acme Bank AG",
+      "tokenClassification": "Token-Klassifizierung",
+      "tokenClassificationPlaceholder": "Token-Klassifizierung auswählen",
+      "kycRequirement": "KYC-Anforderung",
+      "kycRequirementPlaceholder": "KYC-Anforderung auswählen",
+      "jurisdiction": "Gerichtsbarkeit",
+      "jurisdictionPlaceholder": "DE, EEA, EU",
+      "purpose": "Zweck",
+      "purposePlaceholder": "Zahlung, Investition, Nutzung",
+      "expirationDate": "Ablaufdatum"
+    },
+    "sections": {
+      "jurisdictionAndPurpose": "Gerichtsbarkeit & Zweck",
+      "transferRestrictions": "Übertragungsbeschränkungen",
+      "expiration": "Ablauf (Optional)",
+      "additionalMetadata": "Zusätzliche Metadaten (JSON)",
+      "anchorComplianceData": "Compliance-Daten verankern"
+    },
+    "options": {
+      "utilityToken": "Utility Token",
+      "securityToken": "Security Token",
+      "paymentToken": "Payment Token",
+      "required": "Erforderlich",
+      "optional": "Optional",
+      "notRequired": "Nicht erforderlich"
+    },
+    "metadata": {
+      "description": "Optionale öffentliche Metadaten (z.B. Token-Beschreibung, Emittenten-Website, Logo-URL)",
+      "includeComplianceRecord": "Compliance-Datensatz in die Blockchain-Transaktion einbeziehen",
+      "enableTransferRestrictions": "Übertragungsbeschränkungen aktivieren",
+      "recordId": "Datensatz-ID:",
+      "sha256Hash": "SHA256-Hash:",
+      "publicOnChainMetadata": "Öffentliche On-Chain-Metadaten",
+      "warningMessage": "Diese Metadaten werden dauerhaft auf der Blockchain gespeichert und sind öffentlich sichtbar. Fügen Sie keine sensiblen Informationen wie personenbezogene Daten, Compliance-Details oder private Geschäftsinformationen hinzu."
+    },
+    "actions": {
+      "backToCompliance": "← Zurück zur Compliance",
+      "backToAuthorization": "← Zurück zur Autorisierung"
+    }
+  },
+  "success": {
+    "title": "Token erfolgreich ausgegeben!",
+    "description": "Ihr Token wurde auf {{ledger}} ausgegeben und in der lokalen Datenbank gespeichert.",
+    "transactionDetails": "Transaktionsdetails",
+    "tokenIssuanceTransaction": "Token-Ausgabe-Transaktion:",
+    "viewOnExplorer": "Im Explorer anzeigen →",
+    "complianceRecord": "Compliance-Datensatz:",
+    "recordId": "Datensatz-ID:",
+    "sha256": "SHA256:",
+    "anchored": "Verankert:",
+    "status": "Status:",
+    "successfullyAnchored": "Erfolgreich verankert",
+    "pending": "Ausstehend",
+    "issueAnotherToken": "Weiteren Token ausgeben"
   }
 }

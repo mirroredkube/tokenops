@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Eye, RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle, Plus } from 'lucide-react'
@@ -27,6 +28,7 @@ interface IssuanceListResponse {
 }
 
 export default function IssuanceHistoryPage() {
+  const { t } = useTranslation(['issuances', 'common'])
   const router = useRouter()
   const [issuances, setIssuances] = useState<Issuance[]>([])
   const [loading, setLoading] = useState(true)
@@ -158,20 +160,20 @@ export default function IssuanceHistoryPage() {
   }
 
   const statusOptions = [
-    { value: '', label: 'All Statuses' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'submitted', label: 'Submitted' },
-    { value: 'validated', label: 'Validated' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'expired', label: 'Expired' }
+    { value: '', label: t('issuances:filters.allStatuses', 'All Statuses') },
+    { value: 'pending', label: t('issuances:statusInfo.pending.title', 'Pending') },
+    { value: 'submitted', label: t('issuances:statusInfo.submitted.title', 'Submitted') },
+    { value: 'validated', label: t('issuances:statusInfo.validated.title', 'Validated') },
+    { value: 'failed', label: t('issuances:statusInfo.failed.title', 'Failed') },
+    { value: 'expired', label: t('issuances:status.expired', 'Expired') }
   ]
 
   if (loading) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Issuance History</h1>
-          <p className="text-gray-600 mt-1">View and manage all asset issuance transactions</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('issuances:pages.history.title', 'Issuance History')}</h1>
+          <p className="text-gray-600 mt-1">{t('issuances:pages.history.description', 'View and manage all asset issuance transactions')}</p>
         </div>
         
         <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -192,8 +194,42 @@ export default function IssuanceHistoryPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Issuance History</h1>
-          <p className="text-gray-600 mt-1">View and manage all asset issuance transactions</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('issuances:pages.history.title', 'Issuance History')}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-gray-600">{t('issuances:pages.history.description', 'View and manage all asset issuance transactions')}</p>
+                        <InfoPopup title={t('issuances:pages.history.issuanceStatuses', 'Issuance Statuses')}>
+              <div className="space-y-4">
+                <p>{t('issuances:pages.history.understandingStates', 'Understanding the different states of an asset issuance:')}</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-yellow-600" />
+                    <span><strong>{t('issuances:statusInfo.pending.title', 'Pending')}:</strong> {t('issuances:statusInfo.pending.description', 'Issuance created but not yet submitted to ledger')}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <span><strong>{t('issuances:statusInfo.submitted.title', 'Submitted')}:</strong> {t('issuances:statusInfo.submitted.description', 'Issuance submitted to ledger, waiting for validation')}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span><strong>{t('issuances:statusInfo.validated.title', 'Validated')}:</strong> {t('issuances:statusInfo.validated.description', 'Issuance successfully validated on the ledger')}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <XCircle className="h-4 w-4 text-red-600" />
+                    <span><strong>{t('issuances:statusInfo.failed.title', 'Failed')}:</strong> {t('issuances:statusInfo.failed.description', 'Issuance failed on the ledger')}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <span><strong>{t('issuances:status.expired', 'Expired')}:</strong> {t('issuances:statusInfo.expired.description', 'Issuance expired before validation')}</span>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>{t('common:note', 'Note')}:</strong> {t('issuances:pages.history.note', 'There may be a delay between submission and ledger validation. Use the refresh button to check the latest status.')}
+                  </p>
+                </div>
+              </div>
+            </InfoPopup>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <button
@@ -201,41 +237,8 @@ export default function IssuanceHistoryPage() {
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Issuance
+            {t('issuances:pages.history.newIssuance', 'New Issuance')}
           </button>
-          <InfoPopup title="Issuance Statuses">
-            <div className="space-y-4">
-              <p>Understanding the different states of an asset issuance:</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-yellow-600" />
-                  <span><strong>Pending:</strong> Issuance created but not yet submitted to ledger</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-blue-600" />
-                  <span><strong>Submitted:</strong> Issuance submitted to ledger, waiting for validation</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span><strong>Validated:</strong> Issuance successfully validated on the ledger</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <XCircle className="h-4 w-4 text-red-600" />
-                  <span><strong>Failed:</strong> Issuance failed on the ledger</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                  <span><strong>Expired:</strong> Issuance expired before validation</span>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> There may be a delay between submission and ledger validation. 
-                  Use the refresh button to check the latest status.
-                </p>
-              </div>
-            </div>
-          </InfoPopup>
         </div>
       </div>
 
@@ -243,21 +246,21 @@ export default function IssuanceHistoryPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('issuances:filters.status', 'Status')}</label>
             <CustomDropdown
               options={statusOptions}
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
-              placeholder="Filter by status"
+              placeholder={t('issuances:filters.filterByStatus', 'Filter by status')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Asset ID</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('issuances:filters.assetId', 'Asset ID')}</label>
             <input
               type="text"
               value={filters.assetId}
               onChange={(e) => handleFilterChange('assetId', e.target.value)}
-              placeholder="Filter by asset ID"
+              placeholder={t('issuances:filters.filterByAssetId', 'Filter by asset ID')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -269,7 +272,7 @@ export default function IssuanceHistoryPage() {
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
-              Issuances ({pagination.total})
+              {t('issuances:page.allIssuances', 'All Issuances')} ({pagination.total})
             </h2>
           </div>
         </div>
@@ -280,7 +283,7 @@ export default function IssuanceHistoryPage() {
           </div>
         ) : issuances.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            <p>No issuances found matching your criteria.</p>
+            <p>{t('issuances:pages.history.noIssuancesFound', 'No issuances found matching your criteria.')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -296,13 +299,13 @@ export default function IssuanceHistoryPage() {
               </colgroup>
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Currency</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To Address</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('issuances:table.currency', 'Currency')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('issuances:table.amount', 'Amount')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('issuances:table.destination', 'Destination')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('issuances:table.status', 'Status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('issuances:table.date', 'Date')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('issuances:table.transaction', 'Transaction')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('issuances:table.actions', 'Actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -329,7 +332,7 @@ export default function IssuanceHistoryPage() {
                           <button
                             onClick={() => handleRefreshStatus(issuance.id, issuance.assetId)}
                             className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Refresh status"
+                            title={t('issuances:pages.history.refreshStatus', 'Refresh status')}
                           >
                             <RefreshCw className="h-3 w-3" />
                           </button>
@@ -337,7 +340,7 @@ export default function IssuanceHistoryPage() {
                       </div>
                       {issuance.validatedAt && (
                         <div className="text-xs text-gray-500 mt-1">
-                          Validated: {formatDate(issuance.validatedAt)}
+                          {t('issuances:statusInfo.validated.title', 'Validated')}: {formatDate(issuance.validatedAt)}
                         </div>
                       )}
                     </td>
@@ -362,7 +365,7 @@ export default function IssuanceHistoryPage() {
                       <button
                         onClick={() => router.push(`/app/assets/${issuance.assetId}`)}
                         className="text-blue-600 hover:text-blue-800 transition-colors"
-                        title="View Asset"
+                        title={t('issuances:actions.viewAsset', 'View Asset')}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -379,7 +382,11 @@ export default function IssuanceHistoryPage() {
           <div className="px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} issuances
+                {t('issuances:pages.history.showingResults', 'Showing {{start}} to {{end}} of {{total}} issuances', {
+                  start: ((pagination.page - 1) * pagination.limit) + 1,
+                  end: Math.min(pagination.page * pagination.limit, pagination.total),
+                  total: pagination.total
+                })}
               </div>
               <div className="flex space-x-2">
                 <button
@@ -387,14 +394,14 @@ export default function IssuanceHistoryPage() {
                   disabled={pagination.page === 1}
                   className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
-                  Previous
+                  {t('issuances:pages.history.previous', 'Previous')}
                 </button>
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page * pagination.limit >= pagination.total}
                   className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
-                  Next
+                  {t('issuances:pages.history.next', 'Next')}
                 </button>
               </div>
             </div>

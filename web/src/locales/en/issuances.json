@@ -72,7 +72,8 @@
     "status": "Status",
     "assetId": "Asset ID",
     "allStatuses": "All Statuses",
-    "filterByAssetId": "Filter by asset ID"
+    "filterByAssetId": "Filter by asset ID",
+    "filterByStatus": "Filter by status"
   },
   "table": {
     "currency": "Currency",
@@ -101,11 +102,176 @@
       "title": "Failed",
       "description": "Transaction failed, no tokens issued"
     },
+    "expired": {
+      "title": "Expired",
+      "description": "Issuance expired before validation"
+    },
     "flowTitle": "Typical Issuance Flow:",
     "note": "Note: Most transactions complete in 3-5 seconds on XRPL. Failed transactions may need to be retried."
   },
   "actions": {
     "refreshStatus": "Refresh status from ledger",
     "viewAsset": "View Asset"
+  },
+  "pages": {
+    "newIssuance": {
+      "title": "New Issuance",
+      "viewHistory": "View History"
+    },
+    "history": {
+      "title": "Issuance History",
+      "description": "View and manage all asset issuance transactions",
+      "newIssuance": "New Issuance",
+      "issuanceStatuses": "Issuance Statuses",
+      "understandingStates": "Understanding the different states of an asset issuance:",
+      "note": "Note: There may be a delay between submission and ledger validation. Use the refresh button to check the latest status.",
+      "noIssuancesFound": "No issuances found matching your criteria.",
+      "showingResults": "Showing {{start}} to {{end}} of {{total}} issuances",
+      "previous": "Previous",
+      "next": "Next",
+      "refreshStatus": "Refresh status"
+    }
+  },
+  "ledgerSelection": {
+    "title": "Select Target Ledger",
+    "description": "Choose the blockchain platform where you want to issue your token",
+    "searchPlaceholder": "Search ledgers...",
+    "available": "Available",
+    "comingSoon": "Coming Soon",
+    "comingSoonTitle": "Coming Soon!",
+    "notAvailableYet": "Not available yet"
+  },
+  "steps": {
+    "selectLedger": "Select Ledger",
+    "selectAsset": "Select Asset",
+    "authorization": "Authorization",
+    "compliance": "Compliance",
+    "issue": "Issue",
+    "complete": "Complete",
+    "step1": "Step 1",
+    "step2": "Step 2",
+    "step3": "Step 3",
+    "step4": "Step 4",
+    "step5": "Step 5",
+    "step6": "Step 6",
+    "progress": "Progress"
+  },
+  "assetSelection": {
+    "title": "Select Asset",
+    "description": "Select an active asset on {{ledger}} to issue tokens",
+    "compliance": "Compliance:"
+  },
+  "trustlineConfiguration": {
+    "title": "Trustline Configuration",
+    "description": "We'll verify if a trustline exists and configure one if needed for your token issuance",
+    "selectedAsset": "Selected Asset: {{asset}} ({{network}})"
+  },
+  "trustlineDetails": {
+    "title": "Trustline Details",
+    "description": "Enter the basic information to check trustline status",
+    "currencyCode": "CURRENCY CODE *",
+    "currencyCodeHint": "Currency code is set from the selected asset",
+    "holderAddress": "HOLDER ADDRESS *",
+    "holderAddressPlaceholder": "rHolder123...",
+    "issuerAddress": "ISSUER ADDRESS *",
+    "issuerAddressPlaceholder": "rIssuer456...",
+    "issuerAddressHint": "Issuer address is set from the selected asset",
+    "backToAssetSelection": "← Back to Asset Selection",
+    "backToLedgerSelection": "← Back to Ledger Selection",
+    "checkAndConfigureTrustline": "Check & Configure Trustline",
+    "loadingAssets": "Loading assets...",
+    "noActiveAssetsFound": "No active assets found",
+    "createAssetFirst": "You need to create an asset first before issuing tokens.",
+    "createAsset": "Create Asset",
+    "trustlineFound": "Trustline Found",
+    "trustlineNotFound": "⚠️ Trustline Not Found",
+    "trustlineFoundMessage": "A trustline exists for {{currency}} from {{issuer}} with limit {{limit}} and balance {{balance}}.",
+    "trustlineNotFoundMessage": "No trustline found for {{currency}} from {{issuer}}. Please provide additional details to create one.",
+    "createNewTrustline": "Create New Trustline",
+    "trustLimit": "TRUST LIMIT *",
+    "trustLimitPlaceholder": "1000000",
+    "holderSecret": "HOLDER SECRET (FAMILY SEED) *",
+    "holderSecretPlaceholder": "sEd7...",
+    "holderSecretHint": "Private key of the holder account",
+    "signWithWallet": "SIGN WITH WALLET *"
+  },
+  "tokenIssuance": {
+    "title": "Issue Token",
+    "description": "Now issue tokens from the issuer to the holder on {{ledger}}.",
+    "tokenDetails": "Token Details",
+    "configureTokenIssuance": "Configure the token issuance parameters",
+    "currencyCodeLocked": "Currency Code (Locked)",
+    "amount": "Amount",
+    "amountPlaceholder": "100",
+    "destinationAddressLocked": "Destination Address (Locked)",
+    "destinationAddressLockedHint": "Destination address locked based on trustline configuration",
+    "issueToken": "Issue Token",
+    "followDevelopment": "Follow Development",
+    "continueToIssue": "Continue to Issue"
+  },
+  "compliance": {
+    "title": "MiCA Compliance Metadata",
+    "description": "Configure compliance metadata for regulatory reporting and audit trails.",
+    "complianceDetails": "Compliance Details",
+    "configureCompliance": "Configure regulatory compliance information.",
+    "basicInformation": "Basic Information",
+    "fields": {
+      "isinCode": "ISIN Code",
+      "isinCodePlaceholder": "DE0001234567",
+      "legalIssuerName": "Legal Issuer Name",
+      "legalIssuerNamePlaceholder": "Acme Bank AG",
+      "tokenClassification": "Token Classification",
+      "tokenClassificationPlaceholder": "Select token classification",
+      "kycRequirement": "KYC Requirement",
+      "kycRequirementPlaceholder": "Select KYC requirement",
+      "jurisdiction": "Jurisdiction",
+      "jurisdictionPlaceholder": "DE, EEA, EU",
+      "purpose": "Purpose",
+      "purposePlaceholder": "Payment, Investment, Utility",
+      "expirationDate": "Expiration Date"
+    },
+    "sections": {
+      "jurisdictionAndPurpose": "Jurisdiction & Purpose",
+      "transferRestrictions": "Transfer Restrictions",
+      "expiration": "Expiration (Optional)",
+      "additionalMetadata": "Additional Metadata (JSON)",
+      "anchorComplianceData": "Anchor Compliance Data"
+    },
+    "options": {
+      "utilityToken": "Utility Token",
+      "securityToken": "Security Token",
+      "paymentToken": "Payment Token",
+      "required": "Required",
+      "optional": "Optional",
+      "notRequired": "Not Required"
+    },
+    "metadata": {
+      "description": "Optional public metadata (e.g., token description, issuer website, logo URL)",
+      "includeComplianceRecord": "Include compliance record in the blockchain transaction",
+      "enableTransferRestrictions": "Enable transfer restrictions",
+      "recordId": "Record ID:",
+      "sha256Hash": "SHA256 Hash:",
+      "publicOnChainMetadata": "Public On-Chain Metadata",
+      "warningMessage": "This metadata will be stored permanently on the blockchain and is publicly visible. Do not include sensitive information like personal data, compliance details, or private business information."
+    },
+    "actions": {
+      "backToCompliance": "← Back to Compliance",
+      "backToAuthorization": "← Back to Authorization"
+    }
+  },
+  "success": {
+    "title": "Token Issued Successfully!",
+    "description": "Your token has been issued on {{ledger}} and stored in the local database.",
+    "transactionDetails": "Transaction Details",
+    "tokenIssuanceTransaction": "Token Issuance Transaction:",
+    "viewOnExplorer": "View on Explorer →",
+    "complianceRecord": "Compliance Record:",
+    "recordId": "Record ID:",
+    "sha256": "SHA256:",
+    "anchored": "Anchored:",
+    "status": "Status:",
+    "successfullyAnchored": "Successfully anchored",
+    "pending": "Pending",
+    "issueAnotherToken": "Issue Another Token"
   }
 }
