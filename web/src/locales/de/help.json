@@ -1,0 +1,151 @@
+{
+  "page": {
+    "title": "Hilfecenter",
+    "description": "Finden Sie Antworten auf häufige Fragen und lernen Sie, wie Sie Regula verwenden"
+  },
+  "sections": {
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "description": "Beginnen Sie mit häufigen Aufgaben"
+    },
+    "gettingStarted": {
+      "title": "Erste Schritte",
+      "description": "Lernen Sie die Grundlagen der Verwendung von Regula"
+    },
+    "faq": {
+      "title": "Häufig gestellte Fragen",
+      "description": "Finden Sie Antworten auf häufige Fragen"
+    },
+    "apiDocs": {
+      "title": "API-Dokumentation",
+      "description": "Vollständige API-Referenz für Entwickler"
+    },
+    "support": {
+      "title": "Support & Kontakt",
+      "description": "Holen Sie sich Hilfe, wenn Sie sie brauchen"
+    }
+  },
+  "quickActions": {
+    "createAsset": {
+      "title": "Asset erstellen",
+      "description": "Erstellen Sie ein neues Token-Asset mit Metadaten und Compliance-Einstellungen"
+    },
+    "startIssuance": {
+      "title": "Emission starten",
+      "description": "Geben Sie Assets an Adressen mit Compliance-Kontrollen aus"
+    },
+    "setupAuthorization": {
+      "title": "Autorisierung einrichten",
+      "description": "Erstellen und verwalten Sie Asset-Autorisierungen für Inhaber"
+    },
+    "verifyCompliance": {
+      "title": "Compliance verifizieren",
+      "description": "Überprüfen und verifizieren Sie Compliance-Datensätze"
+    }
+  },
+  "gettingStarted": {
+    "step1": {
+      "title": "Schritt 1: Asset erstellen",
+      "description": "Definieren Sie Ihr Token mit Metadaten, Compliance-Einstellungen und Ledger-Konfiguration.",
+      "items": [
+        "Token-Code, Name und Beschreibung festlegen",
+        "Compliance-Modus und Metadaten konfigurieren",
+        "Ledger- und Netzwerk-Einstellungen auswählen"
+      ]
+    },
+    "step2": {
+      "title": "Schritt 2: Autorisierungen einrichten",
+      "description": "Erstellen Sie Autorisierungen für Inhaber, um Ihre Tokens zu erhalten.",
+      "items": [
+        "Ledger und Asset für Autorisierung auswählen",
+        "Inhaber-Limits und Einschränkungen festlegen",
+        "Autorisierungsparameter konfigurieren"
+      ]
+    },
+    "step3": {
+      "title": "Schritt 3: Tokens ausgeben",
+      "description": "Prägen Sie Tokens an autorisierte Adressen mit Compliance-Kontrollen.",
+      "items": [
+        "Asset und Ziel-Inhaber auswählen",
+        "Emissionsbetrag und Metadaten festlegen",
+        "Transaktion einreichen und Status überwachen"
+      ]
+    },
+    "step4": {
+      "title": "Schritt 4: Überwachen & Berichten",
+      "description": "Verfolgen Sie Salden, verifizieren Sie Compliance und exportieren Sie prüfungsreife Berichte.",
+      "items": [
+        "Ausstehende Versorgung und Inhaber-Salden überwachen",
+        "Compliance-Datensätze verifizieren und Berichte exportieren",
+        "Systemgesundheit und Transaktionsstatus verfolgen"
+      ]
+    }
+  },
+  "faq": {
+    "whatIsRegula": {
+      "question": "Was ist Regula?",
+      "answer": "Regula ist eine Compliance-fähige Tokenisierungsplattform, die es Ihnen ermöglicht, Assets zu erstellen, Tokens auszugeben und Autorisierungen mit integrierten Compliance-Kontrollen, Audit-Trails und rollenbasierter Zugriffskontrolle zu verwalten. Sie unterstützt mehrere Ledger einschließlich XRPL, mit Hedera und Ethereum in Kürze verfügbar."
+    },
+    "howToGetStarted": {
+      "question": "Wie beginne ich?",
+      "answer": "Um zu beginnen, erstellen Sie zuerst ein Asset, richten Sie dann Autorisierungen für Inhaber ein und verwenden Sie schließlich die Emissionsseite, um Tokens zu prägen. Sie können alle Aktivitäten über das Dashboard überwachen und bei Bedarf Berichte exportieren."
+    },
+    "supportedLedgers": {
+      "question": "Welche Ledger werden unterstützt?",
+      "answer": "Derzeit wird XRPL (XRP Ledger) vollständig mit Asset-Erstellung, Autorisierungen und Emission unterstützt. Hedera- und Ethereum-Adapter sind in Entwicklung."
+    },
+    "assetsVsIssuances": {
+      "question": "Was ist der Unterschied zwischen Assets und Emissionen?",
+      "answer": "Assets sind die Token-Definitionen (wie ein Währungscode und Metadaten), während Emissionen das tatsächliche Prägen von Tokens an spezifische Adressen sind. Sie erstellen ein Asset einmal und können es dann mehrmals an verschiedene Inhaber ausgeben."
+    },
+    "manageCompliance": {
+      "question": "Wie verwalte ich Compliance?",
+      "answer": "Regula umfasst integrierte Compliance-Datensätze, Audit-Trails und Export-Funktionen. Alle Transaktionen werden protokolliert und können für Prüfungszwecke exportiert werden. Verwenden Sie die Compliance-Seite, um Datensätze zu verifizieren, und die Berichtsseite, um Daten zu exportieren."
+    },
+    "integration": {
+      "question": "Kann ich mit meinen bestehenden Systemen integrieren?",
+      "answer": "Ja, Regula bietet RESTful APIs für programmatischen Zugriff. Besuchen Sie den API-Dokumentationsbereich, um die vollständige API-Referenz mit interaktiven Test-Tools zu erkunden."
+    }
+  },
+  "apiDocs": {
+    "title": "REST API-Referenz",
+    "description": "Regula bietet eine umfassende REST API für programmatischen Zugriff auf alle Plattformfunktionen. Die API unterstützt Asset-Erstellung, Emissionen, Autorisierungen, Compliance-Management und Berichterstattung.",
+    "openInteractiveDocs": "Interaktive API-Dokumentation öffnen",
+    "keyEndpoints": {
+      "title": "Wichtige Endpunkte",
+      "items": [
+        "Assets: Token-Definitionen erstellen und verwalten",
+        "Emissionen: Tokens an Adressen prägen",
+        "Autorisierungen: Inhaber-Berechtigungen verwalten",
+        "Compliance: Datensätze verifizieren und verwalten",
+        "Berichte: Daten und Analysen exportieren"
+      ]
+    },
+    "features": {
+      "title": "Funktionen",
+      "items": [
+        "Interaktive Dokumentation mit Tests",
+        "Authentifizierung und Autorisierung",
+        "Rate-Limiting und Fehlerbehandlung",
+        "JSON-Anfrage-/Antwortformat",
+        "Webhook-Unterstützung für Echtzeit-Updates"
+      ]
+    }
+  },
+  "support": {
+    "documentation": {
+      "title": "Dokumentation",
+      "description": "Umfassende Anleitungen und Ressourcen, um Ihnen bei der effektiven Nutzung von Regula zu helfen, einschließlich API-Dokumentation für Entwickler.",
+      "viewApiDocs": "API-Dokumentation anzeigen"
+    },
+    "contact": {
+      "title": "Support kontaktieren",
+      "description": "Brauchen Sie Hilfe? Unser Support-Team steht Ihnen bei Fragen oder Problemen zur Verfügung.",
+      "emailSupport": "E-Mail-Support"
+    },
+    "hours": {
+      "title": "Support-Zeiten",
+      "description": "Unser Support-Team ist Montag bis Freitag von 9:00 bis 18:00 Uhr EST verfügbar. Für dringende Angelegenheiten fügen Sie bitte \"DRINGEND\" in die Betreffzeile Ihrer E-Mail ein."
+    }
+  }
+}

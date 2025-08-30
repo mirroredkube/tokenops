@@ -1,0 +1,151 @@
+{
+  "page": {
+    "title": "Help Center",
+    "description": "Find answers to common questions and learn how to use Regula"
+  },
+  "sections": {
+    "quickActions": {
+      "title": "Quick Actions",
+      "description": "Get started with common tasks"
+    },
+    "gettingStarted": {
+      "title": "Getting Started",
+      "description": "Learn the basics of using Regula"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "description": "Find answers to common questions"
+    },
+    "apiDocs": {
+      "title": "API Documentation",
+      "description": "Complete API reference for developers"
+    },
+    "support": {
+      "title": "Support & Contact",
+      "description": "Get help when you need it"
+    }
+  },
+  "quickActions": {
+    "createAsset": {
+      "title": "Create Asset",
+      "description": "Create a new token asset with metadata and compliance settings"
+    },
+    "startIssuance": {
+      "title": "Start Issuance",
+      "description": "Issue assets to addresses with compliance controls"
+    },
+    "setupAuthorization": {
+      "title": "Setup Authorization",
+      "description": "Create and manage asset authorizations for holders"
+    },
+    "verifyCompliance": {
+      "title": "Verify Compliance",
+      "description": "Review and verify compliance records"
+    }
+  },
+  "gettingStarted": {
+    "step1": {
+      "title": "Step 1: Create an Asset",
+      "description": "Define your token with metadata, compliance settings, and ledger configuration.",
+      "items": [
+        "Set token code, name, and description",
+        "Configure compliance mode and metadata",
+        "Select ledger and network settings"
+      ]
+    },
+    "step2": {
+      "title": "Step 2: Setup Authorizations",
+      "description": "Create authorizations for holders to receive your tokens.",
+      "items": [
+        "Select ledger and asset for authorization",
+        "Set holder limits and restrictions",
+        "Configure authorization parameters"
+      ]
+    },
+    "step3": {
+      "title": "Step 3: Issue Tokens",
+      "description": "Mint tokens to authorized addresses with compliance controls.",
+      "items": [
+        "Select asset and target holder",
+        "Set issuance amount and metadata",
+        "Submit and monitor transaction status"
+      ]
+    },
+    "step4": {
+      "title": "Step 4: Monitor & Report",
+      "description": "Track balances, verify compliance, and export audit-ready reports.",
+      "items": [
+        "Monitor outstanding supply and holder balances",
+        "Verify compliance records and export reports",
+        "Track system health and transaction status"
+      ]
+    }
+  },
+  "faq": {
+    "whatIsRegula": {
+      "question": "What is Regula?",
+      "answer": "Regula is a compliance-grade tokenization platform that allows you to create assets, issue tokens, and manage authorizations with built-in compliance controls, audit trails, and role-based access. It supports multiple ledgers including XRPL, with Hedera and Ethereum coming soon."
+    },
+    "howToGetStarted": {
+      "question": "How do I get started?",
+      "answer": "To get started, first create an asset, then set up authorizations for holders, and finally use the issuance page to mint tokens. You can monitor all activity through the dashboard and export reports as needed."
+    },
+    "supportedLedgers": {
+      "question": "What ledgers are supported?",
+      "answer": "Currently, XRPL (XRP Ledger) is fully supported with asset creation, authorizations, and issuance. Hedera and Ethereum adapters are in development."
+    },
+    "assetsVsIssuances": {
+      "question": "What's the difference between Assets and Issuances?",
+      "answer": "Assets are the token definitions (like a currency code and metadata), while Issuances are the actual minting of tokens to specific addresses. You create an asset once, then can issue it multiple times to different holders."
+    },
+    "manageCompliance": {
+      "question": "How do I manage compliance?",
+      "answer": "Regula includes built-in compliance records, audit trails, and export capabilities. All transactions are logged and can be exported for audit purposes. Use the Compliance page to verify records and the Reports page to export data."
+    },
+    "integration": {
+      "question": "Can I integrate with my existing systems?",
+      "answer": "Yes, Regula provides RESTful APIs for programmatic access. Visit the API Documentation section to explore the complete API reference with interactive testing tools."
+    }
+  },
+  "apiDocs": {
+    "title": "REST API Reference",
+    "description": "Regula provides a comprehensive REST API for programmatic access to all platform features. The API supports asset creation, issuances, authorizations, compliance management, and reporting.",
+    "openInteractiveDocs": "Open Interactive API Documentation",
+    "keyEndpoints": {
+      "title": "Key Endpoints",
+      "items": [
+        "Assets: Create and manage token definitions",
+        "Issuances: Mint tokens to addresses",
+        "Authorizations: Manage holder permissions",
+        "Compliance: Verify and manage records",
+        "Reports: Export data and analytics"
+      ]
+    },
+    "features": {
+      "title": "Features",
+      "items": [
+        "Interactive documentation with testing",
+        "Authentication and authorization",
+        "Rate limiting and error handling",
+        "JSON request/response format",
+        "Webhook support for real-time updates"
+      ]
+    }
+  },
+  "support": {
+    "documentation": {
+      "title": "Documentation",
+      "description": "Comprehensive guides and resources to help you use Regula effectively, including API documentation for developers.",
+      "viewApiDocs": "View API Documentation"
+    },
+    "contact": {
+      "title": "Contact Support",
+      "description": "Need help? Our support team is here to assist you with any questions or issues.",
+      "emailSupport": "Email Support"
+    },
+    "hours": {
+      "title": "Support Hours",
+      "description": "Our support team is available Monday through Friday, 9:00 AM - 6:00 PM EST. For urgent issues, please include \"URGENT\" in your email subject line."
+    }
+  }
+}
