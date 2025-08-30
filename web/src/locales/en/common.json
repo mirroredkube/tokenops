@@ -63,7 +63,7 @@
     "unknown": "Unknown",
     "none": "None",
     "all": "All",
-    "select": "Select",
+    "select": "Select an option",
     "choose": "Choose",
     "optional": "Optional",
     "required": "Required",
@@ -102,6 +102,7 @@
     "confirmAction": "Are you sure you want to perform this action?",
     "thisActionCannotBeUndone": "This action cannot be undone"
   },
+  "notProvided": "Not provided",
   "dashboard": {
     "overview": "Overview of your token operations and system status"
   }

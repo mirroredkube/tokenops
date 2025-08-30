@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
 
 interface Option {
@@ -20,10 +21,12 @@ export default function CustomDropdown({
   value,
   onChange,
   options,
-  placeholder = 'Select an option',
+  placeholder,
   className = '',
   required = false
 }: CustomDropdownProps) {
+  const { t } = useTranslation(['common'])
+  const defaultPlaceholder = t('select', 'Select an option')
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -57,7 +60,7 @@ export default function CustomDropdown({
         }`}
         
       >
-        {selectedOption ? selectedOption.label : placeholder}
+        {selectedOption ? selectedOption.label : (placeholder || defaultPlaceholder)}
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
           <ChevronDown 
             className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${

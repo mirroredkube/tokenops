@@ -278,7 +278,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">{t('profile')}</h2>
-                  <p className="text-sm text-gray-600">Update your personal details</p>
+                  <p className="text-sm text-gray-600">{t('settings:descriptions.updatePersonalDetails', 'Update your personal details')}</p>
                 </div>
               </div>
               <button
@@ -286,7 +286,7 @@ export default function SettingsPage() {
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 <Edit3 className="w-4 h-4" />
-                {isEditing ? (t('actions.cancel') || 'Cancel') : (t('actions.edit') || 'Edit')}
+                {isEditing ? (t('common:actions.cancel', 'Cancel') || 'Cancel') : (t('common:actions.edit', 'Edit') || 'Edit')}
               </button>
             </div>
           </div>
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                 ) : (
                   <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md">
                     <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">{user?.name || 'Not provided'}</span>
+                    <span className="text-gray-900">{user?.name || t('common:notProvided', 'Not provided')}</span>
                   </div>
                 )}
               </div>
@@ -328,7 +328,7 @@ export default function SettingsPage() {
                 ) : (
                   <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">{user?.email || 'Not provided'}</span>
+                    <span className="text-gray-900">{user?.email || t('common:notProvided', 'Not provided')}</span>
                   </div>
                 )}
               </div>
@@ -347,7 +347,7 @@ export default function SettingsPage() {
                   onClick={handleCancel}
                   className="px-4 py-2 text-gray-600 border border-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  {t('actions.cancel') || 'Cancel'}
+                  {t('common:actions.cancel', 'Cancel') || 'Cancel'}
                 </button>
               </div>
             )}
@@ -363,7 +363,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">{t('security')}</h2>
-                <p className="text-sm text-gray-600">Manage your account security settings</p>
+                <p className="text-sm text-gray-600">{t('settings:descriptions.manageAccountSecurity', 'Manage your account security settings')}</p>
               </div>
             </div>
           </div>
@@ -374,8 +374,8 @@ export default function SettingsPage() {
                 <h3 className="font-medium text-gray-900">{t('fields.twoFactorAuth')}</h3>
                 <p className="text-sm text-gray-600">
                   {twoFactorEnabled 
-                    ? 'Two-factor authentication is enabled for your account' 
-                    : 'Add an extra layer of security to your account'
+                    ? t('settings:descriptions.twoFactorAuthEnabled', 'Two-factor authentication is enabled for your account')
+                    : t('settings:descriptions.addExtraSecurity', 'Add an extra layer of security to your account')
                   }
                 </p>
               </div>
@@ -396,7 +396,7 @@ export default function SettingsPage() {
                   {isLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
-                      Setting up...
+                      {t('settings:twoFactorAuth.settingUp', 'Setting up...')}
                     </>
                   ) : (
                     t('actions.enable') || 'Enable'
@@ -407,12 +407,12 @@ export default function SettingsPage() {
             
             <div className="flex items-center justify-between py-3">
               <div>
-                <h3 className="font-medium text-gray-900">API Keys</h3>
-                <p className="text-sm text-gray-600">Manage your API keys for programmatic access</p>
+                <h3 className="font-medium text-gray-900">{t('settings:apiKeys.title', 'API Keys')}</h3>
+                <p className="text-sm text-gray-600">{t('settings:descriptions.manageApiKeys', 'Manage your API keys for programmatic access')}</p>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
                 <Key className="w-4 h-4" />
-                Manage Keys
+                {t('settings:apiKeys.manageKeys', 'Manage Keys')}
               </button>
             </div>
           </div>
@@ -424,7 +424,7 @@ export default function SettingsPage() {
             <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Set Up Two-Factor Authentication</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{t('settings:twoFactorAuth.setupTitle', 'Set Up Two-Factor Authentication')}</h2>
                   <button
                     onClick={() => setShowTwoFactorSetup(false)}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -436,31 +436,31 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                   {/* Step 1: Download App */}
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-3">Step 1: Download an Authenticator App</h3>
+                    <h3 className="font-medium text-gray-900 mb-3">{t('settings:twoFactorAuth.step1Title', 'Step 1: Download an Authenticator App')}</h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Download one of these authenticator apps on your mobile device:
+                      {t('settings:twoFactorAuth.step1Description', 'Download one of these authenticator apps on your mobile device:')}
                     </p>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <Smartphone className="w-4 h-4 text-emerald-600" />
-                        <span className="text-gray-700">Google Authenticator</span>
+                        <span className="text-gray-700">{t('settings:authenticatorApps.googleAuthenticator', 'Google Authenticator')}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Smartphone className="w-4 h-4 text-emerald-600" />
-                        <span className="text-gray-700">Authy</span>
+                        <span className="text-gray-700">{t('settings:authenticatorApps.authy', 'Authy')}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Smartphone className="w-4 h-4 text-emerald-600" />
-                        <span className="text-gray-700">Microsoft Authenticator</span>
+                        <span className="text-gray-700">{t('settings:authenticatorApps.microsoftAuthenticator', 'Microsoft Authenticator')}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Step 2: Scan QR Code */}
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-3">Step 2: Scan QR Code</h3>
+                    <h3 className="font-medium text-gray-900 mb-3">{t('settings:twoFactorAuth.step2Title', 'Step 2: Scan QR Code')}</h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Open your authenticator app and scan this QR code:
+                      {t('settings:twoFactorAuth.step2Description', 'Open your authenticator app and scan this QR code:')}
                     </p>
                     <div className="flex justify-center">
                       <div className="bg-gray-100 p-4 rounded-lg">
@@ -474,7 +474,7 @@ export default function SettingsPage() {
                           <div className="w-48 h-48 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
                             <div className="text-center">
                               <QrCode className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                              <p className="text-sm text-gray-500">Loading QR Code...</p>
+                              <p className="text-sm text-gray-500">{t('settings:twoFactorAuth.loadingQrCode', 'Loading QR Code...')}</p>
                             </div>
                           </div>
                         )}
@@ -484,9 +484,9 @@ export default function SettingsPage() {
 
                   {/* Step 3: Manual Entry */}
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-3">Step 3: Manual Entry (Alternative)</h3>
+                    <h3 className="font-medium text-gray-900 mb-3">{t('settings:twoFactorAuth.step3Title', 'Step 3: Manual Entry (Alternative)')}</h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      If you can't scan the QR code, enter this secret manually:
+                      {t('settings:twoFactorAuth.step3Description', 'If you can\'t scan the QR code, enter this secret manually:')}
                     </p>
                     <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                       <code className="flex-1 font-mono text-sm">
@@ -509,9 +509,9 @@ export default function SettingsPage() {
 
                   {/* Step 4: Verify */}
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-3">Step 4: Verify Setup</h3>
+                    <h3 className="font-medium text-gray-900 mb-3">{t('settings:twoFactorAuth.step4Title', 'Step 4: Verify Setup')}</h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Enter the 6-digit code from your authenticator app:
+                      {t('settings:twoFactorAuth.step4Description', 'Enter the 6-digit code from your authenticator app:')}
                     </p>
                     <div className="space-y-3">
                       <input
@@ -534,7 +534,7 @@ export default function SettingsPage() {
                       onClick={() => setShowTwoFactorSetup(false)}
                       className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                     >
-                      Cancel
+                      {t('common:actions.cancel', 'Cancel')}
                     </button>
                     <button
                       onClick={handleVerifyTwoFactor}
@@ -544,12 +544,12 @@ export default function SettingsPage() {
                       {isVerifying ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Verifying...
+                          {t('settings:twoFactorAuth.verifying', 'Verifying...')}
                         </>
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4" />
-                          Verify & Enable
+                          {t('settings:actions.verifyAndEnable', 'Verify & Enable')}
                         </>
                       )}
                     </button>
@@ -568,8 +568,8 @@ export default function SettingsPage() {
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-                <p className="text-sm text-gray-600">Configure how you receive notifications</p>
+                <h2 className="text-lg font-semibold text-gray-900">{t('settings:notifications', 'Notifications')}</h2>
+                <p className="text-sm text-gray-600">{t('settings:descriptions.configureNotifications', 'Configure how you receive notifications')}</p>
               </div>
             </div>
           </div>
@@ -577,8 +577,8 @@ export default function SettingsPage() {
           <div className="p-6 space-y-4">
             <div className="flex items-center justify-between py-3">
               <div>
-                <h3 className="font-medium text-gray-900">Email Notifications</h3>
-                <p className="text-sm text-gray-600">Receive important updates via email</p>
+                <h3 className="font-medium text-gray-900">{t('settings:fields.emailNotifications', 'Email Notifications')}</h3>
+                <p className="text-sm text-gray-600">{t('settings:descriptions.receiveEmailUpdates', 'Receive important updates via email')}</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -594,8 +594,8 @@ export default function SettingsPage() {
             
             <div className="flex items-center justify-between py-3">
               <div>
-                <h3 className="font-medium text-gray-900">Security Alerts</h3>
-                <p className="text-sm text-gray-600">Get notified about security events</p>
+                <h3 className="font-medium text-gray-900">{t('settings:fields.securityAlerts', 'Security Alerts')}</h3>
+                <p className="text-sm text-gray-600">{t('settings:descriptions.getSecurityAlerts', 'Get notified about security events')}</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -619,8 +619,8 @@ export default function SettingsPage() {
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Preferences</h2>
-                <p className="text-sm text-gray-600">Customize your experience</p>
+                <h2 className="text-lg font-semibold text-gray-900">{t('settings:preferences', 'Preferences')}</h2>
+                <p className="text-sm text-gray-600">{t('settings:descriptions.customizeExperience', 'Customize your experience')}</p>
               </div>
             </div>
           </div>
@@ -653,9 +653,9 @@ export default function SettingsPage() {
                   {t('fields.language')}
                 </label>
                 <CustomDropdown
-                  value={currentLanguage === 'en' ? 'English' : 'German'}
+                  value={availableLanguages.find(lang => lang.value === currentLanguage)?.label || ''}
                   onChange={(value) => {
-                    const lang = value === 'English' ? 'en' : 'de'
+                    const lang = availableLanguages.find(l => l.label === value)?.value || 'en'
                     setLanguage(lang)
                     setFormData(prev => ({ ...prev, language: value }))
                   }}
@@ -663,6 +663,7 @@ export default function SettingsPage() {
                     value: lang.label,
                     label: lang.label
                   }))}
+                  placeholder={t('common:select', 'Select an option')}
                   className="w-full"
                 />
               </div>
@@ -676,7 +677,7 @@ export default function SettingsPage() {
             <div className="bg-white rounded-lg max-w-md w-full">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Disable Two-Factor Authentication</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{t('settings:twoFactorAuth.disableTitle', 'Disable Two-Factor Authentication')}</h2>
                   <button
                     onClick={() => {
                       setShowDisableTwoFactor(false)
@@ -692,12 +693,12 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                   <div>
                     <p className="text-sm text-gray-600 mb-4">
-                      To disable two-factor authentication, please enter the 6-digit code from your authenticator app.
+                      {t('settings:twoFactorAuth.disableDescription', 'To disable two-factor authentication, please enter the 6-digit code from your authenticator app.')}
                     </p>
                     
                     <div>
                       <label htmlFor="disable-verification-code" className="block text-sm font-medium text-gray-700 mb-2">
-                        Verification Code
+                        {t('settings:twoFactorAuth.verificationCode', 'Verification Code')}
                       </label>
                       <input
                         id="disable-verification-code"
@@ -728,10 +729,10 @@ export default function SettingsPage() {
                       {isLoading ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Disabling...
+                          {t('settings:twoFactorAuth.disabling', 'Disabling...')}
                         </>
                       ) : (
-                        'Disable 2FA'
+                        t('settings:twoFactorAuth.disable2FA', 'Disable 2FA')
                       )}
                     </button>
                     <button
@@ -742,7 +743,7 @@ export default function SettingsPage() {
                       }}
                       className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                     >
-                      Cancel
+                      {t('common:actions.cancel', 'Cancel')}
                     </button>
                   </div>
                 </div>

@@ -63,7 +63,7 @@
     "unknown": "Unbekannt",
     "none": "Keine",
     "all": "Alle",
-    "select": "Auswählen",
+    "select": "Option auswählen",
     "choose": "Wählen",
     "optional": "Optional",
     "required": "Erforderlich",
@@ -101,5 +101,6 @@
     "confirmDelete": "Sind Sie sicher, dass Sie dieses Element löschen möchten?",
     "confirmAction": "Sind Sie sicher, dass Sie diese Aktion ausführen möchten?",
     "thisActionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden"
-  }
+  },
+  "notProvided": "Nicht angegeben"
 }

@@ -12,7 +12,8 @@
     "language": "Language",
     "twoFactorAuth": "Two-Factor Authentication",
     "emailNotifications": "Email Notifications",
-    "pushNotifications": "Push Notifications"
+    "pushNotifications": "Push Notifications",
+    "securityAlerts": "Security Alerts"
   },
   "actions": {
     "saveChanges": "Save Changes",
@@ -44,5 +45,47 @@
     "pst": "Pacific Time",
     "cet": "Central European Time",
     "eet": "Eastern European Time"
+  },
+  "descriptions": {
+    "updatePersonalDetails": "Update your personal details",
+    "manageAccountSecurity": "Manage your account security settings",
+    "configureNotifications": "Configure how you receive notifications",
+    "customizeExperience": "Customize your experience",
+    "twoFactorAuthEnabled": "Two-factor authentication is enabled for your account",
+    "addExtraSecurity": "Add an extra layer of security to your account",
+    "manageApiKeys": "Manage your API keys for programmatic access",
+    "receiveEmailUpdates": "Receive important updates via email",
+    "getSecurityAlerts": "Get notified about security events"
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "manageKeys": "Manage Keys"
+  },
+  "twoFactorAuth": {
+    "setupTitle": "Set Up Two-Factor Authentication",
+    "disableTitle": "Disable Two-Factor Authentication",
+    "step1Title": "Step 1: Download an Authenticator App",
+    "step1Description": "Download one of these authenticator apps on your mobile device:",
+    "step2Title": "Step 2: Scan QR Code",
+    "step2Description": "Open your authenticator app and scan this QR code:",
+    "step3Title": "Step 3: Manual Entry (Alternative)",
+    "step3Description": "If you can't scan the QR code, enter this secret manually:",
+    "step4Title": "Step 4: Verify Setup",
+    "step4Description": "Enter the 6-digit code from your authenticator app:",
+    "disableDescription": "To disable two-factor authentication, please enter the 6-digit code from your authenticator app.",
+    "verificationCode": "Verification Code",
+    "loadingQrCode": "Loading QR Code...",
+    "qrCodeAlt": "QR Code for 2FA setup",
+    "settingUp": "Setting up...",
+    "verifying": "Verifying...",
+    "disabling": "Disabling...",
+    "disable2FA": "Disable 2FA",
+    "pleaseEnterValidCode": "Please enter a valid 6-digit code",
+    "failedToDisable2FA": "Failed to disable 2FA"
+  },
+  "authenticatorApps": {
+    "googleAuthenticator": "Google Authenticator",
+    "authy": "Authy",
+    "microsoftAuthenticator": "Microsoft Authenticator"
   }
 }

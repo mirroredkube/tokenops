@@ -12,7 +12,8 @@
     "language": "Sprache",
     "twoFactorAuth": "Zwei-Faktor-Authentifizierung",
     "emailNotifications": "E-Mail-Benachrichtigungen",
-    "pushNotifications": "Push-Benachrichtigungen"
+    "pushNotifications": "Push-Benachrichtigungen",
+    "securityAlerts": "Sicherheitswarnungen"
   },
   "actions": {
     "saveChanges": "Änderungen speichern",
@@ -44,5 +45,47 @@
     "pst": "Pazifikzeit",
     "cet": "Mitteleuropäische Zeit",
     "eet": "Osteuropäische Zeit"
+  },
+  "descriptions": {
+    "updatePersonalDetails": "Aktualisieren Sie Ihre persönlichen Daten",
+    "manageAccountSecurity": "Verwalten Sie Ihre Kontosicherheitseinstellungen",
+    "configureNotifications": "Konfigurieren Sie, wie Sie Benachrichtigungen erhalten",
+    "customizeExperience": "Passen Sie Ihre Erfahrung an",
+    "twoFactorAuthEnabled": "Zwei-Faktor-Authentifizierung ist für Ihr Konto aktiviert",
+    "addExtraSecurity": "Fügen Sie eine zusätzliche Sicherheitsebene zu Ihrem Konto hinzu",
+    "manageApiKeys": "Verwalten Sie Ihre API-Schlüssel für programmatischen Zugriff",
+    "receiveEmailUpdates": "Erhalten Sie wichtige Updates per E-Mail",
+    "getSecurityAlerts": "Erhalten Sie Benachrichtigungen über Sicherheitsereignisse"
+  },
+  "apiKeys": {
+    "title": "API-Schlüssel",
+    "manageKeys": "Schlüssel verwalten"
+  },
+  "twoFactorAuth": {
+    "setupTitle": "Zwei-Faktor-Authentifizierung einrichten",
+    "disableTitle": "Zwei-Faktor-Authentifizierung deaktivieren",
+    "step1Title": "Schritt 1: Authenticator-App herunterladen",
+    "step1Description": "Laden Sie eine dieser Authenticator-Apps auf Ihr Mobilgerät herunter:",
+    "step2Title": "Schritt 2: QR-Code scannen",
+    "step2Description": "Öffnen Sie Ihre Authenticator-App und scannen Sie diesen QR-Code:",
+    "step3Title": "Schritt 3: Manuelle Eingabe (Alternative)",
+    "step3Description": "Wenn Sie den QR-Code nicht scannen können, geben Sie dieses Geheimnis manuell ein:",
+    "step4Title": "Schritt 4: Einrichtung verifizieren",
+    "step4Description": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein:",
+    "disableDescription": "Um die Zwei-Faktor-Authentifizierung zu deaktivieren, geben Sie bitte den 6-stelligen Code aus Ihrer Authenticator-App ein.",
+    "verificationCode": "Verifizierungscode",
+    "loadingQrCode": "QR-Code wird geladen...",
+    "qrCodeAlt": "QR-Code für 2FA-Einrichtung",
+    "settingUp": "Wird eingerichtet...",
+    "verifying": "Wird verifiziert...",
+    "disabling": "Wird deaktiviert...",
+    "disable2FA": "2FA deaktivieren",
+    "pleaseEnterValidCode": "Bitte geben Sie einen gültigen 6-stelligen Code ein",
+    "failedToDisable2FA": "2FA konnte nicht deaktiviert werden"
+  },
+  "authenticatorApps": {
+    "googleAuthenticator": "Google Authenticator",
+    "authy": "Authy",
+    "microsoftAuthenticator": "Microsoft Authenticator"
   }
 }
