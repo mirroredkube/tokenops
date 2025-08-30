@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, ensureJson } from '@/lib/api'
 import FormField from './FormField'
 import TransactionResult from './TransactionResult'
@@ -40,6 +41,7 @@ interface AuthorizationResult {
 }
 
 export default function AuthorizationFlow() {
+  const { t } = useTranslation(['authorizations', 'common'])
   const [currentStep, setCurrentStep] = useState<Step>('ledger-selection')
   const [selectedLedger, setSelectedLedger] = useState<LedgerType>('XRPL')
   const [assets, setAssets] = useState<Asset[]>([])
@@ -252,8 +254,8 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Select Ledger</div>
-                <div className="text-xs text-gray-500">Step 1</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectLedger', 'Select Ledger')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step1', 'Step 1')}</div>
               </div>
             </div>
             
@@ -265,8 +267,8 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Select Asset</div>
-                <div className="text-xs text-gray-500">Step 2</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectAsset', 'Select Asset')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step2', 'Step 2')}</div>
               </div>
             </div>
             
@@ -278,21 +280,21 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Authorization</div>
-                <div className="text-xs text-gray-500">Step 3</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.authorizationSetup', 'Authorization')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step3', 'Step 3')}</div>
               </div>
             </div>
           </div>
           
           {/* Progress Percentage */}
           <div className="text-center mt-4">
-            <span className="text-sm font-medium text-gray-800">Progress: 33%</span>
+            <span className="text-sm font-medium text-gray-800">{t('authorizations:flow.progress', 'Progress')}: 33%</span>
           </div>
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Select Ledger</h1>
-          <p className="text-lg text-gray-600">Choose the blockchain network for your authorization</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">{t('authorizations:ledgerSelection.title', 'Select Ledger')}</h1>
+          <p className="text-lg text-gray-600">{t('authorizations:ledgerSelection.description', 'Choose the blockchain network for your authorization')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -318,12 +320,12 @@ export default function AuthorizationFlow() {
                   ledger.status === 'beta' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {ledger.status === 'live' ? 'Live' :
+                  {ledger.status === 'live' ? t('authorizations:ledgerSelection.available', 'Live') :
                    ledger.status === 'beta' ? 'Beta' :
-                   'Coming Soon'}
+                   t('authorizations:ledgerSelection.comingSoon', 'Coming Soon')}
                 </span>
                 {ledger.status === 'coming-soon' && (
-                  <span className="text-sm text-gray-500">Not available yet</span>
+                  <span className="text-sm text-gray-500">{t('authorizations:ledgerSelection.notAvailableYet', 'Not available yet')}</span>
                 )}
               </div>
             </button>
@@ -350,8 +352,8 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Select Ledger</div>
-                <div className="text-xs text-gray-500">Step 1</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectLedger', 'Select Ledger')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step1', 'Step 1')}</div>
               </div>
             </div>
             
@@ -364,8 +366,8 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Select Asset</div>
-                <div className="text-xs text-gray-500">Step 2</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectAsset', 'Select Asset')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step2', 'Step 2')}</div>
               </div>
             </div>
             
@@ -377,15 +379,15 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Authorization</div>
-                <div className="text-xs text-gray-500">Step 3</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.authorizationSetup', 'Authorization')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step3', 'Step 3')}</div>
               </div>
             </div>
           </div>
           
           {/* Progress Percentage */}
           <div className="text-center mt-4">
-            <span className="text-sm font-medium text-gray-800">Progress: 67%</span>
+            <span className="text-sm font-medium text-gray-800">{t('authorizations:flow.progress', 'Progress')}: 67%</span>
           </div>
         </div>
 
@@ -399,15 +401,15 @@ export default function AuthorizationFlow() {
             </svg>
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Select Asset</h1>
-            <p className="text-gray-600">Choose the asset for authorization on {selectedLedger}</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('authorizations:assetSelection.title', 'Select Asset')}</h1>
+            <p className="text-gray-600">{t('authorizations:assetSelection.description', 'Choose the asset for authorization on {{ledger}}', { ledger: selectedLedger })}</p>
           </div>
         </div>
 
         {assetsLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading assets...</p>
+            <p className="text-gray-600">{t('authorizations:assetSelection.loadingAssets', 'Loading assets...')}</p>
           </div>
         ) : assetsError ? (
           <div className="text-center py-12">
@@ -422,7 +424,7 @@ export default function AuthorizationFlow() {
               onClick={fetchAssets}
               className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
-              Try Again
+              {t('common:actions.tryAgain', 'Try Again')}
             </button>
           </div>
         ) : assets.length === 0 ? (
@@ -432,13 +434,13 @@ export default function AuthorizationFlow() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
-            <p className="text-gray-900 font-semibold mb-2">No active assets found</p>
-            <p className="text-gray-600 mb-4">Create an asset first to set up authorizations</p>
+            <p className="text-gray-900 font-semibold mb-2">{t('authorizations:assetSelection.noActiveAssetsFound', 'No active assets found')}</p>
+            <p className="text-gray-600 mb-4">{t('authorizations:assetSelection.createAssetFirst', 'Create an asset first to set up authorizations')}</p>
             <button
               onClick={() => window.location.href = '/app/assets/create'}
               className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
-              Create Asset
+              {t('authorizations:assetSelection.createAsset', 'Create Asset')}
             </button>
           </div>
         ) : (
@@ -485,8 +487,8 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Select Ledger</div>
-                <div className="text-xs text-gray-500">Step 1</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectLedger', 'Select Ledger')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step1', 'Step 1')}</div>
               </div>
             </div>
             
@@ -498,8 +500,8 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Select Asset</div>
-                <div className="text-xs text-gray-500">Step 2</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectAsset', 'Select Asset')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step2', 'Step 2')}</div>
               </div>
             </div>
             
@@ -512,15 +514,15 @@ export default function AuthorizationFlow() {
                 </svg>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">Authorization</div>
-                <div className="text-xs text-gray-500">Step 3</div>
+                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.authorizationSetup', 'Authorization')}</div>
+                <div className="text-xs text-gray-500">{t('authorizations:flow.step3', 'Step 3')}</div>
               </div>
             </div>
           </div>
           
           {/* Progress Percentage */}
           <div className="text-center mt-4">
-            <span className="text-sm font-medium text-gray-800">Progress: 100%</span>
+            <span className="text-sm font-medium text-gray-800">{t('authorizations:flow.progress', 'Progress')}: 100%</span>
           </div>
         </div>
 
@@ -534,8 +536,8 @@ export default function AuthorizationFlow() {
             </svg>
           </button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">Authorization Setup</h1>
-            <p className="text-gray-600">Configure authorization for {selectedAsset?.code}</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('authorizations:authorizationSetup.title', 'Authorization Setup')}</h1>
+            <p className="text-gray-600">{t('authorizations:authorizationSetup.description', 'Configure authorization for {{asset}}', { asset: selectedAsset?.code })}</p>
           </div>
           <InfoPopup title="Authorization Information">
             {selectedLedger === 'XRPL' ? (
@@ -589,7 +591,7 @@ export default function AuthorizationFlow() {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <form onSubmit={handleAuthorizationSubmit} className="space-y-6">
-            <FormField label="Asset" required>
+            <FormField label={t('common:fields.asset', 'Asset')} required>
               <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
@@ -603,42 +605,42 @@ export default function AuthorizationFlow() {
               </div>
             </FormField>
 
-            <FormField label="Holder Address" required>
+            <FormField label={t('authorizations:authorizationSetup.fields.holderAddress', 'Holder Address')} required>
               <input
                 type="text"
                 value={authorizationData.holderAddress}
                 onChange={(e) => setAuthorizationData(prev => ({ ...prev, holderAddress: e.target.value }))}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="rHolder123..."
+                placeholder={t('authorizations:authorizationSetup.fields.holderAddressPlaceholder', 'rHolder123...')}
                 required
               />
               <p className="text-sm text-gray-500 mt-1">XRPL address that will receive tokens</p>
             </FormField>
 
-            <FormField label="Trust Limit" required>
+            <FormField label={t('authorizations:authorizationSetup.fields.limit', 'Trust Limit')} required>
               <input
                 type="text"
                 value={authorizationData.limit}
                 onChange={(e) => setAuthorizationData(prev => ({ ...prev, limit: e.target.value }))}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="1000000000"
+                placeholder={t('authorizations:authorizationSetup.fields.limitPlaceholder', '1000000000')}
                 required
               />
-              <p className="text-sm text-gray-500 mt-1">Maximum amount the holder is willing to accept</p>
+              <p className="text-sm text-gray-500 mt-1">{t('authorizations:authorizationSetup.fields.limitHint', 'Maximum amount the holder is willing to accept')}</p>
             </FormField>
 
             {allowUiSecret && devAllowRawSecret && (
               <FormField 
-                label="Holder Secret (Family Seed)" 
+                label={t('authorizations:authorizationSetup.fields.holderSecret', 'Holder Secret (Family Seed)')} 
                 required
-                helperText="Private key of the holder account (development only)"
+                helperText={t('authorizations:authorizationSetup.fields.holderSecretHint', 'Private key of the holder account (development only)')}
               >
                 <input
                   type="password"
                   value={authorizationData.holderSecret}
                   onChange={(e) => setAuthorizationData(prev => ({ ...prev, holderSecret: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="sEd7..."
+                  placeholder={t('authorizations:authorizationSetup.fields.holderSecretPlaceholder', 'sEd7...')}
                   required
                 />
               </FormField>
@@ -654,7 +656,7 @@ export default function AuthorizationFlow() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="noRipple" className="ml-2 text-sm text-gray-700">
-                  Set NoRipple flag (prevents rippling through this trustline)
+                  {t('authorizations:authorizationSetup.options.noRipple', 'Set NoRipple flag')} ({t('authorizations:authorizationSetup.options.noRippleHint', 'prevents rippling through this trustline')})
                 </label>
               </div>
 
@@ -667,7 +669,7 @@ export default function AuthorizationFlow() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="requireAuth" className="ml-2 text-sm text-gray-700">
-                  Require authorization (issuer must approve trustline)
+                  {t('authorizations:authorizationSetup.options.requireAuth', 'Require authorization')} ({t('authorizations:authorizationSetup.options.requireAuthHint', 'issuer must approve trustline')})
                 </label>
               </div>
             </div>
@@ -687,7 +689,7 @@ export default function AuthorizationFlow() {
                 onClick={() => setCurrentStep('asset-selection')}
                 className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
               >
-                ← Back to Assets
+                {t('authorizations:actions.backToAssets', '← Back to Assets')}
               </button>
               <button
                 type="submit"
@@ -697,14 +699,14 @@ export default function AuthorizationFlow() {
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-600 border-t-transparent"></div>
-                    Creating Authorization...
+                    {t('authorizations:actions.creatingAuthorization', 'Creating Authorization...')}
                   </>
                 ) : (
                   <>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Create Authorization
+                    {t('authorizations:actions.createAuthorization', 'Create Authorization')}
                   </>
                 )}
               </button>
@@ -727,19 +729,19 @@ export default function AuthorizationFlow() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">Authorization Created Successfully!</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('authorizations:success.title', 'Authorization Created Successfully!')}</h1>
               <p className="text-lg text-gray-600">
-                Your authorization has been submitted to {selectedLedger} and recorded in the database.
+                {t('authorizations:success.description', 'Your authorization has been submitted to {{ledger}} and recorded in the database.', { ledger: selectedLedger })}
               </p>
             </div>
 
             {/* Transaction Details */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Transaction Details</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('authorizations:success.transactionDetails', 'Transaction Details')}</h2>
               <div className="space-y-4">
                 {result.txId && (
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">Transaction ID:</p>
+                    <p className="text-sm font-semibold text-gray-700 mb-2">{t('authorizations:success.authorizationTransaction', 'Transaction ID:')}</p>
                     <div className="flex items-center justify-between">
                       <code className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded font-mono break-all">
                         {result.txId}
@@ -751,7 +753,7 @@ export default function AuthorizationFlow() {
                           rel="noopener noreferrer"
                           className="ml-4 inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
-                          View on Explorer →
+                          {t('authorizations:success.viewOnExplorer', 'View on Explorer →')}
                         </a>
                       )}
                     </div>
@@ -793,7 +795,7 @@ export default function AuthorizationFlow() {
                 }}
                 className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors duration-200"
               >
-                Create Another Authorization
+                {t('authorizations:success.createAnotherAuthorization', 'Create Another Authorization')}
               </button>
             </div>
           </div>

@@ -1,56 +1,122 @@
 {
-  "title": "Authorizations",
-  "description": "Manage holder authorizations for your assets",
-  "newAuthorization": "New Authorization",
-  "authorizationHistory": "Authorization History",
-  "authorizationFlow": "Authorization Flow",
-  "setupAuthorization": "Setup Authorization",
-  "fields": {
-    "asset": "Asset",
-    "holder": "Holder",
-    "limit": "Limit",
-    "status": "Status",
-    "transaction": "Transaction",
-    "dateTime": "Date/Time",
-    "transactionId": "Transaction ID"
-  },
-  "actions": {
-    "createAuthorization": "Create Authorization",
-    "creatingAuthorization": "Creating Authorization...",
-    "viewAllAuthorizations": "View All Authorizations",
-    "createAnotherAuthorization": "Create Another Authorization",
-    "viewHistory": "View History"
-  },
-  "steps": {
-    "selectLedger": "Select Ledger",
-    "selectAsset": "Select Asset",
-    "authorization": "Authorization",
-    "step1": "Step 1",
-    "step2": "Step 2",
-    "step3": "Step 3",
-    "progress": "Progress"
-  },
-  "messages": {
-    "authorizationCreatedSuccessfully": "Authorization Created Successfully!",
-    "yourAuthorizationHasBeenSubmitted": "Your authorization has been submitted to {{ledger}} and recorded in the database.",
-    "transactionDetails": "Transaction Details",
-    "transactionId": "Transaction ID:",
-    "authorizationId": "Authorization ID:",
-    "noActiveAssetsFound": "No active assets found",
-    "createAssetFirst": "Create an asset first to set up authorizations",
-    "tryAgain": "Try Again",
-    "comingSoon": "Coming Soon",
-    "authorizationSupportUnderDevelopment": "Authorization support for {{ledger}} is currently under development.",
-    "backToLedgerSelection": "Back to Ledger Selection"
-  },
-  "status": {
-    "submitted": "Submitted",
-    "validated": "Validated",
-    "failed": "Failed",
-    "expired": "Expired"
-  },
   "page": {
     "title": "New Authorization",
     "description": "Create asset authorizations for token issuance across multiple ledgers"
+  },
+  "actions": {
+    "viewHistory": "View History",
+    "newAuthorization": "New Authorization",
+    "createAuthorization": "Create Authorization",
+    "creatingAuthorization": "Creating Authorization...",
+    "backToAssets": "← Back to Assets",
+    "backToLedgerSelection": "← Back to Ledger Selection",
+    "continue": "Continue",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "view": "View",
+    "viewAsset": "View Asset"
+  },
+  "flow": {
+    "steps": {
+      "selectLedger": "Select Ledger",
+      "selectAsset": "Select Asset",
+      "authorizationSetup": "Authorization Setup"
+    },
+    "progress": "Progress",
+    "step1": "Step 1",
+    "step2": "Step 2",
+    "step3": "Step 3"
+  },
+  "ledgerSelection": {
+    "title": "Select Ledger",
+    "description": "Choose the blockchain platform where you want to create the authorization",
+    "searchPlaceholder": "Search ledgers...",
+    "available": "Available",
+    "comingSoon": "Coming Soon",
+    "comingSoonTitle": "Coming Soon!",
+    "notAvailableYet": "Not available yet"
+  },
+  "assetSelection": {
+    "title": "Select Asset",
+    "description": "Choose an active asset on {{ledger}} to create authorization for",
+    "compliance": "Compliance:",
+    "loadingAssets": "Loading assets...",
+    "noActiveAssetsFound": "No active assets found",
+    "createAssetFirst": "You need to create an asset first before creating authorizations.",
+    "createAsset": "Create Asset"
+  },
+  "authorizationSetup": {
+    "title": "Authorization Setup",
+    "description": "Configure the authorization parameters for {{asset}} on {{ledger}}",
+    "fields": {
+      "currencyCode": "Currency Code",
+      "currencyCodeHint": "Currency code is set from the selected asset",
+      "holderAddress": "Holder Address",
+      "holderAddressPlaceholder": "rHolder123...",
+      "issuerAddress": "Issuer Address",
+      "issuerAddressPlaceholder": "rIssuer456...",
+      "issuerAddressHint": "Issuer address is set from the selected asset",
+      "limit": "Authorization Limit",
+      "limitPlaceholder": "1000000000",
+      "limitHint": "Maximum amount the holder can receive",
+      "holderSecret": "Holder Secret (Family Seed)",
+      "holderSecretPlaceholder": "sEd7...",
+      "holderSecretHint": "Private key of the holder account",
+      "signWithWallet": "Sign with Wallet"
+    },
+    "options": {
+      "noRipple": "No Ripple",
+      "noRippleHint": "Prevent rippling through this trustline",
+      "requireAuth": "Require Authorization",
+      "requireAuthHint": "Require issuer authorization for transfers"
+    }
+  },
+  "success": {
+    "title": "Authorization Created Successfully!",
+    "description": "Your authorization has been submitted to {{ledger}} and recorded in the database.",
+    "transactionDetails": "Transaction Details",
+    "authorizationTransaction": "Authorization Transaction:",
+    "viewOnExplorer": "View on Explorer →",
+    "createAnotherAuthorization": "Create Another Authorization"
+  },
+  "history": {
+    "title": "Authorization History",
+    "description": "View and manage all asset authorization transactions",
+    "filters": {
+      "status": "Status:",
+      "allStatuses": "All Statuses",
+      "pending": "Pending",
+      "submitted": "Submitted",
+      "validated": "Validated",
+      "failed": "Failed",
+      "expired": "Expired"
+    },
+    "table": {
+      "asset": "Asset",
+      "holder": "Holder",
+      "limit": "Limit",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "status": {
+      "pending": "PENDING",
+      "submitted": "SUBMITTED",
+      "validated": "VALIDATED",
+      "failed": "FAILED",
+      "expired": "EXPIRED"
+    },
+    "messages": {
+      "loadingAuthorizations": "Loading authorizations...",
+      "authorizationsFound": "{{count}} authorization{{plural}} found",
+      "noAuthorizationsFound": "No authorizations found",
+      "noAuthorizationsWithStatus": "No authorizations with status \"{{status}}\" found.",
+      "noAuthorizationRecords": "No authorization records found. Create your first authorization to get started.",
+      "failedToFetchAuthorizations": "Failed to fetch authorizations",
+      "showingResults": "Showing {{start}} to {{end}} of {{total}} results",
+      "pageOf": "Page {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    }
   }
 }

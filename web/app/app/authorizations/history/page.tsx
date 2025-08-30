@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react'
@@ -28,6 +29,7 @@ interface Authorization {
 }
 
 export default function AuthorizationHistoryPage() {
+  const { t } = useTranslation(['authorizations', 'common'])
   const router = useRouter()
   const [authorizations, setAuthorizations] = useState<Authorization[]>([])
   const [loading, setLoading] = useState(true)
@@ -57,11 +59,11 @@ export default function AuthorizationHistoryPage() {
       const { data, error } = await api.GET('/v1/authorizations', { params })
 
       if (error && typeof error === 'object' && 'error' in error) {
-        throw new Error((error as any).error || 'Failed to fetch authorizations')
+        throw new Error((error as any).error || t('authorizations:history.messages.failedToFetchAuthorizations', 'Failed to fetch authorizations'))
       }
 
       if (!data) {
-        throw new Error('No data received')
+        throw new Error(t('common:messages.noDataReceived', 'No data received'))
       }
 
       setAuthorizations((data.authorizations || []) as Authorization[])
@@ -69,7 +71,7 @@ export default function AuthorizationHistoryPage() {
       setTotalPages(Math.ceil((data.pagination?.total || 0) / limit))
     } catch (err: any) {
       console.error('Error fetching authorizations:', err)
-      setError(err.message || 'Failed to fetch authorizations')
+      setError(err.message || t('authorizations:history.messages.failedToFetchAuthorizations', 'Failed to fetch authorizations'))
     } finally {
       setLoading(false)
     }
@@ -139,21 +141,21 @@ export default function AuthorizationHistoryPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Authorization History</h1>
-            <p className="text-gray-600 mt-1">View and manage all asset authorization transactions</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('authorizations:history.title', 'Authorization History')}</h1>
+            <p className="text-gray-600 mt-1">{t('authorizations:history.description', 'View and manage all asset authorization transactions')}</p>
           </div>
           <button
             onClick={() => router.push('/app/authorizations')}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Authorization
+            {t('authorizations:actions.newAuthorization', 'New Authorization')}
           </button>
         </div>
         
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading authorizations...</p>
+          <p className="text-gray-600">{t('authorizations:history.messages.loadingAuthorizations', 'Loading authorizations...')}</p>
         </div>
       </div>
     )
@@ -171,7 +173,7 @@ export default function AuthorizationHistoryPage() {
              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
            >
              <Plus className="h-4 w-4 mr-2" />
-             New Authorization
+             {t('authorizations:actions.newAuthorization', 'New Authorization')}
            </button>
       </div>
 
@@ -187,24 +189,24 @@ export default function AuthorizationHistoryPage() {
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">Status:</span>
+          <span className="text-sm font-medium text-gray-700">{t('authorizations:history.filters.status', 'Status:')}</span>
           <CustomDropdown
             value={statusFilter}
             onChange={handleFilterChange}
             options={[
-              { value: 'all', label: 'All Statuses' },
-              { value: 'PENDING', label: 'Pending' },
-              { value: 'SUBMITTED', label: 'Submitted' },
-              { value: 'VALIDATED', label: 'Validated' },
-              { value: 'FAILED', label: 'Failed' },
-              { value: 'EXPIRED', label: 'Expired' }
+              { value: 'all', label: t('authorizations:history.filters.allStatuses', 'All Statuses') },
+              { value: 'PENDING', label: t('authorizations:history.filters.pending', 'Pending') },
+              { value: 'SUBMITTED', label: t('authorizations:history.filters.submitted', 'Submitted') },
+              { value: 'VALIDATED', label: t('authorizations:history.filters.validated', 'Validated') },
+              { value: 'FAILED', label: t('authorizations:history.filters.failed', 'Failed') },
+              { value: 'EXPIRED', label: t('authorizations:history.filters.expired', 'Expired') }
             ]}
             className="w-48"
           />
         </div>
         
         <div className="text-sm text-gray-600">
-          {totalCount > 0 ? `${totalCount} authorization${totalCount !== 1 ? 's' : ''} found` : 'No authorizations found'}
+          {totalCount > 0 ? t('authorizations:history.messages.authorizationsFound', '{{count}} authorization{{plural}} found', { count: totalCount, plural: totalCount !== 1 ? 's' : '' }) : t('authorizations:history.messages.noAuthorizationsFound', 'No authorizations found')}
         </div>
       </div>
 
@@ -223,12 +225,12 @@ export default function AuthorizationHistoryPage() {
               </colgroup>
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holder</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Limit</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.asset', 'Asset')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.holder', 'Holder')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.limit', 'Limit')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.status', 'Status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.created', 'Created')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.actions', 'Actions')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -269,14 +271,14 @@ export default function AuthorizationHistoryPage() {
                             className="text-emerald-600 hover:text-emerald-900 flex items-center gap-1"
                           >
                             <ExternalLink className="h-3 w-3" />
-                            View
+                            {t('authorizations:actions.view', 'View')}
                           </a>
                         )}
                                                  <button
                            onClick={() => router.push(`/app/assets/${auth.assetId || ''}`)}
                            className="text-blue-600 hover:text-blue-900"
                          >
-                           View Asset
+                           {t('authorizations:actions.viewAsset', 'View Asset')}
                          </button>
                       </div>
                     </td>
@@ -293,19 +295,19 @@ export default function AuthorizationHistoryPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Authorizations Found</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('authorizations:history.messages.noAuthorizationsFound', 'No Authorizations Found')}</h3>
           <p className="text-gray-600 mb-6">
             {statusFilter !== 'all' 
-              ? `No authorizations with status "${statusFilter}" found.`
-              : 'No authorization records found. Create your first authorization to get started.'
+              ? t('authorizations:history.messages.noAuthorizationsWithStatus', 'No authorizations with status "{{status}}" found.', { status: statusFilter })
+              : t('authorizations:history.messages.noAuthorizationRecords', 'No authorization records found. Create your first authorization to get started.')
             }
           </p>
           <button
-            onClick={() => router.push('/app/opt-in')}
-            className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 shadow-sm hover:shadow-md"
+            onClick={() => router.push('/app/authorizations')}
+            className="inline-flex items-center px-6 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Create Authorization
+            {t('authorizations:actions.createAuthorization', 'Create Authorization')}
           </button>
         </div>
       )}
@@ -314,7 +316,11 @@ export default function AuthorizationHistoryPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalCount)} of {totalCount} results
+            {t('authorizations:history.messages.showingResults', 'Showing {{start}} to {{end}} of {{total}} results', { 
+              start: ((currentPage - 1) * limit) + 1, 
+              end: Math.min(currentPage * limit, totalCount), 
+              total: totalCount 
+            })}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -322,17 +328,17 @@ export default function AuthorizationHistoryPage() {
               disabled={currentPage === 1}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              {t('authorizations:history.messages.previous', 'Previous')}
             </button>
             <span className="px-3 py-2 text-sm text-gray-700">
-              Page {currentPage} of {totalPages}
+              {t('authorizations:history.messages.pageOf', 'Page {{current}} of {{total}}', { current: currentPage, total: totalPages })}
             </span>
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              {t('authorizations:history.messages.next', 'Next')}
             </button>
           </div>
         </div>

@@ -1,56 +1,122 @@
 {
-  "title": "Autorisierungen",
-  "description": "Inhaber-Autorisierungen für Ihre Assets verwalten",
-  "newAuthorization": "Neue Autorisierung",
-  "authorizationHistory": "Autorisierungs-Historie",
-  "authorizationFlow": "Autorisierungsablauf",
-  "setupAuthorization": "Autorisierung einrichten",
-  "fields": {
-    "asset": "Asset",
-    "holder": "Inhaber",
-    "limit": "Limit",
-    "status": "Status",
-    "transaction": "Transaktion",
-    "dateTime": "Datum/Zeit",
-    "transactionId": "Transaktions-ID"
-  },
-  "actions": {
-    "createAuthorization": "Autorisierung erstellen",
-    "creatingAuthorization": "Autorisierung wird erstellt...",
-    "viewAllAuthorizations": "Alle Autorisierungen anzeigen",
-    "createAnotherAuthorization": "Weitere Autorisierung erstellen",
-    "viewHistory": "Historie anzeigen"
-  },
-  "steps": {
-    "selectLedger": "Ledger auswählen",
-    "selectAsset": "Asset auswählen",
-    "authorization": "Autorisierung",
-    "step1": "Schritt 1",
-    "step2": "Schritt 2",
-    "step3": "Schritt 3",
-    "progress": "Fortschritt"
-  },
-  "messages": {
-    "authorizationCreatedSuccessfully": "Autorisierung erfolgreich erstellt!",
-    "yourAuthorizationHasBeenSubmitted": "Ihre Autorisierung wurde an {{ledger}} übermittelt und in der Datenbank gespeichert.",
-    "transactionDetails": "Transaktionsdetails",
-    "transactionId": "Transaktions-ID:",
-    "authorizationId": "Autorisierungs-ID:",
-    "noActiveAssetsFound": "Keine aktiven Assets gefunden",
-    "createAssetFirst": "Erstellen Sie zuerst ein Asset, um Autorisierungen einzurichten",
-    "tryAgain": "Erneut versuchen",
-    "comingSoon": "Demnächst verfügbar",
-    "authorizationSupportUnderDevelopment": "Autorisierungsunterstützung für {{ledger}} wird derzeit entwickelt.",
-    "backToLedgerSelection": "Zurück zur Ledger-Auswahl"
-  },
-  "status": {
-    "submitted": "Eingereicht",
-    "validated": "Validiert",
-    "failed": "Fehlgeschlagen",
-    "expired": "Abgelaufen"
-  },
   "page": {
     "title": "Neue Autorisierung",
-    "description": "Asset-Autorisierungen für Token-Emissionen über mehrere Ledger hinweg erstellen"
+    "description": "Erstellen Sie Asset-Autorisierungen für Token-Ausgaben über mehrere Ledger"
+  },
+  "actions": {
+    "viewHistory": "Historie anzeigen",
+    "newAuthorization": "Neue Autorisierung",
+    "createAuthorization": "Autorisierung erstellen",
+    "creatingAuthorization": "Autorisierung wird erstellt...",
+    "backToAssets": "← Zurück zu Assets",
+    "backToLedgerSelection": "← Zurück zur Ledger-Auswahl",
+    "continue": "Weiter",
+    "submit": "Absenden",
+    "cancel": "Abbrechen",
+    "view": "Anzeigen",
+    "viewAsset": "Asset anzeigen"
+  },
+  "flow": {
+    "steps": {
+      "selectLedger": "Ledger auswählen",
+      "selectAsset": "Asset auswählen",
+      "authorizationSetup": "Autorisierung einrichten"
+    },
+    "progress": "Fortschritt",
+    "step1": "Schritt 1",
+    "step2": "Schritt 2",
+    "step3": "Schritt 3"
+  },
+  "ledgerSelection": {
+    "title": "Ledger auswählen",
+    "description": "Wählen Sie die Blockchain-Plattform, auf der Sie die Autorisierung erstellen möchten",
+    "searchPlaceholder": "Ledger suchen...",
+    "available": "Verfügbar",
+    "comingSoon": "Demnächst verfügbar",
+    "comingSoonTitle": "Demnächst verfügbar!",
+    "notAvailableYet": "Noch nicht verfügbar"
+  },
+  "assetSelection": {
+    "title": "Asset auswählen",
+    "description": "Wählen Sie ein aktives Asset auf {{ledger}} aus, für das Sie eine Autorisierung erstellen möchten",
+    "compliance": "Compliance:",
+    "loadingAssets": "Assets werden geladen...",
+    "noActiveAssetsFound": "Keine aktiven Assets gefunden",
+    "createAssetFirst": "Sie müssen zuerst ein Asset erstellen, bevor Sie Autorisierungen erstellen können.",
+    "createAsset": "Asset erstellen"
+  },
+  "authorizationSetup": {
+    "title": "Autorisierung einrichten",
+    "description": "Konfigurieren Sie die Autorisierungsparameter für {{asset}} auf {{ledger}}",
+    "fields": {
+      "currencyCode": "Währungscode",
+      "currencyCodeHint": "Währungscode wird vom ausgewählten Asset gesetzt",
+      "holderAddress": "Inhaber-Adresse",
+      "holderAddressPlaceholder": "rHolder123...",
+      "issuerAddress": "Emittenten-Adresse",
+      "issuerAddressPlaceholder": "rIssuer456...",
+      "issuerAddressHint": "Emittenten-Adresse wird vom ausgewählten Asset gesetzt",
+      "limit": "Autorisierungs-Limit",
+      "limitPlaceholder": "1000000000",
+      "limitHint": "Maximaler Betrag, den der Inhaber erhalten kann",
+      "holderSecret": "Inhaber-Secret (Family Seed)",
+      "holderSecretPlaceholder": "sEd7...",
+      "holderSecretHint": "Privater Schlüssel des Inhaber-Kontos",
+      "signWithWallet": "Mit Wallet unterschreiben"
+    },
+    "options": {
+      "noRipple": "No Ripple",
+      "noRippleHint": "Rippling über diese Trustline verhindern",
+      "requireAuth": "Autorisierung erforderlich",
+      "requireAuthHint": "Emittenten-Autorisierung für Überweisungen erforderlich"
+    }
+  },
+  "success": {
+    "title": "Autorisierung erfolgreich erstellt!",
+    "description": "Ihre Autorisierung wurde an {{ledger}} übermittelt und in der Datenbank gespeichert.",
+    "transactionDetails": "Transaktionsdetails",
+    "authorizationTransaction": "Autorisierungs-Transaktion:",
+    "viewOnExplorer": "Im Explorer anzeigen →",
+    "createAnotherAuthorization": "Weitere Autorisierung erstellen"
+  },
+  "history": {
+    "title": "Autorisierungs-Historie",
+    "description": "Alle Asset-Autorisierungs-Transaktionen anzeigen und verwalten",
+    "filters": {
+      "status": "Status:",
+      "allStatuses": "Alle Status",
+      "pending": "Ausstehend",
+      "submitted": "Übermittelt",
+      "validated": "Bestätigt",
+      "failed": "Fehlgeschlagen",
+      "expired": "Abgelaufen"
+    },
+    "table": {
+      "asset": "Asset",
+      "holder": "Inhaber",
+      "limit": "Limit",
+      "status": "Status",
+      "created": "Erstellt",
+      "actions": "Aktionen"
+    },
+    "status": {
+      "pending": "AUSSTEHEND",
+      "submitted": "ÜBERMITTELT",
+      "validated": "BESTÄTIGT",
+      "failed": "FEHLGESCHLAGEN",
+      "expired": "ABGELAUFEN"
+    },
+    "messages": {
+      "loadingAuthorizations": "Autorisierungen werden geladen...",
+      "authorizationsFound": "{{count}} Autorisierung{{plural}} gefunden",
+      "noAuthorizationsFound": "Keine Autorisierungen gefunden",
+      "noAuthorizationsWithStatus": "Keine Autorisierungen mit Status \"{{status}}\" gefunden.",
+      "noAuthorizationRecords": "Keine Autorisierungsdatensätze gefunden. Erstellen Sie Ihre erste Autorisierung, um zu beginnen.",
+      "failedToFetchAuthorizations": "Fehler beim Laden der Autorisierungen",
+      "showingResults": "Zeige {{start}} bis {{end}} von {{total}} Ergebnissen",
+      "pageOf": "Seite {{current}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
   }
 }
