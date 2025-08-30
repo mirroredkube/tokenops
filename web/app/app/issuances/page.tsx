@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { 
@@ -42,6 +43,7 @@ interface IssuanceListResponse {
 }
 
 export default function IssuancesPage() {
+  const { t } = useTranslation(['issuances', 'common'])
   const router = useRouter()
   const [issuances, setIssuances] = useState<Issuance[]>([])
   const [loading, setLoading] = useState(true)
@@ -156,11 +158,11 @@ export default function IssuancesPage() {
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {
       case 'validated':
-        return 'Confirmed on ledger'
+        return t('issuances:statusInfo.validated.description', 'Successfully confirmed and tokens issued')
       case 'failed':
-        return 'Not confirmed (e.g., expired). See explorer.'
+        return t('issuances:statusInfo.failed.description', 'Transaction failed, no tokens issued')
       case 'submitted':
-        return 'Awaiting ledger validation (≈ 3–5s)'
+        return t('issuances:statusInfo.submitted.description', 'Transaction sent to XRPL network, waiting for validation')
       default:
         return status
     }
@@ -188,9 +190,9 @@ export default function IssuancesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Token Issuances</h1>
+        <h1 className="text-3xl font-bold">{t('issuances:page.title', 'Token Issuances')}</h1>
         <p className="text-gray-600 mt-2">
-          View all token issuances across all assets.
+          {t('issuances:page.description', 'View all token issuances across all assets.')}
         </p>
       </div>
 
@@ -198,76 +200,76 @@ export default function IssuancesPage() {
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <div className="flex items-center gap-4 mb-4">
           <Filter className="h-5 w-5 text-gray-500" />
-          <h2 className="text-lg font-semibold">Filters</h2>
+          <h2 className="text-lg font-semibold">{t('issuances:page.filters', 'Filters')}</h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <label className="block text-sm font-medium text-gray-700">
-                Status
+                {t('issuances:filters.status', 'Status')}
               </label>
-              <InfoPopup title="Issuance Status Meanings">
+              <InfoPopup title={t('issuances:statusInfo.title', 'Issuance Status Meanings')}>
                 <div className="space-y-4">
                   {/* Status Definitions */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                       <Clock className="h-5 w-5 text-yellow-600" />
                       <div>
-                        <div className="font-semibold text-yellow-800">Pending</div>
-                        <div className="text-sm text-yellow-700">Created but not yet submitted to blockchain</div>
+                        <div className="font-semibold text-yellow-800">{t('issuances:statusInfo.pending.title', 'Pending')}</div>
+                        <div className="text-sm text-yellow-700">{t('issuances:statusInfo.pending.description', 'Created but not yet submitted to blockchain')}</div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <Clock className="h-5 w-5 text-blue-600" />
                       <div>
-                        <div className="font-semibold text-blue-800">Submitted</div>
-                        <div className="text-sm text-blue-700">Transaction sent to XRPL network, waiting for validation</div>
+                        <div className="font-semibold text-blue-800">{t('issuances:statusInfo.submitted.title', 'Submitted')}</div>
+                        <div className="text-sm text-blue-700">{t('issuances:statusInfo.submitted.description', 'Transaction sent to XRPL network, waiting for validation')}</div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
                       <CheckCircle className="h-5 w-5 text-green-600" />
                       <div>
-                        <div className="font-semibold text-green-800">Validated</div>
-                        <div className="text-sm text-green-700">Successfully confirmed and tokens issued</div>
+                        <div className="font-semibold text-green-800">{t('issuances:statusInfo.validated.title', 'Validated')}</div>
+                        <div className="text-sm text-green-700">{t('issuances:statusInfo.validated.description', 'Successfully confirmed and tokens issued')}</div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
                       <XCircle className="h-5 w-5 text-red-600" />
                       <div>
-                        <div className="font-semibold text-red-800">Failed</div>
-                        <div className="text-sm text-red-700">Transaction failed, no tokens issued</div>
+                        <div className="font-semibold text-red-800">{t('issuances:statusInfo.failed.title', 'Failed')}</div>
+                        <div className="text-sm text-red-700">{t('issuances:statusInfo.failed.description', 'Transaction failed, no tokens issued')}</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Flow Diagram */}
                   <div className="border-t pt-4">
-                    <h4 className="font-semibold text-gray-900 mb-3">Typical Issuance Flow:</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3">{t('issuances:statusInfo.flowTitle', 'Typical Issuance Flow:')}</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex items-center justify-between text-sm">
                         <div className="text-center">
                           <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
                             <Clock className="h-4 w-4 text-yellow-600" />
                           </div>
-                          <div className="font-medium text-gray-700">Pending</div>
+                          <div className="font-medium text-gray-700">{t('issuances:statusInfo.pending.title', 'Pending')}</div>
                         </div>
                         <div className="flex-1 h-0.5 bg-gray-300 mx-4"></div>
                         <div className="text-center">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                             <Clock className="h-4 w-4 text-blue-600" />
                           </div>
-                          <div className="font-medium text-gray-700">Submitted</div>
+                          <div className="font-medium text-gray-700">{t('issuances:statusInfo.submitted.title', 'Submitted')}</div>
                         </div>
                         <div className="flex-1 h-0.5 bg-gray-300 mx-4"></div>
                         <div className="text-center">
                           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           </div>
-                          <div className="font-medium text-gray-700">Validated</div>
+                          <div className="font-medium text-gray-700">{t('issuances:statusInfo.validated.title', 'Validated')}</div>
                         </div>
                       </div>
                     </div>
@@ -276,8 +278,7 @@ export default function IssuancesPage() {
                   {/* Additional Info */}
                   <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                     <div className="text-sm text-blue-800">
-                      <strong>Note:</strong> Most transactions complete in 3-5 seconds on XRPL. 
-                      Failed transactions may need to be retried.
+                      <strong>Note:</strong> {t('issuances:statusInfo.note', 'Most transactions complete in 3-5 seconds on XRPL. Failed transactions may need to be retried.')}
                     </div>
                   </div>
                 </div>
@@ -287,23 +288,23 @@ export default function IssuancesPage() {
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
               options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'submitted', label: 'Submitted' },
-                { value: 'validated', label: 'Validated' },
-                { value: 'failed', label: 'Failed' }
+                { value: '', label: t('issuances:filters.allStatuses', 'All Statuses') },
+                { value: 'pending', label: t('issuances:statusInfo.pending.title', 'Pending') },
+                { value: 'submitted', label: t('issuances:statusInfo.submitted.title', 'Submitted') },
+                { value: 'validated', label: t('issuances:statusInfo.validated.title', 'Validated') },
+                { value: 'failed', label: t('issuances:statusInfo.failed.title', 'Failed') }
               ]}
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Asset ID
+              {t('issuances:filters.assetId', 'Asset ID')}
             </label>
             <input
               type="text"
               value={filters.assetId}
               onChange={(e) => handleFilterChange('assetId', e.target.value)}
-              placeholder="Filter by asset ID"
+              placeholder={t('issuances:filters.filterByAssetId', 'Filter by asset ID')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -323,20 +324,20 @@ export default function IssuancesPage() {
       {/* Issuances Table */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold">All Issuances</h3>
+          <h3 className="text-lg font-semibold">{t('issuances:page.allIssuances', 'All Issuances')}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            Showing {issuances.length} of {pagination.total} issuances
+            {t('issuances:page.showingResults', 'Showing {{count}} of {{total}} issuances', { count: issuances.length, total: pagination.total })}
           </p>
         </div>
 
         {loading ? (
           <div className="p-10 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-500 mt-2">Loading issuances...</p>
+            <p className="text-gray-500 mt-2">{t('issuances:page.loadingIssuances', 'Loading issuances...')}</p>
           </div>
         ) : issuances.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
-            No issuances found. Create your first issuance to see it here.
+            {t('issuances:page.noIssuancesFound', 'No issuances found. Create your first issuance to see it here.')}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -353,25 +354,25 @@ export default function IssuancesPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Currency
+                    {t('issuances:table.currency', 'Currency')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
+                    {t('issuances:table.amount', 'Amount')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Destination
+                    {t('issuances:table.destination', 'Destination')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t('issuances:table.status', 'Status')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction
+                    {t('issuances:table.transaction', 'Transaction')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
+                    {t('issuances:table.date', 'Date')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    {t('issuances:table.actions', 'Actions')}
                   </th>
                 </tr>
               </thead>
@@ -404,7 +405,7 @@ export default function IssuancesPage() {
                             <button
                               onClick={() => handleRefreshStatus(issuance.id, issuance.assetId)}
                               className="text-blue-600 hover:text-blue-800 transition-colors"
-                              title="Refresh status from ledger"
+                              title={t('issuances:actions.refreshStatus', 'Refresh status from ledger')}
                             >
                               <RefreshCw className="h-3 w-3" />
                             </button>
@@ -412,7 +413,7 @@ export default function IssuancesPage() {
                         </div>
                         {issuance.updatedAt && (
                           <div className="text-xs text-gray-500">
-                            Last checked: {formatDate(issuance.updatedAt)}
+                            {t('issuances:page.lastChecked', 'Last checked: {{date}}', { date: formatDate(issuance.updatedAt) })}
                           </div>
                         )}
                       </div>
@@ -429,7 +430,7 @@ export default function IssuancesPage() {
                           <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
                       ) : (
-                        <span className="text-gray-500">Pending</span>
+                        <span className="text-gray-500">{t('issuances:statusInfo.pending.title', 'Pending')}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -443,7 +444,7 @@ export default function IssuancesPage() {
                       <button
                         onClick={() => router.push(`/app/assets/${issuance.assetId}`)}
                         className="inline-flex items-center justify-center px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors duration-200 border border-gray-200 hover:border-gray-300"
-                        title="View Asset"
+                        title={t('issuances:actions.viewAsset', 'View Asset')}
                       >
                         <Eye className="w-3 h-3" />
                       </button>
@@ -460,9 +461,11 @@ export default function IssuancesPage() {
           <div className="px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} results
+                {t('issuances:page.pageInfo', 'Showing {{start}} to {{end}} of {{total}} results', {
+                  start: ((pagination.page - 1) * pagination.limit) + 1,
+                  end: Math.min(pagination.page * pagination.limit, pagination.total),
+                  total: pagination.total
+                })}
               </div>
               
               <div className="flex items-center space-x-2">
@@ -475,7 +478,7 @@ export default function IssuancesPage() {
                 </button>
                 
                 <span className="px-3 py-1 text-sm text-gray-700">
-                  Page {pagination.page} of {pagination.pages}
+                  {t('issuances:page.pageOf', 'Page {{current}} of {{total}}', { current: pagination.page, total: pagination.pages })}
                 </span>
                 
                 <button

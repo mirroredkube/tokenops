@@ -175,7 +175,7 @@ export default function AssetsPage() {
               <div className="space-y-6">
                 {/* Asset Lifecycle Flow Diagram */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-4">Asset Lifecycle Stages</h4>
+                  <h4 className="font-semibold text-gray-900 mb-4">{t('assets:lifecycleStages.title', 'Asset Lifecycle Stages')}</h4>
                   <div className="relative">
                     {/* Flow Diagram */}
                     <div className="grid grid-cols-4 gap-4 mb-6">
@@ -187,8 +187,8 @@ export default function AssetsPage() {
                           </svg>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">Draft</div>
-                          <div className="text-xs text-gray-500">Initial Setup</div>
+                          <div className="text-sm font-medium text-gray-900">{t('assets:lifecycleStages.draft.title', 'Draft')}</div>
+                          <div className="text-xs text-gray-500">{t('assets:lifecycleStages.draft.description', 'Initial Setup')}</div>
                         </div>
                       </div>
                       
@@ -200,8 +200,8 @@ export default function AssetsPage() {
                           </svg>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">Active</div>
-                          <div className="text-xs text-gray-500">Live & Issuing</div>
+                          <div className="text-sm font-medium text-gray-900">{t('assets:lifecycleStages.active.title', 'Active')}</div>
+                          <div className="text-xs text-gray-500">{t('assets:lifecycleStages.active.description', 'Live & Issuing')}</div>
                         </div>
                       </div>
                       
@@ -213,8 +213,8 @@ export default function AssetsPage() {
                           </svg>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">Paused</div>
-                          <div className="text-xs text-gray-500">Temporarily Suspended</div>
+                          <div className="text-sm font-medium text-gray-900">{t('assets:lifecycleStages.paused.title', 'Paused')}</div>
+                          <div className="text-xs text-gray-500">{t('assets:lifecycleStages.paused.description', 'Temporarily Suspended')}</div>
                         </div>
                       </div>
                       
@@ -226,8 +226,8 @@ export default function AssetsPage() {
                           </svg>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">Retired</div>
-                          <div className="text-xs text-gray-500">Permanently Closed</div>
+                          <div className="text-sm font-medium text-gray-900">{t('assets:lifecycleStages.retired.title', 'Retired')}</div>
+                          <div className="text-xs text-gray-500">{t('assets:lifecycleStages.retired.description', 'Permanently Closed')}</div>
                         </div>
                       </div>
                     </div>
@@ -240,75 +240,71 @@ export default function AssetsPage() {
                 {/* Stage Descriptions */}
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <h5 className="font-medium text-gray-900 mb-2">📝 Draft</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">📝 {t('assets:lifecycleStages.draft.title', 'Draft')}</h5>
                     <p className="text-sm text-gray-600">
-                      Asset is being configured with metadata, compliance settings, and ledger configuration. 
-                      No issuances can be made in this stage.
+                      {t('assets:lifecycleStages.draft.details', 'Asset is being configured with metadata, compliance settings, and ledger configuration. No issuances can be made in this stage.')}
                     </p>
                   </div>
                   
                   <div className="p-4 bg-green-50 rounded-lg">
-                    <h5 className="font-medium text-gray-900 mb-2">✅ Active</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">✅ {t('assets:lifecycleStages.active.title', 'Active')}</h5>
                     <p className="text-sm text-gray-600">
-                      Asset is live and ready for issuances. Holders can be authorized and tokens can be issued 
-                      to authorized addresses.
+                      {t('assets:lifecycleStages.active.details', 'Asset is live and ready for issuances. Holders can be authorized and tokens can be issued to authorized addresses.')}
                     </p>
                   </div>
                   
                   <div className="p-4 bg-yellow-50 rounded-lg">
-                    <h5 className="font-medium text-gray-900 mb-2">⏸️ Paused</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">⏸️ {t('assets:lifecycleStages.paused.title', 'Paused')}</h5>
                     <p className="text-sm text-gray-600">
-                      Asset is temporarily suspended. No new issuances can be made, but existing balances 
-                      remain intact. Can be reactivated to Active status.
+                      {t('assets:lifecycleStages.paused.details', 'Asset is temporarily suspended. No new issuances can be made, but existing balances remain intact. Can be reactivated to Active status.')}
                     </p>
                   </div>
                   
                   <div className="p-4 bg-red-50 rounded-lg">
-                    <h5 className="font-medium text-gray-900 mb-2">❌ Retired</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">❌ {t('assets:lifecycleStages.retired.title', 'Retired')}</h5>
                     <p className="text-sm text-gray-600">
-                      Asset is permanently closed. No new issuances or authorizations can be made. 
-                      This action is irreversible.
+                      {t('assets:lifecycleStages.retired.details', 'Asset is permanently closed. No new issuances or authorizations can be made. This action is irreversible.')}
                     </p>
                   </div>
                 </div>
 
                 {/* Compliance Modes */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Compliance Modes</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">{t('assets:complianceModesInfo.title', 'Compliance Modes')}</h4>
                   <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                      <div>
-                        <div className="font-medium text-gray-900">No Compliance (OFF)</div>
-                        <div className="text-sm text-gray-600">No compliance checks or records are maintained.</div>
+                                          <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-gray-900">{t('assets:complianceModesInfo.noCompliance.title', 'No Compliance (OFF)')}</div>
+                          <div className="text-sm text-gray-600">{t('assets:complianceModesInfo.noCompliance.description', 'No compliance checks or records are maintained.')}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                      <div>
-                        <div className="font-medium text-gray-900">Record Only (RECORD_ONLY)</div>
-                        <div className="text-sm text-gray-600">Compliance records are created but no enforcement.</div>
+                                          <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-gray-900">{t('assets:complianceModesInfo.recordOnly.title', 'Record Only (RECORD_ONLY)')}</div>
+                          <div className="text-sm text-gray-600">{t('assets:complianceModesInfo.recordOnly.description', 'Compliance records are created but no enforcement.')}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                      <div>
-                        <div className="font-medium text-gray-900">Gated Before (GATED_BEFORE)</div>
-                        <div className="text-sm text-gray-600">Compliance verification required before issuance.</div>
+                                          <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-gray-900">{t('assets:complianceModesInfo.gatedBefore.title', 'Gated Before (GATED_BEFORE)')}</div>
+                          <div className="text-sm text-gray-600">{t('assets:complianceModesInfo.gatedBefore.description', 'Compliance verification required before issuance.')}</div>
+                        </div>
                       </div>
-                    </div>
                   </div>
                 </div>
 
                 {/* Best Practices */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Best Practices</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">{t('assets:bestPractices.title', 'Best Practices')}</h4>
                   <ul className="text-sm text-gray-600 space-y-2">
-                    <li>• Always test assets in Draft mode before activating</li>
-                    <li>• Use appropriate compliance modes for your regulatory requirements</li>
-                    <li>• Monitor asset usage and consider pausing if suspicious activity is detected</li>
-                    <li>• Only retire assets when absolutely necessary, as this action is irreversible</li>
-                    <li>• Keep asset metadata up to date for audit and compliance purposes</li>
+                    <li>• {t('assets:bestPractices.items.0', 'Always test assets in Draft mode before activating')}</li>
+                    <li>• {t('assets:bestPractices.items.1', 'Use appropriate compliance modes for your regulatory requirements')}</li>
+                    <li>• {t('assets:bestPractices.items.2', 'Monitor asset usage and consider pausing if suspicious activity is detected')}</li>
+                    <li>• {t('assets:bestPractices.items.3', 'Only retire assets when absolutely necessary, as this action is irreversible')}</li>
+                    <li>• {t('assets:bestPractices.items.4', 'Keep asset metadata up to date for audit and compliance purposes')}</li>
                   </ul>
                 </div>
               </div>

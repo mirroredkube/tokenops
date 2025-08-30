@@ -46,6 +46,32 @@
     "allStatuses": "All Statuses",
     "unverified": "Unverified",
     "verified": "Verified",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "status": "Status",
+    "assetId": "Asset ID",
+    "holderAddress": "Holder Address",
+    "filterByAssetId": "Filter by asset ID",
+    "filterByHolderAddress": "Filter by holder address"
+  },
+  "page": {
+    "filters": "Filters",
+    "complianceRecords": "Compliance Records",
+    "totalRecords": "{{count}} total records",
+    "loadingComplianceRecords": "Loading compliance records...",
+    "view": "View"
+  },
+  "table": {
+    "recordId": "Record ID",
+    "asset": "Asset",
+    "holder": "Holder",
+    "status": "Status",
+    "created": "Created",
+    "actions": "Actions"
+  },
+  "pagination": {
+    "showingResults": "Showing {{start}} to {{end}} of {{total}} results",
+    "pageOf": "Page {{current}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

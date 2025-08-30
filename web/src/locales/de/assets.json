@@ -92,5 +92,116 @@
     "retireAsset": "Asset zurückziehen",
     "issueTokens": "Token ausgeben"
   },
-  "assetLifecycleAndDocumentation": "Asset-Lebenszyklus & Dokumentation"
+  "assetLifecycleAndDocumentation": "Asset-Lebenszyklus & Dokumentation",
+  "lifecycleStages": {
+    "title": "Asset-Lebenszyklus-Stadien",
+    "draft": {
+      "title": "Entwurf",
+      "description": "Erstkonfiguration",
+      "details": "Asset wird mit Metadaten, Compliance-Einstellungen und Ledger-Konfiguration konfiguriert. In diesem Stadium können keine Emissionen erfolgen."
+    },
+    "active": {
+      "title": "Aktiv",
+      "description": "Live & Emission",
+      "details": "Asset ist live und bereit für Emissionen. Inhaber können autorisiert werden und Token können an autorisierte Adressen ausgegeben werden."
+    },
+    "paused": {
+      "title": "Pausiert",
+      "description": "Vorübergehend ausgesetzt",
+      "details": "Asset ist vorübergehend ausgesetzt. Keine neuen Emissionen können erfolgen, aber bestehende Salden bleiben intakt. Kann zu aktivem Status reaktiviert werden."
+    },
+    "retired": {
+      "title": "Zurückgezogen",
+      "description": "Dauerhaft geschlossen",
+      "details": "Asset ist dauerhaft geschlossen. Keine neuen Emissionen oder Autorisierungen können erfolgen. Diese Aktion ist unumkehrbar."
+    }
+  },
+  "complianceModesInfo": {
+    "title": "Compliance-Modi",
+    "noCompliance": {
+      "title": "Keine Compliance (OFF)",
+      "description": "Es werden keine Compliance-Prüfungen oder -Aufzeichnungen durchgeführt."
+    },
+    "recordOnly": {
+      "title": "Nur Aufzeichnung (RECORD_ONLY)",
+      "description": "Compliance-Aufzeichnungen werden erstellt, aber keine Durchsetzung."
+    },
+    "gatedBefore": {
+      "title": "Vorher geprüft (GATED_BEFORE)",
+      "description": "Compliance-Verifizierung vor der Emission erforderlich."
+    }
+  },
+  "bestPractices": {
+    "title": "Beste Praktiken",
+    "items": {
+      "0": "Testen Sie Assets immer im Entwurfsmodus, bevor Sie sie aktivieren",
+      "1": "Verwenden Sie angemessene Compliance-Modi für Ihre regulatorischen Anforderungen",
+      "2": "Überwachen Sie die Asset-Nutzung und erwägen Sie eine Pause bei verdächtigen Aktivitäten",
+      "3": "Ziehen Sie Assets nur zurück, wenn es absolut notwendig ist, da diese Aktion unumkehrbar ist",
+      "4": "Halten Sie Asset-Metadaten für Audit- und Compliance-Zwecke aktuell"
+    }
+  },
+  "createAsset": {
+    "title": "Asset erstellen",
+    "description": "Erstellen Sie ein neues Token-Asset für Emissionen über mehrere Ledger hinweg.",
+    "steps": {
+      "identity": "Identität",
+      "policy": "Richtlinie",
+      "registry": "Register",
+      "controls": "Steuerungen"
+    },
+    "fields": {
+      "ledger": "Ledger",
+      "network": "Netzwerk",
+      "issuerAddress": "Emittenten-Adresse",
+      "currencyCode": "Währungscode",
+      "decimals": "Dezimalstellen",
+      "complianceMode": "Compliance-Modus",
+      "transferFee": "Übertragungsgebühr (Basis-Punkte)"
+    },
+    "options": {
+      "selectLedger": "Ledger auswählen",
+      "selectNetwork": "Netzwerk auswählen",
+      "selectComplianceMode": "Compliance-Modus auswählen",
+      "noCompliance": "Keine Compliance",
+      "recordOnly": "Nur Aufzeichnung (Optional)",
+      "gatedBefore": "Vorher geprüft (Erforderlich)"
+    },
+    "placeholders": {
+      "issuerAddress": "r... (XRPL) / 0x... (Ethereum)",
+      "currencyCode": "USD, EUR, COMP",
+      "transferFee": "0"
+    },
+    "registry": {
+      "title": "Register-Informationen",
+      "description": "Register-Informationen helfen bei Compliance und regulatorischer Berichterstattung. Diese Daten werden Off-Chain gespeichert und können in Compliance-Datensätzen referenziert werden.",
+      "fields": {
+        "isinCode": "ISIN-Code",
+        "jurisdiction": "Gerichtsbarkeit",
+        "micaClassification": "MiCA-Klassifizierung",
+        "leiCode": "LEI-Code"
+      },
+      "placeholders": {
+        "isinCode": "US0378331005",
+        "jurisdiction": "DE, US, EU",
+        "micaClassification": "Utility Token, Security Token",
+        "leiCode": "529900WXWXWXWXWXWXWX"
+      }
+    },
+    "controls": {
+      "title": "Ledger-spezifische Steuerungen",
+      "description": "Diese Steuerungen beeinflussen, wie sich das Asset im ausgewählten Ledger verhält. Einige Optionen sind möglicherweise nicht für alle Ledger verfügbar.",
+      "requireAuthorization": "Autorisierung erforderlich (XRPL)",
+      "enableFreeze": "Einfrieren aktivieren (XRPL)",
+      "enableClawback": "Rückforderung aktivieren (XRPL)"
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "createAsset": "Asset erstellen (Entwurf)",
+      "creatingAsset": "Asset wird erstellt..."
+    },
+    "messages": {
+      "failedToCreateAsset": "Asset konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+    }
+  }
 }

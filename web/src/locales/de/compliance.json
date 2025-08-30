@@ -46,6 +46,32 @@
     "allStatuses": "Alle Status",
     "unverified": "Nicht verifiziert",
     "verified": "Verifiziert",
-    "rejected": "Abgelehnt"
+    "rejected": "Abgelehnt",
+    "status": "Status",
+    "assetId": "Asset-ID",
+    "holderAddress": "Inhaber-Adresse",
+    "filterByAssetId": "Nach Asset-ID filtern",
+    "filterByHolderAddress": "Nach Inhaber-Adresse filtern"
+  },
+  "page": {
+    "filters": "Filter",
+    "complianceRecords": "Compliance-Datensätze",
+    "totalRecords": "{{count}} Datensätze insgesamt",
+    "loadingComplianceRecords": "Compliance-Datensätze werden geladen...",
+    "view": "Anzeigen"
+  },
+  "table": {
+    "recordId": "Datensatz-ID",
+    "asset": "Asset",
+    "holder": "Inhaber",
+    "status": "Status",
+    "created": "Erstellt",
+    "actions": "Aktionen"
+  },
+  "pagination": {
+    "showingResults": "Zeige {{start}} bis {{end}} von {{total}} Ergebnissen",
+    "pageOf": "Seite {{current}} von {{total}}",
+    "previous": "Zurück",
+    "next": "Weiter"
   }
 }

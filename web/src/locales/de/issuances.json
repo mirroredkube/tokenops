@@ -53,6 +53,59 @@
     "submitted": "Eingereicht",
     "validated": "Validiert",
     "failed": "Fehlgeschlagen",
-    "expired": "Abgelaufen"
+    "expired": "Abgelaufen",
+    "pending": "Ausstehend"
+  },
+  "page": {
+    "title": "Token-Emissionen",
+    "description": "Alle Token-Emissionen über alle Assets hinweg anzeigen.",
+    "filters": "Filter",
+    "allIssuances": "Alle Emissionen",
+    "showingResults": "Zeige {{count}} von {{total}} Emissionen",
+    "noIssuancesFound": "Keine Emissionen gefunden. Erstellen Sie Ihre erste Emission, um sie hier zu sehen.",
+    "loadingIssuances": "Emissionen werden geladen...",
+    "lastChecked": "Zuletzt geprüft: {{date}}",
+    "pageInfo": "Zeige {{start}} bis {{end}} von {{total}} Ergebnissen",
+    "pageOf": "Seite {{current}} von {{total}}"
+  },
+  "filters": {
+    "status": "Status",
+    "assetId": "Asset-ID",
+    "allStatuses": "Alle Status",
+    "filterByAssetId": "Nach Asset-ID filtern"
+  },
+  "table": {
+    "currency": "Währung",
+    "amount": "Betrag",
+    "destination": "Ziel",
+    "status": "Status",
+    "transaction": "Transaktion",
+    "date": "Datum",
+    "actions": "Aktionen"
+  },
+  "statusInfo": {
+    "title": "Bedeutung der Emissionsstatus",
+    "pending": {
+      "title": "Ausstehend",
+      "description": "Erstellt, aber noch nicht an Blockchain übermittelt"
+    },
+    "submitted": {
+      "title": "Eingereicht",
+      "description": "Transaktion an XRPL-Netzwerk gesendet, wartet auf Validierung"
+    },
+    "validated": {
+      "title": "Validiert",
+      "description": "Erfolgreich bestätigt und Token ausgegeben"
+    },
+    "failed": {
+      "title": "Fehlgeschlagen",
+      "description": "Transaktion fehlgeschlagen, keine Token ausgegeben"
+    },
+    "flowTitle": "Typischer Emissionsablauf:",
+    "note": "Hinweis: Die meisten Transaktionen werden in 3-5 Sekunden auf XRPL abgeschlossen. Fehlgeschlagene Transaktionen müssen möglicherweise wiederholt werden."
+  },
+  "actions": {
+    "refreshStatus": "Status vom Ledger aktualisieren",
+    "viewAsset": "Asset anzeigen"
   }
 }

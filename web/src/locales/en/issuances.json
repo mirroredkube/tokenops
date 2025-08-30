@@ -53,6 +53,59 @@
     "submitted": "Submitted",
     "validated": "Validated",
     "failed": "Failed",
-    "expired": "Expired"
+    "expired": "Expired",
+    "pending": "Pending"
+  },
+  "page": {
+    "title": "Token Issuances",
+    "description": "View all token issuances across all assets.",
+    "filters": "Filters",
+    "allIssuances": "All Issuances",
+    "showingResults": "Showing {{count}} of {{total}} issuances",
+    "noIssuancesFound": "No issuances found. Create your first issuance to see it here.",
+    "loadingIssuances": "Loading issuances...",
+    "lastChecked": "Last checked: {{date}}",
+    "pageInfo": "Showing {{start}} to {{end}} of {{total}} results",
+    "pageOf": "Page {{current}} of {{total}}"
+  },
+  "filters": {
+    "status": "Status",
+    "assetId": "Asset ID",
+    "allStatuses": "All Statuses",
+    "filterByAssetId": "Filter by asset ID"
+  },
+  "table": {
+    "currency": "Currency",
+    "amount": "Amount",
+    "destination": "Destination",
+    "status": "Status",
+    "transaction": "Transaction",
+    "date": "Date",
+    "actions": "Actions"
+  },
+  "statusInfo": {
+    "title": "Issuance Status Meanings",
+    "pending": {
+      "title": "Pending",
+      "description": "Created but not yet submitted to blockchain"
+    },
+    "submitted": {
+      "title": "Submitted",
+      "description": "Transaction sent to XRPL network, waiting for validation"
+    },
+    "validated": {
+      "title": "Validated",
+      "description": "Successfully confirmed and tokens issued"
+    },
+    "failed": {
+      "title": "Failed",
+      "description": "Transaction failed, no tokens issued"
+    },
+    "flowTitle": "Typical Issuance Flow:",
+    "note": "Note: Most transactions complete in 3-5 seconds on XRPL. Failed transactions may need to be retried."
+  },
+  "actions": {
+    "refreshStatus": "Refresh status from ledger",
+    "viewAsset": "View Asset"
   }
 }

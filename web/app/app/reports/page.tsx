@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Download, RotateCcw, Calendar, Search, Filter, ExternalLink, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import CustomDropdown from '../../components/CustomDropdown'
@@ -27,6 +28,7 @@ interface IssuanceRecord {
 }
 
 export default function ReportsPage() {
+  const { t } = useTranslation(['reports', 'common'])
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<ReportTab>('issuances')
   const [filters, setFilters] = useState<FilterState>({
@@ -184,17 +186,17 @@ export default function ReportsPage() {
   }
 
   const tabs = [
-    { id: 'issuances', label: 'Issuances' },
-    { id: 'authorizations', label: 'Authorizations' },
-    { id: 'compliance', label: 'Compliance' }
+    { id: 'issuances', label: t('reports:issuances', 'Issuances') },
+    { id: 'authorizations', label: t('reports:authorizations', 'Authorizations') },
+    { id: 'compliance', label: t('reports:compliance', 'Compliance') }
   ]
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-        <p className="text-gray-600 mt-1">Generate reports and export data for compliance and analysis</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('reports:title', 'Reports')}</h1>
+        <p className="text-gray-600 mt-1">{t('reports:description', 'Generate reports and export data for compliance and analysis')}</p>
       </div>
 
       {/* Tabs */}
@@ -221,15 +223,15 @@ export default function ReportsPage() {
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Date:</span>
+            <span className="text-sm font-medium text-gray-700">{t('reports:filters.date', 'Date:')}</span>
             <CustomDropdown
               value={filters.dateRange}
               onChange={(value) => handleFilterChange('dateRange', value)}
               options={[
-                { value: '7', label: 'Last 7 days' },
-                { value: '30', label: 'Last 30 days' },
-                { value: '90', label: 'Last 90 days' },
-                { value: 'custom', label: 'Custom range' }
+                { value: '7', label: t('reports:filters.last7Days', 'Last 7 days') },
+                { value: '30', label: t('reports:filters.last30Days', 'Last 30 days') },
+                { value: '90', label: t('reports:filters.last90Days', 'Last 90 days') },
+                { value: 'custom', label: t('reports:filters.customRange', 'Custom range') }
               ]}
               className="w-40"
             />
@@ -237,23 +239,23 @@ export default function ReportsPage() {
 
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Status:</span>
+            <span className="text-sm font-medium text-gray-700">{t('reports:filters.status', 'Status:')}</span>
             <CustomDropdown
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
               options={
                 activeTab === 'compliance' 
                   ? [
-                      { value: 'all', label: 'All Statuses' },
-                      { value: 'UNVERIFIED', label: 'Unverified' },
-                      { value: 'VERIFIED', label: 'Verified' },
-                      { value: 'REJECTED', label: 'Rejected' }
+                      { value: 'all', label: t('reports:filters.allStatuses', 'All Statuses') },
+                      { value: 'UNVERIFIED', label: t('reports:filters.unverified', 'Unverified') },
+                      { value: 'VERIFIED', label: t('reports:filters.verified', 'Verified') },
+                      { value: 'REJECTED', label: t('reports:filters.rejected', 'Rejected') }
                     ]
                   : [
-                      { value: 'all', label: 'All Statuses' },
-                      { value: 'SUBMITTED', label: 'Submitted' },
-                      { value: 'VALIDATED', label: 'Validated' },
-                      { value: 'FAILED', label: 'Failed' }
+                      { value: 'all', label: t('reports:filters.allStatuses', 'All Statuses') },
+                      { value: 'SUBMITTED', label: t('reports:filters.submitted', 'Submitted') },
+                      { value: 'VALIDATED', label: t('reports:filters.validated', 'Validated') },
+                      { value: 'FAILED', label: t('reports:filters.failed', 'Failed') }
                     ]
               }
               className="w-40"
@@ -262,12 +264,12 @@ export default function ReportsPage() {
 
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Holder:</span>
+            <span className="text-sm font-medium text-gray-700">{t('reports:filters.holder', 'Holder:')}</span>
             <input
               type="text"
               value={filters.holder}
               onChange={(e) => handleFilterChange('holder', e.target.value)}
-              placeholder="Search holder address..."
+              placeholder={t('reports:filters.searchHolderAddress', 'Search holder address...')}
               className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
           </div>
@@ -278,14 +280,14 @@ export default function ReportsPage() {
               className="inline-flex items-center px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
             >
               <RotateCcw className="h-4 w-4 mr-1" />
-              Reset
+              {t('reports:actions.reset', 'Reset')}
             </button>
             <button
               onClick={handleDownloadCSV}
               className="inline-flex items-center px-3 py-1 text-sm font-medium text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
             >
               <Download className="h-4 w-4 mr-1" />
-              Download CSV
+              {t('reports:actions.downloadCSV', 'Download CSV')}
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Download, RefreshCw, ExternalLink, Search, Users, TrendingUp } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import CustomDropdown from '../../components/CustomDropdown'
@@ -49,6 +50,7 @@ interface HolderLookupData {
 type TabType = 'outstanding' | 'holder-lookup'
 
 export default function BalancesPage() {
+  const { t } = useTranslation(['balances', 'common'])
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<TabType>('outstanding')
   const [issuerFilters, setIssuerFilters] = useState<IssuerFilters>({
@@ -185,8 +187,8 @@ export default function BalancesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Balances</h1>
-        <p className="text-gray-600 mt-1">View outstanding supply and holder breakdown for your assets</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('balances:title', 'Balances')}</h1>
+        <p className="text-gray-600 mt-1">{t('balances:description', 'View outstanding supply and holder breakdown for your assets')}</p>
       </div>
 
       {/* Tabs */}
@@ -203,7 +205,7 @@ export default function BalancesPage() {
             >
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Outstanding
+                {t('balances:outstanding', 'Outstanding')}
               </div>
             </button>
             <button
@@ -216,7 +218,7 @@ export default function BalancesPage() {
             >
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Holder Lookup
+                {t('balances:holderLookup', 'Holder Lookup')}
               </div>
             </button>
           </nav>
@@ -230,6 +232,7 @@ export default function BalancesPage() {
               onDownloadCSV={handleDownloadCSV}
               onRefresh={handleRefresh}
               assetsData={assetsData}
+              t={t}
             />
           ) : (
             <HolderLookupView 
@@ -238,6 +241,7 @@ export default function BalancesPage() {
               onDownloadCSV={handleDownloadCSV}
               onRefresh={handleRefresh}
               assetsData={assetsData}
+              t={t}
             />
           )}
         </div>
@@ -251,20 +255,22 @@ function OutstandingView({
   onFilterChange,
   onDownloadCSV,
   onRefresh,
-  assetsData
+  assetsData,
+  t
 }: { 
   filters: IssuerFilters
   onFilterChange: (key: keyof IssuerFilters, value: string) => void
   onDownloadCSV: () => void
   onRefresh: () => void
   assetsData: any[] | undefined
+  t: any
 }) {
   return (
     <div className="space-y-6">
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Asset:</span>
+          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('balances:fields.asset', 'Asset:')}</span>
           <div className="flex-1 min-w-0">
             <CustomDropdown
               value={filters.assetId}
@@ -310,13 +316,15 @@ function HolderLookupView({
   onFilterChange,
   onDownloadCSV,
   onRefresh,
-  assetsData
+  assetsData,
+  t
 }: { 
   filters: HolderLookupFilters
   onFilterChange: (key: keyof HolderLookupFilters, value: string) => void
   onDownloadCSV: () => void
   onRefresh: () => void
   assetsData: any[] | undefined
+  t: any
 }) {
   return (
     <div className="space-y-6">

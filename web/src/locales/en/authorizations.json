@@ -48,5 +48,9 @@
     "validated": "Validated",
     "failed": "Failed",
     "expired": "Expired"
+  },
+  "page": {
+    "title": "New Authorization",
+    "description": "Create asset authorizations for token issuance across multiple ledgers"
   }
 }

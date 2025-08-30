@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock } from 'lucide-react'
@@ -31,6 +32,7 @@ interface ComplianceListResponse {
 }
 
 export default function CompliancePage() {
+  const { t } = useTranslation(['compliance', 'common'])
   const router = useRouter()
   const [records, setRecords] = useState<ComplianceRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -133,9 +135,9 @@ export default function CompliancePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Compliance Management</h1>
+        <h1 className="text-3xl font-bold">{t('compliance:title', 'Compliance Management')}</h1>
         <p className="text-gray-600 mt-2">
-          View and verify compliance records for regulatory oversight.
+          {t('compliance:description', 'View and verify compliance records for regulatory oversight.')}
         </p>
       </div>
 
@@ -143,49 +145,49 @@ export default function CompliancePage() {
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <div className="flex items-center gap-4 mb-4">
           <Filter className="h-5 w-5 text-gray-500" />
-          <h2 className="text-lg font-semibold">Filters</h2>
+          <h2 className="text-lg font-semibold">{t('compliance:page.filters', 'Filters')}</h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
+              {t('compliance:filters.status', 'Status')}
             </label>
             <CustomDropdown
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
               options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'UNVERIFIED', label: 'Unverified' },
-                { value: 'VERIFIED', label: 'Verified' },
-                { value: 'REJECTED', label: 'Rejected' }
+                { value: '', label: t('compliance:filters.allStatuses', 'All Statuses') },
+                { value: 'UNVERIFIED', label: t('compliance:filters.unverified', 'Unverified') },
+                { value: 'VERIFIED', label: t('compliance:filters.verified', 'Verified') },
+                { value: 'REJECTED', label: t('compliance:filters.rejected', 'Rejected') }
               ]}
-              placeholder="All Statuses"
+              placeholder={t('compliance:filters.allStatuses', 'All Statuses')}
             />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Asset ID
+              {t('compliance:filters.assetId', 'Asset ID')}
             </label>
             <input
               type="text"
               value={filters.assetId}
               onChange={(e) => handleFilterChange('assetId', e.target.value)}
-              placeholder="Filter by asset ID"
+              placeholder={t('compliance:filters.filterByAssetId', 'Filter by asset ID')}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
             />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Holder Address
+              {t('compliance:filters.holderAddress', 'Holder Address')}
             </label>
             <input
               type="text"
               value={filters.holder}
               onChange={(e) => handleFilterChange('holder', e.target.value)}
-              placeholder="Filter by holder address"
+              placeholder={t('compliance:filters.filterByHolderAddress', 'Filter by holder address')}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
             />
           </div>
@@ -196,9 +198,9 @@ export default function CompliancePage() {
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Compliance Records</h2>
+            <h2 className="text-lg font-semibold">{t('compliance:page.complianceRecords', 'Compliance Records')}</h2>
             <div className="text-sm text-gray-500">
-              {pagination.total} total records
+              {t('compliance:page.totalRecords', '{{count}} total records', { count: pagination.total })}
             </div>
           </div>
         </div>
@@ -206,7 +208,7 @@ export default function CompliancePage() {
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading compliance records...</p>
+            <p className="mt-2 text-gray-600">{t('compliance:page.loadingComplianceRecords', 'Loading compliance records...')}</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center">
@@ -218,17 +220,17 @@ export default function CompliancePage() {
               onClick={fetchRecords}
               className="mt-2 px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
             >
-              Retry
+              {t('compliance:actions.retry', 'Retry')}
             </button>
           </div>
         ) : records.length === 0 ? (
           <div className="p-8 text-center">
             <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No compliance records found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('compliance:messages.noComplianceRecordsFound', 'No compliance records found')}</h3>
             <p className="text-gray-600">
               {Object.values(filters).some(f => f) 
-                ? 'Try adjusting your filters to see more results.'
-                : 'Compliance records will appear here once created.'
+                ? t('compliance:messages.tryAdjustingYourFilters', 'Try adjusting your filters to see more results.')
+                : t('compliance:messages.complianceRecordsWillAppear', 'Compliance records will appear here once created.')
               }
             </p>
           </div>
@@ -239,22 +241,22 @@ export default function CompliancePage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Record ID
+                      {t('compliance:table.recordId', 'Record ID')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Asset
+                      {t('compliance:table.asset', 'Asset')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Holder
+                      {t('compliance:table.holder', 'Holder')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Status
+                      {t('compliance:table.status', 'Status')}
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Created
+                      {t('compliance:table.created', 'Created')}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                      Actions
+                      {t('compliance:table.actions', 'Actions')}
                     </th>
                   </tr>
                 </thead>
@@ -301,7 +303,7 @@ export default function CompliancePage() {
                           className="inline-flex items-center justify-center px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors duration-200 border border-gray-200 hover:border-gray-300 whitespace-nowrap"
                         >
                           <Eye className="w-3 h-3 mr-1" />
-                          View
+                          {t('compliance:page.view', 'View')}
                         </button>
                       </td>
                     </tr>
@@ -315,9 +317,11 @@ export default function CompliancePage() {
               <div className="px-6 py-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-700">
-                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                    {pagination.total} results
+                    {t('compliance:pagination.showingResults', 'Showing {{start}} to {{end}} of {{total}} results', {
+                      start: ((pagination.page - 1) * pagination.limit) + 1,
+                      end: Math.min(pagination.page * pagination.limit, pagination.total),
+                      total: pagination.total
+                    })}
                   </div>
                   <div className="flex space-x-2">
                     <button
@@ -325,17 +329,17 @@ export default function CompliancePage() {
                       disabled={pagination.page === 1}
                       className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
-                      Previous
+                      {t('compliance:pagination.previous', 'Previous')}
                     </button>
                     <span className="px-3 py-1 text-sm text-gray-700">
-                      Page {pagination.page} of {pagination.pages}
+                      {t('compliance:pagination.pageOf', 'Page {{current}} of {{total}}', { current: pagination.page, total: pagination.pages })}
                     </span>
                     <button
                       onClick={() => handlePageChange(pagination.page + 1)}
                       disabled={pagination.page === pagination.pages}
                       className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
-                      Next
+                      {t('compliance:pagination.next', 'Next')}
                     </button>
                   </div>
                 </div>

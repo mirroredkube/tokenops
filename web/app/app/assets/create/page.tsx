@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import FormField from '../../../components/FormField'
@@ -29,6 +30,7 @@ interface AssetFormData {
 }
 
 export default function CreateAssetPage() {
+  const { t } = useTranslation(['assets', 'common'])
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -99,7 +101,7 @@ export default function CreateAssetPage() {
       router.push(`/app/assets/${data.id}`)
     } catch (err: any) {
       console.error('Error creating asset:', err)
-      setError(err.message || 'Failed to create asset. Please try again.')
+      setError(err.message || t('assets:createAsset.messages.failedToCreateAsset', 'Failed to create asset. Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -125,9 +127,9 @@ export default function CreateAssetPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Create Asset</h1>
+        <h1 className="text-3xl font-bold">{t('assets:createAsset.title', 'Create Asset')}</h1>
         <p className="text-gray-600 mt-2">
-          Create a new token asset for issuance across multiple ledgers.
+          {t('assets:createAsset.description', 'Create a new token asset for issuance across multiple ledgers.')}
         </p>
       </div>
 
@@ -143,9 +145,9 @@ export default function CreateAssetPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Step 1: Identity */}
-        <Accordion title="Identity" step={1} defaultOpen={true}>
+        <Accordion title={t('assets:createAsset.steps.identity', 'Identity')} step={1} defaultOpen={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Ledger" required>
+            <FormField label={t('assets:createAsset.fields.ledger', 'Ledger')} required>
               <CustomDropdown
                 value={formData.ledger}
                 onChange={(value) => handleInputChange('ledger', value)}
@@ -154,12 +156,12 @@ export default function CreateAssetPage() {
                   { value: 'hedera', label: 'Hedera' },
                   { value: 'ethereum', label: 'Ethereum' }
                 ]}
-                placeholder="Select Ledger"
+                placeholder={t('assets:createAsset.options.selectLedger', 'Select Ledger')}
                 required
               />
             </FormField>
 
-            <FormField label="Network" required>
+            <FormField label={t('assets:createAsset.fields.network', 'Network')} required>
               <CustomDropdown
                 value={formData.network}
                 onChange={(value) => handleInputChange('network', value)}
@@ -168,34 +170,34 @@ export default function CreateAssetPage() {
                   { value: 'mainnet', label: 'Mainnet' },
                   { value: 'devnet', label: 'Devnet' }
                 ]}
-                placeholder="Select Network"
+                placeholder={t('assets:createAsset.options.selectNetwork', 'Select Network')}
                 required
               />
             </FormField>
 
-            <FormField label="Issuer Address" required>
+            <FormField label={t('assets:createAsset.fields.issuerAddress', 'Issuer Address')} required>
               <input
                 type="text"
                 value={formData.issuer}
                 onChange={(e) => handleInputChange('issuer', e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="r... (XRPL) / 0x... (Ethereum)"
+                placeholder={t('assets:createAsset.placeholders.issuerAddress', 'r... (XRPL) / 0x... (Ethereum)')}
                 required
               />
             </FormField>
 
-            <FormField label="Currency Code" required>
+            <FormField label={t('assets:createAsset.fields.currencyCode', 'Currency Code')} required>
               <input
                 type="text"
                 value={formData.code}
                 onChange={(e) => handleInputChange('code', e.target.value.toUpperCase())}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="USD, EUR, COMP"
+                placeholder={t('assets:createAsset.placeholders.currencyCode', 'USD, EUR, COMP')}
                 required
               />
             </FormField>
 
-            <FormField label="Decimals" required>
+            <FormField label={t('assets:createAsset.fields.decimals', 'Decimals')} required>
               <input
                 type="number"
                 min="0"
@@ -210,18 +212,18 @@ export default function CreateAssetPage() {
         </Accordion>
 
         {/* Step 2: Policy */}
-        <Accordion title="Policy" step={2}>
+        <Accordion title={t('assets:createAsset.steps.policy', 'Policy')} step={2}>
           <div className="space-y-4">
-            <FormField label="Compliance Mode" required>
+            <FormField label={t('assets:createAsset.fields.complianceMode', 'Compliance Mode')} required>
               <CustomDropdown
                 value={formData.complianceMode}
                 onChange={(value) => handleInputChange('complianceMode', value)}
                 options={[
-                  { value: 'OFF', label: 'No Compliance' },
-                  { value: 'RECORD_ONLY', label: 'Record Only (Optional)' },
-                  { value: 'GATED_BEFORE', label: 'Gated Before (Required)' }
+                  { value: 'OFF', label: t('assets:createAsset.options.noCompliance', 'No Compliance') },
+                  { value: 'RECORD_ONLY', label: t('assets:createAsset.options.recordOnly', 'Record Only (Optional)') },
+                  { value: 'GATED_BEFORE', label: t('assets:createAsset.options.gatedBefore', 'Gated Before (Required)') }
                 ]}
-                placeholder="Select Compliance Mode"
+                placeholder={t('assets:createAsset.options.selectComplianceMode', 'Select Compliance Mode')}
                 required
               />
             </FormField>
@@ -229,54 +231,53 @@ export default function CreateAssetPage() {
         </Accordion>
 
         {/* Step 3: Registry */}
-        <Accordion title="Registry" step={3}>
+        <Accordion title={t('assets:createAsset.steps.registry', 'Registry')} step={3}>
           <div className="space-y-4">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-900 mb-2">Registry Information</h4>
+              <h4 className="font-medium text-blue-900 mb-2">{t('assets:createAsset.registry.title', 'Registry Information')}</h4>
               <p className="text-sm text-blue-700">
-                Registry information helps with compliance and regulatory reporting. 
-                This data will be stored off-chain and can be referenced in compliance records.
+                {t('assets:createAsset.registry.description', 'Registry information helps with compliance and regulatory reporting. This data will be stored off-chain and can be referenced in compliance records.')}
               </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="ISIN Code">
+              <FormField label={t('assets:createAsset.registry.fields.isinCode', 'ISIN Code')}>
                 <input
                   type="text"
                   value={formData.registry?.isin || ''}
                   onChange={(e) => handleNestedChange('registry', 'isin', e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="US0378331005"
+                  placeholder={t('assets:createAsset.registry.placeholders.isinCode', 'US0378331005')}
                 />
               </FormField>
 
-              <FormField label="Jurisdiction">
+              <FormField label={t('assets:createAsset.registry.fields.jurisdiction', 'Jurisdiction')}>
                 <input
                   type="text"
                   value={formData.registry?.jurisdiction || ''}
                   onChange={(e) => handleNestedChange('registry', 'jurisdiction', e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="DE, US, EU"
+                  placeholder={t('assets:createAsset.registry.placeholders.jurisdiction', 'DE, US, EU')}
                 />
               </FormField>
 
-              <FormField label="MiCA Classification">
+              <FormField label={t('assets:createAsset.registry.fields.micaClassification', 'MiCA Classification')}>
                 <input
                   type="text"
                   value={formData.registry?.micaClass || ''}
                   onChange={(e) => handleNestedChange('registry', 'micaClass', e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="Utility Token, Security Token"
+                  placeholder={t('assets:createAsset.registry.placeholders.micaClassification', 'Utility Token, Security Token')}
                 />
               </FormField>
 
-              <FormField label="LEI Code">
+              <FormField label={t('assets:createAsset.registry.fields.leiCode', 'LEI Code')}>
                 <input
                   type="text"
                   value={formData.registry?.lei || ''}
                   onChange={(e) => handleNestedChange('registry', 'lei', e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="529900WXWXWXWXWXWXWX"
+                  placeholder={t('assets:createAsset.registry.placeholders.leiCode', '529900WXWXWXWXWXWXWX')}
                 />
               </FormField>
             </div>
@@ -284,13 +285,12 @@ export default function CreateAssetPage() {
         </Accordion>
 
         {/* Step 4: Controls */}
-        <Accordion title="Controls" step={4}>
+        <Accordion title={t('assets:createAsset.steps.controls', 'Controls')} step={4}>
           <div className="space-y-4">
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <h4 className="font-medium text-yellow-900 mb-2">Ledger-Specific Controls</h4>
+              <h4 className="font-medium text-yellow-900 mb-2">{t('assets:createAsset.controls.title', 'Ledger-Specific Controls')}</h4>
               <p className="text-sm text-yellow-700">
-                These controls affect how the asset behaves on the selected ledger. 
-                Some options may not be available for all ledgers.
+                {t('assets:createAsset.controls.description', 'These controls affect how the asset behaves on the selected ledger. Some options may not be available for all ledgers.')}
               </p>
             </div>
 
@@ -304,7 +304,7 @@ export default function CreateAssetPage() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="requireAuth" className="ml-2 text-sm text-gray-700">
-                  Require Authorization (XRPL)
+                  {t('assets:createAsset.controls.requireAuthorization', 'Require Authorization (XRPL)')}
                 </label>
               </div>
 
@@ -317,7 +317,7 @@ export default function CreateAssetPage() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="freeze" className="ml-2 text-sm text-gray-700">
-                  Enable Freeze (XRPL)
+                  {t('assets:createAsset.controls.enableFreeze', 'Enable Freeze (XRPL)')}
                 </label>
               </div>
 
@@ -330,11 +330,11 @@ export default function CreateAssetPage() {
                   className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                 />
                 <label htmlFor="clawback" className="ml-2 text-sm text-gray-700">
-                  Enable Clawback (XRPL)
+                  {t('assets:createAsset.controls.enableClawback', 'Enable Clawback (XRPL)')}
                 </label>
               </div>
 
-              <FormField label="Transfer Fee (basis points)">
+              <FormField label={t('assets:createAsset.fields.transferFee', 'Transfer Fee (basis points)')}>
                 <input
                   type="number"
                   min="0"
@@ -342,7 +342,7 @@ export default function CreateAssetPage() {
                   value={formData.controls?.transferFeeBps || ''}
                   onChange={(e) => handleNestedChange('controls', 'transferFeeBps', parseInt(e.target.value) || 0)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="0"
+                  placeholder={t('assets:createAsset.placeholders.transferFee', '0')}
                 />
               </FormField>
             </div>
@@ -356,14 +356,14 @@ export default function CreateAssetPage() {
             onClick={() => router.back()}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
           >
-            Cancel
+            {t('assets:createAsset.actions.cancel', 'Cancel')}
           </button>
           <button
             type="submit"
             disabled={loading}
             className="px-6 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating Asset...' : 'Create Asset (Draft)'}
+            {loading ? t('assets:createAsset.actions.creatingAsset', 'Creating Asset...') : t('assets:createAsset.actions.createAsset', 'Create Asset (Draft)')}
           </button>
         </div>
       </form>

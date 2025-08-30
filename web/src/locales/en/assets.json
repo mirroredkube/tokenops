@@ -92,5 +92,116 @@
     "retireAsset": "Retire Asset",
     "issueTokens": "Issue Tokens"
   },
-  "assetLifecycleAndDocumentation": "Asset Lifecycle & Documentation"
+  "assetLifecycleAndDocumentation": "Asset Lifecycle & Documentation",
+  "lifecycleStages": {
+    "title": "Asset Lifecycle Stages",
+    "draft": {
+      "title": "Draft",
+      "description": "Initial Setup",
+      "details": "Asset is being configured with metadata, compliance settings, and ledger configuration. No issuances can be made in this stage."
+    },
+    "active": {
+      "title": "Active",
+      "description": "Live & Issuing",
+      "details": "Asset is live and ready for issuances. Holders can be authorized and tokens can be issued to authorized addresses."
+    },
+    "paused": {
+      "title": "Paused",
+      "description": "Temporarily Suspended",
+      "details": "Asset is temporarily suspended. No new issuances can be made, but existing balances remain intact. Can be reactivated to Active status."
+    },
+    "retired": {
+      "title": "Retired",
+      "description": "Permanently Closed",
+      "details": "Asset is permanently closed. No new issuances or authorizations can be made. This action is irreversible."
+    }
+  },
+  "complianceModesInfo": {
+    "title": "Compliance Modes",
+    "noCompliance": {
+      "title": "No Compliance (OFF)",
+      "description": "No compliance checks or records are maintained."
+    },
+    "recordOnly": {
+      "title": "Record Only (RECORD_ONLY)",
+      "description": "Compliance records are created but no enforcement."
+    },
+    "gatedBefore": {
+      "title": "Gated Before (GATED_BEFORE)",
+      "description": "Compliance verification required before issuance."
+    }
+  },
+  "bestPractices": {
+    "title": "Best Practices",
+    "items": {
+      "0": "Always test assets in Draft mode before activating",
+      "1": "Use appropriate compliance modes for your regulatory requirements",
+      "2": "Monitor asset usage and consider pausing if suspicious activity is detected",
+      "3": "Only retire assets when absolutely necessary, as this action is irreversible",
+      "4": "Keep asset metadata up to date for audit and compliance purposes"
+    }
+  },
+  "createAsset": {
+    "title": "Create Asset",
+    "description": "Create a new token asset for issuance across multiple ledgers.",
+    "steps": {
+      "identity": "Identity",
+      "policy": "Policy",
+      "registry": "Registry",
+      "controls": "Controls"
+    },
+    "fields": {
+      "ledger": "Ledger",
+      "network": "Network",
+      "issuerAddress": "Issuer Address",
+      "currencyCode": "Currency Code",
+      "decimals": "Decimals",
+      "complianceMode": "Compliance Mode",
+      "transferFee": "Transfer Fee (basis points)"
+    },
+    "options": {
+      "selectLedger": "Select Ledger",
+      "selectNetwork": "Select Network",
+      "selectComplianceMode": "Select Compliance Mode",
+      "noCompliance": "No Compliance",
+      "recordOnly": "Record Only (Optional)",
+      "gatedBefore": "Gated Before (Required)"
+    },
+    "placeholders": {
+      "issuerAddress": "r... (XRPL) / 0x... (Ethereum)",
+      "currencyCode": "USD, EUR, COMP",
+      "transferFee": "0"
+    },
+    "registry": {
+      "title": "Registry Information",
+      "description": "Registry information helps with compliance and regulatory reporting. This data will be stored off-chain and can be referenced in compliance records.",
+      "fields": {
+        "isinCode": "ISIN Code",
+        "jurisdiction": "Jurisdiction",
+        "micaClassification": "MiCA Classification",
+        "leiCode": "LEI Code"
+      },
+      "placeholders": {
+        "isinCode": "US0378331005",
+        "jurisdiction": "DE, US, EU",
+        "micaClassification": "Utility Token, Security Token",
+        "leiCode": "529900WXWXWXWXWXWXWX"
+      }
+    },
+    "controls": {
+      "title": "Ledger-Specific Controls",
+      "description": "These controls affect how the asset behaves on the selected ledger. Some options may not be available for all ledgers.",
+      "requireAuthorization": "Require Authorization (XRPL)",
+      "enableFreeze": "Enable Freeze (XRPL)",
+      "enableClawback": "Enable Clawback (XRPL)"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "createAsset": "Create Asset (Draft)",
+      "creatingAsset": "Creating Asset..."
+    },
+    "messages": {
+      "failedToCreateAsset": "Failed to create asset. Please try again."
+    }
+  }
 }

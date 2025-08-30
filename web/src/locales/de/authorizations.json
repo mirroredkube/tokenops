@@ -48,5 +48,9 @@
     "validated": "Validiert",
     "failed": "Fehlgeschlagen",
     "expired": "Abgelaufen"
+  },
+  "page": {
+    "title": "Neue Autorisierung",
+    "description": "Asset-Autorisierungen für Token-Emissionen über mehrere Ledger hinweg erstellen"
   }
 }
