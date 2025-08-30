@@ -304,6 +304,7 @@ export default function ReportsPage() {
 }
 
 function IssuancesReport({ filters }: { filters: FilterState }) {
+  const { t } = useTranslation(['reports', 'common'])
   const { data, isLoading, error } = useQuery({
     queryKey: ['issuances', filters],
     queryFn: async () => {
@@ -369,6 +370,19 @@ function IssuancesReport({ filters }: { filters: FilterState }) {
     }
   }
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'SUBMITTED':
+        return t('reports:status.submitted', 'Submitted')
+      case 'VALIDATED':
+        return t('reports:status.validated', 'Validated')
+      case 'FAILED':
+        return t('reports:status.failed', 'Failed')
+      default:
+        return status
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -388,8 +402,8 @@ function IssuancesReport({ filters }: { filters: FilterState }) {
     return (
       <div className="p-6">
         <div className="text-center py-8">
-          <div className="text-red-500 text-lg">Error loading issuances</div>
-          <div className="text-gray-400 text-sm mt-2">Please try again later</div>
+          <div className="text-red-500 text-lg">{t('reports:messages.errorLoadingIssuances', 'Error loading issuances')}</div>
+          <div className="text-gray-400 text-sm mt-2">{t('reports:messages.pleaseTryAgainLater', 'Please try again later')}</div>
         </div>
       </div>
     )
@@ -400,28 +414,28 @@ function IssuancesReport({ filters }: { filters: FilterState }) {
   return (
     <div className="overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Issuances Report</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t('reports:issuancesReport', 'Issuances Report')}</h3>
         <p className="text-sm text-gray-600 mt-1">
-          {issuances.length} issuance{issuances.length !== 1 ? 's' : ''} found
+          {issuances.length} {issuances.length === 1 ? t('reports:messages.issuancesFound', 'issuance found', { count: issuances.length, plural: '' }) : t('reports:messages.issuancesFound', 'issuances found', { count: issuances.length, plural: 's' })}
         </p>
       </div>
 
       {issuances.length === 0 ? (
         <div className="p-6 text-center">
-          <div className="text-gray-500 text-lg">No issuances found</div>
-          <div className="text-gray-400 text-sm mt-2">Try adjusting your filters</div>
+          <div className="text-gray-500 text-lg">{t('reports:messages.noIssuancesFound', 'No issuances found')}</div>
+          <div className="text-gray-400 text-sm mt-2">{t('reports:messages.tryAdjustingYourFilters', 'Try adjusting your filters')}</div>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To (Holder)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.dateTime', 'Date/Time')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.asset', 'Asset')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.to', 'To (Holder)')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.amount', 'Amount')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.status', 'Status')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.transaction', 'Transaction')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -451,7 +465,7 @@ function IssuancesReport({ filters }: { filters: FilterState }) {
                      {issuance.status ? (
                        <span className={getStatusBadge(issuance.status)}>
                          {getStatusIcon(issuance.status)}
-                         <span className="ml-1">{issuance.status}</span>
+                         <span className="ml-1">{getStatusText(issuance.status)}</span>
                        </span>
                      ) : (
                        <span className="text-gray-400">-</span>
@@ -483,6 +497,7 @@ function IssuancesReport({ filters }: { filters: FilterState }) {
 }
 
 function AuthorizationsReport({ filters }: { filters: FilterState }) {
+  const { t } = useTranslation(['reports', 'common'])
   const { data, isLoading, error } = useQuery({
     queryKey: ['authorizations', filters],
     queryFn: async () => {
@@ -548,6 +563,19 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
     }
   }
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'SUBMITTED':
+        return t('reports:status.submitted', 'Submitted')
+      case 'VALIDATED':
+        return t('reports:status.validated', 'Validated')
+      case 'FAILED':
+        return t('reports:status.failed', 'Failed')
+      default:
+        return status
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -567,8 +595,8 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
     return (
       <div className="p-6">
         <div className="text-center py-8">
-          <div className="text-red-500 text-lg">Error loading authorizations</div>
-          <div className="text-gray-400 text-sm mt-2">Please try again later</div>
+          <div className="text-red-500 text-lg">{t('reports:messages.errorLoadingAuthorizations', 'Error loading authorizations')}</div>
+          <div className="text-gray-400 text-sm mt-2">{t('reports:messages.pleaseTryAgainLater', 'Please try again later')}</div>
         </div>
       </div>
     )
@@ -579,28 +607,28 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
   return (
     <div className="overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Authorizations Report</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t('reports:authorizationsReport', 'Authorizations Report')}</h3>
         <p className="text-sm text-gray-600 mt-1">
-          {authorizations.length} authorization{authorizations.length !== 1 ? 's' : ''} found
+          {authorizations.length} {authorizations.length === 1 ? t('reports:messages.authorizationsFound', 'authorization found', { count: authorizations.length, plural: '' }) : t('reports:messages.authorizationsFound', 'authorizations found', { count: authorizations.length, plural: 's' })}
         </p>
       </div>
 
       {authorizations.length === 0 ? (
         <div className="p-6 text-center">
-          <div className="text-gray-500 text-lg">No authorizations found</div>
-          <div className="text-gray-400 text-sm mt-2">Try adjusting your filters</div>
+          <div className="text-gray-500 text-lg">{t('reports:messages.noAuthorizationsFound', 'No authorizations found')}</div>
+          <div className="text-gray-400 text-sm mt-2">{t('reports:messages.tryAdjustingYourFilters', 'Try adjusting your filters')}</div>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holder</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Limit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.dateTime', 'Date/Time')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.asset', 'Asset')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.holder', 'Holder')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.limit', 'Limit')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.status', 'Status')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.transaction', 'Transaction')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -630,7 +658,7 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
                     {auth.status ? (
                       <span className={getStatusBadge(auth.status)}>
                         {getStatusIcon(auth.status)}
-                        <span className="ml-1">{auth.status}</span>
+                        <span className="ml-1">{getStatusText(auth.status)}</span>
                       </span>
                     ) : (
                       <span className="text-gray-400">-</span>
@@ -662,6 +690,7 @@ function AuthorizationsReport({ filters }: { filters: FilterState }) {
 }
 
 function ComplianceReport({ filters }: { filters: FilterState }) {
+  const { t } = useTranslation(['reports', 'common'])
   const { data, isLoading, error } = useQuery({
     queryKey: ['compliance-records', filters],
     queryFn: async () => {
@@ -720,6 +749,19 @@ function ComplianceReport({ filters }: { filters: FilterState }) {
     }
   }
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'VERIFIED':
+        return t('reports:status.verified', 'Verified')
+      case 'REJECTED':
+        return t('reports:status.rejected', 'Rejected')
+      case 'UNVERIFIED':
+        return t('reports:status.unverified', 'Unverified')
+      default:
+        return status
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -739,8 +781,8 @@ function ComplianceReport({ filters }: { filters: FilterState }) {
     return (
       <div className="p-6">
         <div className="text-center py-8">
-          <div className="text-red-500 text-lg">Error loading compliance records</div>
-          <div className="text-gray-400 text-sm mt-2">Please try again later</div>
+          <div className="text-red-500 text-lg">{t('reports:messages.errorLoadingComplianceRecords', 'Error loading compliance records')}</div>
+          <div className="text-gray-400 text-sm mt-2">{t('reports:messages.pleaseTryAgainLater', 'Please try again later')}</div>
         </div>
       </div>
     )
@@ -751,29 +793,29 @@ function ComplianceReport({ filters }: { filters: FilterState }) {
   return (
     <div className="overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Compliance Report</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t('reports:complianceReport', 'Compliance Report')}</h3>
         <p className="text-sm text-gray-600 mt-1">
-          {records.length} compliance record{records.length !== 1 ? 's' : ''} found
+          {records.length} {records.length === 1 ? t('reports:messages.complianceRecordsFound', 'compliance record found', { count: records.length, plural: '' }) : t('reports:messages.complianceRecordsFound', 'compliance records found', { count: records.length, plural: 's' })}
         </p>
       </div>
 
       {records.length === 0 ? (
         <div className="p-6 text-center">
-          <div className="text-gray-500 text-lg">No compliance records found</div>
-          <div className="text-gray-400 text-sm mt-2">Try adjusting your filters</div>
+          <div className="text-gray-500 text-lg">{t('reports:messages.noComplianceRecordsFound', 'No compliance records found')}</div>
+          <div className="text-gray-400 text-sm mt-2">{t('reports:messages.tryAdjustingYourFilters', 'Try adjusting your filters')}</div>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Record ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holder</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SHA-256</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verified At</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.created', 'Created')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.recordId', 'Record ID')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.asset', 'Asset')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.holder', 'Holder')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.status', 'Status')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.sha256', 'SHA-256')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('reports:fields.verifiedAt', 'Verified At')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -805,7 +847,7 @@ function ComplianceReport({ filters }: { filters: FilterState }) {
                     {record.status ? (
                       <span className={getStatusBadge(record.status)}>
                         {getStatusIcon(record.status)}
-                        <span className="ml-1">{record.status}</span>
+                        <span className="ml-1">{getStatusText(record.status)}</span>
                       </span>
                     ) : (
                       <span className="text-gray-400">-</span>

@@ -44,5 +44,14 @@
     "xrpBalance": "XRP Balance",
     "reserve": "Reserve",
     "assets": "Assets"
+  },
+  "tables": {
+    "holderBreakdown": "Holder Breakdown",
+    "assets": "Assets"
+  },
+  "alerts": {
+    "selectAssetFirst": "Please select an asset first",
+    "enterHolderAddressFirst": "Please enter a holder address first",
+    "noDataAvailable": "No data available to export"
   }
 }

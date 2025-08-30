@@ -87,7 +87,7 @@ export default function BalancesPage() {
 
   const downloadOutstandingCSV = (assetId: string) => {
     if (!assetId) {
-      alert('Please select an asset first')
+      alert(t('balances:alerts.selectAssetFirst', 'Please select an asset first'))
       return
     }
 
@@ -95,7 +95,7 @@ export default function BalancesPage() {
     const outstandingData = queryClient.getQueryData(['outstanding-balances', assetId]) as OutstandingData | null
 
     if (!outstandingData || !outstandingData.holders.length) {
-      alert('No data available to export')
+      alert(t('balances:alerts.noDataAvailable', 'No data available to export'))
       return
     }
 
@@ -130,7 +130,7 @@ export default function BalancesPage() {
 
   const downloadHolderLookupCSV = (holderAddress: string) => {
     if (!holderAddress) {
-      alert('Please enter a holder address first')
+      alert(t('balances:alerts.enterHolderAddressFirst', 'Please enter a holder address first'))
       return
     }
 
@@ -138,7 +138,7 @@ export default function BalancesPage() {
     const holderData = queryClient.getQueryData(['holder-lookup', holderAddress]) as HolderLookupData | null
 
     if (!holderData || !holderData.assets.length) {
-      alert('No data available to export')
+      alert(t('balances:alerts.noDataAvailable', 'No data available to export'))
       return
     }
 
@@ -276,7 +276,7 @@ function OutstandingView({
               value={filters.assetId}
               onChange={(value) => onFilterChange('assetId', value)}
               options={[
-                { value: '', label: 'Select an asset' },
+                { value: '', label: t('balances:fields.selectAsset', 'Select an asset') },
                 ...(assetsData?.map((asset: any) => ({
                   value: asset.id,
                   label: `${asset.code} (${asset.issuer})`
@@ -293,14 +293,14 @@ function OutstandingView({
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors whitespace-nowrap"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh from Ledger
+            {t('balances:actions.refreshFromLedger', 'Refresh from Ledger')}
           </button>
           <button
             onClick={onDownloadCSV}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors whitespace-nowrap"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download CSV
+            {t('balances:actions.downloadCSV', 'Download CSV')}
           </button>
         </div>
       </div>
@@ -331,13 +331,13 @@ function HolderLookupView({
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Holder Address:</span>
+          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('balances:fields.holderAddress', 'Holder Address:')}</span>
           <div className="flex-1 min-w-0">
             <input
               type="text"
               value={filters.holderAddress}
               onChange={(e) => onFilterChange('holderAddress', e.target.value)}
-              placeholder="Enter XRPL address (e.g., r...)"
+              placeholder={t('balances:fields.enterXrplAddress', 'Enter XRPL address (e.g., r...)')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             />
           </div>
@@ -349,14 +349,14 @@ function HolderLookupView({
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors whitespace-nowrap"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh from Ledger
+            {t('balances:actions.refreshFromLedger', 'Refresh from Ledger')}
           </button>
           <button
             onClick={onDownloadCSV}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors whitespace-nowrap"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download CSV
+            {t('balances:actions.downloadCSV', 'Download CSV')}
           </button>
         </div>
       </div>
@@ -374,6 +374,7 @@ function IssuerOutstandingView({
   filters: IssuerFilters
   onDownloadCSV: () => void
 }) {
+  const { t } = useTranslation(['balances', 'common'])
   const { data, isLoading, error } = useQuery({
     queryKey: ['outstanding-balances', filters.assetId],
     queryFn: async () => {
@@ -462,7 +463,7 @@ function IssuerOutstandingView({
   if (!filters.assetId) {
     return (
       <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
-        <div className="text-gray-500 text-lg">Select an asset to view outstanding supply</div>
+        <div className="text-gray-500 text-lg">{t('balances:messages.selectAssetToViewOutstanding', 'Select an asset to view outstanding supply')}</div>
       </div>
     )
   }
@@ -485,8 +486,8 @@ function IssuerOutstandingView({
   if (error) {
     return (
       <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
-        <div className="text-red-500 text-lg">Error loading outstanding balances</div>
-        <div className="text-gray-400 text-sm mt-2">Please try again later</div>
+        <div className="text-red-500 text-lg">{t('balances:messages.errorLoadingOutstandingBalances', 'Error loading outstanding balances')}</div>
+        <div className="text-gray-400 text-sm mt-2">{t('balances:messages.pleaseTryAgainLater', 'Please try again later')}</div>
       </div>
     )
   }
@@ -502,13 +503,13 @@ function IssuerOutstandingView({
             <div className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
               {formatBalance(outstandingData.outstandingSupply)}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Outstanding Supply</div>
+            <div className="text-sm text-gray-600 mt-1">{t('balances:kpis.outstandingSupply', 'Outstanding Supply')}</div>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl sm:text-3xl font-bold text-gray-900">
               {outstandingData.holderCount}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Holders</div>
+            <div className="text-sm text-gray-600 mt-1">{t('balances:kpis.holders', 'Holders')}</div>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
@@ -517,7 +518,7 @@ function IssuerOutstandingView({
                 : '0.00'
               }
             </div>
-            <div className="text-sm text-gray-600 mt-1">Average Holding</div>
+            <div className="text-sm text-gray-600 mt-1">{t('balances:kpis.averageHolding', 'Average Holding')}</div>
           </div>
         </div>
       </div>
@@ -525,16 +526,16 @@ function IssuerOutstandingView({
             {/* Holders Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Holder Breakdown</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('balances:tables.holderBreakdown', 'Holder Breakdown')}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {outstandingData.holders.length} holder{outstandingData.holders.length !== 1 ? 's' : ''} with balance &gt; 0
+            {outstandingData.holders.length} {outstandingData.holders.length === 1 ? t('balances:messages.holdersWithBalanceGreaterThanZero', 'holder with balance > 0', { count: outstandingData.holders.length, plural: '' }) : t('balances:messages.holdersWithBalanceGreaterThanZero', 'holders with balance > 0', { count: outstandingData.holders.length, plural: 's' })}
           </p>
         </div>
 
         {outstandingData.holders.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="text-gray-500 text-lg">No holders found</div>
-            <div className="text-gray-400 text-sm mt-2">No outstanding supply for this asset</div>
+            <div className="text-gray-500 text-lg">{t('balances:messages.noHoldersFound', 'No holders found')}</div>
+            <div className="text-gray-400 text-sm mt-2">{t('balances:messages.noOutstandingSupply', 'No outstanding supply for this asset')}</div>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -542,16 +543,16 @@ function IssuerOutstandingView({
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
-                    <span className="block truncate">Holder</span>
+                    <span className="block truncate">{t('balances:fields.holder', 'Holder')}</span>
                   </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <span className="block truncate">Balance</span>
+                    <span className="block truncate">{t('balances:fields.balance', 'Balance')}</span>
                   </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <span className="block truncate">Last Updated</span>
+                    <span className="block truncate">{t('balances:fields.lastUpdated', 'Last Updated')}</span>
                   </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    <span className="block truncate">Explorer</span>
+                    <span className="block truncate">{t('balances:fields.explorer', 'Explorer')}</span>
                   </th>
                 </tr>
               </thead>
@@ -607,6 +608,7 @@ function HolderLookupContent({
   filters: HolderLookupFilters
   assetsData: any[] | undefined
 }) {
+  const { t } = useTranslation(['balances', 'common'])
   const { data, isLoading, error } = useQuery<HolderLookupData | null>({
     queryKey: ['holder-lookup', filters.holderAddress],
     queryFn: async () => {
@@ -689,7 +691,7 @@ function HolderLookupContent({
   if (!filters.holderAddress) {
     return (
       <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
-        <div className="text-gray-500 text-lg">Enter a holder address to view their balances</div>
+        <div className="text-gray-500 text-lg">{t('balances:messages.enterHolderAddressToView', 'Enter a holder address to view their balances')}</div>
       </div>
     )
   }
@@ -712,8 +714,8 @@ function HolderLookupContent({
   if (error) {
     return (
       <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
-        <div className="text-red-500 text-lg">Error loading holder lookup data</div>
-        <div className="text-gray-400 text-sm mt-2">Please try again later</div>
+        <div className="text-red-500 text-lg">{t('balances:messages.errorLoadingHolderLookupData', 'Error loading holder lookup data')}</div>
+        <div className="text-gray-400 text-sm mt-2">{t('balances:messages.pleaseTryAgainLater', 'Please try again later')}</div>
       </div>
     )
   }
@@ -729,19 +731,19 @@ function HolderLookupContent({
             <div className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
               {formatBalance(holderData.xrpBalance || '0')}
             </div>
-            <div className="text-sm text-gray-600 mt-1">XRP Balance</div>
+            <div className="text-sm text-gray-600 mt-1">{t('balances:kpis.xrpBalance', 'XRP Balance')}</div>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
               {formatBalance(holderData.reserve || '0')}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Reserve</div>
+            <div className="text-sm text-gray-600 mt-1">{t('balances:kpis.reserve', 'Reserve')}</div>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
               {holderData.assets.length}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Assets</div>
+            <div className="text-sm text-gray-600 mt-1">{t('balances:kpis.assets', 'Assets')}</div>
           </div>
         </div>
       </div>
@@ -749,15 +751,15 @@ function HolderLookupContent({
       {/* Assets Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Assets</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('balances:tables.assets', 'Assets')}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {holderData.assets.length} asset{holderData.assets.length !== 1 ? 's' : ''}
+            {holderData.assets.length} {holderData.assets.length === 1 ? t('balances:messages.assetCount', 'asset', { count: holderData.assets.length, plural: '' }) : t('balances:messages.assetCount', 'assets', { count: holderData.assets.length, plural: 's' })}
           </p>
         </div>
 
         {holderData.assets.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="text-gray-500 text-lg">No assets found for this holder</div>
+            <div className="text-gray-500 text-lg">{t('balances:messages.noAssetsFoundForHolder', 'No assets found for this holder')}</div>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -765,16 +767,16 @@ function HolderLookupContent({
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
-                    <span className="block truncate">Asset</span>
+                    <span className="block truncate">{t('balances:fields.assets', 'Asset')}</span>
                   </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <span className="block truncate">Balance</span>
+                    <span className="block truncate">{t('balances:fields.balance', 'Balance')}</span>
                   </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <span className="block truncate">Last Updated</span>
+                    <span className="block truncate">{t('balances:fields.lastUpdated', 'Last Updated')}</span>
                   </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                    <span className="block truncate">Explorer</span>
+                    <span className="block truncate">{t('balances:fields.explorer', 'Explorer')}</span>
                   </th>
                 </tr>
               </thead>

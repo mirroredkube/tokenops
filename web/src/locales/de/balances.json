@@ -44,5 +44,14 @@
     "xrpBalance": "XRP-Saldo",
     "reserve": "Reserve",
     "assets": "Assets"
+  },
+  "tables": {
+    "holderBreakdown": "Inhaber-Aufschlüsselung",
+    "assets": "Assets"
+  },
+  "alerts": {
+    "selectAssetFirst": "Bitte wählen Sie zuerst ein Asset aus",
+    "enterHolderAddressFirst": "Bitte geben Sie zuerst eine Inhaber-Adresse ein",
+    "noDataAvailable": "Keine Daten zum Exportieren verfügbar"
   }
 }
