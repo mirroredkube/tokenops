@@ -1,6 +1,8 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
-import prisma from '../../db/client.js'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 // ---------- Authentication Helper ----------
 async function verifyAuthIfRequired(req: any): Promise<any> {

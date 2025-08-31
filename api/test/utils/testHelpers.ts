@@ -1,4 +1,4 @@
-import { PrismaClient, OrganizationStatus, UserRole, UserStatus } from '@prisma/client'
+import { PrismaClient, OrganizationStatus, UserRole, UserStatus, AssetClass, ProductStatus } from '@prisma/client'
 import { FastifyInstance } from 'fastify'
 import supertest from 'supertest'
 
@@ -21,6 +21,18 @@ export interface TestUser {
   name: string
   role: UserRole
   status: UserStatus
+  organizationId: string
+}
+
+export interface TestProduct {
+  id: string
+  name: string
+  description?: string
+  assetClass: AssetClass
+  policyPresets?: string[]
+  documents?: string[]
+  targetMarkets: string[]
+  status: ProductStatus
   organizationId: string
 }
 
@@ -56,6 +68,23 @@ export class TestDataManager {
     })
     
     return user as TestUser
+  }
+
+  static async createTestProduct(organizationId: string, data: Partial<TestProduct> = {}): Promise<TestProduct> {
+    const product = await prisma.product.create({
+      data: {
+        name: data.name || `Test Product ${Date.now()}`,
+        description: data.description || `Test product description ${Date.now()}`,
+        assetClass: data.assetClass || AssetClass.OTHER,
+        policyPresets: data.policyPresets || ['mica-kyc-tier-art-emt'],
+        documents: data.documents || ['whitepaper.pdf'],
+        targetMarkets: data.targetMarkets || ['US', 'EU'],
+        status: data.status || ProductStatus.DRAFT,
+        organizationId
+      }
+    })
+    
+    return product as TestProduct
   }
 
   static async cleanupTestData(): Promise<void> {
@@ -106,5 +135,27 @@ export const testOrganizations = {
   invalid: {
     name: '', // Invalid: empty name
     country: 'INVALID' // Invalid: not 2 characters
+  }
+}
+
+export const testProducts = {
+  valid: {
+    name: 'Valid Test Product',
+    description: 'A valid test product for testing',
+    assetClass: AssetClass.ART,
+    policyPresets: ['mica-kyc-tier-art-emt'],
+    documents: ['whitepaper.pdf'],
+    targetMarkets: ['US', 'EU'],
+    status: ProductStatus.DRAFT
+  },
+  
+  minimal: {
+    name: 'Minimal Test Product',
+    assetClass: AssetClass.OTHER
+  },
+  
+  invalid: {
+    name: '', // Invalid: empty name
+    assetClass: 'INVALID' as any // Invalid: not a valid enum
   }
 }

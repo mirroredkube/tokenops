@@ -70,8 +70,8 @@ model UserSettings {
 model Product {
   id             String        @id @default(cuid())
   organizationId String
-  name           String
-  description    String?
+  name           String        @db.VarChar(100)
+  description    String?       @db.VarChar(500)
   assetClass     AssetClass    @default(OTHER)
   policyPresets  Json?
   documents      Json?
@@ -83,6 +83,7 @@ model Product {
   events         Event[]
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+  @@unique([organizationId, name])
   @@index([organizationId])
   @@index([assetClass])
   @@index([status])

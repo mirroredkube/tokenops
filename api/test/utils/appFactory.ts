@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client'
 
 // Import routes
 import organizationRoutes from '../../src/routes/v1/organizations'
+import productRoutes from '../../src/routes/v1/products'
 
 export async function createTestApp() {
   const app = Fastify({ 
@@ -16,8 +17,9 @@ export async function createTestApp() {
     credentials: true,
   })
 
-  // Register organization routes
+  // Register routes
   await app.register(organizationRoutes, { prefix: '/v1' })
+  await app.register(productRoutes, { prefix: '/v1' })
 
   // Add a simple health check for testing
   app.get('/health', async () => {
