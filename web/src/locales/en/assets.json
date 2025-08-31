@@ -15,6 +15,7 @@
   "authorizationsAndIssuancesComing": "Authorizations and Issuances coming in Phase 2",
   "viewAuthorizationStatus": "You'll be able to view authorization status and issuance history here.",
   "fields": {
+    "product": "Product",
     "issuerAddress": "Issuer Address",
     "decimals": "Decimals",
     "complianceMode": "Compliance Mode",
@@ -74,6 +75,8 @@
   },
   "table": {
     "asset": "Asset",
+    "product": "Product",
+    "organization": "Organization",
     "ledger": "Ledger",
     "compliance": "Compliance",
     "status": "Status",
@@ -145,6 +148,7 @@
     "title": "Create Asset",
     "description": "Create a new token asset for issuance across multiple ledgers.",
     "steps": {
+      "product": "Product Selection",
       "identity": "Identity",
       "policy": "Policy",
       "registry": "Registry",
@@ -160,6 +164,7 @@
       "transferFee": "Transfer Fee (basis points)"
     },
     "options": {
+      "selectProduct": "Select Product",
       "selectLedger": "Select Ledger",
       "selectNetwork": "Select Network",
       "selectComplianceMode": "Select Compliance Mode",
@@ -171,10 +176,14 @@
       "issuerAddress": "r... (XRPL) / 0x... (Ethereum)",
       "currencyCode": "USD, EUR, COMP",
       "transferFee": "0"
-    },
-    "registry": {
-      "title": "Registry Information",
-      "description": "Registry information helps with compliance and regulatory reporting. This data will be stored off-chain and can be referenced in compliance records.",
+      },
+  "product": {
+    "title": "Product Selection",
+    "description": "Select a product to associate this asset with. Assets must belong to a product within your organization."
+  },
+  "registry": {
+    "title": "Registry Information",
+    "description": "Registry information helps with compliance and regulatory reporting. This data will be stored off-chain and can be referenced in compliance records.",
       "fields": {
         "isinCode": "ISIN Code",
         "jurisdiction": "Jurisdiction",

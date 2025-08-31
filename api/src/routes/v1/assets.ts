@@ -2,10 +2,13 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { generateAssetRef } from './shared.js'
-import prisma from '../../db/client.js'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 // ---------- Validation Schemas ----------
 const AssetCreateSchema = z.object({
+  productId: z.string().min(1),
   ledger: z.enum(["xrpl", "hedera", "ethereum"]),
   network: z.enum(["mainnet", "testnet", "devnet"]).default("testnet"),
   issuer: z.string().min(1),
@@ -40,8 +43,12 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       tags: ['v1'],
       body: {
         type: 'object',
-        required: ['ledger', 'issuer', 'code', 'decimals'],
+        required: ['productId', 'ledger', 'issuer', 'code', 'decimals'],
         properties: {
+          productId: {
+            type: 'string',
+            description: 'Product ID that this asset belongs to'
+          },
           ledger: { 
             type: 'string', 
             enum: ['xrpl', 'hedera', 'ethereum'],
@@ -135,41 +142,20 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         return reply.status(409).send({ error: 'Asset already exists' })
       }
       
-      // Get or create default organization and product for backward compatibility
-      let defaultOrg = await prisma.organization.findFirst({
-        where: { name: 'Default Organization' }
-      });
-      
-      if (!defaultOrg) {
-        defaultOrg = await prisma.organization.create({
-          data: {
-            name: 'Default Organization',
-            legalName: 'Default Organization',
-            country: 'US',
-            jurisdiction: 'US',
-            status: 'ACTIVE'
-          }
-        });
-      }
-      
-      let defaultProduct = await prisma.product.findFirst({
-        where: { 
-          organizationId: defaultOrg.id,
-          name: 'Default Product'
+      // Validate that the product exists and belongs to the user's organization
+      const product = await prisma.product.findUnique({
+        where: { id: assetData.productId },
+        include: {
+          organization: true
         }
       });
       
-      if (!defaultProduct) {
-        defaultProduct = await prisma.product.create({
-          data: {
-            organizationId: defaultOrg.id,
-            name: 'Default Product',
-            description: 'Default product for existing assets',
-            assetClass: 'OTHER',
-            status: 'ACTIVE'
-          }
-        });
+      if (!product) {
+        return reply.status(404).send({ error: 'Product not found' });
       }
+      
+      // TODO: Add user authentication check to verify organization ownership
+      // For now, we'll allow any valid product
       
       // Create or find issuer address
       let issuerAddress = await prisma.issuerAddress.findFirst({
@@ -183,7 +169,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       if (!issuerAddress) {
         issuerAddress = await prisma.issuerAddress.create({
           data: {
-            organizationId: defaultOrg.id,
+            organizationId: product.organizationId,
             address: assetData.issuer,
             ledger: assetData.ledger.toUpperCase() as any,
             network: assetData.network.toUpperCase() as any,
@@ -197,7 +183,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       const asset = await prisma.asset.create({
         data: {
           assetRef,
-          productId: defaultProduct.id,
+          productId: product.id,
           ledger: assetData.ledger.toUpperCase() as any,
           network: assetData.network.toUpperCase() as any,
           issuingAddressId: issuerAddress.id,
@@ -223,7 +209,16 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         decimals: asset.decimals,
         complianceMode: asset.complianceMode.toLowerCase(),
         status: asset.status.toLowerCase(),
-        createdAt: asset.createdAt.toISOString()
+        createdAt: asset.createdAt.toISOString(),
+        product: {
+          id: product.id,
+          name: product.name,
+          assetClass: product.assetClass
+        },
+        organization: {
+          id: product.organization.id,
+          name: product.organization.name
+        }
       })
     } catch (error: any) {
       console.error('Error creating asset:', error)
@@ -460,6 +455,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       querystring: {
         type: 'object',
         properties: {
+          productId: { type: 'string', description: 'Filter by product ID' },
           ledger: { type: 'string', enum: ['xrpl', 'hedera', 'ethereum'] },
           status: { type: 'string', enum: ['draft', 'active', 'paused', 'retired'] },
           limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
@@ -484,7 +480,22 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
                   decimals: { type: 'number' },
                   complianceMode: { type: 'string' },
                   status: { type: 'string' },
-                  createdAt: { type: 'string' }
+                  createdAt: { type: 'string' },
+                  product: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      assetClass: { type: 'string' }
+                    }
+                  },
+                  organization: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' }
+                    }
+                  }
                 }
               }
             },
@@ -496,11 +507,15 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       }
     }
   }, async (req, reply) => {
-    const { ledger, status, limit = 20, offset = 0 } = req.query as any
+    const { productId, ledger, status, limit = 20, offset = 0 } = req.query as any
     
     try {
       // Build where clause
       const where: any = {}
+      
+      if (productId) {
+        where.productId = productId
+      }
       
       if (ledger) {
         where.ledger = ledger.toUpperCase()
@@ -518,7 +533,12 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           skip: offset,
           orderBy: { createdAt: 'desc' },
           include: {
-            issuingAddress: true
+            issuingAddress: true,
+            product: {
+              include: {
+                organization: true
+              }
+            }
           }
         }),
         prisma.asset.count({ where })
@@ -535,7 +555,16 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           decimals: asset.decimals,
           complianceMode: asset.complianceMode.toLowerCase(),
           status: asset.status.toLowerCase(),
-          createdAt: asset.createdAt.toISOString()
+          createdAt: asset.createdAt.toISOString(),
+          product: {
+            id: asset.product.id,
+            name: asset.product.name,
+            assetClass: asset.product.assetClass
+          },
+          organization: {
+            id: asset.product.organization.id,
+            name: asset.product.organization.name
+          }
         })),
         total,
         limit,
@@ -546,4 +575,6 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       return reply.status(500).send({ error: 'Failed to list assets' })
     }
   })
+
+
 }

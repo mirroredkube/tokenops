@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
@@ -9,6 +9,7 @@ import Accordion from '../../../components/Accordion'
 import { trackPageView, trackAssetAction, AnalyticsEvents } from '../../../lib/analytics'
 
 interface AssetFormData {
+  productId: string
   ledger: "xrpl" | "hedera" | "ethereum"
   network: "mainnet" | "testnet" | "devnet"
   issuer: string
@@ -29,15 +30,26 @@ interface AssetFormData {
   }
 }
 
+interface Product {
+  id: string
+  name: string
+  assetClass: string
+  status: string
+}
+
 export default function CreateAssetPage() {
   const { t } = useTranslation(['assets', 'common'])
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [productsLoading, setProductsLoading] = useState(false)
+  const [productsError, setProductsError] = useState<string | null>(null)
   
   // Track page view
   trackPageView('asset_create')
   const [formData, setFormData] = useState<AssetFormData>({
+    productId: '',
     ledger: 'xrpl',
     network: 'testnet',
     issuer: '',
@@ -48,14 +60,52 @@ export default function CreateAssetPage() {
     registry: undefined
   })
 
+  // Fetch products on component mount
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    setProductsLoading(true)
+    setProductsError(null)
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+      const response = await fetch(`${apiUrl}/v1/products?limit=50`)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch products')
+      }
+
+      if (!data || !data.products) {
+        throw new Error('No products data received')
+      }
+
+      setProducts(data.products)
+    } catch (err: any) {
+      console.error('Error fetching products:', err)
+      setProductsError(err.message || 'Failed to fetch products')
+    } finally {
+      setProductsLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
+    if (!formData.productId) {
+      setError('Please select a product')
+      setLoading(false)
+      return
+    }
+
     try {
       // Prepare the request body, filtering out undefined values
       const requestBody = {
+        productId: formData.productId,
         ledger: formData.ledger,
         network: formData.network,
         issuer: formData.issuer,
@@ -144,8 +194,47 @@ export default function CreateAssetPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Step 0: Product Selection */}
+        <Accordion title={t('assets:createAsset.steps.product', 'Product Selection')} step={0} defaultOpen={true}>
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900 mb-2">{t('assets:createAsset.product.title', 'Product Selection')}</h4>
+              <p className="text-sm text-blue-700">
+                {t('assets:createAsset.product.description', 'Select a product to associate this asset with. Assets must belong to a product within your organization.')}
+              </p>
+            </div>
+            
+            <FormField label={t('assets:createAsset.fields.product', 'Product')} required>
+              {productsLoading ? (
+                <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
+                  <span className="text-gray-500">Loading products...</span>
+                </div>
+              ) : productsError ? (
+                <div className="w-full p-3 border border-red-300 rounded-lg bg-red-50">
+                  <span className="text-red-500">Error loading products: {productsError}</span>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="w-full p-3 border border-yellow-300 rounded-lg bg-yellow-50">
+                  <span className="text-yellow-700">No active products found. Please create a product first.</span>
+                </div>
+              ) : (
+                <CustomDropdown
+                  value={formData.productId}
+                  onChange={(value) => handleInputChange('productId', value)}
+                  options={products.map(product => ({
+                    value: product.id,
+                    label: `${product.name} (${product.assetClass}) - ${product.status}`
+                  }))}
+                  placeholder={t('assets:createAsset.options.selectProduct', 'Select Product')}
+                  required
+                />
+              )}
+            </FormField>
+          </div>
+        </Accordion>
+
         {/* Step 1: Identity */}
-        <Accordion title={t('assets:createAsset.steps.identity', 'Identity')} step={1} defaultOpen={true}>
+        <Accordion title={t('assets:createAsset.steps.identity', 'Identity')} step={1}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label={t('assets:createAsset.fields.ledger', 'Ledger')} required>
               <CustomDropdown
