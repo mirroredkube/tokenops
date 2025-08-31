@@ -160,11 +160,12 @@ export const xrplAdapter: LedgerAdapter = {
       throw new Error('Unsupported ledger')
     }
 
+    const currency = normalize(asset.code)
     const tx = {
       TransactionType: "TrustSet",
       Account: holder,
       LimitAmount: { 
-        currency: asset.code, 
+        currency: currency, 
         issuer: asset.issuer, 
         value: "1000000000" // Default limit, could be made configurable
       },
@@ -181,6 +182,7 @@ export const xrplAdapter: LedgerAdapter = {
     const seed = process.env.ISSUER_SEED || process.env.ISSUER_SECRET
     if (!seed) throw new Error('Missing ISSUER_SEED')
     const wallet = Wallet.fromSeed(seed)
+    const currency = normalize(asset.code)
 
     return await withClient(async (client: Client) => {
       const prepared = await client.autofill({
@@ -188,11 +190,11 @@ export const xrplAdapter: LedgerAdapter = {
         Account: wallet.address,
         Destination: to,
         Amount: { 
-          currency: asset.code, 
+          currency: currency, 
           value: amount, 
           issuer: wallet.address 
         },
-        Memos: memoHex ? [{ Memo: { MemoData: memoHex } }] : undefined,
+        Memos: memoHex ? [{ Memo: { MemoData: Buffer.from(memoHex, 'utf8').toString('hex').toUpperCase() } }] : undefined,
       })
       const signed = wallet.sign(prepared)
       const res = await client.submitAndWait(signed.tx_blob)

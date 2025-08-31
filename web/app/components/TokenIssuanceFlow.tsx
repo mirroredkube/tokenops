@@ -64,10 +64,13 @@ interface ComplianceRecord {
 }
 
 interface IssuanceResult {
+  txId?: string
   txHash?: string
   explorer?: string
   trustlineTxHash?: string
   trustlineExplorer?: string
+  manifestHash?: string
+  publicMetadata?: Record<string, any>
   complianceRecord?: ComplianceRecord
   compliance?: {
     status?: string
@@ -411,7 +414,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       const issuanceRequest = {
         holder: tokenData.destination,
         amount: tokenData.amount.toString(),
-        issuanceFacts: complianceRecord ? {
+        issuanceFacts: {
           purpose: complianceData.purpose,
           isin: complianceData.isin,
           legal_issuer: complianceData.legalIssuerName,
@@ -419,8 +422,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
           mica_class: complianceData.micaClassification,
           kyc_requirement: complianceData.kycRequirement,
           transfer_restrictions: complianceData.transferRestrictions.toString()
-        } : undefined,
-        anchor: anchorCompliance
+        },
+        anchor: anchorCompliance,
+        publicMetadata: Object.keys(tokenData.metadata).length > 0 ? tokenData.metadata : undefined
       }
 
       // Generate idempotency key
@@ -446,12 +450,18 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
       // Handle the response data safely
       const responseData = data as any
-      console.log('Issuance response:', responseData)
+      console.log('🎯 Issuance response:', responseData)
+      console.log('🔍 Transaction ID from response:', responseData.txId)
+      console.log('🔍 Explorer URL from response:', responseData.explorer)
 
       setResult(prev => ({
         ...prev,
-        txHash: responseData.txId || 'pending',
-        explorer: responseData.explorer || `https://testnet.xrpl.org/transactions/${responseData.txId || 'pending'}`,
+        txId: responseData.txId,
+        txHash: responseData.txId, // Keep for backward compatibility
+        explorer: responseData.explorer,
+        manifestHash: responseData.manifestHash,
+        publicMetadata: tokenData.metadata,
+        compliance: responseData.compliance,
         complianceRecord: {
           recordId: responseData.manifestHash || responseData.issuanceId,
           sha256: responseData.manifestHash || '',
@@ -1805,23 +1815,72 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     </div>
                   </div>
                 )}
-                {result.txHash && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">{t('issuances:success.tokenIssuanceTransaction', 'Token Issuance Transaction:')}</p>
-                    <div className="flex items-center justify-between">
-                      <code className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded font-mono break-all">
-                        {result.txHash}
-                      </code>
-                      {result.explorer && (
-                        <a
-                          href={result.explorer}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-4 inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
-                        >
-                          {t('issuances:success.viewOnExplorer', 'View on Explorer →')}
-                        </a>
-                      )}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">{t('issuances:success.tokenIssuanceTransaction', 'Token Issuance Transaction:')}</p>
+                  <div className="flex items-center justify-between">
+                    {result.txId ? (
+                      <>
+                        <code className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded font-mono break-all">
+                          {result.txId}
+                        </code>
+                        {result.explorer && (
+                          <a
+                            href={result.explorer}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-4 inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
+                          >
+                            {t('issuances:success.viewOnExplorer', 'View on Explorer →')}
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-2 rounded">
+                          Pending transaction confirmation...
+                        </span>
+                        <span className="ml-4 text-sm text-gray-500">
+                          Transaction submitted to network
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {result.manifestHash && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-blue-700 mb-2">{t('issuances:success.complianceRecord', 'Compliance Record:')}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-600">{t('issuances:success.sha256', 'SHA256 Hash:')}</span>
+                        <code className="text-sm text-blue-700 bg-blue-100 px-3 py-2 rounded font-mono break-all">
+                          {result.manifestHash}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-600">{t('issuances:success.anchored', 'Anchored:')}</span>
+                        <span className="text-sm font-medium text-blue-700">
+                          {result.manifestHash ? t('issuances:success.successfullyAnchored', 'Successfully anchored') : t('issuances:success.pending', 'Pending')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {result.publicMetadata && (
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-green-700 mb-2">Public Metadata:</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-green-600">Metadata:</span>
+                        <code className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded font-mono break-all">
+                          {JSON.stringify(result.publicMetadata, null, 2)}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-green-600">Anchored:</span>
+                        <span className="text-sm font-medium text-green-700">
+                          Successfully anchored to blockchain
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}

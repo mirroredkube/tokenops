@@ -26,7 +26,8 @@ const IssuanceSchema = z.object({
     tranche_series: z.string().optional(),
     references: z.array(z.string()).optional()
   }).optional(),
-  anchor: z.boolean().default(false)
+  anchor: z.boolean().default(false),
+  publicMetadata: z.record(z.any()).optional()
 })
 
 export default async function issuanceRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
@@ -227,7 +228,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       return reply.status(400).send({ error: 'Invalid request body' })
     }
 
-    const { holder, amount, issuanceFacts, anchor } = body.data
+    const { holder, amount, issuanceFacts, anchor, publicMetadata } = body.data
     
     // Check idempotency
     const idempotencyKey = req.headers['idempotency-key'] as string
@@ -298,21 +299,54 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       
       const issuanceId = generateIssuanceId()
       
-      // Build compliance manifest and generate hash first
+      // Store issuance record in database first
+      const issuance = await prisma.issuance.create({
+        data: {
+          id: issuanceId,
+          assetId: asset.id,
+          holder,
+          amount,
+          anchor,
+          status: 'SUBMITTED',
+          complianceEvaluated: false,
+          complianceStatus: 'PENDING'
+        } as any
+      })
+      
+      // Create snapshot of live requirements for this issuance
+      await snapshotService.createIssuanceSnapshot(assetId, issuance.id)
+      
+      // Build compliance manifest and generate hash after issuance exists
       let manifest = null
       let manifestHash = null
       
       try {
-        manifest = await manifestBuilder.buildManifest(issuanceId, issuanceFacts || {})
+        manifest = await manifestBuilder.buildManifest(issuance.id, issuanceFacts || {})
         manifestHash = manifestBuilder.generateManifestHash(manifest)
-        console.log(`✅ Created compliance manifest for issuance ${issuanceId}`)
+        console.log(`✅ Created compliance manifest for issuance ${issuance.id}`)
       } catch (manifestError: any) {
         console.error('⚠️ Failed to create compliance manifest:', manifestError)
         // Don't fail issuance if manifest creation fails
       }
       
-      // Issue tokens with memo anchoring if requested and manifest hash is available
-      const memoHex = (anchor && manifestHash) ? manifestHash : undefined
+      // Prepare memos for blockchain transaction
+      const memos = []
+      
+      // Add compliance hash memo if anchoring is requested
+      if (anchor && manifestHash) {
+        memos.push(`COMPLIANCE_HASH:${manifestHash}`)
+      }
+      
+      // Add public metadata memo if provided
+      if (publicMetadata && Object.keys(publicMetadata).length > 0) {
+        const metadataJson = JSON.stringify(publicMetadata)
+        memos.push(`PUBLIC_METADATA:${metadataJson}`)
+      }
+      
+      // Combine memos or use undefined if no memos
+      const memoHex = memos.length > 0 ? memos.join(' | ') : undefined
+      
+      console.log('🔍 Submitting transaction to XRPL with memoHex:', memoHex)
       
       const result = await (adapter as any).issue({
         to: holder,
@@ -325,37 +359,25 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         memoHex
       })
       
-      // Store issuance record in database
-      const issuance = await prisma.issuance.create({
+      console.log('✅ XRPL transaction result:', result)
+      console.log('🔍 Transaction ID:', result.txid)
+      
+      // Update issuance with transaction details and manifest
+      await prisma.issuance.update({
+        where: { id: issuance.id },
         data: {
-          id: issuanceId,
-          assetId: asset.id,
-          holder,
-          amount,
-          anchor,
           txId: result.txid,
           explorer: `https://testnet.xrpl.org/transactions/${result.txid}`,
-          status: 'SUBMITTED',
-          complianceEvaluated: false,
-          complianceStatus: 'PENDING'
-        } as any
-      })
-      
-      // Create snapshot of live requirements for this issuance
-      await snapshotService.createIssuanceSnapshot(assetId, issuance.id)
-      
-      // Update issuance with manifest and hash if available
-      if (manifest && manifestHash) {
-        await prisma.issuance.update({
-          where: { id: issuance.id },
-          data: {
+          ...(manifest && manifestHash ? {
             complianceRef: manifest as any,
             manifestHash: manifestHash as any,
             complianceEvaluated: true,
             complianceStatus: 'READY'
-          } as any
-        })
-      }
+          } : {})
+        } as any
+      })
+      
+      console.log('✅ Updated issuance with txId:', result.txid)
       
       // Get snapshot requirements for response
       const requirementInstances = await snapshotService.getIssuanceSnapshot(issuance.id)
@@ -383,8 +405,8 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         holder: (issuance as any).holder,
         amount: issuance.amount,
         manifestHash,
-        txId: issuance.txId,
-        explorer: issuance.explorer,
+        txId: result.txid,
+        explorer: `https://testnet.xrpl.org/transactions/${result.txid}`,
         status: issuance.status,
         createdAt: issuance.createdAt.toISOString(),
         compliance: {
