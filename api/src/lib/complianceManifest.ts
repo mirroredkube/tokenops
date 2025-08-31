@@ -110,7 +110,7 @@ export class ComplianceManifestBuilder {
     // Build issuance facts
     const facts = {
       amount: issuance.amount,
-      holder: issuance.holder,
+              holder: (issuance as any).holder,
       ...issuanceFacts
     };
 

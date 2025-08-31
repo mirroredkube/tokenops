@@ -337,10 +337,10 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           where: { id: issuance.id },
           data: {
             complianceRef: manifest as any,
-            manifestHash,
+            manifestHash: manifestHash as any,
             complianceEvaluated: true,
             complianceStatus: 'READY'
-          }
+          } as any
         })
         
         console.log(`✅ Created compliance manifest for issuance ${issuance.id}`)
@@ -358,7 +358,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           issuanceId: issuance.id,
           assetId: issuance.assetId,
           assetRef: asset.assetRef,
-          holder: issuance.holder,
+          holder: (issuance as any).holder,
           amount: issuance.amount,
           manifestHash,
           txId: issuance.txId,
@@ -372,7 +372,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         issuanceId: issuance.id,
         assetId: issuance.assetId,
         assetRef: asset.assetRef,
-        holder: issuance.holder,
+        holder: (issuance as any).holder,
         amount: issuance.amount,
         manifestHash,
         txId: issuance.txId,
@@ -492,7 +492,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         issuanceId: issuance.id,
         assetId: issuance.assetId,
         assetRef: asset.assetRef,
-        holder: issuance.holder,
+        holder: (issuance as any).holder,
         amount: issuance.amount,
         complianceRef: issuance.complianceRef as any,
         txId: issuance.txId,
@@ -585,7 +585,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         issuances: assetIssuances.map(issuance => ({
           issuanceId: issuance.id,
           assetId: issuance.assetId,
-          holder: issuance.holder,
+          holder: (issuance as any).holder,
           amount: issuance.amount,
           txId: issuance.txId,
           status: issuance.status,
@@ -675,7 +675,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           id: issuance.id,
           assetId: issuance.assetId,
           assetRef: issuance.asset.assetRef,
-          holder: issuance.holder,
+          holder: (issuance as any).holder,
           amount: issuance.amount,
           txId: issuance.txId,
           explorer: issuance.explorer,
