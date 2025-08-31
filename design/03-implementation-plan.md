@@ -186,3 +186,12 @@
 - **Adapter:** sandbox-tested against ledger, feature flags, documented rollback.
 - **Policy/Kernel:** scenario tests (matrix), rationale strings verified, requirements render correctly.
 - **Security/Privacy:** role-based gating verified, PII confined to vault, exports pass redaction.
+
+## Weekly Reporting Template (CTO → Architect)
+- **Task IDs:** (e.g., C-001, B-002)  
+- **Status:** Green / Amber / Red  
+- **Shipped:** bullets + screen refs  
+- **Decisions:** 1–3 bullets (with rationale)  
+- **Metrics:** time-to-activation (median), auto-approval %, exceptions opened/closed  
+- **Blockers/Risks:** owner, mitigation  
+- **Next Up:** exact Task IDs planned

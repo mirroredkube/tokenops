@@ -65,7 +65,10 @@ import prisma from '../../db/client.js'
 
 export async function validateAsset(assetId: string): Promise<Asset> {
   const asset = await prisma.asset.findUnique({
-    where: { id: assetId }
+    where: { id: assetId },
+    include: {
+      issuingAddress: true
+    }
   })
   
   if (!asset) {
@@ -82,7 +85,7 @@ export async function validateAsset(assetId: string): Promise<Asset> {
     assetRef: asset.assetRef,
     ledger: asset.ledger.toLowerCase() as "xrpl"|"hedera"|"ethereum",
     network: asset.network.toLowerCase() as "mainnet"|"testnet"|"devnet",
-    issuer: asset.issuer,
+    issuer: asset.issuingAddress?.address || 'unknown', // Backward compatibility
     code: asset.code,
     decimals: asset.decimals,
     complianceMode: asset.complianceMode.toLowerCase() as "OFF"|"RECORD_ONLY"|"GATED_BEFORE",

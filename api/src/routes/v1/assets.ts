@@ -135,13 +135,72 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         return reply.status(409).send({ error: 'Asset already exists' })
       }
       
+      // Get or create default organization and product for backward compatibility
+      let defaultOrg = await prisma.organization.findFirst({
+        where: { name: 'Default Organization' }
+      });
+      
+      if (!defaultOrg) {
+        defaultOrg = await prisma.organization.create({
+          data: {
+            name: 'Default Organization',
+            legalName: 'Default Organization',
+            country: 'US',
+            jurisdiction: 'US',
+            status: 'ACTIVE'
+          }
+        });
+      }
+      
+      let defaultProduct = await prisma.product.findFirst({
+        where: { 
+          organizationId: defaultOrg.id,
+          name: 'Default Product'
+        }
+      });
+      
+      if (!defaultProduct) {
+        defaultProduct = await prisma.product.create({
+          data: {
+            organizationId: defaultOrg.id,
+            name: 'Default Product',
+            description: 'Default product for existing assets',
+            assetClass: 'OTHER',
+            status: 'ACTIVE'
+          }
+        });
+      }
+      
+      // Create or find issuer address
+      let issuerAddress = await prisma.issuerAddress.findFirst({
+        where: {
+          address: assetData.issuer,
+          ledger: assetData.ledger.toUpperCase() as any,
+          network: assetData.network.toUpperCase() as any
+        }
+      });
+      
+      if (!issuerAddress) {
+        issuerAddress = await prisma.issuerAddress.create({
+          data: {
+            organizationId: defaultOrg.id,
+            address: assetData.issuer,
+            ledger: assetData.ledger.toUpperCase() as any,
+            network: assetData.network.toUpperCase() as any,
+            allowedUseTags: ['OTHER'],
+            status: 'APPROVED' // Auto-approve for backward compatibility
+          }
+        });
+      }
+      
       // Create asset in database
       const asset = await prisma.asset.create({
         data: {
           assetRef,
+          productId: defaultProduct.id,
           ledger: assetData.ledger.toUpperCase() as any,
           network: assetData.network.toUpperCase() as any,
-          issuer: assetData.issuer,
+          issuingAddressId: issuerAddress.id,
           code: assetData.code,
           decimals: assetData.decimals,
           complianceMode: assetData.complianceMode.toUpperCase() as any,
@@ -159,7 +218,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         assetRef: asset.assetRef,
         ledger: asset.ledger.toLowerCase(),
         network: asset.network.toLowerCase(),
-        issuer: asset.issuer,
+        issuer: issuerAddress.address, // Return issuer address for backward compatibility
         code: asset.code,
         decimals: asset.decimals,
         complianceMode: asset.complianceMode.toLowerCase(),
@@ -213,7 +272,10 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
     
     try {
       const asset = await prisma.asset.findUnique({
-        where: { id: assetId }
+        where: { id: assetId },
+        include: {
+          issuingAddress: true
+        }
       })
       
       if (!asset) {
@@ -225,7 +287,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         assetRef: asset.assetRef,
         ledger: asset.ledger.toLowerCase(),
         network: asset.network.toLowerCase(),
-        issuer: asset.issuer,
+        issuer: asset.issuingAddress?.address || 'unknown', // Backward compatibility
         code: asset.code,
         decimals: asset.decimals,
         complianceMode: asset.complianceMode.toLowerCase(),
@@ -454,7 +516,10 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           where,
           take: limit,
           skip: offset,
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
+          include: {
+            issuingAddress: true
+          }
         }),
         prisma.asset.count({ where })
       ])
@@ -465,7 +530,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           assetRef: asset.assetRef,
           ledger: asset.ledger.toLowerCase(),
           network: asset.network.toLowerCase(),
-          issuer: asset.issuer,
+          issuer: asset.issuingAddress?.address || 'unknown', // Backward compatibility
           code: asset.code,
           decimals: asset.decimals,
           complianceMode: asset.complianceMode.toLowerCase(),

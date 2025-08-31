@@ -93,13 +93,34 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       });
 
       if (!dbUser) {
+        // Get or create default organization
+        let defaultOrg = await prisma.organization.findFirst({
+          where: { name: 'Default Organization' }
+        });
+        
+        if (!defaultOrg) {
+          defaultOrg = await prisma.organization.create({
+            data: {
+              name: 'Default Organization',
+              legalName: 'Default Organization',
+              country: 'US',
+              jurisdiction: 'US',
+              status: 'ACTIVE'
+            }
+          });
+        }
+        
+        // Convert role to new enum format
+        const newRole = role === 'admin' ? 'ADMIN' : 'VIEWER';
+        
         // Create new user
         dbUser = await prisma.user.create({
           data: {
             email: email || '',
             name: name || '',
             sub,
-            role
+            role: newRole,
+            organizationId: defaultOrg.id
           }
         });
       }
@@ -294,12 +315,33 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       });
       
       if (!dbUser) {
+        // Get or create default organization
+        let defaultOrg = await prisma.organization.findFirst({
+          where: { name: 'Default Organization' }
+        });
+        
+        if (!defaultOrg) {
+          defaultOrg = await prisma.organization.create({
+            data: {
+              name: 'Default Organization',
+              legalName: 'Default Organization',
+              country: 'US',
+              jurisdiction: 'US',
+              status: 'ACTIVE'
+            }
+          });
+        }
+        
+        // Convert role to new enum format
+        const newRole = user.role === 'admin' ? 'ADMIN' : 'VIEWER';
+        
         dbUser = await prisma.user.create({
           data: {
             email: user.email,
             name: user.name,
             sub: user.sub,
-            role: user.role
+            role: newRole,
+            organizationId: defaultOrg.id
           }
         });
       }

@@ -7,46 +7,254 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Asset {
-  id                String             @id @default(cuid())
-  assetRef          String             @unique
-  ledger            AssetLedger
-  network           AssetNetwork
-  issuer            String
-  code              String
-  decimals          Int
-  complianceMode    ComplianceMode     @default(RECORD_ONLY)
-  controls          Json?
-  registry          Json?
-  metadata          Json?
-  status            AssetStatus        @default(DRAFT)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  complianceRecords ComplianceRecord[]
-  issuances         Issuance[]
-  authorizations    Authorization[]
+model Organization {
+  id              String             @id @default(cuid())
+  name            String
+  legalName       String?
+  country         String
+  jurisdiction    String?
+  taxId           String?
+  website         String?
+  status          OrganizationStatus @default(ACTIVE)
+  metadata        Json?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  events          Event[]
+  issuerAddresses IssuerAddress[]
+  products        Product[]
+  users           User[]
 
+  @@index([country])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model User {
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  name                 String?
+  sub                  String                @unique
+  twoFactorSecret      String?
+  twoFactorEnabled     Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  organizationId       String
+  status               UserStatus            @default(ACTIVE)
+  role                 UserRole              @default(VIEWER)
+  events               Event[]
+  verifiedRequirements RequirementInstance[]
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  settings             UserSettings?
+
+  @@index([email])
+  @@index([sub])
+  @@index([organizationId])
+  @@index([role])
+  @@index([status])
+}
+
+model UserSettings {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  timezone      String   @default("UTC")
+  language      String   @default("en")
+  theme         String   @default("light")
+  notifications Json     @default("{}")
+  preferences   Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id             String        @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  assetClass     AssetClass    @default(OTHER)
+  policyPresets  Json?
+  documents      Json?
+  targetMarkets  String[]
+  status         ProductStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  assets         Asset[]
+  events         Event[]
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([assetClass])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Asset {
+  id                   String                @id @default(cuid())
+  assetRef             String                @unique
+  ledger               AssetLedger
+  network              AssetNetwork
+  code                 String
+  decimals             Int
+  complianceMode       ComplianceMode        @default(RECORD_ONLY)
+  controls             Json?
+  registry             Json?
+  metadata             Json?
+  status               AssetStatus           @default(DRAFT)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  productId            String
+  issuingAddressId     String?
+  issuingAddress       IssuerAddress?        @relation(fields: [issuingAddressId], references: [id])
+  product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorizations       Authorization[]
+  complianceRecords    ComplianceRecord[]
+  events               Event[]
+  issuances            Issuance[]
+  requirementInstances RequirementInstance[]
+
+  @@index([productId])
   @@index([ledger, network])
   @@index([status])
   @@index([createdAt])
 }
 
+model IssuerAddress {
+  id             String              @id @default(cuid())
+  organizationId String
+  address        String
+  ledger         AssetLedger
+  network        AssetNetwork
+  allowedUseTags String[]
+  status         IssuerAddressStatus @default(PENDING)
+  proofOfControl Json?
+  approvedAt     DateTime?
+  approvedBy     String?
+  suspendedAt    DateTime?
+  suspendedBy    String?
+  reason         String?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  assets         Asset[]
+  events         Event[]
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([address])
+  @@index([ledger, network])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Regime {
+  id                   String                @id @default(cuid())
+  name                 String
+  version              String
+  effectiveFrom        DateTime
+  effectiveTo          DateTime?
+  description          String?
+  metadata             Json?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  events               Event[]
+  requirementTemplates RequirementTemplate[]
+
+  @@index([name, version])
+  @@index([effectiveFrom, effectiveTo])
+}
+
+model RequirementTemplate {
+  id                   String                @id @default(cuid())
+  regimeId             String
+  name                 String
+  description          String?
+  applicabilityExpr    String
+  dataPoints           String[]
+  enforcementHints     Json?
+  version              String                @default("1.0")
+  effectiveFrom        DateTime
+  effectiveTo          DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  events               Event[]
+  requirementInstances RequirementInstance[]
+  regime               Regime                @relation(fields: [regimeId], references: [id], onDelete: Cascade)
+
+  @@index([regimeId])
+  @@index([name])
+  @@index([effectiveFrom, effectiveTo])
+}
+
+model RequirementInstance {
+  id                    String              @id @default(cuid())
+  assetId               String
+  requirementTemplateId String
+  status                RequirementStatus   @default(NA)
+  evidenceRefs          Json?
+  verifierId            String?
+  verifiedAt            DateTime?
+  rationale             String?
+  exceptionReason       String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  events                Event[]
+  asset                 Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  requirementTemplate   RequirementTemplate @relation(fields: [requirementTemplateId], references: [id])
+  verifier              User?               @relation(fields: [verifierId], references: [id])
+
+  @@index([assetId])
+  @@index([requirementTemplateId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Event {
+  id                    String               @id @default(cuid())
+  organizationId        String?
+  productId             String?
+  assetId               String?
+  issuerAddressId       String?
+  regimeId              String?
+  requirementTemplateId String?
+  requirementInstanceId String?
+  userId                String?
+  eventType             String
+  eventData             Json?
+  rationale             String?
+  createdAt             DateTime             @default(now())
+  asset                 Asset?               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  issuerAddress         IssuerAddress?       @relation(fields: [issuerAddressId], references: [id], onDelete: Cascade)
+  organization          Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product               Product?             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  regime                Regime?              @relation(fields: [regimeId], references: [id], onDelete: Cascade)
+  requirementInstance   RequirementInstance? @relation(fields: [requirementInstanceId], references: [id], onDelete: Cascade)
+  requirementTemplate   RequirementTemplate? @relation(fields: [requirementTemplateId], references: [id], onDelete: Cascade)
+  user                  User?                @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([productId])
+  @@index([assetId])
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
+}
+
 model Issuance {
-  id                  String   @id @default(cuid())
-  assetId             String
-  to                  String
-  amount              String
-  complianceRef       Json?
-  anchor              Boolean  @default(true)
-  txId                String?
-  explorer            String?
-  status              String   @default("pending")
-  validatedAt         DateTime?
+  id                   String    @id @default(cuid())
+  assetId              String
+  to                   String
+  amount               String
+  complianceRef        Json?
+  anchor               Boolean   @default(true)
+  txId                 String?
+  explorer             String?
+  status               String    @default("pending")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  failureCode          String?
+  validatedAt          DateTime?
   validatedLedgerIndex BigInt?
-  failureCode         String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  asset               Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  asset                Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId])
   @@index([status])
@@ -54,22 +262,22 @@ model Issuance {
 }
 
 model Authorization {
-  id                  String   @id @default(cuid())
-  assetId             String
-  holder              String
-  limit               String
-  txId                String?
-  explorer            String?
-  status              AuthorizationStatus @default(PENDING)
-  validatedAt         DateTime?
+  id                   String              @id @default(cuid())
+  assetId              String
+  holder               String
+  limit                String
+  txId                 String?
+  explorer             String?
+  status               AuthorizationStatus @default(PENDING)
+  validatedAt          DateTime?
   validatedLedgerIndex BigInt?
-  failureCode         String?
-  noRipple            Boolean  @default(false)
-  requireAuth         Boolean  @default(false)
-  metadata            Json?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  asset               Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  failureCode          String?
+  noRipple             Boolean             @default(false)
+  requireAuth          Boolean             @default(false)
+  metadata             Json?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  asset                Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId])
   @@index([holder])
@@ -107,33 +315,53 @@ model ComplianceRecord {
   @@index([recordId])
 }
 
-model User {
-  id               String   @id @default(cuid())
-  email            String   @unique
-  name             String?
-  sub              String   @unique
-  role             String   @default("user")
-  twoFactorSecret  String?
-  twoFactorEnabled Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  settings         UserSettings?
-
-  @@index([email])
-  @@index([sub])
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
 }
 
-model UserSettings {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  timezone      String   @default("UTC")
-  language      String   @default("en")
-  theme         String   @default("light")
-  notifications Json     @default("{}")
-  preferences   Json     @default("{}")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum UserRole {
+  ADMIN
+  COMPLIANCE_OFFICER
+  AUDITOR
+  ISSUER_ADMIN
+  COMPLIANCE_REVIEWER
+  OPERATOR
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  RETIRED
+}
+
+enum AssetClass {
+  ART
+  EMT
+  OTHER
+}
+
+enum IssuerAddressStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  REVOKED
+}
+
+enum RequirementStatus {
+  NA
+  REQUIRED
+  SATISFIED
+  EXCEPTION
 }
 
 enum AssetLedger {

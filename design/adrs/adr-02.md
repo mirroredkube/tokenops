@@ -87,62 +87,54 @@ Adopt a **Regulation-Agnostic Compliance Layer** (Regulation Catalog + Policy Ke
 
 ## 3) Alternatives Considered
 
-1. **Tag-only grouping instead of Product**  
-   - *Rejected*: weak place to attach class defaults and governing documents; poor aggregation and audit semantics.  
-2. **Hard-coding MiCA checks in service code**  
-   - *Rejected*: tight coupling; costly for rule changes and multi-region expansion.  
-3. **Heavy rules DSL now**  
-   - *Rejected*: overkill for MVP; we start with simple expressions and grow as needed.  
-4. **On-chain compliance controls everywhere**  
-   - *Rejected*: inconsistent feasibility across ledgers; adds friction; worse operator UX.  
-5. **Region-specific schemas**  
-   - *Rejected*: schema churn; harms portability and speed.
+1. **Tag-only grouping instead of Product** — *Rejected* (weak place to attach class defaults and governing documents; poor aggregation and audit semantics).  
+2. **Hard-coding MiCA checks in service code** — *Rejected* (tight coupling; costly for rule changes and multi-region expansion).  
+3. **Heavy rules DSL now** — *Rejected* (overkill for MVP; start simple and evolve).  
+4. **On-chain compliance controls everywhere** — *Rejected* (inconsistent feasibility across ledgers; adds friction).  
+5. **Region-specific schemas** — *Rejected* (schema churn; harms portability and speed).
 
 ---
 
 ## 4) Consequences
 
-### 4.1 Positive
-- **Clear hierarchy**: Organization → Product → Asset aligns compliance docs and policies to the right level.  
-- **Regulation-agnostic**: add or revise regimes without schema/API churn.  
-- **Operator-friendly**: only relevant fields appear; clear blockers with rationale.  
-- **Consistent enforcement** across ledgers via adapters.  
-- **Audit-ready**: per-requirement evidence and 4-eyes verification, with events.
+**Positive**
+- Clear hierarchy aligns documents and policies to the right level.  
+- Regulation-agnostic: add/revise regimes without schema/API churn.  
+- Operator-friendly: only relevant fields appear; clear blockers with rationale.  
+- Consistent cross-ledger enforcement via adapters.  
+- Audit-ready: per-requirement evidence and four-eyes verification, with events.
 
-### 4.2 Trade-offs
+**Trade-offs**
 - Slightly more model surface (Product).  
 - Requires disciplined, testable applicability expressions and document versioning at Product.
 
-### 4.3 Risks & Mitigations
-- **Rule drift vs code** — Version regimes and schedule re-evaluation; surface drift banners and tasks.  
+**Risks & Mitigations**
+- **Rule drift vs code** — Version regimes; schedule re-evaluation; surface drift banners and tasks.  
 - **Over-collection** — Purpose-bound fields tied to requirements; default redaction.  
-- **Adapter divergence** — Maintain a capability matrix per ledger; integration tests per enforcement hint.
+- **Adapter divergence** — Capability matrix per ledger; integration tests per enforcement hint.
 
 ---
 
 ## 5) Implementation Notes (links to plan)
-
 - Add **Product** as a first-class entity; Assets belong to Products; Issuer Addresses remain Organization-scoped.  
 - Seed regimes and ~10 RequirementTemplates (MiCA + EU Travel Rule).  
 - Build **Policy Kernel v0**; evaluate facts and produce Asset RequirementInstances + Enforcement Plan.  
 - Add **Create Product** step (class defaults, documents, presets) and **Create Asset under Product** with dynamic checklist.  
 - Wire **XRPL** (RequireAuth + trustline authorization) and **EVM** (allowlist + pause) to consume enforcement hints.  
-- Emit events for changes; support 4-eyes verification.  
+- Emit events for changes; support four-eyes verification.  
 - See Implementation Plan tasks: **A-003 (Product), A-004 (Asset), B-001, B-002, B-003, B-004, C-001, C-002**.
 
 ---
 
 ## 6) Rollout / Migration
-
 - No breaking API changes; add Product references in UI and internal APIs.  
-- For any pre-existing Assets (if any), create a **Default Product** per Organization and reparent Assets.  
+- For any pre-existing Assets, create a **Default Product** per Organization and reparent Assets.  
 - Run the Kernel in **advisory mode** for existing drafts to surface gaps; enable **activation gating** after backfill/verification.  
 - Document operator playbooks mapping enforcement hints to ledger actions.
 
 ---
 
 ## 7) Open Questions
-
 - Do we need **Series** (terms/vintages) in near term, or keep as future option?  
 - Which non-EU regimes to prioritize next (UK, SG, CH)?  
 - When to expose read-only compliance states via public API?
@@ -150,5 +142,4 @@ Adopt a **Regulation-Agnostic Compliance Layer** (Regulation Catalog + Policy Ke
 ---
 
 ## 8) Decision Outcome
-
 Adopt the **Regulation-Agnostic Compliance Layer** and the **Organization → Product → Asset** hierarchy as the standard model for selecting requirements, collecting data, and driving ledger-specific enforcement. This preserves ADR-001’s API stability and enables rapid multi-jurisdiction, multi-ledger expansion.
