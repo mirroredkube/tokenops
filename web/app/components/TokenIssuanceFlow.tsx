@@ -795,7 +795,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                          <p className="text-gray-500 mb-4">Try searching for something else or check back later for more options.</p>
                          <button
                            onClick={() => setSearchQuery('')}
-                           className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                           className="inline-flex items-center px-4 py-2 text-gray-600 border border-gray-600 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                          >
                            Clear search
                          </button>
@@ -908,7 +908,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <a
                     href="/app/assets/create"
                     target="_blank"
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                    className="inline-flex items-center px-6 py-3 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
                   >
                     {t('issuances:trustlineDetails.createAsset', 'Create Asset')}
                   </a>
@@ -1190,7 +1190,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                        </div>
                                        <button
                                          type="button"
-                                         className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors duration-200"
+                                         className="mt-3 px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 font-medium text-sm transition-colors duration-200"
                                        >
                                          Connect Wallet
                                        </button>
@@ -1206,7 +1206,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                 type="button"
                                 onClick={handleOptInSubmit}
                                 disabled={loading}
-                                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                                className="px-6 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
                               >
                                 {loading ? 'Creating Trustline...' : 'Create Trustline'}
                               </button>
@@ -1220,7 +1220,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                                                                      <button
                               type="button"
                               onClick={() => setCurrentStep('compliance-metadata')}
-                              className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
+                              className="px-8 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
                             >
                               {t('issuances:tokenIssuance.continueToIssue', 'Continue to Issue')}
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1305,7 +1305,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => setCurrentStep('ledger-selection')}
-                className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all duration-200"
+                className="px-8 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-semibold transition-all duration-200"
               >
                 {t('issuances:trustlineDetails.backToLedgerSelection', '← Back to Ledger Selection')}
               </button>
