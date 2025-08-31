@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { generateAssetRef } from './shared.js'
 import { PrismaClient } from '@prisma/client'
+import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
 
 const prisma = new PrismaClient()
 
@@ -199,6 +200,48 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       
       console.log('Asset created:', asset)
       
+      // Evaluate compliance and create requirement instances
+      let complianceEvaluation: any = null
+      let requirementInstances: any[] = []
+      
+      try {
+        // Build policy facts from asset and product data
+        const facts: PolicyFacts = {
+          issuerCountry: product.organization.country,
+          assetClass: product.assetClass,
+          targetMarkets: product.targetMarkets || [],
+          ledger: asset.ledger,
+          distributionType: 'private', // Default - could be enhanced with product data
+          investorAudience: 'professional', // Default - could be enhanced with product data
+          isCaspInvolved: true, // Default - could be enhanced with product data
+          transferType: 'CASP_TO_CASP' // Default - could be enhanced with product data
+        }
+        
+        // Evaluate compliance
+        complianceEvaluation = await policyKernel.evaluateFacts(facts)
+        
+        // Create requirement instances
+        await policyKernel.createRequirementInstances(asset.id, facts)
+        
+        // Get created instances for response
+        requirementInstances = await prisma.requirementInstance.findMany({
+          where: { assetId: asset.id },
+          include: {
+            requirementTemplate: {
+              include: {
+                regime: true
+              }
+            }
+          }
+        })
+        
+        console.log(`✅ Compliance evaluation completed: ${complianceEvaluation.requirementInstances.length} requirements`)
+      } catch (complianceError: any) {
+        console.error('⚠️ Compliance evaluation failed:', complianceError)
+        // Don't fail asset creation if compliance evaluation fails
+        // Asset can still be created, compliance can be evaluated later
+      }
+      
       return reply.status(201).send({
         id: asset.id,
         assetRef: asset.assetRef,
@@ -218,6 +261,20 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         organization: {
           id: product.organization.id,
           name: product.organization.name
+        },
+        compliance: {
+          evaluated: complianceEvaluation !== null,
+          requirementCount: requirementInstances.length,
+          requirements: requirementInstances.map(instance => ({
+            id: instance.id,
+            status: instance.status,
+            template: {
+              id: instance.requirementTemplate.id,
+              name: instance.requirementTemplate.name,
+              regime: instance.requirementTemplate.regime.name
+            }
+          })),
+          enforcementPlan: complianceEvaluation?.enforcementPlan || null
         }
       })
     } catch (error: any) {
@@ -256,7 +313,31 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
             metadata: { type: 'object' },
             status: { type: 'string' },
             createdAt: { type: 'string' },
-            updatedAt: { type: 'string' }
+            updatedAt: { type: 'string' },
+            compliance: {
+              type: 'object',
+              properties: {
+                requirementCount: { type: 'number' },
+                requirements: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      status: { type: 'string' },
+                      template: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' },
+                          regime: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         404: { type: 'object', properties: { error: { type: 'string' } } }
@@ -269,7 +350,16 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       const asset = await prisma.asset.findUnique({
         where: { id: assetId },
         include: {
-          issuingAddress: true
+          issuingAddress: true,
+          requirementInstances: {
+            include: {
+              requirementTemplate: {
+                include: {
+                  regime: true
+                }
+              }
+            }
+          }
         }
       })
       
@@ -291,7 +381,19 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         metadata: asset.metadata,
         status: asset.status.toLowerCase(),
         createdAt: asset.createdAt.toISOString(),
-        updatedAt: asset.updatedAt.toISOString()
+        updatedAt: asset.updatedAt.toISOString(),
+        compliance: {
+          requirementCount: asset.requirementInstances.length,
+          requirements: asset.requirementInstances.map(instance => ({
+            id: instance.id,
+            status: instance.status,
+            template: {
+              id: instance.requirementTemplate.id,
+              name: instance.requirementTemplate.name,
+              regime: instance.requirementTemplate.regime.name
+            }
+          }))
+        }
       })
     } catch (error: any) {
       console.error('Error fetching asset:', error)
@@ -495,6 +597,30 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
                       id: { type: 'string' },
                       name: { type: 'string' }
                     }
+                  },
+                  compliance: {
+                    type: 'object',
+                    properties: {
+                      requirementCount: { type: 'number' },
+                      requirements: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            status: { type: 'string' },
+                            template: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'string' },
+                                name: { type: 'string' },
+                                regime: { type: 'string' }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -538,6 +664,15 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
               include: {
                 organization: true
               }
+            },
+            requirementInstances: {
+              include: {
+                requirementTemplate: {
+                  include: {
+                    regime: true
+                  }
+                }
+              }
             }
           }
         }),
@@ -564,6 +699,18 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           organization: {
             id: asset.product.organization.id,
             name: asset.product.organization.name
+          },
+          compliance: {
+            requirementCount: asset.requirementInstances.length,
+            requirements: asset.requirementInstances.map(instance => ({
+              id: instance.id,
+              status: instance.status,
+              template: {
+                id: instance.requirementTemplate.id,
+                name: instance.requirementTemplate.name,
+                regime: instance.requirementTemplate.regime.name
+              }
+            }))
           }
         })),
         total,
