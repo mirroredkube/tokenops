@@ -314,6 +314,24 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
             status: { type: 'string' },
             createdAt: { type: 'string' },
             updatedAt: { type: 'string' },
+            product: {
+              type: 'object',
+              nullable: true,
+              properties: {
+                id: { type: 'string' },
+                name: { type: 'string' },
+                assetClass: { type: 'string' }
+              }
+            },
+            organization: {
+              type: 'object',
+              nullable: true,
+              properties: {
+                id: { type: 'string' },
+                name: { type: 'string' },
+                country: { type: 'string' }
+              }
+            },
             compliance: {
               type: 'object',
               properties: {
@@ -351,6 +369,11 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         where: { id: assetId },
         include: {
           issuingAddress: true,
+          product: {
+            include: {
+              organization: true
+            }
+          },
           requirementInstances: {
             include: {
               requirementTemplate: {
@@ -382,6 +405,16 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         status: asset.status.toLowerCase(),
         createdAt: asset.createdAt.toISOString(),
         updatedAt: asset.updatedAt.toISOString(),
+        product: asset.product ? {
+          id: asset.product.id,
+          name: asset.product.name,
+          assetClass: asset.product.assetClass
+        } : null,
+        organization: asset.product?.organization ? {
+          id: asset.product.organization.id,
+          name: asset.product.organization.name,
+          country: asset.product.organization.country
+        } : null,
         compliance: {
           requirementCount: asset.requirementInstances.length,
           requirements: asset.requirementInstances.map(instance => ({

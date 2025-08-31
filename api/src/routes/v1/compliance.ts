@@ -503,4 +503,75 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       return reply.status(500).send({ error: 'Failed to fetch requirement instances' })
     }
   })
+
+  // 5. POST /v1/compliance/records - Create compliance record with hash for anchoring
+  app.post('/compliance/records', {
+    schema: {
+      summary: 'Create compliance record with hash for anchoring',
+      description: 'Create a compliance record with SHA256 hash for blockchain anchoring',
+      tags: ['v1'],
+      body: {
+        type: 'object',
+        required: ['assetId', 'holder'],
+        properties: {
+          assetId: { type: 'string' },
+          holder: { type: 'string' },
+          purpose: { type: 'string' },
+          isin: { type: 'string' },
+          legalIssuer: { type: 'string' },
+          jurisdiction: { type: 'string' },
+          micaClass: { type: 'string' },
+          kycRequirement: { type: 'string' },
+          transferRestrictions: { type: 'boolean' }
+        }
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            recordId: { type: 'string' },
+            sha256: { type: 'string' },
+            createdAt: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { assetId, holder, purpose, isin, legalIssuer, jurisdiction, micaClass, kycRequirement, transferRestrictions } = req.body as any
+      
+      // Create compliance data object
+      const complianceData = {
+        assetId,
+        holder,
+        purpose,
+        isin,
+        legalIssuer,
+        jurisdiction,
+        micaClass,
+        kycRequirement,
+        transferRestrictions,
+        timestamp: new Date().toISOString()
+      }
+      
+      // Generate SHA256 hash of compliance data
+      const crypto = await import('crypto')
+      const complianceDataString = JSON.stringify(complianceData, Object.keys(complianceData).sort())
+      const sha256 = crypto.createHash('sha256').update(complianceDataString).digest('hex')
+      
+      // Generate unique record ID
+      const recordId = `compliance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
+      console.log('🔐 Created compliance record:', { recordId, sha256 })
+      
+      return reply.status(201).send({
+        recordId,
+        sha256,
+        createdAt: new Date().toISOString()
+      })
+    } catch (error: any) {
+      console.error('❌ Error creating compliance record:', error)
+      return reply.status(500).send({ error: 'Failed to create compliance record' })
+    }
+  })
 }

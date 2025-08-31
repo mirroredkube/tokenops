@@ -69,6 +69,17 @@ interface IssuanceResult {
   trustlineTxHash?: string
   trustlineExplorer?: string
   complianceRecord?: ComplianceRecord
+  compliance?: {
+    status?: string
+    requirementCount?: number
+    requirements?: Array<{
+      id: string
+      status: string
+      template?: {
+        name: string
+      }
+    }>
+  }
 }
 
 interface TokenIssuanceFlowProps {
@@ -454,8 +465,36 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     setError(null)
 
     try {
-      // Create compliance record using the v1 API
+      // First, evaluate compliance using the new v1 API
       const complianceRequest = {
+        issuerCountry: (selectedAsset as any)?.organization?.country || 'DE',
+        assetClass: (selectedAsset as any)?.product?.assetClass || 'OTHER',
+        targetMarkets: (selectedAsset as any)?.product?.targetMarkets || ['DE'],
+        ledger: selectedAsset?.ledger?.toUpperCase() || 'XRPL',
+        distributionType: 'private', // Default for now
+        investorAudience: 'professional', // Default for now
+        isCaspInvolved: true, // Default for now
+        transferType: 'CASP_TO_SELF_HOSTED' // Default for now
+      }
+
+      console.log('Evaluating compliance:', complianceRequest)
+
+      const { data: evaluationData, error: evaluationError } = await api.POST('/v1/compliance/evaluate' as any, {
+        body: complianceRequest
+      })
+
+      if (evaluationError && typeof evaluationError === 'object' && 'error' in evaluationError) {
+        throw new Error((evaluationError as any).error || 'Failed to evaluate compliance')
+      }
+
+      if (!evaluationData) {
+        throw new Error('No compliance evaluation data received')
+      }
+
+      console.log('Compliance evaluation result:', evaluationData)
+
+      // Create compliance record for anchoring (using the old API for now)
+      const complianceRecordRequest = {
         assetId: selectedAsset?.id,
         holder: trustlineData.holderAddress || trustlineCheckData.holderAddress,
         purpose: complianceData.purpose,
@@ -467,26 +506,26 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         transferRestrictions: complianceData.transferRestrictions
       }
 
-      console.log('Creating compliance record:', complianceRequest)
+      console.log('Creating compliance record:', complianceRecordRequest)
 
-      const { data, error } = await api.POST('/v1/compliance-records' as any, {
-        body: complianceRequest
+      const { data: recordData, error: recordError } = await api.POST('/v1/compliance/records' as any, {
+        body: complianceRecordRequest
       })
 
-      if (error && typeof error === 'object' && 'error' in error) {
-        throw new Error((error as any).error || 'Failed to create compliance record')
+      if (recordError && typeof recordError === 'object' && 'error' in recordError) {
+        throw new Error((recordError as any).error || 'Failed to create compliance record')
       }
 
-      if (!data) {
-        throw new Error('No response data received')
+      if (!recordData) {
+        throw new Error('No compliance record data received')
       }
 
-      // Store the compliance record
-      const responseData = data as any
+      // Store the compliance record for anchoring
+      const responseData = recordData as any
       const newComplianceRecord: ComplianceRecord = {
         recordId: responseData.recordId,
         sha256: responseData.sha256,
-        createdAt: new Date().toISOString() // API doesn't return createdAt, so we'll use current time
+        createdAt: new Date().toISOString()
       }
 
       setComplianceRecord(newComplianceRecord)
@@ -496,7 +535,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       setCurrentStep('token-issuance')
     } catch (err: any) {
       console.error('Compliance submit error:', err)
-      setError(err.message || 'Failed to create compliance record')
+      setError(err.message || 'Failed to process compliance')
     } finally {
       setLoading(false)
     }
@@ -1538,135 +1577,158 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
               {/* Form Content */}
               <div className="p-8">
-                                <form onSubmit={handleComplianceSubmit} className="space-y-6">
+                <form onSubmit={handleComplianceSubmit} className="space-y-6">
+                  {/* Asset Information Display */}
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">Asset Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Asset</label>
+                        <p className="text-gray-900 font-medium">{selectedAsset?.code || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Product</label>
+                        <p className="text-gray-900 font-medium">{(selectedAsset as any)?.product?.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Organization</label>
+                        <p className="text-gray-900 font-medium">{(selectedAsset as any)?.organization?.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ledger</label>
+                        <p className="text-gray-900 font-medium">{selectedAsset?.ledger?.toUpperCase() || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Basic Compliance Information */}
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.basicInformation', 'Basic Information')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label={t('issuances:compliance.fields.isinCode', 'ISIN Code *')} required>
-                  <input
-                    type="text"
-                    value={complianceData.isin}
-                    onChange={(e) => setComplianceData(prev => ({ ...prev, isin: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder={t('issuances:compliance.fields.isinCodePlaceholder', 'DE0001234567')}
-                    required
-                  />
-                </FormField>
-                <FormField label={t('issuances:compliance.fields.legalIssuerName', 'Legal Issuer Name *')} required>
-                  <input
-                    type="text"
-                    value={complianceData.legalIssuerName}
-                    onChange={(e) => setComplianceData(prev => ({ ...prev, legalIssuerName: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder={t('issuances:compliance.fields.legalIssuerNamePlaceholder', 'Acme Bank AG')}
-                    required
-                  />
-                </FormField>
-              </div>
-            </div>
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.basicInformation', 'Basic Information')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label={t('issuances:compliance.fields.isinCode', 'ISIN Code *')} required>
+                        <input
+                          type="text"
+                          value={complianceData.isin}
+                          onChange={(e) => setComplianceData(prev => ({ ...prev, isin: e.target.value }))}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder={t('issuances:compliance.fields.isinCodePlaceholder', 'DE0001234567')}
+                          required
+                        />
+                      </FormField>
+                      <FormField label={t('issuances:compliance.fields.legalIssuerName', 'Legal Issuer Name *')} required>
+                        <input
+                          type="text"
+                          value={complianceData.legalIssuerName}
+                          onChange={(e) => setComplianceData(prev => ({ ...prev, legalIssuerName: e.target.value }))}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder={t('issuances:compliance.fields.legalIssuerNamePlaceholder', 'Acme Bank AG')}
+                          required
+                        />
+                      </FormField>
+                    </div>
+                  </div>
 
-            {/* MiCA Classification */}
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">MiCA-Klassifizierung</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label={t('issuances:compliance.fields.tokenClassification', 'Token Classification *')} required>
-                  <CustomDropdown
-                    value={complianceData.micaClassification}
-                    onChange={(value) => setComplianceData(prev => ({ ...prev, micaClassification: value as any }))}
-                    options={[
-                      { value: 'stablecoin', label: 'Stablecoin' },
-                      { value: 'security_token', label: t('issuances:compliance.options.securityToken', 'Security Token') },
-                      { value: 'utility_token', label: t('issuances:compliance.options.utilityToken', 'Utility Token') },
-                      { value: 'asset_backed', label: 'Asset-Backed Token' }
-                    ]}
-                    placeholder={t('issuances:compliance.fields.tokenClassificationPlaceholder', 'Select token classification')}
-                  />
-                </FormField>
-                <FormField label={t('issuances:compliance.fields.kycRequirement', 'KYC Requirement *')} required>
-                  <CustomDropdown
-                    value={complianceData.kycRequirement}
-                    onChange={(value) => setComplianceData(prev => ({ ...prev, kycRequirement: value as any }))}
-                    options={[
-                      { value: 'mandatory', label: t('issuances:compliance.options.required', 'Required') },
-                      { value: 'optional', label: t('issuances:compliance.options.optional', 'Optional') },
-                      { value: 'not_required', label: t('issuances:compliance.options.notRequired', 'Not Required') }
-                    ]}
-                    placeholder={t('issuances:compliance.fields.kycRequirementPlaceholder', 'Select KYC requirement')}
-                  />
-                </FormField>
-              </div>
-            </div>
+                  {/* MiCA Classification */}
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">MiCA Classification</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label={t('issuances:compliance.fields.tokenClassification', 'Token Classification *')} required>
+                        <CustomDropdown
+                          value={complianceData.micaClassification}
+                          onChange={(value) => setComplianceData(prev => ({ ...prev, micaClassification: value as any }))}
+                          options={[
+                            { value: 'stablecoin', label: 'Stablecoin' },
+                            { value: 'security_token', label: t('issuances:compliance.options.securityToken', 'Security Token') },
+                            { value: 'utility_token', label: t('issuances:compliance.options.utilityToken', 'Utility Token') },
+                            { value: 'asset_backed', label: 'Asset-Backed Token' }
+                          ]}
+                          placeholder={t('issuances:compliance.fields.tokenClassificationPlaceholder', 'Select token classification')}
+                        />
+                      </FormField>
+                      <FormField label={t('issuances:compliance.fields.kycRequirement', 'KYC Requirement *')} required>
+                        <CustomDropdown
+                          value={complianceData.kycRequirement}
+                          onChange={(value) => setComplianceData(prev => ({ ...prev, kycRequirement: value as any }))}
+                          options={[
+                            { value: 'mandatory', label: t('issuances:compliance.options.required', 'Required') },
+                            { value: 'optional', label: t('issuances:compliance.options.optional', 'Optional') },
+                            { value: 'not_required', label: t('issuances:compliance.options.notRequired', 'Not Required') }
+                          ]}
+                          placeholder={t('issuances:compliance.fields.kycRequirementPlaceholder', 'Select KYC requirement')}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
 
-            {/* Jurisdiction and Purpose */}
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.jurisdictionAndPurpose', 'Jurisdiction & Purpose')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label={t('issuances:compliance.fields.jurisdiction', 'Jurisdiction *')} required>
-                  <input
-                    type="text"
-                    value={complianceData.jurisdiction}
-                    onChange={(e) => setComplianceData(prev => ({ ...prev, jurisdiction: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder={t('issuances:compliance.fields.jurisdictionPlaceholder', 'DE, EEA, EU')}
-                    required
-                  />
-                </FormField>
-                <FormField label={t('issuances:compliance.fields.purpose', 'Purpose *')} required>
-                  <input
-                    type="text"
-                    value={complianceData.purpose}
-                    onChange={(e) => setComplianceData(prev => ({ ...prev, purpose: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder={t('issuances:compliance.fields.purposePlaceholder', 'Payment, Investment, Utility')}
-                    required
-                  />
-                </FormField>
-              </div>
-            </div>
+                  {/* Jurisdiction and Purpose */}
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.jurisdictionAndPurpose', 'Jurisdiction & Purpose')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label={t('issuances:compliance.fields.jurisdiction', 'Jurisdiction *')} required>
+                        <input
+                          type="text"
+                          value={complianceData.jurisdiction}
+                          onChange={(e) => setComplianceData(prev => ({ ...prev, jurisdiction: e.target.value }))}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder={t('issuances:compliance.fields.jurisdictionPlaceholder', 'DE, EEA, EU')}
+                          required
+                        />
+                      </FormField>
+                      <FormField label={t('issuances:compliance.fields.purpose', 'Purpose *')} required>
+                        <input
+                          type="text"
+                          value={complianceData.purpose}
+                          onChange={(e) => setComplianceData(prev => ({ ...prev, purpose: e.target.value }))}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder={t('issuances:compliance.fields.purposePlaceholder', 'Payment, Investment, Utility')}
+                          required
+                        />
+                      </FormField>
+                    </div>
+                  </div>
 
-            {/* Transfer Restrictions */}
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.transferRestrictions', 'Transfer Restrictions')}</h3>
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="transferRestrictions"
-                    checked={complianceData.transferRestrictions}
-                    onChange={(e) => setComplianceData(prev => ({ ...prev, transferRestrictions: e.target.checked }))}
-                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="transferRestrictions" className="ml-2 text-sm text-gray-700">
-                    {t('issuances:compliance.metadata.enableTransferRestrictions', 'Enable transfer restrictions')}
-                  </label>
-                </div>
-                {complianceData.transferRestrictions && (
-                  <FormField label="Maximum Transfer Amount">
-                    <input
-                      type="text"
-                      value={complianceData.maxTransferAmount}
-                      onChange={(e) => setComplianceData(prev => ({ ...prev, maxTransferAmount: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      placeholder="10000"
-                    />
-                  </FormField>
-                )}
-              </div>
-            </div>
+                  {/* Transfer Restrictions */}
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.transferRestrictions', 'Transfer Restrictions')}</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="transferRestrictions"
+                          checked={complianceData.transferRestrictions}
+                          onChange={(e) => setComplianceData(prev => ({ ...prev, transferRestrictions: e.target.checked }))}
+                          className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="transferRestrictions" className="ml-2 text-sm text-gray-700">
+                          {t('issuances:compliance.metadata.enableTransferRestrictions', 'Enable transfer restrictions')}
+                        </label>
+                      </div>
+                      {complianceData.transferRestrictions && (
+                        <FormField label="Maximum Transfer Amount">
+                          <input
+                            type="text"
+                            value={complianceData.maxTransferAmount}
+                            onChange={(e) => setComplianceData(prev => ({ ...prev, maxTransferAmount: e.target.value }))}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            placeholder="10000"
+                          />
+                        </FormField>
+                      )}
+                    </div>
+                  </div>
 
-            {/* Expiration */}
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.expiration', 'Expiration (Optional)')}</h3>
-              <FormField label={t('issuances:compliance.fields.expirationDate', 'Expiration Date')}>
-                <input
-                  type="date"
-                  value={complianceData.expirationDate}
-                  onChange={(e) => setComplianceData(prev => ({ ...prev, expirationDate: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
-              </FormField>
-            </div>
+                  {/* Expiration */}
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.expiration', 'Expiration (Optional)')}</h3>
+                    <FormField label={t('issuances:compliance.fields.expirationDate', 'Expiration Date')}>
+                      <input
+                        type="date"
+                        value={complianceData.expirationDate}
+                        onChange={(e) => setComplianceData(prev => ({ ...prev, expirationDate: e.target.value }))}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                    </FormField>
+                  </div>
 
                   {/* Action Buttons */}
                   <div className="flex items-center justify-between pt-8 border-t border-gray-100">
@@ -1685,7 +1747,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                       {loading ? (
                         <>
                           <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-600 border-t-transparent"></div>
-                          Completing Issuance...
+                          Processing Compliance...
                         </>
                       ) : (
                         <>
@@ -1764,34 +1826,41 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     </div>
                   </div>
                 )}
-                {result.complianceRecord && (
+                {result.compliance && (
                   <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-blue-700 mb-2">{t('issuances:success.complianceRecord', 'Compliance Record:')}</p>
+                    <p className="text-sm font-semibold text-blue-700 mb-2">Compliance Evaluation:</p>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                                                  <span className="text-sm text-blue-600">{t('issuances:success.recordId', 'Record ID:')}</span>
-                        <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono">
-                          {result.complianceRecord.recordId}
-                        </code>
-                      </div>
-                      <div className="flex items-start justify-between">
-                                                  <span className="text-sm text-blue-600">{t('issuances:success.sha256', 'SHA256:')}</span>
-                        <code className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded font-mono break-all max-w-xs">
-                          {result.complianceRecord.sha256}
-                        </code>
-                      </div>
-                      <div className="flex items-center justify-between">
-                                                  <span className="text-sm text-blue-600">{t('issuances:success.anchored', 'Anchored:')}</span>
+                        <span className="text-sm text-blue-600">Status:</span>
                         <span className="text-sm font-medium text-blue-700">
-                          {anchorCompliance ? 'Yes' : 'No'}
+                          {result.compliance.status || 'Evaluated'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                                                  <span className="text-sm text-blue-600">{t('issuances:success.status', 'Status:')}</span>
-                          <span className="text-sm font-medium text-blue-700">
-                            {result.txHash && result.txHash !== 'pending' ? t('issuances:success.successfullyAnchored', 'Successfully anchored') : t('issuances:success.pending', 'Pending')}
-                          </span>
+                        <span className="text-sm text-blue-600">Requirements:</span>
+                        <span className="text-sm font-medium text-blue-700">
+                          {result.compliance.requirementCount || 0} evaluated
+                        </span>
                       </div>
+                      {result.compliance.requirements && result.compliance.requirements.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-sm text-blue-600 mb-2">Key Requirements:</p>
+                          <div className="space-y-1">
+                            {result.compliance.requirements.slice(0, 3).map((req: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between text-xs">
+                                <span className="text-blue-600">{req.template?.name || 'Requirement'}</span>
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                  req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
+                                  req.status === 'REQUIRED' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {req.status}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
