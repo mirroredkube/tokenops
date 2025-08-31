@@ -407,13 +407,18 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         throw new Error('No asset selected. Please go back and select an asset.')
       }
 
-      // Prepare the issuance request
+      // Prepare the issuance request with compliance facts
       const issuanceRequest = {
-        to: tokenData.destination,
+        holder: tokenData.destination,
         amount: tokenData.amount.toString(),
-        complianceRef: complianceRecord ? {
-          recordId: complianceRecord.recordId,
-          sha256: complianceRecord.sha256
+        issuanceFacts: complianceRecord ? {
+          purpose: complianceData.purpose,
+          isin: complianceData.isin,
+          legal_issuer: complianceData.legalIssuerName,
+          jurisdiction: complianceData.jurisdiction,
+          mica_class: complianceData.micaClassification,
+          kyc_requirement: complianceData.kycRequirement,
+          transfer_restrictions: complianceData.transferRestrictions.toString()
         } : undefined,
         anchor: anchorCompliance
       }
@@ -447,7 +452,11 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         ...prev,
         txHash: responseData.txId || 'pending',
         explorer: responseData.explorer || `https://testnet.xrpl.org/transactions/${responseData.txId || 'pending'}`,
-        complianceRecord: complianceRecord || undefined
+        complianceRecord: {
+          recordId: responseData.manifestHash || responseData.issuanceId,
+          sha256: responseData.manifestHash || '',
+          createdAt: responseData.createdAt
+        }
       }))
 
       setCurrentStep('success')
@@ -493,43 +502,22 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
       console.log('Compliance evaluation result:', evaluationData)
 
-      // Create compliance record for anchoring (using the old API for now)
-      const complianceRecordRequest = {
-        assetId: selectedAsset?.id,
-        holder: trustlineData.holderAddress || trustlineCheckData.holderAddress,
+      // Store compliance data for issuance (will be included in manifest)
+      const issuanceFacts = {
         purpose: complianceData.purpose,
         isin: complianceData.isin,
-        legalIssuer: complianceData.legalIssuerName,
+        legal_issuer: complianceData.legalIssuerName,
         jurisdiction: complianceData.jurisdiction,
-        micaClass: complianceData.micaClassification,
-        kycRequirement: complianceData.kycRequirement,
-        transferRestrictions: complianceData.transferRestrictions
+        mica_class: complianceData.micaClassification,
+        kyc_requirement: complianceData.kycRequirement,
+        transfer_restrictions: complianceData.transferRestrictions.toString()
       }
 
-      console.log('Creating compliance record:', complianceRecordRequest)
+      console.log('Compliance facts for issuance:', issuanceFacts)
 
-      const { data: recordData, error: recordError } = await api.POST('/v1/compliance/records' as any, {
-        body: complianceRecordRequest
-      })
-
-      if (recordError && typeof recordError === 'object' && 'error' in recordError) {
-        throw new Error((recordError as any).error || 'Failed to create compliance record')
-      }
-
-      if (!recordData) {
-        throw new Error('No compliance record data received')
-      }
-
-      // Store the compliance record for anchoring
-      const responseData = recordData as any
-      const newComplianceRecord: ComplianceRecord = {
-        recordId: responseData.recordId,
-        sha256: responseData.sha256,
-        createdAt: new Date().toISOString()
-      }
-
-      setComplianceRecord(newComplianceRecord)
-      console.log('Compliance record created:', newComplianceRecord)
+      // Store the compliance facts for use in issuance
+      // Don't set compliance record yet - it will be generated during issuance
+      setComplianceRecord(null)
 
       // Navigate to the Issue step
       setCurrentStep('token-issuance')
@@ -1474,29 +1462,29 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   </div>
 
                   {/* Anchor Compliance Toggle */}
-                  {complianceRecord && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center h-6">
-                            <input
-                              id="anchor-compliance"
-                              type="checkbox"
-                              checked={anchorCompliance}
-                              onChange={(e) => setAnchorCompliance(e.target.checked)}
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="anchor-compliance" className="text-sm font-medium text-blue-900">
-                              {t('issuances:compliance.sections.anchorComplianceData', 'Anchor Compliance Data')}
-                            </label>
-                            <p className="text-xs text-blue-700 mt-1">
-                              {t('issuances:compliance.metadata.includeComplianceRecord', 'Include compliance record in the blockchain transaction')}
-                            </p>
-                          </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center h-6">
+                          <input
+                            id="anchor-compliance"
+                            type="checkbox"
+                            checked={anchorCompliance}
+                            onChange={(e) => setAnchorCompliance(e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
                         </div>
-                        
+                        <div>
+                          <label htmlFor="anchor-compliance" className="text-sm font-medium text-blue-900">
+                            {t('issuances:compliance.sections.anchorComplianceData', 'Anchor Compliance Data')}
+                          </label>
+                          <p className="text-xs text-blue-700 mt-1">
+                            {t('issuances:compliance.metadata.includeComplianceRecord', 'Include compliance record in the blockchain transaction')}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {complianceRecord ? (
                         <div className="bg-blue-100 rounded p-3 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-blue-800">{t('issuances:compliance.metadata.recordId', 'Record ID:')}</span>
@@ -1511,9 +1499,20 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                             </code>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="bg-blue-100 rounded p-3">
+                          <div className="flex items-center space-x-2">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-xs text-blue-800">
+                              {t('issuances:compliance.metadata.willBeGenerated', 'Compliance record and hash will be generated during issuance')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
 
                   {/* Action Buttons */}
                   <div className="flex items-center justify-between pt-8 border-t border-gray-100">

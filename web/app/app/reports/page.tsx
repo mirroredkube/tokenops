@@ -707,8 +707,21 @@ function ComplianceReport({ filters }: { filters: FilterState }) {
         params.holder = filters.holder
       }
 
-      const response = await api.GET('/v1/compliance-records', { params: { query: params } })
-      return response.data
+      const response = await api.GET('/v1/issuances', { params: { query: params } })
+      // Transform issuances to compliance records format for backward compatibility
+      const complianceRecords = (response.data?.items || [])
+        .filter((issuance: any) => issuance.complianceRef)
+        .map((issuance: any) => ({
+          id: issuance.id,
+          recordId: issuance.manifestHash || issuance.id,
+          assetId: issuance.assetId,
+          assetRef: issuance.assetRef,
+          holder: issuance.holder,
+          status: issuance.complianceStatus === 'READY' ? 'VERIFIED' : 'UNVERIFIED',
+          sha256: issuance.manifestHash || '',
+          createdAt: issuance.createdAt
+        }))
+      return { records: complianceRecords, total: response.data?.total || 0 }
     }
   })
 

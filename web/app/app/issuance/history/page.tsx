@@ -145,6 +145,7 @@ export default function IssuanceHistoryPage() {
   }
 
   const truncateAddress = (address: string, length: number = 8) => {
+    if (!address) return 'N/A'
     if (address.length <= length * 2) return address
     return `${address.substring(0, length)}...${address.substring(address.length - length)}`
   }

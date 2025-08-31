@@ -251,6 +251,7 @@
       "enableTransferRestrictions": "Enable transfer restrictions",
       "recordId": "Record ID:",
       "sha256Hash": "SHA256 Hash:",
+      "willBeGenerated": "Compliance record and hash will be generated during issuance",
       "publicOnChainMetadata": "Public On-Chain Metadata",
       "warningMessage": "This metadata will be stored permanently on the blockchain and is publicly visible. Do not include sensitive information like personal data, compliance details, or private business information."
     },

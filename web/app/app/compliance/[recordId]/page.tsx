@@ -71,19 +71,44 @@ export default function ComplianceRecordPage() {
     setError(null)
     
     try {
-      const { data, error } = await api.GET(`/v1/compliance-records/${recordId}` as any, {})
+      // Use the new unified compliance API - get issuance by ID
+      const { data, error } = await api.GET(`/v1/issuances/${recordId}` as any, {})
       
       if (error) {
-        throw new Error(error.error || 'Failed to fetch compliance record')
+        throw new Error(error.error || 'Failed to fetch issuance with compliance data')
       }
 
-      setRecord(data as ComplianceRecord)
+      const issuance = data as any
+      // Transform issuance to compliance record format for backward compatibility
+      const complianceRecord: ComplianceRecord = {
+        id: issuance.id,
+        recordId: issuance.manifestHash || issuance.id,
+        assetId: issuance.assetId,
+        assetRef: issuance.assetRef,
+        holder: issuance.holder,
+        sha256: issuance.manifestHash || '',
+        status: issuance.complianceStatus === 'READY' ? 'VERIFIED' : 'UNVERIFIED',
+        createdAt: issuance.createdAt,
+        updatedAt: issuance.updatedAt,
+        // Extract compliance data from manifest
+        ...(issuance.complianceRef?.issuance_facts && {
+          purpose: issuance.complianceRef.issuance_facts.purpose,
+          isin: issuance.complianceRef.issuance_facts.isin,
+          legalIssuer: issuance.complianceRef.issuance_facts.legal_issuer,
+          jurisdiction: issuance.complianceRef.issuance_facts.jurisdiction,
+          micaClass: issuance.complianceRef.issuance_facts.mica_class,
+          kycRequirement: issuance.complianceRef.issuance_facts.kyc_requirement,
+          transferRestrictions: issuance.complianceRef.issuance_facts.transfer_restrictions === 'true'
+        })
+      }
+
+      setRecord(complianceRecord)
       
       // Fetch related issuances that reference this compliance record
-      await fetchRelatedIssuances(data.recordId)
+      await fetchRelatedIssuances(complianceRecord.recordId)
     } catch (err: any) {
-      console.error('Error fetching compliance record:', err)
-      setError(err.message || 'Failed to fetch compliance record')
+      console.error('Error fetching issuance with compliance data:', err)
+      setError(err.message || 'Failed to fetch issuance with compliance data')
     } finally {
       setLoading(false)
     }

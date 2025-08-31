@@ -31,16 +31,31 @@ export default function ComplianceToVerifyQueue() {
   useEffect(() => {
     const fetchUnverifiedRecords = async () => {
       try {
-        const { data, error } = await api.GET('/v1/compliance-records?status=UNVERIFIED&limit=10' as any, {})
+        // Use the new unified compliance API - get issuances with compliance data
+        const { data, error } = await api.GET('/v1/issuances?limit=10' as any, {})
         
         if (error) {
-          throw new Error(error.error || 'Failed to fetch unverified compliance records')
+          throw new Error(error.error || 'Failed to fetch issuances with compliance data')
         }
 
-        const response = data as ComplianceListResponse
-        setRecords(response.items || [])
+        const response = data as any
+        // Transform issuances to compliance records format for backward compatibility
+        const complianceRecords = response.items
+          .filter((issuance: any) => issuance.complianceRef && issuance.complianceStatus === 'PENDING')
+          .map((issuance: any) => ({
+            id: issuance.id,
+            recordId: issuance.manifestHash || issuance.id,
+            assetId: issuance.assetId,
+            assetRef: issuance.assetRef,
+            holder: issuance.holder,
+            status: 'UNVERIFIED',
+            sha256: issuance.manifestHash || '',
+            createdAt: issuance.createdAt
+          }))
+        
+        setRecords(complianceRecords)
       } catch (err: any) {
-        console.error('Error fetching unverified compliance records:', err)
+        console.error('Error fetching issuances with compliance data:', err)
         setRecords([])
       } finally {
         setLoading(false)
@@ -55,6 +70,7 @@ export default function ComplianceToVerifyQueue() {
   }
 
   const truncateAddress = (address: string, length: number = 8) => {
+    if (!address) return 'N/A'
     if (address.length <= length * 2) return address
     return `${address.substring(0, length)}...${address.substring(address.length - length)}`
   }

@@ -52,8 +52,20 @@ export default function KPICards() {
       const totalIssuances = issuancesResponse?.total || 0
 
       // Fetch compliance records
-      const { data: complianceResponse } = await api.GET('/v1/compliance-records?limit=100&page=1' as any, {})
-      const complianceRecords = complianceResponse?.records || []
+      const { data: complianceResponse } = await api.GET('/v1/issuances?limit=100' as any, {})
+              // Transform issuances to compliance records format for backward compatibility
+        const complianceRecords = (complianceResponse?.items || [])
+          .filter((issuance: any) => issuance.complianceRef)
+          .map((issuance: any) => ({
+            id: issuance.id,
+            recordId: issuance.manifestHash || issuance.id,
+            assetId: issuance.assetId,
+            assetRef: issuance.assetRef,
+            holder: issuance.holder,
+            status: issuance.complianceStatus === 'READY' ? 'VERIFIED' : 'UNVERIFIED',
+            sha256: issuance.manifestHash || '',
+            createdAt: issuance.createdAt
+          }))
       
       // Count by status - handle both uppercase and lowercase
       let verified = 0

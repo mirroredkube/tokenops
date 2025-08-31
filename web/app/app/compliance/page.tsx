@@ -64,18 +64,38 @@ export default function CompliancePage() {
         ...(filters.holder && { holder: filters.holder })
       })
 
-      const { data, error } = await api.GET(`/v1/compliance-records?${queryParams}` as any, {})
+      // Use the new unified compliance API - get issuances with compliance data
+      const { data, error } = await api.GET(`/v1/issuances?${queryParams}` as any, {})
       
       if (error) {
-        throw new Error(error.error || 'Failed to fetch compliance records')
+        throw new Error(error.error || 'Failed to fetch issuances with compliance data')
       }
 
-      const response = data as ComplianceListResponse
-      setRecords(response.records)
-      setPagination(response.pagination)
+      const response = data as any
+      // Transform issuances to compliance records format for backward compatibility
+      const complianceRecords = response.items
+        .filter((issuance: any) => issuance.complianceRef)
+        .map((issuance: any) => ({
+          id: issuance.id,
+          recordId: issuance.manifestHash || issuance.id,
+          assetId: issuance.assetId,
+          assetRef: issuance.assetRef,
+          holder: issuance.holder,
+          status: issuance.complianceStatus === 'READY' ? 'VERIFIED' : 'UNVERIFIED',
+          sha256: issuance.manifestHash || '',
+          createdAt: issuance.createdAt
+        }))
+      
+      setRecords(complianceRecords)
+      setPagination({
+        page: pagination.page,
+        limit: pagination.limit,
+        total: response.total,
+        pages: Math.ceil(response.total / pagination.limit)
+      })
     } catch (err: any) {
-      console.error('Error fetching compliance records:', err)
-      setError(err.message || 'Failed to fetch compliance records')
+      console.error('Error fetching issuances with compliance data:', err)
+      setError(err.message || 'Failed to fetch issuances with compliance data')
     } finally {
       setLoading(false)
     }
