@@ -1,79 +1,156 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
-import crypto from 'crypto'
-import { checkIdempotency, storeIdempotency } from './shared.js'
-import prisma from '../../db/client.js'
+import { PrismaClient } from '@prisma/client'
+import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
 
-// ---------- validation ----------
-const ComplianceRecordSchema = z.object({
-  version: z.string().default('cmp.v1'),
-  assetId: z.string().min(1),
-  holder: z.string().regex(/^r[a-zA-Z0-9]{24,34}$/),
-  isin: z.string().optional(),
-  legalIssuer: z.string().optional(),
-  jurisdiction: z.string().optional(),
-  micaClass: z.string().optional(),
-  kycRequirement: z.string().optional(),
-  transferRestrictions: z.boolean().default(false),
-  purpose: z.string().optional(),
-  docs: z.array(z.object({
-    type: z.string(),
-    hash: z.string().regex(/^sha256:[a-fA-F0-9]{64}$/)
-  })).optional(),
-  consentTs: z.string().datetime().optional()
+const prisma = new PrismaClient()
+
+// ===== VALIDATION SCHEMAS =====
+
+const PolicyFactsSchema = z.object({
+  // From Organization
+  issuerCountry: z.string().length(2),
+  
+  // From Product
+  assetClass: z.enum(['ART', 'EMT', 'OTHER']),
+  targetMarkets: z.array(z.string().length(2)),
+  
+  // From Asset
+  ledger: z.enum(['XRPL', 'ETHEREUM', 'HEDERA']),
+  distributionType: z.enum(['offer', 'admission', 'private']),
+  investorAudience: z.enum(['retail', 'professional', 'institutional']),
+  isCaspInvolved: z.boolean(),
+  transferType: z.enum(['CASP_TO_CASP', 'CASP_TO_SELF_HOSTED', 'SELF_HOSTED_TO_CASP', 'SELF_HOSTED_TO_SELF_HOSTED'])
 })
 
-const ComplianceVerifySchema = z.object({
-  status: z.enum(['VERIFIED', 'REJECTED']),
-  reason: z.string().optional()
+const AssetComplianceSchema = z.object({
+  assetId: z.string().min(1),
+  productId: z.string().min(1)
 })
 
 export default async function complianceRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
-  // GET list compliance records
-  app.get('/compliance-records', {
+  
+  // 1. POST /v1/compliance/evaluate - Evaluate policy facts
+  app.post('/compliance/evaluate', {
     schema: {
-      summary: 'List compliance records',
-      description: 'Get paginated list of compliance records with filters',
+      summary: 'Evaluate compliance policy facts',
+      description: 'Evaluate policy facts and generate requirement instances and enforcement plan',
       tags: ['v1'],
-      querystring: {
+      body: {
         type: 'object',
+        required: ['issuerCountry', 'assetClass', 'targetMarkets', 'ledger', 'distributionType', 'investorAudience', 'isCaspInvolved', 'transferType'],
         properties: {
-          page: { type: 'number', minimum: 1, default: 1 },
-          limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
-          status: { type: 'string', enum: ['UNVERIFIED', 'VERIFIED', 'REJECTED'] },
-          assetId: { type: 'string' },
-          holder: { type: 'string' }
+          issuerCountry: { type: 'string', minLength: 2, maxLength: 2 },
+          assetClass: { type: 'string', enum: ['ART', 'EMT', 'OTHER'] },
+          targetMarkets: { type: 'array', items: { type: 'string', minLength: 2, maxLength: 2 } },
+          ledger: { type: 'string', enum: ['XRPL', 'ETHEREUM', 'HEDERA'] },
+          distributionType: { type: 'string', enum: ['offer', 'admission', 'private'] },
+          investorAudience: { type: 'string', enum: ['retail', 'professional', 'institutional'] },
+          isCaspInvolved: { type: 'boolean' },
+          transferType: { type: 'string', enum: ['CASP_TO_CASP', 'CASP_TO_SELF_HOSTED', 'SELF_HOSTED_TO_CASP', 'SELF_HOSTED_TO_SELF_HOSTED'] }
         }
       },
       response: {
         200: {
           type: 'object',
           properties: {
-            records: {
+            requirementInstances: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
                   id: { type: 'string' },
-                  recordId: { type: 'string' },
-                  assetId: { type: 'string' },
-                  assetRef: { type: 'string' },
-                  holder: { type: 'string' },
-                  status: { type: 'string' },
-                  sha256: { type: 'string' },
-                  createdAt: { type: 'string' },
-                  verifiedAt: { type: 'string' },
-                  verifiedBy: { type: 'string' }
+                  requirementTemplateId: { type: 'string' },
+                  status: { type: 'string', enum: ['NA', 'REQUIRED', 'SATISFIED', 'EXCEPTION'] },
+                  rationale: { type: 'string' }
                 }
               }
             },
-            pagination: {
+            enforcementPlan: {
               type: 'object',
               properties: {
-                page: { type: 'number' },
-                limit: { type: 'number' },
-                total: { type: 'number' },
-                pages: { type: 'number' }
+                xrpl: {
+                  type: 'object',
+                  properties: {
+                    requireAuth: { type: 'boolean' },
+                    trustlineAuthorization: { type: 'boolean' },
+                    freezeControl: { type: 'boolean' }
+                  }
+                },
+                evm: {
+                  type: 'object',
+                  properties: {
+                    allowlistGating: { type: 'boolean' },
+                    pauseControl: { type: 'boolean' },
+                    mintControl: { type: 'boolean' },
+                    transferControl: { type: 'boolean' }
+                  }
+                }
+              }
+            },
+            rationale: {
+              type: 'array',
+              items: { type: 'string' }
+            }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const facts = PolicyFactsSchema.parse(req.body) as PolicyFacts
+      
+      console.log('🔍 Evaluating compliance facts:', facts)
+      
+      const result = await policyKernel.evaluateFacts(facts)
+      
+      return reply.send(result)
+    } catch (error: any) {
+      console.error('❌ Error evaluating compliance:', error)
+      return reply.status(400).send({ 
+        error: 'Failed to evaluate compliance',
+        details: error.message 
+      })
+    }
+  })
+
+  // 2. GET /v1/compliance/requirements - List available requirement templates
+  app.get('/compliance/requirements', {
+    schema: {
+      summary: 'List requirement templates',
+      description: 'Get all available requirement templates with their applicability rules',
+      tags: ['v1'],
+      querystring: {
+        type: 'object',
+        properties: {
+          regime: { type: 'string', description: 'Filter by regulatory regime' },
+          active: { type: 'boolean', description: 'Filter by active status' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            templates: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  applicabilityExpr: { type: 'string' },
+                  effectiveFrom: { type: 'string' },
+                  effectiveTo: { type: 'string' },
+                  regime: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      jurisdiction: { type: 'string' }
+                    }
+                  }
+                }
               }
             }
           }
@@ -81,186 +158,165 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       }
     }
   }, async (req, reply) => {
-    const { page = 1, limit = 20, status, assetId, holder } = req.query as any
-    
     try {
+      const { regime, active } = req.query as any
+      
       const where: any = {}
-      if (status) where.status = status
-      if (assetId) where.assetId = assetId
-      if (holder) where.holder = { contains: holder, mode: 'insensitive' }
       
-      const [records, total] = await Promise.all([
-        prisma.complianceRecord.findMany({
-          where,
-          include: {
-            asset: {
-              select: {
-                assetRef: true
-              }
-            }
-          },
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * limit,
-          take: limit
-        }),
-        prisma.complianceRecord.count({ where })
-      ])
+      if (regime) {
+        where.regime = { id: regime }
+      }
       
-      const formattedRecords = records.map((record: any) => ({
-        id: record.id,
-        recordId: record.recordId,
-        assetId: record.assetId,
-        assetRef: record.asset.assetRef,
-        holder: record.holder,
-        status: record.status,
-        sha256: record.sha256,
-        createdAt: record.createdAt.toISOString(),
-        verifiedAt: record.verifiedAt?.toISOString(),
-        verifiedBy: record.verifiedBy
-      }))
+      if (active !== undefined) {
+        const now = new Date()
+        if (active) {
+          where.effectiveFrom = { lte: now }
+          where.OR = [
+            { effectiveTo: null },
+            { effectiveTo: { gt: now } }
+          ]
+        } else {
+          where.OR = [
+            { effectiveFrom: { gt: now } },
+            { effectiveTo: { lte: now } }
+          ]
+        }
+      }
       
-      return reply.send({
-        records: formattedRecords,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit)
+      const templates = await prisma.requirementTemplate.findMany({
+        where,
+        include: {
+          regime: true
+        },
+        orderBy: {
+          name: 'asc'
         }
       })
+      
+      return reply.send({ templates })
     } catch (error: any) {
-      console.error('Error fetching compliance records:', error)
-      return reply.status(500).send({ error: 'Failed to fetch compliance records' })
+      console.error('❌ Error fetching requirement templates:', error)
+      return reply.status(500).send({ error: 'Failed to fetch requirement templates' })
     }
   })
 
-  // POST create compliance record
-  app.post('/compliance-records', {
+  // 3. POST /v1/compliance/instances - Create requirement instances for an asset
+  app.post('/compliance/instances', {
     schema: {
-      summary: 'Create compliance record',
-      description: 'Store off-ledger compliance metadata (MiCA, ISIN, jurisdiction)',
+      summary: 'Create requirement instances for an asset',
+      description: 'Create requirement instances based on asset and product information',
       tags: ['v1'],
       body: {
         type: 'object',
-        required: ['assetId', 'holder'],
+        required: ['assetId', 'productId'],
         properties: {
-          version: { type: 'string', default: 'cmp.v1' },
-          assetId: { type: 'string', description: 'Asset identifier' },
-          holder: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
-          isin: { type: 'string', description: 'ISIN code' },
-          legalIssuer: { type: 'string', description: 'Legal issuer name' },
-          jurisdiction: { type: 'string', description: 'Jurisdiction code' },
-          micaClass: { type: 'string', description: 'MiCA classification' },
-          kycRequirement: { type: 'string', description: 'KYC requirement level' },
-          transferRestrictions: { type: 'boolean', default: false },
-          purpose: { type: 'string', description: 'Token purpose' },
-          docs: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                type: { type: 'string' },
-                hash: { type: 'string', pattern: '^sha256:[a-fA-F0-9]{64}$' }
-              }
-            }
-          },
-          consentTs: { type: 'string', format: 'date-time' }
+          assetId: { type: 'string' },
+          productId: { type: 'string' }
         }
       },
       response: {
         201: {
           type: 'object',
           properties: {
-            recordId: { type: 'string' },
-            sha256: { type: 'string' },
-            status: { type: 'string' }
+            message: { type: 'string' },
+            instances: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  requirementTemplateId: { type: 'string' },
+                  status: { type: 'string' },
+                  rationale: { type: 'string' }
+                }
+              }
+            }
           }
-        },
-        400: { type: 'object', properties: { error: { type: 'string' } } }
+        }
       }
     }
   }, async (req, reply) => {
-    const parsed = ComplianceRecordSchema.safeParse(req.body)
-    if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid request body' })
-    }
-
-    const record = parsed.data
-    
-    // Check idempotency
-    const idempotencyKey = req.headers['idempotency-key'] as string
-    const existingResponse = checkIdempotency(idempotencyKey)
-    if (existingResponse) {
-      return reply.status(201).send(existingResponse)
-    }
-    
     try {
-      // Verify asset exists
-      const asset = await prisma.asset.findUnique({
-        where: { id: record.assetId }
-      })
+      const { assetId, productId } = AssetComplianceSchema.parse(req.body)
+      
+      // Get asset and product information
+      const [asset, product] = await Promise.all([
+        prisma.asset.findUnique({
+          where: { id: assetId },
+          include: {
+            product: {
+              include: {
+                organization: true
+              }
+            }
+          }
+        }),
+        prisma.product.findUnique({
+          where: { id: productId },
+          include: {
+            organization: true
+          }
+        })
+      ])
       
       if (!asset) {
-        return reply.status(400).send({ error: 'Asset not found' })
+        return reply.status(404).send({ error: 'Asset not found' })
       }
       
-      // Canonicalize JSON (sort keys, no extra whitespace)
-      const canonicalJson = JSON.stringify(record, Object.keys(record).sort())
+      if (!product) {
+        return reply.status(404).send({ error: 'Product not found' })
+      }
       
-      // Compute SHA256 hash
-      const sha256 = crypto.createHash('sha256').update(canonicalJson).digest('hex')
+      // Build policy facts from asset and product data
+      const facts: PolicyFacts = {
+        issuerCountry: product.organization.country,
+        assetClass: product.assetClass,
+        targetMarkets: product.targetMarkets || [],
+        ledger: asset.ledger,
+        distributionType: 'private', // Default - could be enhanced
+        investorAudience: 'professional', // Default - could be enhanced
+        isCaspInvolved: true, // Default - could be enhanced
+        transferType: 'CASP_TO_CASP' // Default - could be enhanced
+      }
       
-      // Generate record ID
-      const recordId = `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      // Create requirement instances
+      await policyKernel.createRequirementInstances(assetId, facts)
       
-      // Create compliance record in database
-      const complianceRecord = await prisma.complianceRecord.create({
-        data: {
-          recordId,
-          assetId: record.assetId,
-          holder: record.holder,
-          sha256: `sha256:${sha256}`,
-          isin: record.isin,
-          legalIssuer: record.legalIssuer,
-          jurisdiction: record.jurisdiction,
-          micaClass: record.micaClass,
-          kycRequirement: record.kycRequirement,
-          transferRestrictions: record.transferRestrictions,
-          purpose: record.purpose,
-          docs: record.docs,
-          consentTs: record.consentTs ? new Date(record.consentTs) : null
+      // Get created instances
+      const instances = await prisma.requirementInstance.findMany({
+        where: { assetId },
+        include: {
+          requirementTemplate: true
         }
       })
       
-      const response = {
-        recordId: complianceRecord.recordId,
-        sha256: complianceRecord.sha256,
-        status: complianceRecord.status.toLowerCase()
-      }
-      
-      // Store for idempotency
-      if (idempotencyKey) {
-        storeIdempotency(idempotencyKey, response)
-      }
-      
-      return reply.status(201).send(response)
+      return reply.status(201).send({
+        message: 'Requirement instances created successfully',
+        instances: instances.map(instance => ({
+          id: instance.id,
+          requirementTemplateId: instance.requirementTemplateId,
+          status: instance.status,
+          rationale: instance.rationale,
+          template: instance.requirementTemplate
+        }))
+      })
     } catch (error: any) {
-      console.error('Error creating compliance record:', error)
-      return reply.status(400).send({ error: 'Failed to create compliance record' })
+      console.error('❌ Error creating requirement instances:', error)
+      return reply.status(500).send({ error: 'Failed to create requirement instances' })
     }
   })
 
-  // GET compliance record
-  app.get('/compliance-records/:recordId', {
+  // 4. GET /v1/compliance/instances/:id - Get requirement instance details
+  app.get('/compliance/instances/:id', {
     schema: {
-      summary: 'Get compliance record',
-      description: 'Fetch compliance record details',
+      summary: 'Get requirement instance details',
+      description: 'Get detailed information about a specific requirement instance',
       tags: ['v1'],
       params: {
         type: 'object',
-        required: ['recordId'],
+        required: ['id'],
         properties: {
-          recordId: { type: 'string' }
+          id: { type: 'string' }
         }
       },
       response: {
@@ -268,160 +324,183 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
           type: 'object',
           properties: {
             id: { type: 'string' },
-            recordId: { type: 'string' },
-            assetId: { type: 'string' },
-            assetRef: { type: 'string' },
-            holder: { type: 'string' },
-            sha256: { type: 'string' },
             status: { type: 'string' },
+            rationale: { type: 'string' },
+            evidenceRefs: { type: 'object' },
+            verifierId: { type: 'string' },
             verifiedAt: { type: 'string' },
-            verifiedBy: { type: 'string' },
-            reason: { type: 'string' },
-            // Compliance metadata
-            isin: { type: 'string' },
-            legalIssuer: { type: 'string' },
-            jurisdiction: { type: 'string' },
-            micaClass: { type: 'string' },
-            kycRequirement: { type: 'string' },
-            transferRestrictions: { type: 'boolean' },
-            purpose: { type: 'string' },
-            docs: { type: 'array' },
-            consentTs: { type: 'string' },
-            createdAt: { type: 'string' },
-            updatedAt: { type: 'string' }
+            exceptionReason: { type: 'string' },
+            requirementTemplate: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                name: { type: 'string' },
+                description: { type: 'string' },
+                regime: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' }
+                  }
+                }
+              }
+            }
           }
-        },
-        404: { type: 'object', properties: { error: { type: 'string' } } }
+        }
       }
     }
   }, async (req, reply) => {
-    const { recordId } = req.params as { recordId: string }
-    
     try {
-      const record = await prisma.complianceRecord.findUnique({
-        where: { recordId },
+      const { id } = req.params as { id: string }
+      
+      const instance = await prisma.requirementInstance.findUnique({
+        where: { id },
         include: {
-          asset: {
+          requirementTemplate: {
+            include: {
+              regime: true
+            }
+          },
+          verifier: {
             select: {
-              assetRef: true
+              id: true,
+              email: true,
+              name: true
             }
           }
         }
       })
       
-      if (!record) {
-        return reply.status(404).send({ error: 'Compliance record not found' })
+      if (!instance) {
+        return reply.status(404).send({ error: 'Requirement instance not found' })
       }
       
       return reply.send({
-        id: record.id,
-        recordId: record.recordId,
-        assetId: record.assetId,
-        assetRef: record.asset.assetRef,
-        holder: record.holder,
-        sha256: record.sha256,
-        status: record.status,
-        verifiedAt: record.verifiedAt?.toISOString(),
-        verifiedBy: record.verifiedBy,
-        reason: record.reason,
-        isin: record.isin,
-        legalIssuer: record.legalIssuer,
-        jurisdiction: record.jurisdiction,
-        micaClass: record.micaClass,
-        kycRequirement: record.kycRequirement,
-        transferRestrictions: record.transferRestrictions,
-        purpose: record.purpose,
-        docs: record.docs,
-        consentTs: record.consentTs?.toISOString(),
-        createdAt: record.createdAt.toISOString(),
-        updatedAt: record.updatedAt.toISOString()
+        id: instance.id,
+        status: instance.status,
+        rationale: instance.rationale,
+        evidenceRefs: instance.evidenceRefs,
+        verifierId: instance.verifierId,
+        verifiedAt: instance.verifiedAt?.toISOString(),
+        exceptionReason: instance.exceptionReason,
+        requirementTemplate: instance.requirementTemplate,
+        verifier: instance.verifier
       })
     } catch (error: any) {
-      console.error('Error fetching compliance record:', error)
-      return reply.status(500).send({ error: 'Failed to fetch compliance record' })
+      console.error('❌ Error fetching requirement instance:', error)
+      return reply.status(500).send({ error: 'Failed to fetch requirement instance' })
     }
   })
 
-  // PATCH verify compliance record
-  app.patch('/compliance-records/:recordId/verify', {
+  // 5. GET /v1/compliance/instances - List requirement instances
+  app.get('/compliance/instances', {
     schema: {
-      summary: 'Verify compliance record',
-      description: 'Update compliance record status (auditor/regulator only)',
+      summary: 'List requirement instances',
+      description: 'Get all requirement instances with optional filtering',
       tags: ['v1'],
-      params: {
+      querystring: {
         type: 'object',
-        required: ['recordId'],
         properties: {
-          recordId: { type: 'string' }
-        }
-      },
-      body: {
-        type: 'object',
-        required: ['status'],
-        properties: {
-          status: { type: 'string', enum: ['VERIFIED', 'REJECTED'] },
-          reason: { type: 'string', description: 'Reason for rejection' }
+          assetId: { type: 'string' },
+          status: { type: 'string', enum: ['NA', 'REQUIRED', 'SATISFIED', 'EXCEPTION'] },
+          regime: { type: 'string' },
+          limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
+          offset: { type: 'number', minimum: 0, default: 0 }
         }
       },
       response: {
         200: {
           type: 'object',
           properties: {
-            recordId: { type: 'string' },
-            status: { type: 'string' },
-            verifiedAt: { type: 'string' },
-            reason: { type: 'string' }
+            instances: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  status: { type: 'string' },
+                  rationale: { type: 'string' },
+                  requirementTemplate: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      regime: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            total: { type: 'number' },
+            limit: { type: 'number' },
+            offset: { type: 'number' }
           }
-        },
-        400: { type: 'object', properties: { error: { type: 'string' } } },
-        404: { type: 'object', properties: { error: { type: 'string' } } }
+        }
       }
     }
   }, async (req, reply) => {
-    const { recordId } = req.params as { recordId: string }
-    const parsed = ComplianceVerifySchema.safeParse(req.body)
-    
-    if (!parsed.success) {
-      return reply.status(400).send({ error: 'Invalid request body' })
-    }
-    
-    const { status, reason } = parsed.data
-    
     try {
-      // Check if record exists
-      const existingRecord = await prisma.complianceRecord.findUnique({
-        where: { recordId }
-      })
+      const { assetId, status, regime, limit = 20, offset = 0 } = req.query as any
       
-      if (!existingRecord) {
-        return reply.status(404).send({ error: 'Compliance record not found' })
+      const where: any = {}
+      
+      if (assetId) {
+        where.assetId = assetId
       }
       
-      // TODO: Add RBAC check for issuer admin / regulator roles
-      // if (!hasRole(req.user, ['admin', 'regulator'])) {
-      //   return reply.status(403).send({ error: 'Insufficient permissions' })
-      // }
+      if (status) {
+        where.status = status
+      }
       
-      // Update the record
-      const updatedRecord = await prisma.complianceRecord.update({
-        where: { recordId },
-        data: {
-          status,
-          verifiedAt: new Date(),
-          verifiedBy: 'system', // TODO: Get from auth context
-          reason: status === 'REJECTED' ? reason : null
+      if (regime) {
+        where.requirementTemplate = {
+          regime: { id: regime }
         }
-      })
+      }
+      
+      const [instances, total] = await Promise.all([
+        prisma.requirementInstance.findMany({
+          where,
+          include: {
+            requirementTemplate: {
+              include: {
+                regime: true
+              }
+            }
+          },
+          take: limit,
+          skip: offset,
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }),
+        prisma.requirementInstance.count({ where })
+      ])
       
       return reply.send({
-        recordId: updatedRecord.recordId,
-        status: updatedRecord.status,
-        verifiedAt: updatedRecord.verifiedAt?.toISOString(),
-        reason: updatedRecord.reason
+        instances: instances.map(instance => ({
+          id: instance.id,
+          status: instance.status,
+          rationale: instance.rationale,
+          requirementTemplate: {
+            id: instance.requirementTemplate.id,
+            name: instance.requirementTemplate.name,
+            regime: instance.requirementTemplate.regime
+          }
+        })),
+        total,
+        limit,
+        offset
       })
     } catch (error: any) {
-      console.error('Error updating compliance record:', error)
-      return reply.status(500).send({ error: 'Failed to update compliance record' })
+      console.error('❌ Error fetching requirement instances:', error)
+      return reply.status(500).send({ error: 'Failed to fetch requirement instances' })
     }
   })
 }
