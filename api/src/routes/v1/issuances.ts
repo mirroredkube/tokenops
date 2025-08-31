@@ -296,14 +296,34 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         return reply.status(422).send({ error: 'Amount exceeds trustline limit' })
       }
       
-      // Issue tokens
-      const result = await adapter.issueToken({
-        currencyCode: asset.code,
-        amount,
-        destination: holder
-      })
-      
       const issuanceId = generateIssuanceId()
+      
+      // Build compliance manifest and generate hash first
+      let manifest = null
+      let manifestHash = null
+      
+      try {
+        manifest = await manifestBuilder.buildManifest(issuanceId, issuanceFacts || {})
+        manifestHash = manifestBuilder.generateManifestHash(manifest)
+        console.log(`✅ Created compliance manifest for issuance ${issuanceId}`)
+      } catch (manifestError: any) {
+        console.error('⚠️ Failed to create compliance manifest:', manifestError)
+        // Don't fail issuance if manifest creation fails
+      }
+      
+      // Issue tokens with memo anchoring if requested and manifest hash is available
+      const memoHex = (anchor && manifestHash) ? manifestHash : undefined
+      
+      const result = await (adapter as any).issue({
+        to: holder,
+        asset: {
+          ledger: asset.ledger.toLowerCase() as any,
+          code: asset.code,
+          issuer: asset.issuer
+        },
+        amount,
+        memoHex
+      })
       
       // Store issuance record in database
       const issuance = await prisma.issuance.create({
@@ -313,8 +333,8 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           holder,
           amount,
           anchor,
-          txId: result.txHash,
-          explorer: `https://testnet.xrpl.org/transactions/${result.txHash}`,
+          txId: result.txid,
+          explorer: `https://testnet.xrpl.org/transactions/${result.txid}`,
           status: 'SUBMITTED',
           complianceEvaluated: false,
           complianceStatus: 'PENDING'
@@ -324,15 +344,8 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       // Create snapshot of live requirements for this issuance
       await snapshotService.createIssuanceSnapshot(assetId, issuance.id)
       
-      // Build compliance manifest and generate hash
-      let manifest = null
-      let manifestHash = null
-      
-      try {
-        manifest = await manifestBuilder.buildManifest(issuance.id, issuanceFacts || {})
-        manifestHash = manifestBuilder.generateManifestHash(manifest)
-        
-        // Update issuance with manifest and hash
+      // Update issuance with manifest and hash if available
+      if (manifest && manifestHash) {
         await prisma.issuance.update({
           where: { id: issuance.id },
           data: {
@@ -342,11 +355,6 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
             complianceStatus: 'READY'
           } as any
         })
-        
-        console.log(`✅ Created compliance manifest for issuance ${issuance.id}`)
-      } catch (manifestError: any) {
-        console.error('⚠️ Failed to create compliance manifest:', manifestError)
-        // Don't fail issuance if manifest creation fails
       }
       
       // Get snapshot requirements for response

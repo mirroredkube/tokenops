@@ -59,7 +59,6 @@ export default function CompliancePage() {
       const queryParams = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
-        ...(filters.status && { status: filters.status }),
         ...(filters.assetId && { assetId: filters.assetId }),
         ...(filters.holder && { holder: filters.holder })
       })
@@ -73,7 +72,7 @@ export default function CompliancePage() {
 
       const response = data as any
       // Transform issuances to compliance records format for backward compatibility
-      const complianceRecords = response.items
+      let complianceRecords = response.items
         .filter((issuance: any) => issuance.complianceRef)
         .map((issuance: any) => ({
           id: issuance.id,
@@ -86,12 +85,17 @@ export default function CompliancePage() {
           createdAt: issuance.createdAt
         }))
       
+      // Apply client-side status filtering
+      if (filters.status && filters.status !== 'all') {
+        complianceRecords = complianceRecords.filter((record: any) => record.status === filters.status)
+      }
+      
       setRecords(complianceRecords)
       setPagination({
         page: pagination.page,
         limit: pagination.limit,
-        total: response.total,
-        pages: Math.ceil(response.total / pagination.limit)
+        total: complianceRecords.length,
+        pages: Math.ceil(complianceRecords.length / pagination.limit)
       })
     } catch (err: any) {
       console.error('Error fetching issuances with compliance data:', err)
