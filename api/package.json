@@ -29,6 +29,9 @@
     "xrpl": "^3.0.2",
     "zod": "^3.23.8"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@types/express": "^5.0.3",
