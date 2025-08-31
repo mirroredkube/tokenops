@@ -9,12 +9,12 @@ datasource db {
 
 model Organization {
   id              String             @id @default(cuid())
-  name            String
-  legalName       String?
-  country         String
-  jurisdiction    String?
-  taxId           String?
-  website         String?
+  name            String             @db.VarChar(100)
+  legalName       String?            @db.VarChar(200)
+  country         String             @db.Char(2)
+  jurisdiction    String?            @db.VarChar(100)
+  taxId           String?            @db.VarChar(50)
+  website         String?            @db.VarChar(255)
   status          OrganizationStatus @default(ACTIVE)
   metadata        Json?
   createdAt       DateTime           @default(now())
@@ -24,6 +24,7 @@ model Organization {
   products        Product[]
   users           User[]
 
+  @@unique([name])
   @@index([country])
   @@index([status])
   @@index([createdAt])
