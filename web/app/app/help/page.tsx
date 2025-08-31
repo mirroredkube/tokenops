@@ -313,7 +313,9 @@ export default function HelpPage() {
                   {t('help:support.documentation.description', 'Comprehensive guides and resources to help you use Regula effectively, including API documentation for developers.')}
                 </p>
                 <a
-                  href="#api-docs"
+                  href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/docs`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
                 >
                   {t('help:support.documentation.viewApiDocs', 'View API Documentation')}
