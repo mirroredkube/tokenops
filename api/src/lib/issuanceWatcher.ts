@@ -44,9 +44,9 @@ export class IssuanceStatusWatcher {
   /**
    * Update issuance status based on ledger check
    */
-  private async updateIssuanceStatus(
-    issuanceId: string, 
-    status: string, 
+  private   async updateIssuanceStatus(
+    issuanceId: string,
+    status: 'PENDING' | 'SUBMITTED' | 'VALIDATED' | 'FAILED' | 'EXPIRED',
     updateData: {
       validatedAt?: Date
       validatedLedgerIndex?: number
@@ -78,7 +78,7 @@ export class IssuanceStatusWatcher {
       
       const recentSubmittedIssuances = await prisma.issuance.findMany({
         where: {
-          status: 'submitted',
+          status: 'SUBMITTED',
           createdAt: {
             gte: ninetySecondsAgo
           },
@@ -101,14 +101,9 @@ export class IssuanceStatusWatcher {
 
         if (ledgerStatus.validated) {
           if (ledgerStatus.result === 'tesSUCCESS') {
-            await this.updateIssuanceStatus(issuance.id, 'validated', {
-              validatedAt: new Date(),
-              validatedLedgerIndex: ledgerStatus.ledgerIndex ? Number(ledgerStatus.ledgerIndex) : undefined
-            })
+            await this.updateIssuanceStatus(issuance.id, 'VALIDATED', {})
           } else {
-            await this.updateIssuanceStatus(issuance.id, 'failed', {
-              failureCode: ledgerStatus.result
-            })
+            await this.updateIssuanceStatus(issuance.id, 'FAILED', {})
           }
         }
         // If not validated, leave as 'submitted' (will be checked again or user can refresh)
@@ -128,7 +123,7 @@ export class IssuanceStatusWatcher {
         select: { id: true, txId: true, status: true }
       })
 
-      if (!issuance || !issuance.txId || issuance.status !== 'submitted') {
+      if (!issuance || !issuance.txId || issuance.status !== 'SUBMITTED') {
         return false
       }
 
@@ -136,14 +131,9 @@ export class IssuanceStatusWatcher {
 
       if (ledgerStatus.validated) {
         if (ledgerStatus.result === 'tesSUCCESS') {
-          await this.updateIssuanceStatus(issuance.id, 'validated', {
-            validatedAt: new Date(),
-            validatedLedgerIndex: ledgerStatus.ledgerIndex ? Number(ledgerStatus.ledgerIndex) : undefined
-          })
+          await this.updateIssuanceStatus(issuance.id, 'VALIDATED', {})
         } else {
-          await this.updateIssuanceStatus(issuance.id, 'failed', {
-            failureCode: ledgerStatus.result
-          })
+          await this.updateIssuanceStatus(issuance.id, 'FAILED', {})
         }
         return true
       }

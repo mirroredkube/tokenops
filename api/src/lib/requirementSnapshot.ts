@@ -32,7 +32,7 @@ export class RequirementSnapshotService {
           assetId: liveReq.assetId,
           requirementTemplateId: liveReq.requirementTemplateId,
           status: liveReq.status,
-          evidenceRefs: liveReq.evidenceRefs,
+          evidenceRefs: liveReq.evidenceRefs as any,
           verifierId: liveReq.verifierId,
           verifiedAt: liveReq.verifiedAt,
           rationale: liveReq.rationale,

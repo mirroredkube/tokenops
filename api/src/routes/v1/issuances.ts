@@ -455,7 +455,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       }
       
       // If refresh is requested and status is submitted, check ledger
-      if (refresh && issuance.status === 'submitted' && issuance.txId) {
+      if (refresh && issuance.status === 'SUBMITTED' && issuance.txId) {
         await issuanceWatcher.refreshIssuanceStatus(issuanceId)
         
         // Fetch updated issuance data
@@ -464,9 +464,6 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         })
         if (updatedIssuance) {
           issuance.status = updatedIssuance.status
-          issuance.validatedAt = updatedIssuance.validatedAt
-          issuance.validatedLedgerIndex = updatedIssuance.validatedLedgerIndex
-          issuance.failureCode = updatedIssuance.failureCode
           issuance.updatedAt = updatedIssuance.updatedAt
         }
       }
@@ -475,15 +472,12 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         issuanceId: issuance.id,
         assetId: issuance.assetId,
         assetRef: asset.assetRef,
-        to: issuance.to,
+        holder: issuance.holder,
         amount: issuance.amount,
         complianceRef: issuance.complianceRef as any,
         txId: issuance.txId,
         explorer: issuance.explorer,
         status: issuance.status,
-        validatedAt: issuance.validatedAt?.toISOString(),
-        validatedLedgerIndex: issuance.validatedLedgerIndex ? Number(issuance.validatedLedgerIndex) : undefined,
-        failureCode: issuance.failureCode,
         createdAt: issuance.createdAt.toISOString(),
         updatedAt: issuance.updatedAt.toISOString()
       })
@@ -571,7 +565,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         issuances: assetIssuances.map(issuance => ({
           issuanceId: issuance.id,
           assetId: issuance.assetId,
-          to: issuance.to,
+          holder: issuance.holder,
           amount: issuance.amount,
           txId: issuance.txId,
           status: issuance.status,
@@ -661,7 +655,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           id: issuance.id,
           assetId: issuance.assetId,
           assetRef: issuance.asset.assetRef,
-          to: issuance.to,
+          holder: issuance.holder,
           amount: issuance.amount,
           txId: issuance.txId,
           explorer: issuance.explorer,
