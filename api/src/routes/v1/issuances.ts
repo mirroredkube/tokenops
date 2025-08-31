@@ -5,6 +5,7 @@ import { currencyToHex, isHexCurrency } from '../../utils/currency.js'
 import { Asset, assets, issuances, validateAsset, generateIssuanceId, checkIdempotency, storeIdempotency } from './shared.js'
 import prisma from '../../db/client.js'
 import { issuanceWatcher } from '../../lib/issuanceWatcher.js'
+import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
 
 // ---------- Validation Schemas ----------
 const IssuanceSchema = z.object({
@@ -152,7 +153,34 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
             },
             txId: { type: 'string' },
             explorer: { type: 'string' },
-            status: { type: 'string' }
+            status: { type: 'string' },
+            compliance: {
+              type: 'object',
+              properties: {
+                evaluated: { type: 'boolean' },
+                status: { type: 'string' },
+                requirementCount: { type: 'number' },
+                requirements: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      status: { type: 'string' },
+                      template: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' },
+                          regime: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                },
+                enforcementPlan: { type: 'object' }
+              }
+            }
           }
         },
         400: { type: 'object', properties: { error: { type: 'string' } } },
@@ -181,11 +209,60 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       // Validate asset exists and is active
       const asset = await validateAsset(assetId)
       
-      // Check compliance mode requirements
-      if (asset.complianceMode === 'GATED_BEFORE' && !complianceRef) {
-        return reply.status(422).send({ 
-          error: 'Compliance record required for GATED_BEFORE mode' 
-        })
+      // Get asset with product and organization for compliance evaluation
+      const assetWithContext = await prisma.asset.findUnique({
+        where: { id: assetId },
+        include: {
+          product: {
+            include: {
+              organization: true
+            }
+          }
+        }
+      })
+      
+      if (!assetWithContext) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      // Evaluate compliance for this issuance
+      let complianceEvaluation: any = null
+      let requirementInstances: any[] = []
+      let complianceStatus = 'PENDING'
+      
+      try {
+        // Build policy facts from asset, product, and issuance data
+        const facts: PolicyFacts = {
+          issuerCountry: assetWithContext.product.organization.country,
+          assetClass: assetWithContext.product.assetClass,
+          targetMarkets: assetWithContext.product.targetMarkets || [],
+          ledger: assetWithContext.ledger,
+          distributionType: 'private', // Could be enhanced with product data
+          investorAudience: 'professional', // Could be enhanced with product data
+          isCaspInvolved: true, // Could be enhanced with product data
+          transferType: 'CASP_TO_CASP' // Could be enhanced with product data
+        }
+        
+        // Evaluate compliance
+        complianceEvaluation = await policyKernel.evaluateFacts(facts)
+        
+        // Determine compliance status
+        const requiredRequirements = complianceEvaluation.requirementInstances.filter(
+          (instance: any) => instance.status === 'REQUIRED'
+        )
+        
+        if (requiredRequirements.length === 0) {
+          complianceStatus = 'COMPLIANT'
+        } else {
+          // For now, mark as PENDING - in production, this would check actual compliance
+          complianceStatus = 'PENDING'
+        }
+        
+        console.log(`✅ Compliance evaluation completed: ${complianceEvaluation.requirementInstances.length} requirements, status: ${complianceStatus}`)
+      } catch (complianceError: any) {
+        console.error('⚠️ Compliance evaluation failed:', complianceError)
+        complianceStatus = 'PENDING'
+        // Don't fail issuance if compliance evaluation fails
       }
       
       const adapter = getLedgerAdapter()
@@ -249,9 +326,60 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           anchor,
           txId: result.txHash,
           explorer: `https://testnet.xrpl.org/transactions/${result.txHash}`,
-          status: 'submitted'
+          status: 'submitted',
+          complianceEvaluated: complianceEvaluation !== null,
+          complianceStatus: complianceStatus
         }
       })
+      
+      // Create requirement instances for this issuance
+      if (complianceEvaluation) {
+        try {
+          const facts: PolicyFacts = {
+            issuerCountry: assetWithContext.product.organization.country,
+            assetClass: assetWithContext.product.assetClass,
+            targetMarkets: assetWithContext.product.targetMarkets || [],
+            ledger: assetWithContext.ledger,
+            distributionType: 'private',
+            investorAudience: 'professional',
+            isCaspInvolved: true,
+            transferType: 'CASP_TO_CASP'
+          }
+          
+          // Create requirement instances with issuance context
+          for (const instance of complianceEvaluation.requirementInstances) {
+            await prisma.requirementInstance.create({
+              data: {
+                assetId: asset.id,
+                requirementTemplateId: instance.requirementTemplateId,
+                status: instance.status as any,
+                rationale: instance.rationale,
+                issuanceId: issuance.id,
+                holder: to,
+                transferAmount: amount,
+                transferType: 'CASP_TO_CASP'
+              }
+            })
+          }
+          
+          // Get created instances for response
+          requirementInstances = await prisma.requirementInstance.findMany({
+            where: { issuanceId: issuance.id },
+            include: {
+              requirementTemplate: {
+                include: {
+                  regime: true
+                }
+              }
+            }
+          })
+          
+          console.log(`✅ Created ${requirementInstances.length} requirement instances for issuance ${issuance.id}`)
+        } catch (instanceError: any) {
+          console.error('⚠️ Failed to create requirement instances:', instanceError)
+          // Don't fail issuance if requirement instance creation fails
+        }
+      }
       
       // Store for idempotency
       if (idempotencyKey) {
@@ -279,7 +407,22 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         txId: issuance.txId,
         explorer: issuance.explorer,
         status: issuance.status,
-        createdAt: issuance.createdAt.toISOString()
+        createdAt: issuance.createdAt.toISOString(),
+        compliance: {
+          evaluated: issuance.complianceEvaluated,
+          status: issuance.complianceStatus,
+          requirementCount: requirementInstances.length,
+          requirements: requirementInstances.map(instance => ({
+            id: instance.id,
+            status: instance.status,
+            template: {
+              id: instance.requirementTemplate.id,
+              name: instance.requirementTemplate.name,
+              regime: instance.requirementTemplate.regime.name
+            }
+          })),
+          enforcementPlan: complianceEvaluation?.enforcementPlan || null
+        }
       })
     } catch (error: any) {
       console.error('Error issuing tokens:', error)

@@ -9,7 +9,7 @@ datasource db {
 
 model Organization {
   id              String             @id @default(cuid())
-  name            String             @db.VarChar(100)
+  name            String             @unique @db.VarChar(100)
   legalName       String?            @db.VarChar(200)
   country         String             @db.Char(2)
   jurisdiction    String?            @db.VarChar(100)
@@ -24,7 +24,6 @@ model Organization {
   products        Product[]
   users           User[]
 
-  @@unique([name])
   @@index([country])
   @@index([status])
   @@index([createdAt])
@@ -109,7 +108,6 @@ model Asset {
   issuingAddress       IssuerAddress?        @relation(fields: [issuingAddressId], references: [id])
   product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
   authorizations       Authorization[]
-  complianceRecords    ComplianceRecord[]
   events               Event[]
   issuances            Issuance[]
   requirementInstances RequirementInstance[]
@@ -199,8 +197,13 @@ model RequirementInstance {
   exceptionReason       String?
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
+  holder                String?
+  issuanceId            String?
+  transferAmount        String?
+  transferType          String?
   events                Event[]
   asset                 Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  issuance              Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
   requirementTemplate   RequirementTemplate @relation(fields: [requirementTemplateId], references: [id])
   verifier              User?               @relation(fields: [verifierId], references: [id])
 
@@ -208,6 +211,8 @@ model RequirementInstance {
   @@index([requirementTemplateId])
   @@index([status])
   @@index([createdAt])
+  @@index([issuanceId])
+  @@index([holder])
 }
 
 model Event {
@@ -242,25 +247,29 @@ model Event {
 }
 
 model Issuance {
-  id                   String    @id @default(cuid())
+  id                   String                @id @default(cuid())
   assetId              String
   to                   String
   amount               String
   complianceRef        Json?
-  anchor               Boolean   @default(true)
+  anchor               Boolean               @default(true)
   txId                 String?
   explorer             String?
-  status               String    @default("pending")
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  status               String                @default("pending")
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
   failureCode          String?
   validatedAt          DateTime?
   validatedLedgerIndex BigInt?
-  asset                Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  complianceEvaluated  Boolean               @default(false)
+  complianceStatus     String?
+  asset                Asset                 @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  requirementInstances RequirementInstance[]
 
   @@index([assetId])
   @@index([status])
   @@index([createdAt])
+  @@index([complianceStatus])
 }
 
 model Authorization {
@@ -285,36 +294,6 @@ model Authorization {
   @@index([holder])
   @@index([status])
   @@index([createdAt])
-}
-
-model ComplianceRecord {
-  id                   String           @id @default(cuid())
-  recordId             String           @unique
-  assetId              String
-  holder               String
-  sha256               String
-  status               ComplianceStatus @default(UNVERIFIED)
-  verifiedAt           DateTime?
-  verifiedBy           String?
-  reason               String?
-  isin                 String?
-  legalIssuer          String?
-  jurisdiction         String?
-  micaClass            String?
-  kycRequirement       String?
-  transferRestrictions Boolean          @default(false)
-  purpose              String?
-  docs                 Json?
-  consentTs            DateTime?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  asset                Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
-  @@index([assetId])
-  @@index([status])
-  @@index([holder])
-  @@index([createdAt])
-  @@index([recordId])
 }
 
 enum OrganizationStatus {
@@ -389,12 +368,6 @@ enum AssetStatus {
   ACTIVE
   PAUSED
   RETIRED
-}
-
-enum ComplianceStatus {
-  UNVERIFIED
-  VERIFIED
-  REJECTED
 }
 
 enum AuthorizationStatus {
