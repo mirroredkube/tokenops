@@ -6,16 +6,27 @@ import { Asset, assets, issuances, validateAsset, generateIssuanceId, checkIdemp
 import prisma from '../../db/client.js'
 import { issuanceWatcher } from '../../lib/issuanceWatcher.js'
 import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
+import { ComplianceManifestBuilder } from '../../lib/complianceManifest.js'
+import { RequirementSnapshotService } from '../../lib/requirementSnapshot.js'
 
 // ---------- Validation Schemas ----------
 const IssuanceSchema = z.object({
-  to: z.string().regex(/^r[a-zA-Z0-9]{24,34}$/),
+  holder: z.string().regex(/^r[a-zA-Z0-9]{24,34}$/),
   amount: z.string().regex(/^[0-9]{1,16}$/),
-  complianceRef: z.object({
-    recordId: z.string().min(1),
-    sha256: z.string().min(1)
+  issuanceFacts: z.object({
+    purpose: z.string().optional(),
+    isin: z.string().optional(),
+    legal_issuer: z.string().optional(),
+    jurisdiction: z.string().optional(),
+    mica_class: z.string().optional(),
+    kyc_requirement: z.string().optional(),
+    transfer_restrictions: z.string().optional(),
+    max_transfer_amount: z.string().optional(),
+    expiration_date: z.string().optional(),
+    tranche_series: z.string().optional(),
+    references: z.array(z.string()).optional()
   }).optional(),
-  anchor: z.boolean().default(true)
+  anchor: z.boolean().default(false)
 })
 
 export default async function issuanceRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
@@ -92,7 +103,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         id: issuance.id,
         assetId: issuance.assetId,
         assetRef: issuance.asset.assetRef,
-        to: issuance.to,
+        holder: issuance.holder,
         amount: issuance.amount,
         txId: issuance.txId,
         status: issuance.status,
@@ -196,7 +207,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       return reply.status(400).send({ error: 'Invalid request body' })
     }
 
-    const { to, amount, complianceRef, anchor } = body.data
+    const { holder, amount, issuanceFacts, anchor } = body.data
     
     // Check idempotency
     const idempotencyKey = req.headers['idempotency-key'] as string
@@ -224,52 +235,25 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       if (!assetWithContext) {
         return reply.status(404).send({ error: 'Asset not found' })
       }
+
+      // Initialize services for unified compliance design
+      const snapshotService = new RequirementSnapshotService(prisma)
+      const manifestBuilder = new ComplianceManifestBuilder(prisma)
       
-      // Evaluate compliance for this issuance
-      let complianceEvaluation: any = null
-      let requirementInstances: any[] = []
-      let complianceStatus = 'PENDING'
-      
-      try {
-        // Build policy facts from asset, product, and issuance data
-        const facts: PolicyFacts = {
-          issuerCountry: assetWithContext.product.organization.country,
-          assetClass: assetWithContext.product.assetClass,
-          targetMarkets: assetWithContext.product.targetMarkets || [],
-          ledger: assetWithContext.ledger,
-          distributionType: 'private', // Could be enhanced with product data
-          investorAudience: 'professional', // Could be enhanced with product data
-          isCaspInvolved: true, // Could be enhanced with product data
-          transferType: 'CASP_TO_CASP' // Could be enhanced with product data
-        }
-        
-        // Evaluate compliance
-        complianceEvaluation = await policyKernel.evaluateFacts(facts)
-        
-        // Determine compliance status
-        const requiredRequirements = complianceEvaluation.requirementInstances.filter(
-          (instance: any) => instance.status === 'REQUIRED'
-        )
-        
-        if (requiredRequirements.length === 0) {
-          complianceStatus = 'COMPLIANT'
-        } else {
-          // For now, mark as PENDING - in production, this would check actual compliance
-          complianceStatus = 'PENDING'
-        }
-        
-        console.log(`✅ Compliance evaluation completed: ${complianceEvaluation.requirementInstances.length} requirements, status: ${complianceStatus}`)
-      } catch (complianceError: any) {
-        console.error('⚠️ Compliance evaluation failed:', complianceError)
-        complianceStatus = 'PENDING'
-        // Don't fail issuance if compliance evaluation fails
+      // Validate that all required requirements are satisfied
+      const validation = await snapshotService.validateIssuanceRequirements(assetId)
+      if (!validation.valid) {
+        return reply.status(422).send({ 
+          error: 'Issuance blocked by compliance requirements',
+          blockedRequirements: validation.blockedRequirements
+        })
       }
       
       const adapter = getLedgerAdapter()
       
       // Pre-flight checks
       const lines = await adapter.getAccountLines({ 
-        account: to, 
+        account: holder, 
         peer: asset.issuer, 
         ledger_index: 'validated' 
       })
@@ -292,25 +276,11 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         return reply.status(422).send({ error: 'Amount exceeds trustline limit' })
       }
       
-      // Prepare memo for compliance anchoring
-      let memoHex: string | undefined
-      if (anchor && complianceRef) {
-        const memoData = JSON.stringify({ 
-          r: complianceRef.recordId, 
-          h: complianceRef.sha256 
-        })
-        memoHex = Buffer.from(memoData, 'utf8').toString('hex').toUpperCase()
-      }
-      
       // Issue tokens
       const result = await adapter.issueToken({
         currencyCode: asset.code,
         amount,
-        destination: to,
-        metadata: anchor && complianceRef ? { 
-          recordId: complianceRef.recordId, 
-          sha256: complianceRef.sha256 
-        } : undefined
+        destination: holder
       })
       
       const issuanceId = generateIssuanceId()
@@ -320,66 +290,47 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         data: {
           id: issuanceId,
           assetId: asset.id,
-          to,
+          holder,
           amount,
-          complianceRef: complianceRef ? complianceRef : undefined,
           anchor,
           txId: result.txHash,
           explorer: `https://testnet.xrpl.org/transactions/${result.txHash}`,
-          status: 'submitted',
-          complianceEvaluated: complianceEvaluation !== null,
-          complianceStatus: complianceStatus
+          status: 'SUBMITTED',
+          complianceEvaluated: false,
+          complianceStatus: 'PENDING'
         }
       })
       
-      // Create requirement instances for this issuance
-      if (complianceEvaluation) {
-        try {
-          const facts: PolicyFacts = {
-            issuerCountry: assetWithContext.product.organization.country,
-            assetClass: assetWithContext.product.assetClass,
-            targetMarkets: assetWithContext.product.targetMarkets || [],
-            ledger: assetWithContext.ledger,
-            distributionType: 'private',
-            investorAudience: 'professional',
-            isCaspInvolved: true,
-            transferType: 'CASP_TO_CASP'
+      // Create snapshot of live requirements for this issuance
+      await snapshotService.createIssuanceSnapshot(assetId, issuance.id)
+      
+      // Build compliance manifest and generate hash
+      let manifest = null
+      let manifestHash = null
+      
+      try {
+        manifest = await manifestBuilder.buildManifest(issuance.id, issuanceFacts || {})
+        manifestHash = manifestBuilder.generateManifestHash(manifest)
+        
+        // Update issuance with manifest and hash
+        await prisma.issuance.update({
+          where: { id: issuance.id },
+          data: {
+            complianceRef: manifest as any,
+            manifestHash,
+            complianceEvaluated: true,
+            complianceStatus: 'READY'
           }
-          
-          // Create requirement instances with issuance context
-          for (const instance of complianceEvaluation.requirementInstances) {
-            await prisma.requirementInstance.create({
-              data: {
-                assetId: asset.id,
-                requirementTemplateId: instance.requirementTemplateId,
-                status: instance.status as any,
-                rationale: instance.rationale,
-                issuanceId: issuance.id,
-                holder: to,
-                transferAmount: amount,
-                transferType: 'CASP_TO_CASP'
-              }
-            })
-          }
-          
-          // Get created instances for response
-          requirementInstances = await prisma.requirementInstance.findMany({
-            where: { issuanceId: issuance.id },
-            include: {
-              requirementTemplate: {
-                include: {
-                  regime: true
-                }
-              }
-            }
-          })
-          
-          console.log(`✅ Created ${requirementInstances.length} requirement instances for issuance ${issuance.id}`)
-        } catch (instanceError: any) {
-          console.error('⚠️ Failed to create requirement instances:', instanceError)
-          // Don't fail issuance if requirement instance creation fails
-        }
+        })
+        
+        console.log(`✅ Created compliance manifest for issuance ${issuance.id}`)
+      } catch (manifestError: any) {
+        console.error('⚠️ Failed to create compliance manifest:', manifestError)
+        // Don't fail issuance if manifest creation fails
       }
+      
+      // Get snapshot requirements for response
+      const requirementInstances = await snapshotService.getIssuanceSnapshot(issuance.id)
       
       // Store for idempotency
       if (idempotencyKey) {
@@ -387,9 +338,9 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           issuanceId: issuance.id,
           assetId: issuance.assetId,
           assetRef: asset.assetRef,
-          to: issuance.to,
+          holder: issuance.holder,
           amount: issuance.amount,
-          complianceRef: complianceRef,
+          manifestHash,
           txId: issuance.txId,
           explorer: issuance.explorer,
           status: issuance.status,
@@ -401,9 +352,9 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         issuanceId: issuance.id,
         assetId: issuance.assetId,
         assetRef: asset.assetRef,
-        to: issuance.to,
+        holder: issuance.holder,
         amount: issuance.amount,
-        complianceRef: complianceRef,
+        manifestHash,
         txId: issuance.txId,
         explorer: issuance.explorer,
         status: issuance.status,
@@ -421,7 +372,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
               regime: instance.requirementTemplate.regime.name
             }
           })),
-          enforcementPlan: complianceEvaluation?.enforcementPlan || null
+          manifest: manifest
         }
       })
     } catch (error: any) {

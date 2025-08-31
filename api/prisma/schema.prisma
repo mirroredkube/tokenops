@@ -247,29 +247,26 @@ model Event {
 }
 
 model Issuance {
-  id                   String                @id @default(cuid())
-  assetId              String
-  to                   String
-  amount               String
-  complianceRef        Json?
-  anchor               Boolean               @default(true)
-  txId                 String?
-  explorer             String?
-  status               String                @default("pending")
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  failureCode          String?
-  validatedAt          DateTime?
-  validatedLedgerIndex BigInt?
-  complianceEvaluated  Boolean               @default(false)
-  complianceStatus     String?
-  asset                Asset                 @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  requirementInstances RequirementInstance[]
+  id                    String    @id @default(cuid())
+  assetId               String
+  asset                 Asset     @relation(fields: [assetId], references: [id])
+  amount                String
+  holder                String
+  status                IssuanceStatus @default(PENDING)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  complianceRef         Json?
+  anchor                Boolean   @default(false)
+  txId                  String?
+  explorer              String?
+  complianceEvaluated   Boolean   @default(false)
+  complianceStatus      String?
+  requirementInstances  RequirementInstance[]
+  authorizations        Authorization[]
+  manifestHash          String?   @db.VarChar(66)
+  manifestVersion       String    @default("1.0")
 
-  @@index([assetId])
-  @@index([status])
-  @@index([createdAt])
-  @@index([complianceStatus])
+  @@index([manifestHash])
 }
 
 model Authorization {
@@ -289,11 +286,14 @@ model Authorization {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   asset                Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  issuance             Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
+  issuanceId           String?
 
   @@index([assetId])
   @@index([holder])
   @@index([status])
   @@index([createdAt])
+  @@index([issuanceId])
 }
 
 enum OrganizationStatus {
@@ -371,6 +371,14 @@ enum AssetStatus {
 }
 
 enum AuthorizationStatus {
+  PENDING
+  SUBMITTED
+  VALIDATED
+  FAILED
+  EXPIRED
+}
+
+enum IssuanceStatus {
   PENDING
   SUBMITTED
   VALIDATED
