@@ -190,20 +190,33 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       await req.jwtVerify();
       const jwtUser = req.user as any;
       
-      // Fetch complete user data from database
+      // Fetch complete user data from database with organization
       const dbUser = await prisma.user.findUnique({
-        where: { sub: jwtUser.sub }
+        where: { sub: jwtUser.sub },
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              legalName: true,
+              country: true,
+              jurisdiction: true
+            }
+          }
+        }
       });
       
       if (dbUser) {
-        // Return database user data (more complete)
+        // Return database user data with organization
         return reply.send({ 
           user: {
             sub: dbUser.sub,
             email: dbUser.email,
             name: dbUser.name,
             role: dbUser.role,
-            twoFactorEnabled: dbUser.twoFactorEnabled
+            twoFactorEnabled: dbUser.twoFactorEnabled,
+            organizationId: dbUser.organizationId,
+            organization: dbUser.organization
           }
         });
       } else {

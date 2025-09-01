@@ -6,6 +6,14 @@ export interface User {
   name?: string;
   picture?: string;
   role?: "admin" | "user";
+  organizationId?: string;
+  organization?: {
+    id: string;
+    name: string;
+    legalName?: string;
+    country: string;
+    jurisdiction?: string;
+  };
 }
 
 export interface AuthSession {

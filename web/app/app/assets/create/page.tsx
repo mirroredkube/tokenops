@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 import FormField from '../../../components/FormField'
 import CustomDropdown from '../../../components/CustomDropdown'
 import Accordion from '../../../components/Accordion'
@@ -39,6 +40,7 @@ interface Product {
 
 export default function CreateAssetPage() {
   const { t } = useTranslation(['assets', 'common'])
+  const { user } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +73,26 @@ export default function CreateAssetPage() {
     
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-      const response = await fetch(`${apiUrl}/v1/products?limit=50`)
+      // Get organization ID from user context or fetch it
+      let orgId = user?.organization?.id
+      if (!orgId && user?.organizationId) {
+        orgId = user.organizationId
+      }
+      
+
+      
+      const queryParams = new URLSearchParams({
+        limit: '50',
+        ...(orgId && { orgId })
+      })
+      
+      console.log('User:', user)
+      console.log('Organization ID:', orgId)
+      console.log('Query params:', queryParams.toString())
+      
+      const response = await fetch(`${apiUrl}/v1/products?${queryParams}`, {
+        credentials: 'include'
+      })
       const data = await response.json()
 
       if (!response.ok) {
