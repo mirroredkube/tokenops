@@ -300,7 +300,7 @@ export default function AssetCompliancePage() {
                 <button
                   onClick={() => updateRequirementStatus(requirement.id, 'SATISFIED')}
                   disabled={updating === requirement.id}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                  className="px-4 py-2 border border-green-600 text-green-600 bg-white rounded-md hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {updating === requirement.id ? 'Updating...' : 'Mark Satisfied'}
                 </button>
@@ -308,7 +308,7 @@ export default function AssetCompliancePage() {
                 <button
                   onClick={() => updateRequirementStatus(requirement.id, 'EXCEPTION')}
                   disabled={updating === requirement.id}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                  className="px-4 py-2 border border-red-600 text-red-600 bg-white rounded-md hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {updating === requirement.id ? 'Updating...' : 'Mark Exception'}
                 </button>

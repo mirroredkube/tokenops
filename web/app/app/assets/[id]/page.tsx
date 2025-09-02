@@ -34,11 +34,34 @@ interface Asset {
   }
 }
 
+interface ComplianceRequirement {
+  id: string
+  status: 'REQUIRED' | 'SATISFIED' | 'EXCEPTION' | 'NA'
+  rationale?: string
+  evidenceRefs?: any
+  exceptionReason?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+  requirementTemplate: {
+    id: string
+    name: string
+    description?: string
+    regime: {
+      id: string
+      name: string
+      jurisdiction: string
+    }
+  }
+}
+
 export default function AssetDetailsPage() {
   const params = useParams()
   const assetId = params.id as string
   const [activeTab, setActiveTab] = useState<'overview' | 'compliance' | 'settings'>('overview')
   const [asset, setAsset] = useState<Asset | null>(null)
+  const [complianceRequirements, setComplianceRequirements] = useState<ComplianceRequirement[]>([])
+  const [complianceLoading, setComplianceLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [confirmationDialog, setConfirmationDialog] = useState<{
@@ -99,11 +122,38 @@ export default function AssetDetailsPage() {
       }
       
       setAsset(transformedAsset)
+      
+      // Fetch compliance requirements if compliance mode is enabled
+      if (transformedAsset.complianceMode !== 'OFF') {
+        fetchComplianceRequirements()
+      }
     } catch (err: any) {
       console.error('Error fetching asset:', err)
       setError(err.message || 'Failed to fetch asset')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchComplianceRequirements = async () => {
+    if (!assetId) return
+    
+    setComplianceLoading(true)
+    try {
+      const { data, error } = await api.GET(`/v1/compliance/requirements?assetId=${assetId}` as any, {})
+      
+      if (error) {
+        console.error('Error fetching compliance requirements:', error)
+        return
+      }
+      
+      if (data && data.requirements) {
+        setComplianceRequirements(data.requirements)
+      }
+    } catch (err: any) {
+      console.error('Error fetching compliance requirements:', err)
+    } finally {
+      setComplianceLoading(false)
     }
   }
 
@@ -476,16 +526,119 @@ export default function AssetDetailsPage() {
           {/* Compliance Overview */}
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Compliance Status</h3>
-            <div className="text-center py-8">
-              <p className="text-gray-600 mb-2">Compliance requirements and status</p>
-              <p className="text-sm text-gray-500 mb-4">Manage compliance requirements for this asset</p>
-              <Link
-                href={`/app/assets/${asset.id}/compliance`}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
-              >
-                View Compliance Details
-              </Link>
-            </div>
+            
+            {complianceLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading compliance requirements...</p>
+              </div>
+            ) : complianceRequirements.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600 mb-2">No compliance requirements found</p>
+                <p className="text-sm text-gray-500">This asset may not have compliance requirements or they haven't been generated yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Compliance Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {complianceRequirements.filter(r => r.status === 'REQUIRED').length}
+                      </p>
+                      <p className="text-sm text-yellow-700">Required</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">
+                        {complianceRequirements.filter(r => r.status === 'SATISFIED').length}
+                      </p>
+                      <p className="text-sm text-green-700">Satisfied</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-red-600">
+                        {complianceRequirements.filter(r => r.status === 'EXCEPTION').length}
+                      </p>
+                      <p className="text-sm text-red-700">Exceptions</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-600">
+                        {complianceRequirements.length}
+                      </p>
+                      <p className="text-sm text-blue-700">Total</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Requirements List */}
+                <div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">Compliance Requirements</h4>
+                  <div className="space-y-3">
+                    {complianceRequirements.map((requirement) => (
+                      <div 
+                        key={requirement.id} 
+                        className={`p-4 rounded-lg border ${
+                          requirement.status === 'REQUIRED' ? 'bg-yellow-50 border-yellow-200' :
+                          requirement.status === 'SATISFIED' ? 'bg-green-50 border-green-200' :
+                          requirement.status === 'EXCEPTION' ? 'bg-red-50 border-red-200' :
+                          'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h5 className="font-medium text-gray-900 mb-1">
+                              {requirement.requirementTemplate.name}
+                            </h5>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {requirement.requirementTemplate.regime.name} - {requirement.requirementTemplate.regime.jurisdiction}
+                            </p>
+                            {requirement.requirementTemplate.description && (
+                              <p className="text-sm text-gray-700 mb-2">
+                                {requirement.requirementTemplate.description}
+                              </p>
+                            )}
+                            {requirement.rationale && (
+                              <p className="text-sm text-blue-700 bg-blue-50 p-2 rounded">
+                                <strong>Rationale:</strong> {requirement.rationale}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div className="ml-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              requirement.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
+                              requirement.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
+                              requirement.status === 'NA' ? 'bg-gray-100 text-gray-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {requirement.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="text-center pt-4">
+                  <Link
+                    href={`/app/assets/${asset.id}/compliance`}
+                    className="px-6 py-3 border border-emerald-600 text-emerald-600 bg-white rounded-lg hover:bg-emerald-50 font-medium"
+                  >
+                    Manage Compliance Details
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
