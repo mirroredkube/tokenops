@@ -87,19 +87,23 @@ export default function CompliancePage() {
       }
 
       const response = data as any
+      console.log('Raw issuances response:', response)
+      
       // Transform issuances to compliance records format for backward compatibility
       let complianceRecords = response.items
-        .filter((issuance: any) => issuance.complianceRef)
         .map((issuance: any) => ({
           id: issuance.id,
-          recordId: issuance.manifestHash || issuance.id,
+          recordId: issuance.id, // Use issuance ID, not manifest hash
           assetId: issuance.assetId,
           assetRef: issuance.assetRef,
           holder: issuance.holder,
-          status: issuance.complianceStatus === 'READY' ? 'VERIFIED' : 'UNVERIFIED',
+          status: issuance.complianceStatus === 'READY' ? 'VERIFIED' : 
+                  issuance.complianceStatus === 'PENDING' ? 'PENDING' : 'UNVERIFIED',
           sha256: issuance.manifestHash || '',
           createdAt: issuance.createdAt
         }))
+      
+      console.log('Transformed compliance records:', complianceRecords)
       
       // Apply client-side status filtering
       if (filters.status && filters.status !== 'all') {

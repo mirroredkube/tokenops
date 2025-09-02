@@ -59,9 +59,13 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
                   assetId: { type: 'string' },
                   assetRef: { type: 'string' },
                   to: { type: 'string' },
+                  holder: { type: 'string' },
                   amount: { type: 'string' },
                   txId: { type: 'string' },
                   status: { type: 'string' },
+                  complianceRef: { type: 'object' },
+                  complianceStatus: { type: 'string' },
+                  manifestHash: { type: 'string' },
                   createdAt: { type: 'string' },
                   updatedAt: { type: 'string' }
                 }
@@ -119,6 +123,9 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         amount: issuance.amount,
         txId: issuance.txId,
         status: issuance.status,
+        complianceRef: (issuance as any).complianceRef,
+        complianceStatus: (issuance as any).complianceStatus,
+        manifestHash: (issuance as any).manifestHash,
         createdAt: issuance.createdAt.toISOString(),
         updatedAt: issuance.updatedAt.toISOString()
       })),
@@ -128,7 +135,82 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
     })
   })
 
-  // 1. POST /v1/assets/{assetId}/issuances - Create issuance
+  
+  // 1. GET /v1/issuances/{id} - Get individual issuance details
+  app.get('/issuances/:id', {
+    schema: {
+      summary: 'Get individual issuance details',
+      description: 'Get detailed information about a specific token issuance',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string', description: 'Issuance ID' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            assetId: { type: 'string' },
+            assetRef: { type: 'string' },
+            holder: { type: 'string' },
+            amount: { type: 'string' },
+            txId: { type: 'string' },
+            status: { type: 'string' },
+            complianceRef: { type: 'object' },
+            complianceStatus: { type: 'string' },
+            manifestHash: { type: 'string' },
+            createdAt: { type: 'string' },
+            updatedAt: { type: 'string' }
+          }
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    
+    try {
+      const issuance = await prisma.issuance.findUnique({
+        where: { id },
+        include: {
+          asset: {
+            select: {
+              assetRef: true,
+              code: true
+            }
+          }
+        }
+      })
+      
+      if (!issuance) {
+        return reply.status(404).send({ error: 'Issuance not found' })
+      }
+      
+      return reply.send({
+        id: issuance.id,
+        assetId: issuance.assetId,
+        assetRef: issuance.asset.assetRef,
+        holder: (issuance as any).holder,
+        amount: issuance.amount,
+        txId: issuance.txId,
+        status: issuance.status,
+        complianceRef: (issuance as any).complianceRef,
+        complianceStatus: (issuance as any).complianceStatus,
+        manifestHash: (issuance as any).manifestHash,
+        createdAt: issuance.createdAt.toISOString(),
+        updatedAt: issuance.updatedAt.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error fetching issuance:', error)
+      return reply.status(500).send({ error: 'Failed to fetch issuance' })
+    }
+  })
+
+  // 2. POST /v1/assets/{assetId}/issuances - Create issuance
   app.post('/assets/:assetId/issuances', {
     schema: {
       summary: 'Issue tokens to a holder',
