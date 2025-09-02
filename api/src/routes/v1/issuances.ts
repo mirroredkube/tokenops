@@ -264,11 +264,15 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       // Validate that all required requirements are satisfied
       const validation = await snapshotService.validateIssuanceRequirements(assetId)
       if (!validation.valid) {
-        console.log('Compliance validation failed:', validation.blockedRequirements)
-        // For testing, allow issuance even if requirements are not satisfied
-        // TODO: Implement proper requirement satisfaction logic
-        console.log('Bypassing compliance validation for testing')
+        console.log('❌ Compliance validation failed:', validation.blockedRequirements)
+        return reply.status(422).send({ 
+          error: 'Issuance blocked by compliance requirements',
+          blockedRequirements: validation.blockedRequirements,
+          message: 'All required compliance requirements must be satisfied before issuance'
+        })
       }
+      
+      console.log('✅ Compliance validation passed - all requirements satisfied')
       
       const adapter = getLedgerAdapter()
       

@@ -95,6 +95,7 @@ model Asset {
   ledger               AssetLedger
   network              AssetNetwork
   code                 String
+  assetClass           AssetClass            @default(OTHER)
   decimals             Int
   complianceMode       ComplianceMode        @default(RECORD_ONLY)
   controls             Json?
@@ -195,6 +196,7 @@ model RequirementInstance {
   verifiedAt            DateTime?
   rationale             String?
   exceptionReason       String?
+  notes                 String?
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
   holder                String?

@@ -114,23 +114,56 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
   })
 
-  // 2. GET /v1/compliance/requirements - List available requirement templates
+  // 2. GET /v1/compliance/requirements - List requirement instances for an asset OR requirement templates
   app.get('/compliance/requirements', {
     schema: {
-      summary: 'List requirement templates',
-      description: 'Get all available requirement templates with their applicability rules',
+      summary: 'List requirement instances for an asset or requirement templates',
+      description: 'Get requirement instances for a specific asset, or all requirement templates if no assetId provided',
       tags: ['v1'],
       querystring: {
         type: 'object',
         properties: {
-          regime: { type: 'string', description: 'Filter by regulatory regime' },
-          active: { type: 'boolean', description: 'Filter by active status' }
+          assetId: { type: 'string', description: 'Asset ID to get requirement instances for' },
+          regime: { type: 'string', description: 'Filter by regulatory regime (when getting templates)' },
+          active: { type: 'boolean', description: 'Filter by active status (when getting templates)' }
         }
       },
       response: {
         200: {
           type: 'object',
           properties: {
+            requirements: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  status: { type: 'string' },
+                  rationale: { type: 'string' },
+                  evidenceRefs: { type: 'object' },
+                  exceptionReason: { type: 'string' },
+                  notes: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' },
+                  requirementTemplate: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      description: { type: 'string' },
+                      regime: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' },
+                          jurisdiction: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
             templates: {
               type: 'array',
               items: {
@@ -159,8 +192,31 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
   }, async (req, reply) => {
     try {
-      const { regime, active } = req.query as any
+      const { assetId, regime, active } = req.query as any
       
+      // If assetId is provided, return requirement instances for that asset
+      if (assetId) {
+        const requirements = await prisma.requirementInstance.findMany({
+          where: { 
+            assetId,
+            issuanceId: null // Only live requirements, not snapshots
+          },
+          include: {
+            requirementTemplate: {
+              include: {
+                regime: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        })
+        
+        return reply.send({ requirements })
+      }
+      
+      // Otherwise, return requirement templates (existing logic)
       const where: any = {}
       
       if (regime) {
@@ -195,8 +251,8 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       
       return reply.send({ templates })
     } catch (error: any) {
-      console.error('❌ Error fetching requirement templates:', error)
-      return reply.status(500).send({ error: 'Failed to fetch requirement templates' })
+      console.error('❌ Error fetching requirements:', error)
+      return reply.status(500).send({ error: 'Failed to fetch requirements' })
     }
   })
 
@@ -572,6 +628,110 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     } catch (error: any) {
       console.error('❌ Error creating compliance record:', error)
       return reply.status(500).send({ error: 'Failed to create compliance record' })
+    }
+  })
+
+  // PATCH /v1/compliance/requirements/{requirementId} - Update requirement status
+  app.patch('/compliance/requirements/:requirementId', {
+    schema: {
+      summary: 'Update requirement instance status',
+      description: 'Mark requirement as satisfied, add evidence, or update status',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['requirementId'],
+        properties: {
+          requirementId: { type: 'string', description: 'Requirement instance ID' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['status'],
+        properties: {
+          status: { 
+            type: 'string', 
+            enum: ['REQUIRED', 'SATISFIED', 'EXCEPTION'],
+            description: 'New status for the requirement'
+          },
+          evidenceRefs: { 
+            type: 'object', 
+            description: 'Evidence references (documents, links, etc.)'
+          },
+          exceptionReason: { 
+            type: 'string', 
+            description: 'Reason for exception if status is EXCEPTION'
+          },
+          notes: { 
+            type: 'string', 
+            description: 'Additional notes or comments'
+          }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            status: { type: 'string' },
+            updatedAt: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    const { requirementId } = req.params as { requirementId: string }
+    const { status, evidenceRefs, exceptionReason, notes } = req.body as any
+    
+    try {
+      // Find the requirement instance
+      const requirement = await prisma.requirementInstance.findUnique({
+        where: { id: requirementId },
+        include: {
+          requirementTemplate: true,
+          asset: {
+            include: {
+              product: {
+                include: {
+                  organization: true
+                }
+              }
+            }
+          }
+        }
+      })
+      
+      if (!requirement) {
+        return reply.status(404).send({ error: 'Requirement instance not found' })
+      }
+      
+      // Update the requirement instance
+      const updatedRequirement = await prisma.requirementInstance.update({
+        where: { id: requirementId },
+        data: {
+          status: status as any,
+          evidenceRefs: evidenceRefs || {},
+          exceptionReason: exceptionReason || null,
+          notes: notes || null,
+          updatedAt: new Date()
+        }
+      })
+      
+      // Log the update for audit purposes
+      console.log(`📝 Requirement ${requirementId} updated to status: ${status}`)
+      
+      return reply.send({
+        id: updatedRequirement.id,
+        status: updatedRequirement.status,
+        updatedAt: updatedRequirement.updatedAt.toISOString(),
+        message: `Requirement status updated to ${status}`
+      })
+      
+    } catch (error: any) {
+      console.error('Error updating requirement:', error)
+      return reply.status(400).send({ error: 'Failed to update requirement' })
     }
   })
 }

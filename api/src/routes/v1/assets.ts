@@ -14,6 +14,7 @@ const AssetCreateSchema = z.object({
   network: z.enum(["mainnet", "testnet", "devnet"]).default("testnet"),
   issuer: z.string().min(1),
   code: z.string().min(1),
+  assetClass: z.enum(["OTHER", "ART", "EMT"]).default("OTHER"),
   decimals: z.number().int().min(0).max(18),
   complianceMode: z.enum(["OFF", "RECORD_ONLY", "GATED_BEFORE"]).default("RECORD_ONLY"),
   controls: z.object({
@@ -68,6 +69,12 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           code: { 
             type: 'string', 
             description: 'Currency code/symbol'
+          },
+          assetClass: { 
+            type: 'string', 
+            enum: ['OTHER', 'ART', 'EMT'],
+            default: 'OTHER',
+            description: 'Asset class for compliance evaluation (OTHER, ART, EMT)'
           },
           decimals: { 
             type: 'number', 
@@ -189,6 +196,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           network: assetData.network.toUpperCase() as any,
           issuingAddressId: issuerAddress.id,
           code: assetData.code,
+          assetClass: assetData.assetClass,
           decimals: assetData.decimals,
           complianceMode: assetData.complianceMode.toUpperCase() as any,
           controls: assetData.controls,
@@ -208,7 +216,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         // Build policy facts from asset and product data
         const facts: PolicyFacts = {
           issuerCountry: product.organization.country,
-          assetClass: product.assetClass,
+          assetClass: asset.assetClass, // Use asset-level asset class instead of product-level
           targetMarkets: product.targetMarkets || [],
           ledger: asset.ledger,
           distributionType: 'private', // Default - could be enhanced with product data

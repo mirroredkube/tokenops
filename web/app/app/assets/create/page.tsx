@@ -15,6 +15,7 @@ interface AssetFormData {
   network: "mainnet" | "testnet" | "devnet"
   issuer: string
   code: string
+  assetClass: "OTHER" | "ART" | "EMT"
   decimals: number
   complianceMode: "OFF" | "RECORD_ONLY" | "GATED_BEFORE"
   controls?: {
@@ -56,6 +57,7 @@ export default function CreateAssetPage() {
     network: 'testnet',
     issuer: '',
     code: '',
+    assetClass: 'OTHER',
     decimals: 6,
     complianceMode: 'RECORD_ONLY',
     controls: undefined,
@@ -131,6 +133,7 @@ export default function CreateAssetPage() {
         network: formData.network,
         issuer: formData.issuer,
         code: formData.code,
+        assetClass: formData.assetClass,
         decimals: formData.decimals,
         complianceMode: formData.complianceMode,
         ...(formData.controls && Object.keys(formData.controls).length > 0 && {
@@ -307,6 +310,20 @@ export default function CreateAssetPage() {
               />
             </FormField>
 
+            <FormField label={t('assets:createAsset.fields.assetClass', 'Asset Class')} required>
+              <CustomDropdown
+                value={formData.assetClass}
+                onChange={(value) => handleInputChange('assetClass', value)}
+                options={[
+                  { value: 'OTHER', label: 'Utility Token (OTHER)' },
+                  { value: 'ART', label: 'Asset-Referenced Token (ART)' },
+                  { value: 'EMT', label: 'E-Money Token (EMT)' }
+                ]}
+                placeholder={t('assets:createAsset.options.selectAssetClass', 'Select Asset Class')}
+                required
+              />
+            </FormField>
+
             <FormField label={t('assets:createAsset.fields.decimals', 'Decimals')} required>
               <input
                 type="number"
@@ -372,12 +389,16 @@ export default function CreateAssetPage() {
               </FormField>
 
               <FormField label={t('assets:createAsset.registry.fields.micaClassification', 'MiCA Classification')}>
-                <input
-                  type="text"
+                <CustomDropdown
                   value={formData.registry?.micaClass || ''}
-                  onChange={(e) => handleNestedChange('registry', 'micaClass', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder={t('assets:createAsset.registry.placeholders.micaClassification', 'Utility Token, Security Token')}
+                  onChange={(value) => handleNestedChange('registry', 'micaClass', value)}
+                  options={[
+                    { value: 'Utility Token', label: 'Utility Token' },
+                    { value: 'Security Token', label: 'Security Token' },
+                    { value: 'Asset-Referenced Token', label: 'Asset-Referenced Token (ART)' },
+                    { value: 'E-Money Token', label: 'E-Money Token (EMT)' }
+                  ]}
+                  placeholder={t('assets:createAsset.registry.placeholders.micaClassification', 'Select MiCA Classification')}
                 />
               </FormField>
 

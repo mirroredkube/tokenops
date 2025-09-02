@@ -61,7 +61,6 @@ export default async function productRoutes(fastify: FastifyInstance) {
       } else {
         // For now, allow filtering by organization ID in query params
         // This is a temporary solution until proper authentication is implemented
-        const { orgId } = query
         if (orgId) {
           where.organizationId = orgId
         }

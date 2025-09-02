@@ -37,7 +37,7 @@ interface Asset {
 export default function AssetDetailsPage() {
   const params = useParams()
   const assetId = params.id as string
-  const [activeTab, setActiveTab] = useState<'overview' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'compliance' | 'settings'>('overview')
   const [asset, setAsset] = useState<Asset | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -351,6 +351,16 @@ export default function AssetDetailsPage() {
             Overview
           </button>
           <button
+            onClick={() => setActiveTab('compliance')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'compliance'
+                ? 'border-emerald-500 text-emerald-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Compliance
+          </button>
+          <button
             onClick={() => setActiveTab('settings')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'settings'
@@ -456,6 +466,25 @@ export default function AssetDetailsPage() {
             <div className="text-center py-8">
                               <p className="text-gray-600 mb-2">Authorizations and Issuances coming in Phase 2</p>
                 <p className="text-sm text-gray-500">You'll be able to view authorization status and issuance history here.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'compliance' && (
+        <div className="space-y-6">
+          {/* Compliance Overview */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4">Compliance Status</h3>
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-2">Compliance requirements and status</p>
+              <p className="text-sm text-gray-500 mb-4">Manage compliance requirements for this asset</p>
+              <Link
+                href={`/app/assets/${asset.id}/compliance`}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              >
+                View Compliance Details
+              </Link>
             </div>
           </div>
         </div>

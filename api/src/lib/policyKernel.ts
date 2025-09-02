@@ -316,12 +316,55 @@ export class PolicyKernel {
           assetId,
           requirementTemplateId: instance.requirementTemplateId,
           status: instance.status as any,
-          rationale: instance.rationale
+          rationale: instance.rationale,
+          // Set default values for required fields
+          holder: null,
+          transferAmount: null,
+          transferType: null,
+          issuanceId: null
         }
       })
     }
     
     console.log(`✅ Created ${evaluation.requirementInstances.length} requirement instances for asset ${assetId}`)
+  }
+
+  /**
+   * Evaluates facts for an existing asset and updates requirement instances
+   */
+  async updateRequirementInstances(assetId: string, facts: PolicyFacts): Promise<void> {
+    const evaluation = await this.evaluateFacts(facts)
+    
+    // Get existing requirement instances
+    const existingInstances = await prisma.requirementInstance.findMany({
+      where: {
+        assetId,
+        issuanceId: null // Only live requirements, not snapshots
+      }
+    })
+    
+    // Create a map of existing template IDs
+    const existingTemplateIds = new Set(existingInstances.map(inst => inst.requirementTemplateId))
+    
+    // Create new instances for new requirements
+    for (const instance of evaluation.requirementInstances) {
+      if (!existingTemplateIds.has(instance.requirementTemplateId)) {
+        await prisma.requirementInstance.create({
+          data: {
+            assetId,
+            requirementTemplateId: instance.requirementTemplateId,
+            status: instance.status as any,
+            rationale: instance.rationale,
+            holder: null,
+            transferAmount: null,
+            transferType: null,
+            issuanceId: null
+          }
+        })
+      }
+    }
+    
+    console.log(`✅ Updated requirement instances for asset ${assetId}`)
   }
 }
 
