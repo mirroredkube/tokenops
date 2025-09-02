@@ -1,12 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import Link from 'next/link'
 import ConfirmationDialog from '../../../components/ConfirmationDialog'
 import { useToast } from '../../../components/Toast'
 import { trackCopyAction, trackAssetAction, AnalyticsEvents, trackPageView } from '../../../lib/analytics'
-import { Copy } from 'lucide-react'
+import { Copy, Shield } from 'lucide-react'
 
 interface Asset {
   id: string
@@ -36,7 +36,7 @@ interface Asset {
 
 interface ComplianceRequirement {
   id: string
-  status: 'REQUIRED' | 'SATISFIED' | 'EXCEPTION' | 'NA'
+  status: 'REQUIRED' | 'SATISFIED' | 'EXCEPTION'
   rationale?: string
   evidenceRefs?: any
   exceptionReason?: string
@@ -57,6 +57,7 @@ interface ComplianceRequirement {
 
 export default function AssetDetailsPage() {
   const params = useParams()
+  const router = useRouter()
   const assetId = params.id as string
   const [activeTab, setActiveTab] = useState<'overview' | 'compliance' | 'settings'>('overview')
   const [asset, setAsset] = useState<Asset | null>(null)
@@ -157,6 +158,29 @@ export default function AssetDetailsPage() {
     }
   }
 
+  const handleRequirementStatusUpdate = async (requirementId: string, newStatus: 'SATISFIED' | 'EXCEPTION') => {
+    try {
+      console.log('Updating requirement status:', { requirementId, newStatus })
+      
+      const { data, error } = await api.PATCH(`/v1/compliance/requirements/${requirementId}` as any, {
+        body: {
+          status: newStatus
+        }
+      })
+      
+      if (error) {
+        console.error('Error updating requirement status:', error)
+        return
+      }
+      
+      console.log('Requirement status updated successfully:', data)
+      // Refresh compliance requirements
+      await fetchComplianceRequirements()
+    } catch (err: any) {
+      console.error('Error updating requirement status:', err)
+    }
+  }
+
   const showConfirmationDialog = (action: string, newStatus: 'active' | 'paused' | 'retired') => {
     const getDialogConfig = () => {
       switch (newStatus) {
@@ -250,6 +274,8 @@ export default function AssetDetailsPage() {
       setError(`Failed to update status: ${err.message}`)
     }
   }
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -578,65 +604,9 @@ export default function AssetDetailsPage() {
                   </div>
                 </div>
 
-                {/* Requirements List */}
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Compliance Requirements</h4>
-                  <div className="space-y-3">
-                    {complianceRequirements.map((requirement) => (
-                      <div 
-                        key={requirement.id} 
-                        className={`p-4 rounded-lg border ${
-                          requirement.status === 'REQUIRED' ? 'bg-yellow-50 border-yellow-200' :
-                          requirement.status === 'SATISFIED' ? 'bg-green-50 border-green-200' :
-                          requirement.status === 'EXCEPTION' ? 'bg-red-50 border-red-200' :
-                          'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h5 className="font-medium text-gray-900 mb-1">
-                              {requirement.requirementTemplate.name}
-                            </h5>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {requirement.requirementTemplate.regime.name} - {requirement.requirementTemplate.regime.jurisdiction}
-                            </p>
-                            {requirement.requirementTemplate.description && (
-                              <p className="text-sm text-gray-700 mb-2">
-                                {requirement.requirementTemplate.description}
-                              </p>
-                            )}
-                            {requirement.rationale && (
-                              <p className="text-sm text-blue-700 bg-blue-50 p-2 rounded">
-                                <strong>Rationale:</strong> {requirement.rationale}
-                              </p>
-                            )}
-                          </div>
-                          
-                          <div className="ml-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              requirement.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
-                              requirement.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
-                              requirement.status === 'NA' ? 'bg-gray-100 text-gray-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {requirement.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Action Button */}
-                <div className="text-center pt-4">
-                  <Link
-                    href={`/app/assets/${asset.id}/compliance`}
-                    className="px-6 py-3 border border-emerald-600 text-emerald-600 bg-white rounded-lg hover:bg-emerald-50 font-medium"
-                  >
-                    Manage Compliance Details
-                  </Link>
-                </div>
+
+
               </div>
             )}
           </div>
@@ -752,6 +722,80 @@ export default function AssetDetailsPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Compliance Tab */}
+      {activeTab === 'compliance' && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Compliance Requirements</h3>
+              <button
+                onClick={() => router.push('/app/compliance')}
+                className="px-4 py-2 border border-emerald-600 text-emerald-600 bg-white rounded-lg hover:bg-emerald-50"
+              >
+                View All Compliance
+              </button>
+            </div>
+            
+            {complianceLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading compliance requirements...</p>
+              </div>
+            ) : complianceRequirements.length === 0 ? (
+              <div className="text-center py-8">
+                <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No compliance requirements found for this asset</p>
+                <p className="text-sm text-gray-400 mt-1">Requirements will appear here once the asset is created</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Requirements List */}
+                <div className="space-y-4">
+                  {complianceRequirements.map((req) => (
+                    <div key={req.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{req.requirementTemplate.name}</p>
+                        <p className="text-sm text-gray-600">{req.requirementTemplate.regime.name} ({req.requirementTemplate.regime.jurisdiction})</p>
+                        <p className="text-xs text-gray-500">{req.requirementTemplate.description || 'No description available'}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 text-sm rounded-full ${
+                          req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
+                          req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {req.status}
+                        </span>
+                        
+                        {/* Action Buttons - Only show for REQUIRED status */}
+                        {req.status === 'REQUIRED' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleRequirementStatusUpdate(req.id, 'SATISFIED')}
+                              className="px-3 py-1 text-xs bg-green-100 text-green-700 border border-green-300 rounded hover:bg-green-200 transition-colors"
+                            >
+                              Mark Satisfied
+                            </button>
+                            <button
+                              onClick={() => handleRequirementStatusUpdate(req.id, 'EXCEPTION')}
+                              className="px-3 py-1 text-xs bg-red-100 text-red-700 border border-red-300 rounded hover:bg-red-200 transition-colors"
+                            >
+                              Mark Exception
+                            </button>
+
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
