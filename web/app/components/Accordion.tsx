@@ -20,12 +20,14 @@ export default function Accordion({ title, children, defaultOpen = false, step }
         className="w-full px-6 py-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors duration-200 flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          {step && (
+          {step !== undefined && (
             <div className="w-6 h-6 bg-emerald-600 text-white text-xs font-semibold rounded-full flex items-center justify-center">
               {step}
             </div>
           )}
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {step !== undefined ? `Step ${step}: ${title}` : title}
+          </h3>
         </div>
         <ChevronDown 
           className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
