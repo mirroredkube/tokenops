@@ -631,11 +631,11 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
   })
 
-  // PATCH /v1/compliance/requirements/{requirementId} - Update requirement status
-  app.patch('/compliance/requirements/:requirementId', {
+  // PATCH /v1/compliance/requirements/:requirementId - Update requirement status
+  app.patch('/requirements/:requirementId', {
     schema: {
-      summary: 'Update requirement instance status',
-      description: 'Mark requirement as satisfied, add evidence, or update status',
+      summary: 'Update requirement status',
+      description: 'Update the status of a compliance requirement (SATISFIED, EXCEPTION)',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -648,23 +648,13 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         type: 'object',
         required: ['status'],
         properties: {
-          status: { 
-            type: 'string', 
+          status: {
+            type: 'string',
             enum: ['REQUIRED', 'SATISFIED', 'EXCEPTION'],
             description: 'New status for the requirement'
           },
-          evidenceRefs: { 
-            type: 'object', 
-            description: 'Evidence references (documents, links, etc.)'
-          },
-          exceptionReason: { 
-            type: 'string', 
-            description: 'Reason for exception if status is EXCEPTION'
-          },
-          notes: { 
-            type: 'string', 
-            description: 'Additional notes or comments'
-          }
+          exceptionReason: { type: 'string', description: 'Reason for exception (if status is EXCEPTION)' },
+          rationale: { type: 'string', description: 'Rationale for the status change' }
         }
       },
       response: {
@@ -673,65 +663,386 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
           properties: {
             id: { type: 'string' },
             status: { type: 'string' },
-            updatedAt: { type: 'string' },
-            message: { type: 'string' }
+            exceptionReason: { type: 'string' },
+            rationale: { type: 'string' },
+            verifierId: { type: 'string' },
+            verifiedAt: { type: 'string' }
           }
         },
         400: { type: 'object', properties: { error: { type: 'string' } } },
-        404: { type: 'object', properties: { error: { type: 'string' } } }
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req, reply) => {
-    const { requirementId } = req.params as { requirementId: string }
-    const { status, evidenceRefs, exceptionReason, notes } = req.body as any
-    
     try {
-      // Find the requirement instance
-      const requirement = await prisma.requirementInstance.findUnique({
+      const { requirementId } = req.params as { requirementId: string }
+      const { status, exceptionReason, rationale } = req.body as any
+
+      // Get user ID from auth context
+      const userId = (req as any).user?.id
+      if (!userId) {
+        return reply.status(401).send({ error: 'Authentication required' })
+      }
+
+      // Validate status
+      if (!['REQUIRED', 'SATISFIED', 'EXCEPTION'].includes(status)) {
+        return reply.status(400).send({ error: 'Invalid status value' })
+      }
+
+      // Validate exception reason if status is EXCEPTION
+      if (status === 'EXCEPTION' && !exceptionReason) {
+        return reply.status(400).send({ error: 'Exception reason is required when status is EXCEPTION' })
+      }
+
+      // Update requirement
+      const updatedRequirement = await prisma.requirementInstance.update({
         where: { id: requirementId },
-        include: {
-          requirementTemplate: true,
-          asset: {
-            include: {
-              product: {
-                include: {
-                  organization: true
+        data: {
+          status,
+          exceptionReason: status === 'EXCEPTION' ? exceptionReason : null,
+          rationale,
+          verifierId: userId,
+          verifiedAt: new Date()
+        }
+      })
+
+      return reply.send({
+        id: updatedRequirement.id,
+        status: updatedRequirement.status,
+        exceptionReason: updatedRequirement.exceptionReason,
+        rationale: updatedRequirement.rationale,
+        verifierId: updatedRequirement.verifierId,
+        verifiedAt: updatedRequirement.verifiedAt?.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error updating requirement status:', error)
+      if (error.code === 'P2025') {
+        return reply.status(404).send({ error: 'Requirement not found' })
+      }
+      return reply.status(500).send({ error: 'Failed to update requirement status' })
+    }
+  })
+
+  // POST /v1/compliance/evidence - Upload evidence for a requirement
+  app.post('/compliance/evidence', {
+    schema: {
+      summary: 'Upload evidence for a compliance requirement',
+      description: 'Upload a file as evidence for a specific requirement instance',
+      tags: ['v1'],
+      body: {
+        type: 'object',
+        required: ['requirementInstanceId', 'fileName', 'fileType', 'fileSize', 'fileHash', 'uploadPath'],
+        properties: {
+          requirementInstanceId: { type: 'string', description: 'ID of the requirement instance' },
+          fileName: { type: 'string', description: 'Original filename' },
+          fileType: { type: 'string', description: 'MIME type of the file' },
+          fileSize: { type: 'number', description: 'File size in bytes' },
+          fileHash: { type: 'string', description: 'SHA256 hash of the file' },
+          uploadPath: { type: 'string', description: 'Path where file is stored' },
+          description: { type: 'string', description: 'Optional description of the evidence' },
+          tags: { 
+            type: 'array', 
+            items: { type: 'string' },
+            description: 'Optional tags for categorization'
+          }
+        }
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            requirementInstanceId: { type: 'string' },
+            fileName: { type: 'string' },
+            fileType: { type: 'string' },
+            fileSize: { type: 'number' },
+            fileHash: { type: 'string' },
+            uploadPath: { type: 'string' },
+            description: { type: 'string' },
+            tags: { type: 'array', items: { type: 'string' } },
+            uploadedBy: { type: 'string' },
+            uploadedAt: { type: 'string' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { 
+        requirementInstanceId, 
+        fileName, 
+        fileType, 
+        fileSize, 
+        fileHash, 
+        uploadPath, 
+        description, 
+        tags = [] 
+      } = req.body as any
+
+      // Get user ID from auth context
+      const userId = (req as any).user?.id
+      if (!userId) {
+        return reply.status(401).send({ error: 'Authentication required' })
+      }
+
+      // Verify requirement instance exists
+      const requirementInstance = await prisma.requirementInstance.findUnique({
+        where: { id: requirementInstanceId }
+      })
+
+      if (!requirementInstance) {
+        return reply.status(404).send({ error: 'Requirement instance not found' })
+      }
+
+      // Create evidence record
+      const evidence = await prisma.evidence.create({
+        data: {
+          requirementInstanceId,
+          fileName,
+          fileType,
+          fileSize,
+          fileHash,
+          uploadPath,
+          description,
+          tags,
+          uploadedBy: userId
+        }
+      })
+
+      return reply.status(201).send({
+        id: evidence.id,
+        requirementInstanceId: evidence.requirementInstanceId,
+        fileName: evidence.fileName,
+        fileType: evidence.fileType,
+        fileSize: evidence.fileSize,
+        fileHash: evidence.fileHash,
+        uploadPath: evidence.uploadPath,
+        description: evidence.description,
+        tags: evidence.tags,
+        uploadedBy: evidence.uploadedBy,
+        uploadedAt: evidence.uploadedAt.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error uploading evidence:', error)
+      return reply.status(500).send({ error: 'Failed to upload evidence' })
+    }
+  })
+
+  // POST /v1/compliance/evidence/upload - Upload evidence file with multipart form
+  app.post('/compliance/evidence/upload', {
+    schema: {
+      summary: 'Upload evidence file for a compliance requirement',
+      description: 'Upload a file as evidence using multipart form data',
+      tags: ['v1'],
+      consumes: ['multipart/form-data'],
+      body: {
+        type: 'object',
+        required: ['requirementInstanceId', 'file'],
+        properties: {
+          requirementInstanceId: { type: 'string', description: 'ID of the requirement instance' },
+          file: { type: 'string', format: 'binary', description: 'Evidence file to upload' },
+          description: { type: 'string', description: 'Optional description of the evidence' },
+          tags: { 
+            type: 'string', 
+            description: 'Comma-separated tags for categorization'
+          }
+        }
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            requirementInstanceId: { type: 'string' },
+            fileName: { type: 'string' },
+            fileType: { type: 'string' },
+            fileSize: { type: 'number' },
+            fileHash: { type: 'string' },
+            uploadPath: { type: 'string' },
+            description: { type: 'string' },
+            tags: { type: 'array', items: { type: 'string' } },
+            uploadedBy: { type: 'string' },
+            uploadedAt: { type: 'string' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      // Get user ID from auth context
+      const userId = (req as any).user?.id
+      if (!userId) {
+        return reply.status(401).send({ error: 'Authentication required' })
+      }
+
+      // Parse multipart form data using the correct API
+      const data = await (req as any).file()
+      if (!data) {
+        return reply.status(400).send({ error: 'No file uploaded' })
+      }
+
+      // Extract form fields
+      const requirementInstanceId = data.fields.requirementInstanceId
+      const description = data.fields.description
+      const tags = data.fields.tags
+      const file = data.file
+
+      if (!requirementInstanceId || !file) {
+        return reply.status(400).send({ error: 'Missing required fields' })
+      }
+
+      // Verify requirement instance exists
+      const requirementInstance = await prisma.requirementInstance.findUnique({
+        where: { id: requirementInstanceId as string }
+      })
+
+      if (!requirementInstance) {
+        return reply.status(404).send({ error: 'Requirement instance not found' })
+      }
+
+      // Generate file hash and save to disk
+      const chunks: Buffer[] = []
+      for await (const chunk of file) {
+        chunks.push(chunk)
+      }
+      const fileBuffer = Buffer.concat(chunks)
+      const crypto = require('crypto')
+      const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex')
+      
+      // Create uploads directory if it doesn't exist
+      const fs = require('fs')
+      const path = require('path')
+      const uploadsDir = path.join(__dirname, '../../../uploads')
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true })
+      }
+
+      // Save file with unique name
+      const fileName = file.filename || 'evidence'
+      const fileExt = path.extname(fileName)
+      const uniqueFileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}${fileExt}`
+      const uploadPath = uniqueFileName
+      
+      fs.writeFileSync(path.join(uploadsDir, uniqueFileName), fileBuffer)
+
+      // Parse tags
+      const tagArray = tags ? (tags as string).split(',').map(t => t.trim()) : []
+
+      // Create evidence record
+      const evidence = await prisma.evidence.create({
+        data: {
+          requirementInstanceId: requirementInstanceId as string,
+          fileName: fileName,
+          fileType: file.mimetype || 'application/octet-stream',
+          fileSize: fileBuffer.length,
+          fileHash,
+          uploadPath,
+          description: description as string || null,
+          tags: tagArray,
+          uploadedBy: userId
+        }
+      })
+
+      return reply.status(201).send({
+        id: evidence.id,
+        requirementInstanceId: evidence.requirementInstanceId,
+        fileName: evidence.fileName,
+        fileType: evidence.fileType,
+        fileSize: evidence.fileSize,
+        fileHash: evidence.fileHash,
+        uploadPath: evidence.uploadPath,
+        description: evidence.description,
+        tags: evidence.tags,
+        uploadedBy: evidence.uploadedBy,
+        uploadedAt: evidence.uploadedAt.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error uploading evidence file:', error)
+      return reply.status(500).send({ error: 'Failed to upload evidence file' })
+    }
+  })
+
+  // GET /v1/compliance/evidence/:requirementInstanceId - Get evidence for a requirement
+  app.get('/compliance/evidence/:requirementInstanceId', {
+    schema: {
+      summary: 'Get evidence for a compliance requirement',
+      description: 'Retrieve all evidence files for a specific requirement instance',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['requirementInstanceId'],
+        properties: {
+          requirementInstanceId: { type: 'string', description: 'ID of the requirement instance' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            evidence: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  fileName: { type: 'string' },
+                  fileType: { type: 'string' },
+                  fileSize: { type: 'number' },
+                  fileHash: { type: 'string' },
+                  description: { type: 'string' },
+                  tags: { type: 'array', items: { type: 'string' } },
+                  uploadedBy: { type: 'string' },
+                  uploadedAt: { type: 'string' }
                 }
               }
             }
           }
-        }
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { requirementInstanceId } = req.params as { requirementInstanceId: string }
+
+      // Verify requirement instance exists
+      const requirementInstance = await prisma.requirementInstance.findUnique({
+        where: { id: requirementInstanceId }
       })
-      
-      if (!requirement) {
+
+      if (!requirementInstance) {
         return reply.status(404).send({ error: 'Requirement instance not found' })
       }
-      
-      // Update the requirement instance
-      const updatedRequirement = await prisma.requirementInstance.update({
-        where: { id: requirementId },
-        data: {
-          status: status as any,
-          evidenceRefs: evidenceRefs || {},
-          exceptionReason: exceptionReason || null,
-          notes: notes || null,
-          updatedAt: new Date()
-        }
+
+      // Get evidence for this requirement
+      const evidence = await prisma.evidence.findMany({
+        where: { requirementInstanceId },
+        select: {
+          id: true,
+          fileName: true,
+          fileType: true,
+          fileSize: true,
+          fileHash: true,
+          description: true,
+          tags: true,
+          uploadedBy: true,
+          uploadedAt: true
+        },
+        orderBy: { uploadedAt: 'desc' }
       })
-      
-      // Log the update for audit purposes
-      console.log(`📝 Requirement ${requirementId} updated to status: ${status}`)
-      
-      return reply.send({
-        id: updatedRequirement.id,
-        status: updatedRequirement.status,
-        updatedAt: updatedRequirement.updatedAt.toISOString(),
-        message: `Requirement status updated to ${status}`
-      })
-      
+
+      return reply.send({ evidence })
     } catch (error: any) {
-      console.error('Error updating requirement:', error)
-      return reply.status(400).send({ error: 'Failed to update requirement' })
+      console.error('Error fetching evidence:', error)
+      return reply.status(500).send({ error: 'Failed to fetch evidence' })
     }
   })
 }

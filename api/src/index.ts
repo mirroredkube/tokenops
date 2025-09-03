@@ -1,6 +1,7 @@
 // src/index.ts
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
 import authPlugin from './plugins/auth.js'         // ← ensure .js like your other imports
 import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
@@ -22,6 +23,14 @@ const uiOrigin = process.env.UI_ORIGIN || 'http://localhost:3000'  // UI on :300
 await app.register(cors, {
   origin: [uiOrigin],
   credentials: true,
+})
+
+// Multipart: for file uploads
+await app.register(multipart, {
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1 // Only one file per request
+  }
 })
 
 await app.register(swagger, {

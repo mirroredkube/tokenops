@@ -45,6 +45,7 @@ model User {
   verifiedRequirements RequirementInstance[]
   organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   settings             UserSettings?
+  evidence             Evidence[]
 
   @@index([email])
   @@index([sub])
@@ -190,7 +191,7 @@ model RequirementInstance {
   id                    String              @id @default(cuid())
   assetId               String
   requirementTemplateId String
-  status                RequirementStatus   @default(NA)
+  status                RequirementStatus   @default(REQUIRED)
   evidenceRefs          Json?
   verifierId            String?
   verifiedAt            DateTime?
@@ -204,6 +205,7 @@ model RequirementInstance {
   transferAmount        String?
   transferType          String?
   events                Event[]
+  evidence              Evidence[]
   asset                 Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
   issuance              Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
   requirementTemplate   RequirementTemplate @relation(fields: [requirementTemplateId], references: [id])
@@ -215,6 +217,28 @@ model RequirementInstance {
   @@index([createdAt])
   @@index([issuanceId])
   @@index([holder])
+}
+
+model Evidence {
+  id                    String              @id @default(cuid())
+  requirementInstanceId String
+  fileName              String
+  fileType              String
+  fileSize              Int
+  fileHash              String              @db.VarChar(64)
+  uploadPath            String
+  uploadedBy            String
+  uploadedAt            DateTime            @default(now())
+  description           String?
+  tags                  String[]
+  metadata              Json?
+  requirementInstance   RequirementInstance @relation(fields: [requirementInstanceId], references: [id], onDelete: Cascade)
+  user                  User                @relation(fields: [uploadedBy], references: [id])
+
+  @@index([requirementInstanceId])
+  @@index([uploadedBy])
+  @@index([uploadedAt])
+  @@index([fileHash])
 }
 
 model Event {
@@ -341,7 +365,6 @@ enum IssuerAddressStatus {
 }
 
 enum RequirementStatus {
-  NA
   REQUIRED
   SATISFIED
   EXCEPTION
