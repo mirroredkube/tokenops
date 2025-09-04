@@ -72,6 +72,11 @@ export default function CompliancePage() {
   const [acknowledgmentReason, setAcknowledgmentReason] = useState('')
   const [acknowledging, setAcknowledging] = useState(false)
   
+  // Exception reason state
+  const [showExceptionModal, setShowExceptionModal] = useState(false)
+  const [exceptionReason, setExceptionReason] = useState('')
+  const [pendingRequirementId, setPendingRequirementId] = useState<string | null>(null)
+  
   // Filters
   const [filters, setFilters] = useState({
     status: '',
@@ -344,9 +349,29 @@ export default function CompliancePage() {
   }
 
   const handleRequirementStatusUpdate = async (requirementId: string, newStatus: 'SATISFIED' | 'EXCEPTION') => {
+    // If marking as EXCEPTION, show modal to get reason
+    if (newStatus === 'EXCEPTION') {
+      setPendingRequirementId(requirementId)
+      setExceptionReason('')
+      setShowExceptionModal(true)
+      return
+    }
+    
+    // For SATISFIED, update directly
+    await updateRequirementStatus(requirementId, newStatus, '')
+  }
+
+  const updateRequirementStatus = async (requirementId: string, status: string, exceptionReason: string) => {
     try {
+      const body: any = { status }
+      
+      // Add exception reason if status is EXCEPTION
+      if (status === 'EXCEPTION' && exceptionReason) {
+        body.exceptionReason = exceptionReason
+      }
+      
       const { data, error } = await api.PATCH(`/v1/compliance/requirements/${requirementId}` as any, {
-        body: { status: newStatus }
+        body
       })
       
       if (error) {
@@ -359,6 +384,19 @@ export default function CompliancePage() {
     } catch (err: any) {
       console.error('Error updating requirement status:', err)
     }
+  }
+
+  const handleExceptionSubmit = async () => {
+    if (!pendingRequirementId || !exceptionReason.trim()) {
+      return
+    }
+    
+    await updateRequirementStatus(pendingRequirementId, 'EXCEPTION', exceptionReason.trim())
+    
+    // Close modal and reset state
+    setShowExceptionModal(false)
+    setPendingRequirementId(null)
+    setExceptionReason('')
   }
 
   const handlePlatformAcknowledgement = async () => {
@@ -975,6 +1013,52 @@ export default function CompliancePage() {
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {acknowledging ? 'Acknowledging...' : 'Acknowledge'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exception Reason Modal */}
+      {showExceptionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Mark as Exception</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide a reason for marking this requirement as an exception.
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Exception Reason *
+              </label>
+              <textarea
+                value={exceptionReason}
+                onChange={(e) => setExceptionReason(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Provide a reason for the exception..."
+                required
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowExceptionModal(false)
+                  setPendingRequirementId(null)
+                  setExceptionReason('')
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExceptionSubmit}
+                disabled={!exceptionReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Mark Exception
               </button>
             </div>
           </div>

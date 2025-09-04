@@ -2,8 +2,24 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
+import archiver from 'archiver'
+import fs from 'fs'
+import path from 'path'
 
 const prisma = new PrismaClient()
+
+// ---------- Authentication Helper ----------
+async function verifyAuthIfRequired(req: any, reply: any): Promise<any> {
+  const AUTH_MODE = (process.env.AUTH_MODE ?? "off").toLowerCase()
+  
+  if (AUTH_MODE === "off") {
+    return null // No authentication required
+  }
+  
+  // Use the app's built-in verifyAuthOrApiKey decorator
+  await (req.server as any).verifyAuthOrApiKey(req, reply)
+  return req.user
+}
 
 // ===== VALIDATION SCHEMAS =====
 
@@ -815,9 +831,9 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       const { requirementId } = req.params as { requirementId: string }
       const { status, exceptionReason, rationale } = req.body as any
 
-      // Get user ID from auth context
-      const userId = (req as any).user?.id
-      if (!userId) {
+      // Get user from auth context
+      const user = await verifyAuthIfRequired(req, reply)
+      if (!user && process.env.AUTH_MODE && process.env.AUTH_MODE !== "off") {
         return reply.status(401).send({ error: 'Authentication required' })
       }
 
@@ -838,7 +854,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
           status,
           exceptionReason: status === 'EXCEPTION' ? exceptionReason : null,
           rationale,
-          verifierId: userId,
+          verifierId: user?.sub || null,
           verifiedAt: new Date()
         }
       })
@@ -919,9 +935,9 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         tags = [] 
       } = req.body as any
 
-      // Get user ID from auth context
-      const userId = (req as any).user?.id
-      if (!userId) {
+      // Get user from auth context
+      const user = await verifyAuthIfRequired(req)
+      if (!user) {
         return reply.status(401).send({ error: 'Authentication required' })
       }
 
@@ -945,7 +961,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
           uploadPath,
           description,
           tags,
-          uploadedBy: userId
+          uploadedBy: user.sub
         }
       })
 
@@ -999,9 +1015,9 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
   }, async (req, reply) => {
     try {
-      // Get user ID from auth context
-      const userId = (req as any).user?.id
-      if (!userId) {
+      // Get user from auth context
+      const user = await verifyAuthIfRequired(req)
+      if (!user) {
         return reply.status(401).send({ error: 'Authentication required' })
       }
 
@@ -1070,7 +1086,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
           uploadPath,
           description: description as string || null,
           tags: tagArray,
-          uploadedBy: userId
+          uploadedBy: user.sub
         }
       })
 
@@ -1218,19 +1234,19 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       const { requirementId } = req.params as { requirementId: string }
       const { acknowledgmentReason } = req.body as any
 
-      // Get user ID from auth context
-      const userId = (req as any).user?.id
-      if (!userId) {
+      // Get user from auth context
+      const user = await verifyAuthIfRequired(req)
+      if (!user) {
         return reply.status(401).send({ error: 'Authentication required' })
       }
 
       // Get user role for authorization check
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.sub },
         select: { role: true }
       })
 
-      if (!user || !['ADMIN', 'COMPLIANCE_OFFICER'].includes(user.role)) {
+      if (!dbUser || !['ADMIN', 'COMPLIANCE_OFFICER'].includes(dbUser.role)) {
         return reply.status(403).send({ error: 'Platform admin role required for co-acknowledgement' })
       }
 
@@ -1269,7 +1285,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         where: { id: requirementId },
         data: {
           platformAcknowledged: true,
-          platformAcknowledgedBy: userId,
+          platformAcknowledgedBy: user.sub,
           platformAcknowledgedAt: new Date(),
           platformAcknowledgmentReason: acknowledgmentReason
         }
@@ -1434,9 +1450,6 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       })
 
       // Create ZIP bundle
-      const archiver = require('archiver')
-      const fs = require('fs')
-      const path = require('path')
 
       // Set response headers for file download
       const bundleName = `evidence-bundle-${requirementInstanceId}-${Date.now()}.zip`
