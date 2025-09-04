@@ -632,7 +632,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
   })
 
   // PATCH /v1/compliance/requirements/:requirementId - Update requirement status
-  app.patch('/requirements/:requirementId', {
+  app.patch('/compliance/requirements/:requirementId', {
     schema: {
       summary: 'Update requirement status',
       description: 'Update the status of a compliance requirement (SATISFIED, EXCEPTION)',
@@ -839,19 +839,6 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       description: 'Upload a file as evidence using multipart form data',
       tags: ['v1'],
       consumes: ['multipart/form-data'],
-      body: {
-        type: 'object',
-        required: ['requirementInstanceId', 'file'],
-        properties: {
-          requirementInstanceId: { type: 'string', description: 'ID of the requirement instance' },
-          file: { type: 'string', format: 'binary', description: 'Evidence file to upload' },
-          description: { type: 'string', description: 'Optional description of the evidence' },
-          tags: { 
-            type: 'string', 
-            description: 'Comma-separated tags for categorization'
-          }
-        }
-      },
       response: {
         201: {
           type: 'object',
@@ -888,10 +875,11 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         return reply.status(400).send({ error: 'No file uploaded' })
       }
 
+
       // Extract form fields
-      const requirementInstanceId = data.fields.requirementInstanceId
-      const description = data.fields.description
-      const tags = data.fields.tags
+      const requirementInstanceId = data.fields.requirementInstanceId?.value
+      const description = data.fields.description?.value
+      const tags = data.fields.tags?.value
       const file = data.file
 
       if (!requirementInstanceId || !file) {
