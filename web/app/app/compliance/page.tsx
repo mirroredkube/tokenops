@@ -320,11 +320,19 @@ export default function CompliancePage() {
     } else if (activeTab === 'requirements') {
       fetchComplianceRequirements()
     } else {
-      // Overview tab - fetch all requirements without filters
+      // Overview tab - fetch all requirements for summary cards
       fetchRecords()
       fetchAllRequirements()
     }
-  }, [activeTab, pagination.page, filters])
+  }, [activeTab, pagination.page])
+
+  // Separate effect for filtering on Overview and Requirements tabs
+  useEffect(() => {
+    if (activeTab === 'overview' || activeTab === 'requirements') {
+      // For Overview and Requirements tabs, fetch filtered requirements
+      fetchComplianceRequirements()
+    }
+  }, [activeTab, filters])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -508,21 +516,26 @@ export default function CompliancePage() {
           <h2 className="text-lg font-semibold">{t('compliance:page.filters', 'Filters')}</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('compliance:filters.status', 'Status')}
+              {activeTab === 'issuances' ? 'Record Status' : 'Requirement Status'}
             </label>
             <CustomDropdown
-              value={filters.status}
-              onChange={(value) => handleFilterChange('status', value)}
-              options={[
-                { value: '', label: t('compliance:filters.allStatuses', 'All Statuses') },
-                { value: 'UNVERIFIED', label: t('compliance:filters.unverified', 'Unverified') },
-                { value: 'VERIFIED', label: t('compliance:filters.verified', 'Verified') },
-                { value: 'REJECTED', label: t('compliance:filters.rejected', 'Rejected') }
+              value={activeTab === 'issuances' ? filters.status : filters.requirementStatus}
+              onChange={(value) => handleFilterChange(activeTab === 'issuances' ? 'status' : 'requirementStatus', value)}
+              options={activeTab === 'issuances' ? [
+                { value: '', label: 'All Statuses' },
+                { value: 'UNVERIFIED', label: 'Unverified' },
+                { value: 'VERIFIED', label: 'Verified' },
+                { value: 'REJECTED', label: 'Rejected' }
+              ] : [
+                { value: '', label: 'All Statuses' },
+                { value: 'REQUIRED', label: 'Required' },
+                { value: 'SATISFIED', label: 'Satisfied' },
+                { value: 'EXCEPTION', label: 'Exception' }
               ]}
-              placeholder={t('compliance:filters.allStatuses', 'All Statuses')}
+              placeholder="All Statuses"
             />
           </div>
           
@@ -557,23 +570,6 @@ export default function CompliancePage() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Requirement Status
-            </label>
-            <CustomDropdown
-              value={filters.requirementStatus}
-              onChange={(value) => handleFilterChange('requirementStatus', value)}
-              options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'REQUIRED', label: 'Required' },
-                { value: 'SATISFIED', label: 'Satisfied' },
-                { value: 'EXCEPTION', label: 'Exception' },
-
-              ]}
-              placeholder="All Statuses"
-            />
-          </div>
         </div>
       </div>
 
@@ -643,11 +639,11 @@ export default function CompliancePage() {
               <h3 className="text-lg font-semibold">Recent Compliance Requirements</h3>
             </div>
             <div className="p-6">
-              {allRequirements.length === 0 ? (
+              {requirements.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No compliance requirements found</p>
               ) : (
                 <div className="space-y-3">
-                  {allRequirements.map((req) => (
+                  {requirements.map((req) => (
                     <div key={req.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{req.requirementName}</p>
