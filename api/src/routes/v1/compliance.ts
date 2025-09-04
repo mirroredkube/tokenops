@@ -348,7 +348,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       
       return reply.status(201).send({
         message: 'Requirement instances created successfully',
-        instances: instances.map(instance => ({
+        instances: instances.map((instance: any) => ({
           id: instance.id,
           requirementTemplateId: instance.requirementTemplateId,
           status: instance.status,
@@ -448,7 +448,115 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
   })
 
-  // 5. GET /v1/compliance/instances - List requirement instances
+  // 5. GET /v1/compliance/assets - Get assets for compliance filter dropdown
+  app.get('/compliance/assets', {
+    schema: {
+      summary: 'Get assets for compliance filter dropdown',
+      description: 'Get a simplified list of assets for use in compliance filtering',
+      tags: ['v1'],
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', minimum: 1, maximum: 100, default: 50 },
+          offset: { type: 'number', minimum: 0, default: 0 }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            assets: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  code: { type: 'string' },
+                  assetRef: { type: 'string' },
+                  ledger: { type: 'string' },
+                  status: { type: 'string' },
+                  product: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      assetClass: { type: 'string' }
+                    }
+                  },
+                  organization: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            },
+            total: { type: 'number' }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query as any
+      
+      const [assets, total] = await Promise.all([
+        prisma.asset.findMany({
+          select: {
+            id: true,
+            code: true,
+            assetRef: true,
+            ledger: true,
+            status: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                assetClass: true,
+                organization: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
+            }
+          },
+          take: limit,
+          skip: offset,
+          orderBy: {
+            code: 'asc'
+          }
+        }),
+        prisma.asset.count()
+      ])
+      
+      const mappedAssets = assets.map((asset: any) => ({
+        id: asset.id,
+        code: asset.code,
+        assetRef: asset.assetRef,
+        ledger: asset.ledger,
+        status: asset.status,
+        product: asset.product,
+        organization: asset.product.organization,
+        displayName: `${asset.code} (${asset.product.name})`
+      }))
+      
+      console.log('🔍 Assets with displayName:', mappedAssets)
+      
+      return reply.send({
+        assets: mappedAssets,
+        total
+      })
+    } catch (error: any) {
+      console.error('❌ Error fetching assets for compliance filter:', error)
+      return reply.status(500).send({ error: 'Failed to fetch assets' })
+    }
+  })
+
+  // 6. GET /v1/compliance/instances - List requirement instances
   app.get('/compliance/instances', {
     schema: {
       summary: 'List requirement instances',
@@ -529,6 +637,11 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
               include: {
                 regime: true
               }
+            },
+            asset: {
+              include: {
+                product: true
+              }
             }
           },
           take: limit,
@@ -540,46 +653,36 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         prisma.requirementInstance.count({ where })
       ])
 
-      // Get asset information for each instance using a separate query
-      const instancesWithAssets = await Promise.all(
-        instances.map(async (instance) => {
-          const asset = await prisma.asset.findUnique({
-            where: { id: instance.assetId },
-            include: {
-              product: true
-            }
-          })
-
-          return {
-            id: instance.id,
-            assetId: instance.assetId,
-            status: instance.status,
-            rationale: instance.rationale,
-            platformAcknowledged: instance.platformAcknowledged || false,
-            platformAcknowledgedBy: instance.platformAcknowledgedBy,
-            platformAcknowledgedAt: instance.platformAcknowledgedAt,
-            platformAcknowledgmentReason: instance.platformAcknowledgmentReason,
-            createdAt: instance.createdAt,
-            updatedAt: instance.updatedAt,
-            requirementTemplate: {
-              id: instance.requirementTemplate.id,
-              name: instance.requirementTemplate.name,
-              regime: instance.requirementTemplate.regime
-            },
-            asset: asset ? {
-              id: asset.id,
-              assetRef: asset.assetRef,
-              code: asset.code,
-              assetClass: asset.assetClass,
-              product: asset.product ? {
-                id: asset.product.id,
-                name: asset.product.name,
-                assetClass: asset.product.assetClass
-              } : null
-            } : null
-          }
-        })
-      )
+      // Transform instances with asset information (already included in query)
+      console.log('Processing', instances.length, 'instances')
+      const instancesWithAssets = instances.map((instance: any) => ({
+        id: instance.id,
+        assetId: instance.assetId,
+        status: instance.status,
+        rationale: instance.rationale,
+        platformAcknowledged: instance.platformAcknowledged || false,
+        platformAcknowledgedBy: instance.platformAcknowledgedBy,
+        platformAcknowledgedAt: instance.platformAcknowledgedAt,
+        platformAcknowledgmentReason: instance.platformAcknowledgmentReason,
+        createdAt: instance.createdAt,
+        updatedAt: instance.updatedAt,
+        requirementTemplate: {
+          id: instance.requirementTemplate.id,
+          name: instance.requirementTemplate.name,
+          regime: instance.requirementTemplate.regime
+        },
+        asset: instance.asset ? {
+          id: instance.asset.id,
+          assetRef: instance.asset.assetRef,
+          code: instance.asset.code,
+          assetClass: instance.asset.assetClass,
+          product: instance.asset.product ? {
+            id: instance.asset.product.id,
+            name: instance.asset.product.name,
+            assetClass: instance.asset.product.assetClass
+          } : null
+        } : null
+      }))
 
       return reply.send({
         instances: instancesWithAssets,
@@ -1398,7 +1501,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
             version: requirementInstance.requirementTemplate.regime.version
           }
         },
-        evidence: evidence.map(e => ({
+        evidence: evidence.map((e: any) => ({
           id: e.id,
           fileName: e.fileName,
           fileType: e.fileType,

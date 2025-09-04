@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
@@ -55,6 +55,7 @@ export default function CompliancePage() {
   const router = useRouter()
   const [records, setRecords] = useState<ComplianceRecord[]>([])
   const [requirements, setRequirements] = useState<ComplianceRequirement[]>([])
+  const [allRequirements, setAllRequirements] = useState<ComplianceRequirement[]>([]) // For Overview tab
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'issuances'>('overview')
@@ -78,6 +79,40 @@ export default function CompliancePage() {
     holder: '',
     requirementStatus: ''
   })
+  
+  // Assets for dropdown
+  const [assets, setAssets] = useState<Array<{
+    id: string
+    code: string
+    assetRef: string
+    ledger: string
+    status: string
+    product: { id: string; name: string; assetClass: string }
+    organization: { id: string; name: string }
+    displayName?: string
+  }>>([])
+  const [assetsLoading, setAssetsLoading] = useState(false)
+  
+
+  const fetchAssets = async () => {
+    setAssetsLoading(true)
+    try {
+      const { data, error } = await api.GET('/v1/compliance/assets' as any, {})
+      
+      if (error) {
+        console.error('Error fetching assets:', error)
+        return
+      }
+      
+      if (data && data.assets) {
+        setAssets(data.assets)
+      }
+    } catch (err: any) {
+      console.error('Error fetching assets:', err)
+    } finally {
+      setAssetsLoading(false)
+    }
+  }
 
   const fetchRecords = async () => {
     setLoading(true)
@@ -87,8 +122,8 @@ export default function CompliancePage() {
       const queryParams = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
-        ...(filters.assetId && { assetId: filters.assetId }),
-        ...(filters.holder && { holder: filters.holder })
+        ...(filters.assetId && filters.assetId.trim() !== '' && { assetId: filters.assetId }),
+        ...(filters.holder && filters.holder.trim() !== '' && { holder: filters.holder })
       })
 
       // Use the new unified compliance API - get issuances with compliance data
@@ -140,8 +175,30 @@ export default function CompliancePage() {
   const fetchComplianceRequirements = async () => {
     setLoading(true)
     try {
-      // Fetch all requirement instances across all assets using the instances endpoint
-      const { data, error } = await api.GET('/v1/compliance/instances' as any, {})
+      // Build query parameters for server-side filtering
+      const queryParams = new URLSearchParams()
+      
+      // Only add assetId if it's not empty (not "All Assets")
+      if (filters.assetId && filters.assetId.trim() !== '') {
+        queryParams.append('assetId', filters.assetId)
+      }
+      
+      // Only add status if it's not empty (not "All Statuses")
+      if (filters.requirementStatus && filters.requirementStatus.trim() !== '') {
+        queryParams.append('status', filters.requirementStatus)
+      }
+      
+      // Add pagination parameters
+      queryParams.append('limit', pagination.limit.toString())
+      queryParams.append('offset', ((pagination.page - 1) * pagination.limit).toString())
+      
+      const queryString = queryParams.toString()
+      const endpoint = queryString ? `/v1/compliance/instances?${queryString}` : '/v1/compliance/instances'
+      
+      console.log('🔍 Fetching compliance requirements with query:', endpoint)
+      
+      // Fetch requirement instances with server-side filtering
+      const { data, error } = await api.GET(endpoint as any, {})
       
       if (error) {
         console.error('Error fetching compliance requirements:', error)
@@ -174,18 +231,16 @@ export default function CompliancePage() {
         
         console.log('Transformed requirements:', transformedRequirements)
         
-        // Apply filters
-        let filteredRequirements = transformedRequirements
-        if (filters.assetId) {
-          filteredRequirements = filteredRequirements.filter((req: ComplianceRequirement) => 
-            req.assetId === filters.assetId || req.assetRef.includes(filters.assetId)
-          )
-        }
-        if (filters.requirementStatus) {
-          filteredRequirements = filteredRequirements.filter((req: ComplianceRequirement) => req.status === filters.requirementStatus)
-        }
+        setRequirements(transformedRequirements)
         
-        setRequirements(filteredRequirements)
+        // Update pagination with server data
+        if (data.total !== undefined) {
+          setPagination(prev => ({
+            ...prev,
+            total: data.total,
+            pages: Math.ceil(data.total / prev.limit)
+          }))
+        }
       } else if (data && data.templates) {
         // If we get templates, transform them to show as available requirements
         console.log('Got templates, transforming to show available requirements')
@@ -216,15 +271,58 @@ export default function CompliancePage() {
     }
   }
 
+  const fetchAllRequirements = async () => {
+    try {
+      // Fetch ALL requirements without any filters for Overview tab
+      const { data, error } = await api.GET('/v1/compliance/instances' as any, {})
+      
+      if (error) {
+        console.error('Error fetching all requirements:', error)
+        return
+      }
+      
+      if (data && data.instances) {
+        // Transform requirement instances to our format
+        const transformedRequirements = data.instances.map((req: any) => ({
+          id: req.id,
+          assetId: req.assetId || 'N/A',
+          assetRef: req.asset?.assetRef || 'N/A',
+          assetCode: req.asset?.code || 'N/A',
+          status: req.status,
+          requirementName: req.requirementTemplate?.name || 'Unknown',
+          regime: req.requirementTemplate?.regime?.name || 'Unknown',
+          jurisdiction: req.requirementTemplate?.regime?.jurisdiction || 'Unknown',
+          createdAt: req.createdAt,
+          updatedAt: req.updatedAt,
+          platformAcknowledged: req.platformAcknowledged || false,
+          platformAcknowledgedBy: req.platformAcknowledgedBy,
+          platformAcknowledgedAt: req.platformAcknowledgedAt,
+          platformAcknowledgmentReason: req.platformAcknowledgmentReason,
+          assetClass: req.asset?.product?.assetClass || 'OTHER',
+          requiresPlatformAcknowledgement: ['ART', 'EMT'].includes(req.asset?.product?.assetClass)
+        }))
+        
+        setAllRequirements(transformedRequirements)
+      }
+    } catch (err: any) {
+      console.error('Error fetching all requirements:', err)
+    }
+  }
+
+  useEffect(() => {
+    // Fetch assets on initial load
+    fetchAssets()
+  }, [])
+
   useEffect(() => {
     if (activeTab === 'issuances') {
       fetchRecords()
     } else if (activeTab === 'requirements') {
       fetchComplianceRequirements()
     } else {
-      // Overview tab - fetch both
+      // Overview tab - fetch all requirements without filters
       fetchRecords()
-      fetchComplianceRequirements()
+      fetchAllRequirements()
     }
   }, [activeTab, pagination.page, filters])
 
@@ -430,14 +528,19 @@ export default function CompliancePage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('compliance:filters.assetId', 'Asset ID')}
+              {t('compliance:filters.asset', 'Asset')}
             </label>
-            <input
-              type="text"
+            <CustomDropdown
               value={filters.assetId}
-              onChange={(e) => handleFilterChange('assetId', e.target.value)}
-              placeholder={t('compliance:filters.filterByAssetId', 'Filter by asset ID')}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
+              onChange={(value) => handleFilterChange('assetId', value)}
+              options={[
+                { value: '', label: t('compliance:filters.allAssets', 'All Assets') },
+                ...assets.map(asset => ({
+                  value: asset.id,
+                  label: asset.displayName || `${asset.code} (${asset.product.name})`
+                }))
+              ]}
+              placeholder={assetsLoading ? t('compliance:filters.loadingAssets', 'Loading assets...') : t('compliance:filters.selectAsset', 'Select an asset')}
             />
           </div>
           
@@ -486,7 +589,7 @@ export default function CompliancePage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Requirements</p>
-                  <p className="text-2xl font-bold text-gray-900">{requirements.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{allRequirements.length}</p>
                 </div>
               </div>
             </div>
@@ -499,7 +602,7 @@ export default function CompliancePage() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Available</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {requirements.filter(r => r.status === 'AVAILABLE').length}
+                    {allRequirements.filter(r => r.status === 'AVAILABLE').length}
                   </p>
                 </div>
               </div>
@@ -513,7 +616,7 @@ export default function CompliancePage() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Satisfied</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {requirements.filter(r => r.status === 'SATISFIED').length}
+                    {allRequirements.filter(r => r.status === 'SATISFIED').length}
                   </p>
                 </div>
               </div>
@@ -527,7 +630,7 @@ export default function CompliancePage() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Exceptions</p>
                   <p className="text-2xl font-bold text-red-600">
-                    {requirements.filter(r => r.status === 'EXCEPTION').length}
+                    {allRequirements.filter(r => r.status === 'EXCEPTION').length}
                   </p>
                 </div>
               </div>
@@ -540,11 +643,11 @@ export default function CompliancePage() {
               <h3 className="text-lg font-semibold">Recent Compliance Requirements</h3>
             </div>
             <div className="p-6">
-              {requirements.length === 0 ? (
+              {allRequirements.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No compliance requirements found</p>
               ) : (
                 <div className="space-y-3">
-                  {requirements.slice(0, 5).map((req) => (
+                  {allRequirements.map((req) => (
                     <div key={req.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{req.requirementName}</p>
