@@ -51,7 +51,7 @@ export default function CustomDropdown({
   }
 
   return (
-    <div className={`relative z-10 ${className}`} ref={dropdownRef}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -71,7 +71,7 @@ export default function CustomDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-auto">
           {options.map((option) => (
             <button
               key={option.value}
