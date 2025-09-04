@@ -520,6 +520,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
       
+      // Get requirement instances with basic info
       const [instances, total] = await Promise.all([
         prisma.requirementInstance.findMany({
           where,
@@ -527,11 +528,6 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
             requirementTemplate: {
               include: {
                 regime: true
-              }
-            },
-            asset: {
-              include: {
-                product: true
               }
             }
           },
@@ -543,83 +539,44 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }),
         prisma.requirementInstance.count({ where })
       ])
-      
-      // Get asset information for each instance using raw SQL since Prisma client doesn't recognize new fields
+
+      // Get asset information for each instance using a separate query
       const instancesWithAssets = await Promise.all(
         instances.map(async (instance) => {
-          try {
-            // Get asset information using raw SQL
-            const assetInfo = await prisma.$queryRaw`
-              SELECT 
-                a.id as asset_id,
-                a."assetRef" as asset_ref,
-                a.code as asset_code,
-                a."assetClass" as asset_class,
-                p.id as product_id,
-                p.name as product_name,
-                p."assetClass" as product_asset_class,
-                ri."platformAcknowledged" as platform_acknowledged,
-                ri."platformAcknowledgedBy" as platform_acknowledged_by,
-                ri."platformAcknowledgedAt" as platform_acknowledged_at,
-                ri."platformAcknowledgmentReason" as platform_acknowledgment_reason
-              FROM "RequirementInstance" ri
-              LEFT JOIN "Asset" a ON ri."assetId" = a.id
-              LEFT JOIN "Product" p ON a."productId" = p.id
-              WHERE ri.id = ${instance.id}
-            ` as any[]
+          const asset = await prisma.asset.findUnique({
+            where: { id: instance.assetId },
+            include: {
+              product: true
+            }
+          })
 
-            console.log('Raw SQL result for instance', instance.id, ':', assetInfo)
-            const asset = assetInfo[0] || {}
-            
-            return {
-              id: instance.id,
-              assetId: instance.assetId,
-              status: instance.status,
-              rationale: instance.rationale,
-              platformAcknowledged: asset.platform_acknowledged || false,
-              platformAcknowledgedBy: asset.platform_acknowledged_by,
-              platformAcknowledgedAt: asset.platform_acknowledged_at,
-              platformAcknowledgmentReason: asset.platform_acknowledgment_reason,
-              createdAt: instance.createdAt,
-              updatedAt: instance.updatedAt,
-              requirementTemplate: {
-                id: instance.requirementTemplate.id,
-                name: instance.requirementTemplate.name,
-                regime: instance.requirementTemplate.regime
-              },
-              asset: asset.asset_id ? {
-                id: asset.asset_id,
-                assetRef: asset.asset_ref,
-                code: asset.asset_code,
-                assetClass: asset.asset_class,
-                product: asset.product_id ? {
-                  id: asset.product_id,
-                  name: asset.product_name,
-                  assetClass: asset.product_asset_class
-                } : null
+          return {
+            id: instance.id,
+            assetId: instance.assetId,
+            status: instance.status,
+            rationale: instance.rationale,
+            platformAcknowledged: instance.platformAcknowledged || false,
+            platformAcknowledgedBy: instance.platformAcknowledgedBy,
+            platformAcknowledgedAt: instance.platformAcknowledgedAt,
+            platformAcknowledgmentReason: instance.platformAcknowledgmentReason,
+            createdAt: instance.createdAt,
+            updatedAt: instance.updatedAt,
+            requirementTemplate: {
+              id: instance.requirementTemplate.id,
+              name: instance.requirementTemplate.name,
+              regime: instance.requirementTemplate.regime
+            },
+            asset: asset ? {
+              id: asset.id,
+              assetRef: asset.assetRef,
+              code: asset.code,
+              assetClass: asset.assetClass,
+              product: asset.product ? {
+                id: asset.product.id,
+                name: asset.product.name,
+                assetClass: asset.product.assetClass
               } : null
-            }
-          } catch (error) {
-            console.error('Error fetching asset info for instance', instance.id, ':', error)
-            // Return basic instance info if asset query fails
-            return {
-              id: instance.id,
-              assetId: instance.assetId,
-              status: instance.status,
-              rationale: instance.rationale,
-              platformAcknowledged: false,
-              platformAcknowledgedBy: null,
-              platformAcknowledgedAt: null,
-              platformAcknowledgmentReason: null,
-              createdAt: instance.createdAt,
-              updatedAt: instance.updatedAt,
-              requirementTemplate: {
-                id: instance.requirementTemplate.id,
-                name: instance.requirementTemplate.name,
-                regime: instance.requirementTemplate.regime
-              },
-              asset: null
-            }
+            } : null
           }
         })
       )
