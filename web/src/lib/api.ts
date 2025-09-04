@@ -36,7 +36,7 @@ export interface UserSettings {
 // Get user settings
 export async function getUserSettings(): Promise<UserSettings> {
   try {
-    const response = await fetch(`${baseUrl}/auth/me/settings`, {
+    const response = await fetch(`${baseUrl}/v1/users/me/settings`, {
       credentials: 'include'
     })
     
@@ -55,7 +55,7 @@ export async function getUserSettings(): Promise<UserSettings> {
 // Update user settings
 export async function updateUserSettings(updates: Partial<UserSettings>): Promise<UserSettings> {
   try {
-    const response = await fetch(`${baseUrl}/auth/me/settings`, {
+    const response = await fetch(`${baseUrl}/v1/users/me/settings`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
