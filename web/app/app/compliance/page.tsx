@@ -77,6 +77,11 @@ export default function CompliancePage() {
   const [exceptionReason, setExceptionReason] = useState('')
   const [pendingRequirementId, setPendingRequirementId] = useState<string | null>(null)
   
+  // Export format state
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [exportFormat, setExportFormat] = useState<'zip' | 'json' | 'csv'>('zip')
+  const [pendingExportRequirementId, setPendingExportRequirementId] = useState<string | null>(null)
+  
   // Filters
   const [filters, setFilters] = useState({
     status: '',
@@ -433,9 +438,18 @@ export default function CompliancePage() {
     setShowPlatformAckModal(true)
   }
 
-  const handleExportEvidenceBundle = async (requirementId: string) => {
+  const handleExportEvidenceBundle = (requirementId: string) => {
+    // Show format selection modal
+    setPendingExportRequirementId(requirementId)
+    setExportFormat('zip')
+    setShowExportModal(true)
+  }
+
+  const handleExportSubmit = async () => {
+    if (!pendingExportRequirementId) return
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/compliance/evidence/bundle/${requirementId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/compliance/evidence/bundle/${pendingExportRequirementId}?format=${exportFormat}`, {
         credentials: 'include'
       })
       
@@ -447,7 +461,7 @@ export default function CompliancePage() {
       const contentDisposition = response.headers.get('content-disposition')
       const filename = contentDisposition 
         ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-        : `evidence-bundle-${requirementId}.zip`
+        : `evidence-bundle-${pendingExportRequirementId}.${exportFormat}`
       
       // Create blob and download
       const blob = await response.blob()
@@ -459,6 +473,11 @@ export default function CompliancePage() {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
+
+      // Close modal and reset state
+      setShowExportModal(false)
+      setPendingExportRequirementId(null)
+      setExportFormat('zip')
     } catch (err: any) {
       console.error('Error exporting evidence bundle:', err)
     }
@@ -1059,6 +1078,58 @@ export default function CompliancePage() {
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Mark Exception
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Format Selection Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Export Evidence Bundle</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Choose the export format for the compliance evidence bundle.
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Export Format *
+              </label>
+              <CustomDropdown
+                value={exportFormat}
+                onChange={(value) => setExportFormat(value as 'zip' | 'json' | 'csv')}
+                options={[
+                  { value: 'zip', label: 'ZIP Bundle (with evidence files)' },
+                  { value: 'json', label: 'JSON Data (structured data only)' },
+                  { value: 'csv', label: 'CSV Data (spreadsheet analysis)' }
+                ]}
+                placeholder="Select export format"
+              />
+              <div className="mt-2 text-xs text-gray-500">
+                {exportFormat === 'zip' && 'Complete bundle with evidence files and manifest'}
+                {exportFormat === 'json' && 'Structured data for API integration and analysis'}
+                {exportFormat === 'csv' && 'Structured CSV data for spreadsheet analysis and reporting'}
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowExportModal(false)
+                  setPendingExportRequirementId(null)
+                  setExportFormat('zip')
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExportSubmit}
+                className="px-4 py-2 text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50"
+              >
+                Export {exportFormat.toUpperCase()}
               </button>
             </div>
           </div>

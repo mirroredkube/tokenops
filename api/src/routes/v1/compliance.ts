@@ -5,6 +5,7 @@ import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
 import archiver from 'archiver'
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
 const prisma = new PrismaClient()
 
@@ -936,7 +937,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       } = req.body as any
 
       // Get user from auth context
-      const user = await verifyAuthIfRequired(req)
+      const user = await verifyAuthIfRequired(req, reply)
       if (!user) {
         return reply.status(401).send({ error: 'Authentication required' })
       }
@@ -1016,7 +1017,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
   }, async (req, reply) => {
     try {
       // Get user from auth context
-      const user = await verifyAuthIfRequired(req)
+      const user = await verifyAuthIfRequired(req, reply)
       if (!user) {
         return reply.status(401).send({ error: 'Authentication required' })
       }
@@ -1235,7 +1236,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       const { acknowledgmentReason } = req.body as any
 
       // Get user from auth context
-      const user = await verifyAuthIfRequired(req)
+      const user = await verifyAuthIfRequired(req, reply)
       if (!user) {
         return reply.status(401).send({ error: 'Authentication required' })
       }
@@ -1395,7 +1396,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
   app.get('/compliance/evidence/bundle/:requirementInstanceId', {
     schema: {
       summary: 'Export evidence bundle for a compliance requirement',
-      description: 'Download a ZIP bundle containing all evidence files and compliance manifest',
+      description: 'Download evidence bundle in multiple formats: ZIP (with files), JSON (data only), or PDF (human-readable report)',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -1404,11 +1405,22 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
           requirementInstanceId: { type: 'string', description: 'ID of the requirement instance' }
         }
       },
+      querystring: {
+        type: 'object',
+        properties: {
+                         format: {
+                 type: 'string',
+                 enum: ['zip', 'json', 'csv'],
+                 default: 'zip',
+                 description: 'Export format: zip (with evidence files), json (data only), csv (spreadsheet analysis)'
+               }
+        }
+      },
       response: {
         200: {
           type: 'string',
           format: 'binary',
-          description: 'ZIP file containing evidence bundle'
+          description: 'File containing evidence bundle (format depends on format parameter)'
         },
         404: { type: 'object', properties: { error: { type: 'string' } } },
         500: { type: 'object', properties: { error: { type: 'string' } } }
@@ -1417,6 +1429,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
   }, async (req, reply) => {
     try {
       const { requirementInstanceId } = req.params as { requirementInstanceId: string }
+                   const { format = 'zip' } = req.query as { format?: 'zip' | 'json' | 'csv' }
 
       // Verify requirement instance exists
       const requirementInstance = await prisma.requirementInstance.findUnique({
@@ -1449,27 +1462,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         orderBy: { uploadedAt: 'desc' }
       })
 
-      // Create ZIP bundle
-
-      // Set response headers for file download
-      const bundleName = `evidence-bundle-${requirementInstanceId}-${Date.now()}.zip`
-      reply.header('Content-Type', 'application/zip')
-      reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
-
-      // Create archive
-      const archive = archiver('zip', { zlib: { level: 9 } })
-      archive.pipe(reply.raw)
-
-      // Add evidence files
-      const uploadsDir = path.join(__dirname, '../../../uploads')
-      for (const evidenceItem of evidence) {
-        const filePath = path.join(uploadsDir, evidenceItem.uploadPath)
-        if (fs.existsSync(filePath)) {
-          archive.file(filePath, { name: `evidence/${evidenceItem.fileName}` })
-        }
-      }
-
-      // Add compliance manifest
+      // Create compliance manifest data
       const manifest = {
         requirementInstance: {
           id: requirementInstance.id,
@@ -1488,7 +1481,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
           ledger: requirementInstance.asset.ledger,
           network: requirementInstance.asset.network,
           code: requirementInstance.asset.code,
-          assetClass: requirementInstance.asset.assetClass
+          assetClass: requirementInstance.asset.product.assetClass
         },
         product: {
           id: requirementInstance.asset.product.id,
@@ -1514,24 +1507,145 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
             version: requirementInstance.requirementTemplate.regime.version
           }
         },
-        evidence: evidence.map((e: any) => ({
-          id: e.id,
-          fileName: e.fileName,
-          fileType: e.fileType,
-          fileSize: e.fileSize,
-          fileHash: e.fileHash,
-          description: e.description,
-          tags: e.tags,
-          uploadedAt: e.uploadedAt
+        evidence: evidence.map((ev: any) => ({
+          id: ev.id,
+          fileName: ev.fileName,
+          fileSize: ev.fileSize,
+          mimeType: ev.mimeType,
+          uploadedAt: ev.uploadedAt,
+          uploadedBy: ev.uploadedBy,
+          description: ev.description
         })),
         exportedAt: new Date().toISOString(),
         bundleVersion: '1.0'
       }
 
-      archive.append(JSON.stringify(manifest, null, 2), { name: 'compliance-manifest.json' })
+      // Set CORS headers
+      reply.header('Access-Control-Allow-Origin', 'http://localhost:3000')
+      reply.header('Access-Control-Allow-Credentials', 'true')
 
-      // Finalize archive
-      await archive.finalize()
+      // Handle different export formats
+      if (format === 'json') {
+        // JSON export - data only
+        const bundleName = `compliance-data-${requirementInstanceId}-${Date.now()}.json`
+        reply.header('Content-Type', 'application/json')
+        reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
+        return reply.send(JSON.stringify(manifest, null, 2))
+      } else if (format === 'csv') {
+        // CSV export - structured data for spreadsheet analysis
+        const bundleName = `compliance-data-${requirementInstanceId}-${Date.now()}.csv`
+        reply.header('Content-Type', 'text/csv')
+        reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
+        
+        // Generate CSV data
+        const csvRows = []
+        
+        // Header row
+        csvRows.push([
+          'Field Category',
+          'Field Name', 
+          'Field Value',
+          'Data Type',
+          'Description'
+        ])
+        
+        // Requirement Instance data
+        csvRows.push(['Requirement Instance', 'ID', manifest.requirementInstance.id, 'String', 'Unique requirement instance identifier'])
+        csvRows.push(['Requirement Instance', 'Status', manifest.requirementInstance.status, 'String', 'Current compliance status'])
+        csvRows.push(['Requirement Instance', 'Created Date', new Date(manifest.requirementInstance.createdAt).toISOString(), 'DateTime', 'When requirement was created'])
+        csvRows.push(['Requirement Instance', 'Updated Date', new Date(manifest.requirementInstance.updatedAt).toISOString(), 'DateTime', 'When requirement was last updated'])
+        if (manifest.requirementInstance.exceptionReason) {
+          csvRows.push(['Requirement Instance', 'Exception Reason', manifest.requirementInstance.exceptionReason, 'String', 'Reason for exception status'])
+        }
+        if (manifest.requirementInstance.rationale) {
+          csvRows.push(['Requirement Instance', 'Rationale', manifest.requirementInstance.rationale, 'String', 'Business rationale for requirement'])
+        }
+        
+        // Asset data
+        csvRows.push(['Asset', 'Code', manifest.asset.code, 'String', 'Asset code/symbol'])
+        csvRows.push(['Asset', 'Reference', manifest.asset.assetRef, 'String', 'Full asset reference'])
+        csvRows.push(['Asset', 'Ledger', manifest.asset.ledger, 'String', 'Blockchain ledger'])
+        csvRows.push(['Asset', 'Network', manifest.asset.network, 'String', 'Network environment'])
+        csvRows.push(['Asset', 'Asset Class', manifest.asset.assetClass, 'String', 'Classification of asset'])
+        
+        // Product data
+        csvRows.push(['Product', 'Name', manifest.product.name, 'String', 'Product name'])
+        csvRows.push(['Product', 'Description', manifest.product.description, 'String', 'Product description'])
+        csvRows.push(['Product', 'Asset Class', manifest.product.assetClass, 'String', 'Product asset class'])
+        csvRows.push(['Product', 'Target Markets', manifest.product.targetMarkets.join('; '), 'String', 'Target market jurisdictions'])
+        
+        // Organization data
+        csvRows.push(['Organization', 'Name', manifest.organization.name, 'String', 'Organization name'])
+        csvRows.push(['Organization', 'Legal Name', manifest.organization.legalName, 'String', 'Legal entity name'])
+        csvRows.push(['Organization', 'Country', manifest.organization.country, 'String', 'Country of incorporation'])
+        csvRows.push(['Organization', 'Jurisdiction', manifest.organization.jurisdiction, 'String', 'Regulatory jurisdiction'])
+        
+        // Requirement Template data
+        csvRows.push(['Requirement Template', 'Name', manifest.requirementTemplate.name, 'String', 'Template name'])
+        csvRows.push(['Requirement Template', 'Description', manifest.requirementTemplate.description, 'String', 'Template description'])
+        csvRows.push(['Requirement Template', 'Regime', manifest.requirementTemplate.regime.name, 'String', 'Regulatory regime'])
+        csvRows.push(['Requirement Template', 'Regime Version', manifest.requirementTemplate.regime.version, 'String', 'Regime version'])
+        
+        // Evidence data
+        if (manifest.evidence.length > 0) {
+          manifest.evidence.forEach((ev: any, index: number) => {
+            csvRows.push(['Evidence', `File ${index + 1} Name`, ev.fileName, 'String', 'Evidence file name'])
+            csvRows.push(['Evidence', `File ${index + 1} Size`, ev.fileSize, 'Number', 'File size in bytes'])
+            csvRows.push(['Evidence', `File ${index + 1} Upload Date`, new Date(ev.uploadedAt).toISOString(), 'DateTime', 'When file was uploaded'])
+            csvRows.push(['Evidence', `File ${index + 1} Uploaded By`, ev.uploadedBy, 'String', 'User who uploaded file'])
+          })
+        } else {
+          csvRows.push(['Evidence', 'Files Count', '0', 'Number', 'Number of evidence files'])
+        }
+        
+        // Export metadata
+        csvRows.push(['Export', 'Exported At', new Date(manifest.exportedAt).toISOString(), 'DateTime', 'Export timestamp'])
+        csvRows.push(['Export', 'Bundle Version', manifest.bundleVersion, 'String', 'Export format version'])
+        
+        // Convert to CSV format
+        const csvContent = csvRows.map(row => 
+          row.map(field => {
+            // Escape fields that contain commas, quotes, or newlines
+            const fieldStr = String(field || '')
+            if (fieldStr.includes(',') || fieldStr.includes('"') || fieldStr.includes('\n')) {
+              return `"${fieldStr.replace(/"/g, '""')}"`
+            }
+            return fieldStr
+          }).join(',')
+        ).join('\n')
+        
+        return reply.send(csvContent)
+      } else {
+        // ZIP export - with evidence files (default)
+        const bundleName = `evidence-bundle-${requirementInstanceId}-${Date.now()}.zip`
+        reply.header('Content-Type', 'application/zip')
+        reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
+
+        // Create archive
+        const archive = archiver('zip', { zlib: { level: 9 } })
+        
+        // Use reply.raw but ensure headers are sent first
+        reply.raw.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+        reply.raw.setHeader('Access-Control-Allow-Credentials', 'true')
+        archive.pipe(reply.raw)
+
+        // Add evidence files
+        const __filename = fileURLToPath(import.meta.url)
+        const __dirname = path.dirname(__filename)
+        const uploadsDir = path.join(__dirname, '../../../uploads')
+        for (const evidenceItem of evidence) {
+          const filePath = path.join(uploadsDir, evidenceItem.uploadPath)
+          if (fs.existsSync(filePath)) {
+            archive.file(filePath, { name: `evidence/${evidenceItem.fileName}` })
+          }
+        }
+
+        // Add compliance manifest
+        archive.append(JSON.stringify(manifest, null, 2), { name: 'compliance-manifest.json' })
+
+        // Finalize archive
+        await archive.finalize()
+      }
 
     } catch (error: any) {
       console.error('Error creating evidence bundle:', error)
