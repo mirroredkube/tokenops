@@ -165,25 +165,21 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       // TODO: Add user authentication check to verify organization ownership
       // For now, we'll allow any valid product
       
-      // Create or find issuer address
-      let issuerAddress = await prisma.issuerAddress.findFirst({
+      // Find issuer address - must be APPROVED
+      const issuerAddress = await prisma.issuerAddress.findFirst({
         where: {
           address: assetData.issuer,
           ledger: assetData.ledger.toUpperCase() as any,
-          network: assetData.network.toUpperCase() as any
+          network: assetData.network.toUpperCase() as any,
+          status: 'APPROVED', // Only allow APPROVED addresses
+          organizationId: product.organizationId // Must belong to same organization
         }
       });
       
       if (!issuerAddress) {
-        issuerAddress = await prisma.issuerAddress.create({
-          data: {
-            organizationId: product.organizationId,
-            address: assetData.issuer,
-            ledger: assetData.ledger.toUpperCase() as any,
-            network: assetData.network.toUpperCase() as any,
-            allowedUseTags: ['OTHER'],
-            status: 'APPROVED' // Auto-approve for backward compatibility
-          }
+        return reply.status(422).send({ 
+          error: 'Issuer address not found or not approved',
+          message: 'The specified issuer address must be registered and approved before creating assets. Please register the address first and wait for approval.'
         });
       }
       

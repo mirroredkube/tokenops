@@ -21,7 +21,8 @@ import {
   CheckSquare,
   BarChart3,
   Plus,
-  Clock
+  Clock,
+  Key
 } from 'lucide-react'
 
 const BRAND = 'Regula'
@@ -45,6 +46,7 @@ export default function CollapsibleSidebar() {
   const navItems: NavItem[] = [
     { href: '/app/dashboard', label: t('navigation.dashboard'), icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: '/app/assets', label: t('navigation.assets'), icon: <Building className="h-5 w-5" /> },
+    { href: '/app/issuer-addresses', label: t('navigation.issuerAddresses', 'Issuer Addresses'), icon: <Key className="h-5 w-5" /> },
     { href: '/app/issuance/new', label: t('navigation.issuances'), icon: <Coins className="h-5 w-5" /> },
     { href: '/app/authorizations', label: t('navigation.authorizations'), icon: <CheckSquare className="h-5 w-5" /> },
     { href: '/app/compliance', label: t('navigation.compliance'), icon: <Shield className="h-5 w-5" /> },

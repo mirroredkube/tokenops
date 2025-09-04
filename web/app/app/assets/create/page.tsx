@@ -37,6 +37,17 @@ interface Product {
   name: string
   assetClass: string
   status: string
+  organizationId: string
+}
+
+interface ApprovedAddress {
+  id: string
+  address: string
+  ledger: string
+  network: string
+  allowedUseTags: string[]
+  approvedAt: string
+  approvedBy: string
 }
 
 export default function CreateAssetPage() {
@@ -48,6 +59,8 @@ export default function CreateAssetPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
   const [productsError, setProductsError] = useState<string | null>(null)
+  const [approvedAddresses, setApprovedAddresses] = useState<ApprovedAddress[]>([])
+  const [addressesLoading, setAddressesLoading] = useState(false)
   
   // Track page view
   trackPageView('asset_create')
@@ -68,6 +81,13 @@ export default function CreateAssetPage() {
   useEffect(() => {
     fetchProducts()
   }, [])
+
+  // Fetch approved addresses when product changes
+  useEffect(() => {
+    if (formData.productId) {
+      fetchApprovedAddresses()
+    }
+  }, [formData.productId, formData.ledger, formData.network])
 
   const fetchProducts = async () => {
     setProductsLoading(true)
@@ -111,6 +131,38 @@ export default function CreateAssetPage() {
       setProductsError(err.message || 'Failed to fetch products')
     } finally {
       setProductsLoading(false)
+    }
+  }
+
+  const fetchApprovedAddresses = async () => {
+    if (!formData.productId) return
+    
+    try {
+      setAddressesLoading(true)
+      
+      // Get the selected product to find its organization
+      const selectedProduct = products.find(p => p.id === formData.productId)
+      if (!selectedProduct) return
+      
+      const params = new URLSearchParams()
+      params.append('organizationId', selectedProduct.organizationId)
+      if (formData.ledger) params.append('ledger', formData.ledger.toUpperCase())
+      if (formData.network) params.append('network', formData.network.toUpperCase())
+      
+      const response = await api.GET(`/v1/issuer-addresses/approved?${params.toString()}`)
+      
+      if (response.error) {
+        console.error('Error fetching approved addresses:', response.error)
+        setApprovedAddresses([])
+        return
+      }
+      
+      setApprovedAddresses((response.data as any)?.addresses || [])
+    } catch (err: any) {
+      console.error('Error fetching approved addresses:', err)
+      setApprovedAddresses([])
+    } finally {
+      setAddressesLoading(false)
     }
   }
 
@@ -182,10 +234,16 @@ export default function CreateAssetPage() {
   }
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value }
+      
+      // Reset issuer when ledger or network changes
+      if (field === 'ledger' || field === 'network') {
+        newData.issuer = ''
+      }
+      
+      return newData
+    })
   }
 
   const handleNestedChange = (parent: 'controls' | 'registry', field: string, value: any) => {
@@ -289,14 +347,38 @@ export default function CreateAssetPage() {
             </FormField>
 
             <FormField label={t('assets:createAsset.fields.issuerAddress', 'Issuer Address')} required>
-              <input
-                type="text"
-                value={formData.issuer}
-                onChange={(e) => handleInputChange('issuer', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder={t('assets:createAsset.placeholders.issuerAddress', 'r... (XRPL) / 0x... (Ethereum)')}
-                required
-              />
+              {addressesLoading ? (
+                <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  <span className="text-gray-600">Loading approved addresses...</span>
+                </div>
+              ) : approvedAddresses.length === 0 ? (
+                <div className="w-full p-3 border border-gray-300 rounded-lg bg-yellow-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-yellow-800">No approved addresses found</p>
+                      <p className="text-xs text-yellow-600">Register and approve an address first</p>
+                    </div>
+                    <a
+                      href="/app/issuer-addresses"
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Manage Addresses
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <CustomDropdown
+                  value={formData.issuer}
+                  onChange={(value) => handleInputChange('issuer', value)}
+                  options={approvedAddresses.map(addr => ({
+                    value: addr.address,
+                    label: `${addr.address} (${addr.ledger}/${addr.network}) - ${addr.allowedUseTags.join(', ')}`
+                  }))}
+                  placeholder="Select approved issuer address"
+                  required
+                />
+              )}
             </FormField>
 
             <FormField label={t('assets:createAsset.fields.currencyCode', 'Currency Code')} required>
