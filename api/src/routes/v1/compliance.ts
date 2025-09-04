@@ -528,6 +528,11 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
               include: {
                 regime: true
               }
+            },
+            asset: {
+              include: {
+                product: true
+              }
             }
           },
           take: limit,
@@ -539,17 +544,88 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         prisma.requirementInstance.count({ where })
       ])
       
-      return reply.send({
-        instances: instances.map(instance => ({
-          id: instance.id,
-          status: instance.status,
-          rationale: instance.rationale,
-          requirementTemplate: {
-            id: instance.requirementTemplate.id,
-            name: instance.requirementTemplate.name,
-            regime: instance.requirementTemplate.regime
+      // Get asset information for each instance using raw SQL since Prisma client doesn't recognize new fields
+      const instancesWithAssets = await Promise.all(
+        instances.map(async (instance) => {
+          try {
+            // Get asset information using raw SQL
+            const assetInfo = await prisma.$queryRaw`
+              SELECT 
+                a.id as asset_id,
+                a."assetRef" as asset_ref,
+                a.code as asset_code,
+                a."assetClass" as asset_class,
+                p.id as product_id,
+                p.name as product_name,
+                p."assetClass" as product_asset_class,
+                ri."platformAcknowledged" as platform_acknowledged,
+                ri."platformAcknowledgedBy" as platform_acknowledged_by,
+                ri."platformAcknowledgedAt" as platform_acknowledged_at,
+                ri."platformAcknowledgmentReason" as platform_acknowledgment_reason
+              FROM "RequirementInstance" ri
+              LEFT JOIN "Asset" a ON ri."assetId" = a.id
+              LEFT JOIN "Product" p ON a."productId" = p.id
+              WHERE ri.id = ${instance.id}
+            ` as any[]
+
+            console.log('Raw SQL result for instance', instance.id, ':', assetInfo)
+            const asset = assetInfo[0] || {}
+            
+            return {
+              id: instance.id,
+              assetId: instance.assetId,
+              status: instance.status,
+              rationale: instance.rationale,
+              platformAcknowledged: asset.platform_acknowledged || false,
+              platformAcknowledgedBy: asset.platform_acknowledged_by,
+              platformAcknowledgedAt: asset.platform_acknowledged_at,
+              platformAcknowledgmentReason: asset.platform_acknowledgment_reason,
+              createdAt: instance.createdAt,
+              updatedAt: instance.updatedAt,
+              requirementTemplate: {
+                id: instance.requirementTemplate.id,
+                name: instance.requirementTemplate.name,
+                regime: instance.requirementTemplate.regime
+              },
+              asset: asset.asset_id ? {
+                id: asset.asset_id,
+                assetRef: asset.asset_ref,
+                code: asset.asset_code,
+                assetClass: asset.asset_class,
+                product: asset.product_id ? {
+                  id: asset.product_id,
+                  name: asset.product_name,
+                  assetClass: asset.product_asset_class
+                } : null
+              } : null
+            }
+          } catch (error) {
+            console.error('Error fetching asset info for instance', instance.id, ':', error)
+            // Return basic instance info if asset query fails
+            return {
+              id: instance.id,
+              assetId: instance.assetId,
+              status: instance.status,
+              rationale: instance.rationale,
+              platformAcknowledged: false,
+              platformAcknowledgedBy: null,
+              platformAcknowledgedAt: null,
+              platformAcknowledgmentReason: null,
+              createdAt: instance.createdAt,
+              updatedAt: instance.updatedAt,
+              requirementTemplate: {
+                id: instance.requirementTemplate.id,
+                name: instance.requirementTemplate.name,
+                regime: instance.requirementTemplate.regime
+              },
+              asset: null
+            }
           }
-        })),
+        })
+      )
+
+      return reply.send({
+        instances: instancesWithAssets,
         total,
         limit,
         offset
@@ -1031,6 +1107,362 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     } catch (error: any) {
       console.error('Error fetching evidence:', error)
       return reply.status(500).send({ error: 'Failed to fetch evidence' })
+    }
+  })
+
+  // POST /v1/compliance/requirements/:requirementId/platform-acknowledge - Platform co-acknowledge ART/EMT requirement
+  app.post('/compliance/requirements/:requirementId/platform-acknowledge', {
+    schema: {
+      summary: 'Platform co-acknowledge ART/EMT compliance requirement',
+      description: 'Platform admin acknowledges compliance requirement for ART/EMT tokens',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['requirementId'],
+        properties: {
+          requirementId: { type: 'string', description: 'Requirement instance ID' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['acknowledgmentReason'],
+        properties: {
+          acknowledgmentReason: { 
+            type: 'string', 
+            description: 'Reason for platform acknowledgement',
+            minLength: 10,
+            maxLength: 500
+          }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            platformAcknowledged: { type: 'boolean' },
+            platformAcknowledgedBy: { type: 'string' },
+            platformAcknowledgedAt: { type: 'string' },
+            platformAcknowledgmentReason: { type: 'string' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        401: { type: 'object', properties: { error: { type: 'string' } } },
+        403: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { requirementId } = req.params as { requirementId: string }
+      const { acknowledgmentReason } = req.body as any
+
+      // Get user ID from auth context
+      const userId = (req as any).user?.id
+      if (!userId) {
+        return reply.status(401).send({ error: 'Authentication required' })
+      }
+
+      // Get user role for authorization check
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true }
+      })
+
+      if (!user || !['ADMIN', 'COMPLIANCE_OFFICER'].includes(user.role)) {
+        return reply.status(403).send({ error: 'Platform admin role required for co-acknowledgement' })
+      }
+
+      // Get requirement instance with asset and product info
+      const requirementInstance = await prisma.requirementInstance.findUnique({
+        where: { id: requirementId },
+        include: {
+          asset: {
+            include: {
+              product: true
+            }
+          }
+        }
+      })
+
+      if (!requirementInstance) {
+        return reply.status(404).send({ error: 'Requirement instance not found' })
+      }
+
+      // Check if this is an ART/EMT token
+      if (!['ART', 'EMT'].includes(requirementInstance.asset.product.assetClass)) {
+        return reply.status(400).send({ 
+          error: 'Platform co-acknowledgement only available for ART/EMT tokens' 
+        })
+      }
+
+      // Check if requirement is already satisfied
+      if (requirementInstance.status !== 'SATISFIED') {
+        return reply.status(400).send({ 
+          error: 'Requirement must be satisfied before platform co-acknowledgement' 
+        })
+      }
+
+      // Update requirement with platform acknowledgement
+      const updatedRequirement = await prisma.requirementInstance.update({
+        where: { id: requirementId },
+        data: {
+          platformAcknowledged: true,
+          platformAcknowledgedBy: userId,
+          platformAcknowledgedAt: new Date(),
+          platformAcknowledgmentReason: acknowledgmentReason
+        }
+      })
+
+      return reply.send({
+        id: updatedRequirement.id,
+        platformAcknowledged: updatedRequirement.platformAcknowledged,
+        platformAcknowledgedBy: updatedRequirement.platformAcknowledgedBy,
+        platformAcknowledgedAt: updatedRequirement.platformAcknowledgedAt?.toISOString(),
+        platformAcknowledgmentReason: updatedRequirement.platformAcknowledgmentReason
+      })
+    } catch (error: any) {
+      console.error('Error platform acknowledging requirement:', error)
+      if (error.code === 'P2025') {
+        return reply.status(404).send({ error: 'Requirement not found' })
+      }
+      return reply.status(500).send({ error: 'Failed to platform acknowledge requirement' })
+    }
+  })
+
+  // GET /v1/compliance/requirements/:requirementId/platform-status - Get platform acknowledgement status
+  app.get('/compliance/requirements/:requirementId/platform-status', {
+    schema: {
+      summary: 'Get platform acknowledgement status for a requirement',
+      description: 'Retrieve platform acknowledgement status and details for a specific requirement',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['requirementId'],
+        properties: {
+          requirementId: { type: 'string', description: 'Requirement instance ID' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            platformAcknowledged: { type: 'boolean' },
+            platformAcknowledgedBy: { type: 'string' },
+            platformAcknowledgedAt: { type: 'string' },
+            platformAcknowledgmentReason: { type: 'string' },
+            platformAcknowledger: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                name: { type: 'string' },
+                email: { type: 'string' }
+              }
+            },
+            assetClass: { type: 'string' },
+            requiresPlatformAcknowledgement: { type: 'boolean' }
+          }
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { requirementId } = req.params as { requirementId: string }
+
+      // Get requirement instance with related data
+      const requirementInstance = await prisma.requirementInstance.findUnique({
+        where: { id: requirementId },
+        include: {
+          asset: {
+            include: {
+              product: true
+            }
+          },
+          platformAcknowledger: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          }
+        }
+      })
+
+      if (!requirementInstance) {
+        return reply.status(404).send({ error: 'Requirement instance not found' })
+      }
+
+      const assetClass = requirementInstance.asset.product.assetClass
+      const requiresPlatformAcknowledgement = ['ART', 'EMT'].includes(assetClass)
+
+      return reply.send({
+        id: requirementInstance.id,
+        platformAcknowledged: requirementInstance.platformAcknowledged,
+        platformAcknowledgedBy: requirementInstance.platformAcknowledgedBy,
+        platformAcknowledgedAt: requirementInstance.platformAcknowledgedAt?.toISOString(),
+        platformAcknowledgmentReason: requirementInstance.platformAcknowledgmentReason,
+        platformAcknowledger: requirementInstance.platformAcknowledger,
+        assetClass,
+        requiresPlatformAcknowledgement
+      })
+    } catch (error: any) {
+      console.error('Error fetching platform status:', error)
+      return reply.status(500).send({ error: 'Failed to fetch platform status' })
+    }
+  })
+
+  // GET /v1/compliance/evidence/bundle/:requirementInstanceId - Export evidence bundle
+  app.get('/compliance/evidence/bundle/:requirementInstanceId', {
+    schema: {
+      summary: 'Export evidence bundle for a compliance requirement',
+      description: 'Download a ZIP bundle containing all evidence files and compliance manifest',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['requirementInstanceId'],
+        properties: {
+          requirementInstanceId: { type: 'string', description: 'ID of the requirement instance' }
+        }
+      },
+      response: {
+        200: {
+          type: 'string',
+          format: 'binary',
+          description: 'ZIP file containing evidence bundle'
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { requirementInstanceId } = req.params as { requirementInstanceId: string }
+
+      // Verify requirement instance exists
+      const requirementInstance = await prisma.requirementInstance.findUnique({
+        where: { id: requirementInstanceId },
+        include: {
+          asset: {
+            include: {
+              product: {
+                include: {
+                  organization: true
+                }
+              }
+            }
+          },
+          requirementTemplate: {
+            include: {
+              regime: true
+            }
+          }
+        }
+      })
+
+      if (!requirementInstance) {
+        return reply.status(404).send({ error: 'Requirement instance not found' })
+      }
+
+      // Get all evidence for this requirement
+      const evidence = await prisma.evidence.findMany({
+        where: { requirementInstanceId },
+        orderBy: { uploadedAt: 'desc' }
+      })
+
+      // Create ZIP bundle
+      const archiver = require('archiver')
+      const fs = require('fs')
+      const path = require('path')
+
+      // Set response headers for file download
+      const bundleName = `evidence-bundle-${requirementInstanceId}-${Date.now()}.zip`
+      reply.header('Content-Type', 'application/zip')
+      reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
+
+      // Create archive
+      const archive = archiver('zip', { zlib: { level: 9 } })
+      archive.pipe(reply.raw)
+
+      // Add evidence files
+      const uploadsDir = path.join(__dirname, '../../../uploads')
+      for (const evidenceItem of evidence) {
+        const filePath = path.join(uploadsDir, evidenceItem.uploadPath)
+        if (fs.existsSync(filePath)) {
+          archive.file(filePath, { name: `evidence/${evidenceItem.fileName}` })
+        }
+      }
+
+      // Add compliance manifest
+      const manifest = {
+        requirementInstance: {
+          id: requirementInstance.id,
+          status: requirementInstance.status,
+          rationale: requirementInstance.rationale,
+          exceptionReason: requirementInstance.exceptionReason,
+          platformAcknowledged: requirementInstance.platformAcknowledged,
+          platformAcknowledgedAt: requirementInstance.platformAcknowledgedAt,
+          platformAcknowledgmentReason: requirementInstance.platformAcknowledgmentReason,
+          createdAt: requirementInstance.createdAt,
+          updatedAt: requirementInstance.updatedAt
+        },
+        asset: {
+          id: requirementInstance.asset.id,
+          assetRef: requirementInstance.asset.assetRef,
+          ledger: requirementInstance.asset.ledger,
+          network: requirementInstance.asset.network,
+          code: requirementInstance.asset.code,
+          assetClass: requirementInstance.asset.assetClass
+        },
+        product: {
+          id: requirementInstance.asset.product.id,
+          name: requirementInstance.asset.product.name,
+          description: requirementInstance.asset.product.description,
+          assetClass: requirementInstance.asset.product.assetClass,
+          targetMarkets: requirementInstance.asset.product.targetMarkets
+        },
+        organization: {
+          id: requirementInstance.asset.product.organization.id,
+          name: requirementInstance.asset.product.organization.name,
+          legalName: requirementInstance.asset.product.organization.legalName,
+          country: requirementInstance.asset.product.organization.country,
+          jurisdiction: requirementInstance.asset.product.organization.jurisdiction
+        },
+        requirementTemplate: {
+          id: requirementInstance.requirementTemplate.id,
+          name: requirementInstance.requirementTemplate.name,
+          description: requirementInstance.requirementTemplate.description,
+          regime: {
+            id: requirementInstance.requirementTemplate.regime.id,
+            name: requirementInstance.requirementTemplate.regime.name,
+            version: requirementInstance.requirementTemplate.regime.version
+          }
+        },
+        evidence: evidence.map(e => ({
+          id: e.id,
+          fileName: e.fileName,
+          fileType: e.fileType,
+          fileSize: e.fileSize,
+          fileHash: e.fileHash,
+          description: e.description,
+          tags: e.tags,
+          uploadedAt: e.uploadedAt
+        })),
+        exportedAt: new Date().toISOString(),
+        bundleVersion: '1.0'
+      }
+
+      archive.append(JSON.stringify(manifest, null, 2), { name: 'compliance-manifest.json' })
+
+      // Finalize archive
+      await archive.finalize()
+
+    } catch (error: any) {
+      console.error('Error creating evidence bundle:', error)
+      return reply.status(500).send({ error: 'Failed to create evidence bundle' })
     }
   })
 }

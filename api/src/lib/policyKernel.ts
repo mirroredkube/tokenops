@@ -236,6 +236,27 @@ export class PolicyKernel {
   }
   
   /**
+   * Determines if a requirement template requires platform acknowledgement for ART/EMT tokens
+   */
+  private requiresPlatformAcknowledgement(templateId: string, facts: PolicyFacts): boolean {
+    // Only ART/EMT tokens require platform acknowledgement
+    if (!['ART', 'EMT'].includes(facts.assetClass)) {
+      return false
+    }
+    
+    // Specific ART/EMT requirements that need platform co-acknowledgement
+    const artEmtRequirements = [
+      'mica-issuer-auth-art-emt',
+      'mica-whitepaper-art',
+      'mica-kyc-tier-art-emt',
+      'mica-right-of-withdrawal',
+      'mica-marketing-communications'
+    ]
+    
+    return artEmtRequirements.includes(templateId)
+  }
+
+  /**
    * Applies enforcement hints from a requirement template to the enforcement plan
    */
   private applyEnforcementHints(templateId: string, plan: EnforcementPlan, facts: PolicyFacts): void {
@@ -311,6 +332,9 @@ export class PolicyKernel {
     
     // Create requirement instances in database
     for (const instance of evaluation.requirementInstances) {
+      // Check if this is an ART/EMT requirement that needs platform acknowledgement
+      const requiresPlatformAcknowledgement = this.requiresPlatformAcknowledgement(instance.requirementTemplateId, facts)
+      
       await prisma.requirementInstance.create({
         data: {
           assetId,
@@ -321,9 +345,18 @@ export class PolicyKernel {
           holder: null,
           transferAmount: null,
           transferType: null,
-          issuanceId: null
+          issuanceId: null,
+          // Platform acknowledgement fields
+          platformAcknowledged: false,
+          platformAcknowledgedBy: null,
+          platformAcknowledgedAt: null,
+          platformAcknowledgmentReason: null
         }
       })
+      
+      if (requiresPlatformAcknowledgement) {
+        console.log(`🔐 ART/EMT requirement ${instance.requirementTemplateId} requires platform acknowledgement`)
+      }
     }
     
     console.log(`✅ Created ${evaluation.requirementInstances.length} requirement instances for asset ${assetId}`)
@@ -349,6 +382,9 @@ export class PolicyKernel {
     // Create new instances for new requirements
     for (const instance of evaluation.requirementInstances) {
       if (!existingTemplateIds.has(instance.requirementTemplateId)) {
+        // Check if this is an ART/EMT requirement that needs platform acknowledgement
+        const requiresPlatformAcknowledgement = this.requiresPlatformAcknowledgement(instance.requirementTemplateId, facts)
+        
         await prisma.requirementInstance.create({
           data: {
             assetId,
@@ -358,9 +394,18 @@ export class PolicyKernel {
             holder: null,
             transferAmount: null,
             transferType: null,
-            issuanceId: null
+            issuanceId: null,
+            // Platform acknowledgement fields
+            platformAcknowledged: false,
+            platformAcknowledgedBy: null,
+            platformAcknowledgedAt: null,
+            platformAcknowledgmentReason: null
           }
         })
+        
+        if (requiresPlatformAcknowledgement) {
+          console.log(`🔐 ART/EMT requirement ${instance.requirementTemplateId} requires platform acknowledgement`)
+        }
       }
     }
     

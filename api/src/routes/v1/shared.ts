@@ -67,7 +67,17 @@ export async function validateAsset(assetId: string): Promise<Asset> {
   const asset = await prisma.asset.findUnique({
     where: { id: assetId },
     include: {
-      issuingAddress: true
+      issuingAddress: true,
+      product: true,
+      requirementInstances: {
+        where: {
+          status: 'SATISFIED',
+          platformAcknowledged: false
+        },
+        include: {
+          requirementTemplate: true
+        }
+      }
     }
   })
   
@@ -77,6 +87,25 @@ export async function validateAsset(assetId: string): Promise<Asset> {
   
   if (asset.status !== 'ACTIVE') {
     throw new Error(`Asset is ${asset.status.toLowerCase()}, must be active`)
+  }
+
+  // Check platform acknowledgement for ART/EMT assets
+  if (['ART', 'EMT'].includes(asset.product.assetClass)) {
+    const artEmtRequirements = [
+      'mica-issuer-auth-art-emt',
+      'mica-whitepaper-art',
+      'mica-kyc-tier-art-emt',
+      'mica-right-of-withdrawal',
+      'mica-marketing-communications'
+    ]
+    
+    const pendingPlatformAck = asset.requirementInstances.filter(req => 
+      artEmtRequirements.includes(req.requirementTemplate.id)
+    )
+
+    if (pendingPlatformAck.length > 0) {
+      throw new Error(`Asset requires platform co-acknowledgement for ${pendingPlatformAck.length} compliance requirements before use`)
+    }
   }
   
   // Convert Prisma model to Asset type

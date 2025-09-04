@@ -504,6 +504,52 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
       if (!hasStatusChange && hasOtherChanges && asset.status !== 'DRAFT') {
         return reply.status(409).send({ error: 'Can only update draft assets' })
       }
+
+      // Check platform acknowledgement for ART/EMT assets being activated
+      if (hasStatusChange && parsed.data.status === 'active') {
+        const assetWithProduct = await prisma.asset.findUnique({
+          where: { id: assetId },
+          include: {
+            product: true,
+            requirementInstances: {
+              where: {
+                status: 'SATISFIED',
+                platformAcknowledged: false
+              },
+              include: {
+                requirementTemplate: true
+              }
+            }
+          }
+        })
+
+        if (assetWithProduct && ['ART', 'EMT'].includes(assetWithProduct.product.assetClass)) {
+          // Check if there are any satisfied requirements that still need platform acknowledgement
+          const pendingPlatformAck = assetWithProduct.requirementInstances.filter(req => {
+            // Check if this requirement template requires platform acknowledgement
+            const artEmtRequirements = [
+              'mica-issuer-auth-art-emt',
+              'mica-whitepaper-art',
+              'mica-kyc-tier-art-emt',
+              'mica-right-of-withdrawal',
+              'mica-marketing-communications'
+            ]
+            return artEmtRequirements.includes(req.requirementTemplate.id)
+          })
+
+          if (pendingPlatformAck.length > 0) {
+            return reply.status(422).send({
+              error: 'Asset activation blocked by pending platform acknowledgement',
+              message: 'ART/EMT assets require platform co-acknowledgement of all satisfied compliance requirements before activation',
+              pendingPlatformAcknowledgements: pendingPlatformAck.map(req => ({
+                requirementId: req.id,
+                requirementName: req.requirementTemplate.name,
+                templateId: req.requirementTemplate.id
+              }))
+            })
+          }
+        }
+      }
       
       // Prepare update data
       const updateData: any = {}

@@ -30,22 +30,23 @@ model Organization {
 }
 
 model User {
-  id                   String                @id @default(cuid())
-  email                String                @unique
-  name                 String?
-  sub                  String                @unique
-  twoFactorSecret      String?
-  twoFactorEnabled     Boolean               @default(false)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  organizationId       String
-  status               UserStatus            @default(ACTIVE)
-  role                 UserRole              @default(VIEWER)
-  events               Event[]
-  verifiedRequirements RequirementInstance[]
-  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  settings             UserSettings?
-  evidence             Evidence[]
+  id                               String                @id @default(cuid())
+  email                            String                @unique
+  name                             String?
+  sub                              String                @unique
+  twoFactorSecret                  String?
+  twoFactorEnabled                 Boolean               @default(false)
+  createdAt                        DateTime              @default(now())
+  updatedAt                        DateTime              @updatedAt
+  organizationId                   String
+  status                           UserStatus            @default(ACTIVE)
+  role                             UserRole              @default(VIEWER)
+  events                           Event[]
+  evidence                         Evidence[]
+  platformAcknowledgedRequirements RequirementInstance[] @relation("PlatformAcknowledger")
+  verifiedRequirements             RequirementInstance[]
+  organization                     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  settings                         UserSettings?
 
   @@index([email])
   @@index([sub])
@@ -96,7 +97,6 @@ model Asset {
   ledger               AssetLedger
   network              AssetNetwork
   code                 String
-  assetClass           AssetClass            @default(OTHER)
   decimals             Int
   complianceMode       ComplianceMode        @default(RECORD_ONLY)
   controls             Json?
@@ -107,6 +107,7 @@ model Asset {
   updatedAt            DateTime              @updatedAt
   productId            String
   issuingAddressId     String?
+  assetClass           AssetClass            @default(OTHER)
   issuingAddress       IssuerAddress?        @relation(fields: [issuingAddressId], references: [id])
   product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
   authorizations       Authorization[]
@@ -188,28 +189,33 @@ model RequirementTemplate {
 }
 
 model RequirementInstance {
-  id                    String              @id @default(cuid())
-  assetId               String
-  requirementTemplateId String
-  status                RequirementStatus   @default(REQUIRED)
-  evidenceRefs          Json?
-  verifierId            String?
-  verifiedAt            DateTime?
-  rationale             String?
-  exceptionReason       String?
-  notes                 String?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  holder                String?
-  issuanceId            String?
-  transferAmount        String?
-  transferType          String?
-  events                Event[]
-  evidence              Evidence[]
-  asset                 Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  issuance              Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
-  requirementTemplate   RequirementTemplate @relation(fields: [requirementTemplateId], references: [id])
-  verifier              User?               @relation(fields: [verifierId], references: [id])
+  id                           String              @id @default(cuid())
+  assetId                      String
+  requirementTemplateId        String
+  status                       RequirementStatus   @default(REQUIRED)
+  evidenceRefs                 Json?
+  verifierId                   String?
+  verifiedAt                   DateTime?
+  rationale                    String?
+  exceptionReason              String?
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
+  holder                       String?
+  issuanceId                   String?
+  transferAmount               String?
+  transferType                 String?
+  notes                        String?
+  platformAcknowledged         Boolean             @default(false)
+  platformAcknowledgedAt       DateTime?
+  platformAcknowledgedBy       String?
+  platformAcknowledgmentReason String?
+  events                       Event[]
+  evidence                     Evidence[]
+  asset                        Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  issuance                     Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
+  platformAcknowledger         User?               @relation("PlatformAcknowledger", fields: [platformAcknowledgedBy], references: [id])
+  requirementTemplate          RequirementTemplate @relation(fields: [requirementTemplateId], references: [id])
+  verifier                     User?               @relation(fields: [verifierId], references: [id])
 
   @@index([assetId])
   @@index([requirementTemplateId])
@@ -217,6 +223,8 @@ model RequirementInstance {
   @@index([createdAt])
   @@index([issuanceId])
   @@index([holder])
+  @@index([platformAcknowledged])
+  @@index([platformAcknowledgedBy])
 }
 
 model Evidence {
@@ -273,24 +281,24 @@ model Event {
 }
 
 model Issuance {
-  id                    String    @id @default(cuid())
-  assetId               String
-  asset                 Asset     @relation(fields: [assetId], references: [id])
-  amount                String
-  holder                String
-  status                IssuanceStatus @default(PENDING)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  complianceRef         Json?
-  anchor                Boolean   @default(false)
-  txId                  String?
-  explorer              String?
-  complianceEvaluated   Boolean   @default(false)
-  complianceStatus      String?
-  requirementInstances  RequirementInstance[]
-  authorizations        Authorization[]
-  manifestHash          String?   @db.VarChar(66)
-  manifestVersion       String    @default("1.0")
+  id                   String                @id @default(cuid())
+  assetId              String
+  amount               String
+  complianceRef        Json?
+  anchor               Boolean               @default(false)
+  txId                 String?
+  explorer             String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  complianceEvaluated  Boolean               @default(false)
+  complianceStatus     String?
+  holder               String
+  manifestHash         String?               @db.VarChar(66)
+  manifestVersion      String                @default("1.0")
+  status               IssuanceStatus        @default(PENDING)
+  authorizations       Authorization[]
+  asset                Asset                 @relation(fields: [assetId], references: [id])
+  requirementInstances RequirementInstance[]
 
   @@index([manifestHash])
 }
@@ -311,9 +319,9 @@ model Authorization {
   metadata             Json?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
+  issuanceId           String?
   asset                Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
   issuance             Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
-  issuanceId           String?
 
   @@index([assetId])
   @@index([holder])

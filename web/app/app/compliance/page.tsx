@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
-import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download } from 'lucide-react'
 import CustomDropdown from '../../components/CustomDropdown'
 import ModernTooltip from '../../components/ModernTooltip'
 
@@ -32,6 +32,12 @@ interface ComplianceRequirement {
   jurisdiction: string
   createdAt: string
   updatedAt: string
+  platformAcknowledged?: boolean
+  platformAcknowledgedBy?: string
+  platformAcknowledgedAt?: string
+  platformAcknowledgmentReason?: string
+  assetClass?: string
+  requiresPlatformAcknowledgement?: boolean
 }
 
 interface ComplianceListResponse {
@@ -58,6 +64,12 @@ export default function CompliancePage() {
     total: 0,
     pages: 0
   })
+  
+  // Platform acknowledgement state
+  const [showPlatformAckModal, setShowPlatformAckModal] = useState(false)
+  const [selectedRequirement, setSelectedRequirement] = useState<ComplianceRequirement | null>(null)
+  const [acknowledgmentReason, setAcknowledgmentReason] = useState('')
+  const [acknowledging, setAcknowledging] = useState(false)
   
   // Filters
   const [filters, setFilters] = useState({
@@ -128,7 +140,8 @@ export default function CompliancePage() {
   const fetchComplianceRequirements = async () => {
     setLoading(true)
     try {
-      const { data, error } = await api.GET('/v1/compliance/requirements' as any, {})
+      // Fetch all requirement instances across all assets using the instances endpoint
+      const { data, error } = await api.GET('/v1/compliance/instances' as any, {})
       
       if (error) {
         console.error('Error fetching compliance requirements:', error)
@@ -138,11 +151,11 @@ export default function CompliancePage() {
       
       console.log('Raw compliance requirements data:', data)
       
-      if (data && data.requirements) {
-        // Transform requirements to our format
-        const transformedRequirements = data.requirements.map((req: any) => ({
+      if (data && data.instances) {
+        // Transform requirement instances to our format
+        const transformedRequirements = data.instances.map((req: any) => ({
           id: req.id,
-          assetId: req.assetId,
+          assetId: req.assetId || 'N/A',
           assetRef: req.asset?.assetRef || 'N/A',
           assetCode: req.asset?.code || 'N/A',
           status: req.status,
@@ -150,7 +163,13 @@ export default function CompliancePage() {
           regime: req.requirementTemplate?.regime?.name || 'Unknown',
           jurisdiction: req.requirementTemplate?.regime?.jurisdiction || 'Unknown',
           createdAt: req.createdAt,
-          updatedAt: req.updatedAt
+          updatedAt: req.updatedAt,
+          platformAcknowledged: req.platformAcknowledged || false,
+          platformAcknowledgedBy: req.platformAcknowledgedBy,
+          platformAcknowledgedAt: req.platformAcknowledgedAt,
+          platformAcknowledgmentReason: req.platformAcknowledgmentReason,
+          assetClass: req.asset?.product?.assetClass || 'OTHER',
+          requiresPlatformAcknowledgement: ['ART', 'EMT'].includes(req.asset?.product?.assetClass)
         }))
         
         console.log('Transformed requirements:', transformedRequirements)
@@ -221,7 +240,7 @@ export default function CompliancePage() {
   const handleRequirementStatusUpdate = async (requirementId: string, newStatus: 'SATISFIED' | 'EXCEPTION') => {
     try {
       const { data, error } = await api.PATCH(`/v1/compliance/requirements/${requirementId}` as any, {
-        status: newStatus
+        body: { status: newStatus }
       })
       
       if (error) {
@@ -233,6 +252,71 @@ export default function CompliancePage() {
       await fetchComplianceRequirements()
     } catch (err: any) {
       console.error('Error updating requirement status:', err)
+    }
+  }
+
+  const handlePlatformAcknowledgement = async () => {
+    if (!selectedRequirement || !acknowledgmentReason.trim()) {
+      return
+    }
+
+    setAcknowledging(true)
+    try {
+      const { data, error } = await api.POST(`/v1/compliance/requirements/${selectedRequirement.id}/platform-acknowledge` as any, {
+        body: { acknowledgmentReason: acknowledgmentReason.trim() }
+      })
+      
+      if (error) {
+        console.error('Error platform acknowledging requirement:', error)
+        return
+      }
+      
+      // Close modal and refresh
+      setShowPlatformAckModal(false)
+      setSelectedRequirement(null)
+      setAcknowledgmentReason('')
+      await fetchComplianceRequirements()
+    } catch (err: any) {
+      console.error('Error platform acknowledging requirement:', err)
+    } finally {
+      setAcknowledging(false)
+    }
+  }
+
+  const openPlatformAckModal = (requirement: ComplianceRequirement) => {
+    setSelectedRequirement(requirement)
+    setAcknowledgmentReason('')
+    setShowPlatformAckModal(true)
+  }
+
+  const handleExportEvidenceBundle = async (requirementId: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/compliance/evidence/bundle/${requirementId}`, {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to export evidence bundle')
+      }
+      
+      // Get filename from response headers or create default
+      const contentDisposition = response.headers.get('content-disposition')
+      const filename = contentDisposition 
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `evidence-bundle-${requirementId}.zip`
+      
+      // Create blob and download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err: any) {
+      console.error('Error exporting evidence bundle:', err)
     }
   }
 
@@ -531,6 +615,23 @@ export default function CompliancePage() {
                         {req.status}
                       </span>
                         
+                        {/* Platform Acknowledgement Status */}
+                        {req.requiresPlatformAcknowledgement && (
+                          <div className="flex items-center gap-2">
+                            {req.platformAcknowledged ? (
+                              <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Platform Acknowledged
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Pending Platform Ack
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {/* Action Buttons */}
                         {req.status === 'REQUIRED' && (
                           <div className="flex gap-2">
@@ -546,10 +647,28 @@ export default function CompliancePage() {
                             >
                               Mark Exception
                             </button>
-
-
                           </div>
                         )}
+
+                        {/* Platform Acknowledgement Button */}
+                        {req.status === 'SATISFIED' && req.requiresPlatformAcknowledgement && !req.platformAcknowledged && (
+                          <button
+                            onClick={() => openPlatformAckModal(req)}
+                            className="px-3 py-1 text-xs border border-blue-600 text-blue-600 bg-white rounded hover:bg-blue-50"
+                          >
+                            Platform Acknowledge
+                          </button>
+                        )}
+
+                        {/* Export Evidence Bundle Button */}
+                        <button
+                          onClick={() => handleExportEvidenceBundle(req.id)}
+                          className="px-3 py-1 text-xs border border-gray-600 text-gray-600 bg-white rounded hover:bg-gray-50"
+                          title="Export evidence bundle"
+                        >
+                          <Download className="w-3 h-3 mr-1 inline" />
+                          Export Bundle
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -716,6 +835,49 @@ export default function CompliancePage() {
                 )}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Platform Acknowledgement Modal */}
+      {showPlatformAckModal && selectedRequirement && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Platform Co-Acknowledgement</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Acknowledge compliance requirement for {selectedRequirement.assetClass} token: <strong>{selectedRequirement.requirementName}</strong>
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Acknowledgement Reason *
+              </label>
+              <textarea
+                value={acknowledgmentReason}
+                onChange={(e) => setAcknowledgmentReason(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Provide a reason for platform co-acknowledgement..."
+                required
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowPlatformAckModal(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                disabled={acknowledging}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePlatformAcknowledgement}
+                disabled={!acknowledgmentReason.trim() || acknowledging}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {acknowledging ? 'Acknowledging...' : 'Acknowledge'}
+              </button>
+            </div>
           </div>
         </div>
       )}
