@@ -302,23 +302,59 @@ export default function CreateAssetPage() {
     ]
   }
 
-  // Get ledger-specific control options
+  // Get ledger-specific control options with native terminology
   const getLedgerControls = (ledger: string) => {
     const controls = {
       xrpl: [
-        { key: 'requireAuth', label: t('assets:createAsset.controls.requireAuthorization', 'Require Authorization'), description: t('assets:createAsset.controls.requireAuthorizationDesc', 'Holders must be authorized to hold this asset') },
-        { key: 'freeze', label: t('assets:createAsset.controls.enableFreeze', 'Enable Freeze'), description: t('assets:createAsset.controls.enableFreezeDesc', 'Allow freezing of holder accounts') },
-        { key: 'clawback', label: t('assets:createAsset.controls.enableClawback', 'Enable Clawback'), description: t('assets:createAsset.controls.enableClawbackDesc', 'Allow clawback of tokens from holders') }
+        { 
+          key: 'requireAuth', 
+          label: t('assets:createAsset.controls.xrpl.requireAuthorization', 'Require Authorization (XRPL)'), 
+          description: t('assets:createAsset.controls.xrpl.requireAuthorizationDesc', 'Holders must be authorized to hold this asset') 
+        },
+        { 
+          key: 'freeze', 
+          label: t('assets:createAsset.controls.xrpl.enableFreeze', 'Enable Freeze (XRPL)'), 
+          description: t('assets:createAsset.controls.xrpl.enableFreezeDesc', 'Allow freezing of holder accounts') 
+        },
+        { 
+          key: 'clawback', 
+          label: t('assets:createAsset.controls.xrpl.enableClawback', 'Enable Clawback (XRPL)'), 
+          description: t('assets:createAsset.controls.xrpl.enableClawbackDesc', 'Allow clawback of tokens from holders') 
+        }
       ],
       ethereum: [
-        { key: 'pausable', label: t('assets:createAsset.controls.enablePause', 'Enable Pause'), description: t('assets:createAsset.controls.enablePauseDesc', 'Allow pausing of token transfers') },
-        { key: 'mintable', label: t('assets:createAsset.controls.enableMint', 'Enable Mint'), description: t('assets:createAsset.controls.enableMintDesc', 'Allow minting of additional tokens') },
-        { key: 'burnable', label: t('assets:createAsset.controls.enableBurn', 'Enable Burn'), description: t('assets:createAsset.controls.enableBurnDesc', 'Allow burning of tokens') }
+        { 
+          key: 'pausable', 
+          label: t('assets:createAsset.controls.ethereum.enablePause', 'Enable Pause (Ethereum)'), 
+          description: t('assets:createAsset.controls.ethereum.enablePauseDesc', 'Allow pausing of token transfers') 
+        },
+        { 
+          key: 'mintable', 
+          label: t('assets:createAsset.controls.ethereum.enableMint', 'Enable Mint (Ethereum)'), 
+          description: t('assets:createAsset.controls.ethereum.enableMintDesc', 'Allow minting of additional tokens') 
+        },
+        { 
+          key: 'burnable', 
+          label: t('assets:createAsset.controls.ethereum.enableBurn', 'Enable Burn (Ethereum)'), 
+          description: t('assets:createAsset.controls.ethereum.enableBurnDesc', 'Allow burning of tokens') 
+        }
       ],
       hedera: [
-        { key: 'kycRequired', label: t('assets:createAsset.controls.requireKyc', 'Require KYC'), description: t('assets:createAsset.controls.requireKycDesc', 'Require KYC verification for holders') },
-        { key: 'freeze', label: t('assets:createAsset.controls.enableFreeze', 'Enable Freeze'), description: t('assets:createAsset.controls.enableFreezeDesc', 'Allow freezing of holder accounts') },
-        { key: 'wipe', label: t('assets:createAsset.controls.enableWipe', 'Enable Wipe'), description: t('assets:createAsset.controls.enableWipeDesc', 'Allow wiping of tokens from accounts') }
+        { 
+          key: 'kycRequired', 
+          label: t('assets:createAsset.controls.hedera.requireKyc', 'Require KYC (Hedera)'), 
+          description: t('assets:createAsset.controls.hedera.requireKycDesc', 'Require KYC verification for holders') 
+        },
+        { 
+          key: 'freeze', 
+          label: t('assets:createAsset.controls.hedera.enableFreeze', 'Enable Freeze (Hedera)'), 
+          description: t('assets:createAsset.controls.hedera.enableFreezeDesc', 'Allow freezing of holder accounts') 
+        },
+        { 
+          key: 'wipe', 
+          label: t('assets:createAsset.controls.hedera.enableWipe', 'Enable Wipe (Hedera)'), 
+          description: t('assets:createAsset.controls.hedera.enableWipeDesc', 'Allow wiping of tokens from accounts') 
+        }
       ]
     }
     

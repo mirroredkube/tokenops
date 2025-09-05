@@ -212,22 +212,30 @@
     "controls": {
       "title": "Ledger-Specific Controls",
       "description": "These controls affect how the asset behaves on the selected ledger. Some options may not be available for all ledgers.",
-      "requireAuthorization": "Require Authorization",
-      "requireAuthorizationDesc": "Holders must be authorized to hold this asset",
-      "enableFreeze": "Enable Freeze",
-      "enableFreezeDesc": "Allow freezing of holder accounts",
-      "enableClawback": "Enable Clawback",
-      "enableClawbackDesc": "Allow clawback of tokens from holders",
-      "enablePause": "Enable Pause",
-      "enablePauseDesc": "Allow pausing of token transfers",
-      "enableMint": "Enable Mint",
-      "enableMintDesc": "Allow minting of additional tokens",
-      "enableBurn": "Enable Burn",
-      "enableBurnDesc": "Allow burning of tokens",
-      "requireKyc": "Require KYC",
-      "requireKycDesc": "Require KYC verification for holders",
-      "enableWipe": "Enable Wipe",
-      "enableWipeDesc": "Allow wiping of tokens from accounts"
+      "xrpl": {
+        "requireAuthorization": "Require Authorization (XRPL)",
+        "requireAuthorizationDesc": "Holders must be authorized to hold this asset",
+        "enableFreeze": "Enable Freeze (XRPL)",
+        "enableFreezeDesc": "Allow freezing of holder accounts",
+        "enableClawback": "Enable Clawback (XRPL)",
+        "enableClawbackDesc": "Allow clawback of tokens from holders"
+      },
+      "ethereum": {
+        "enablePause": "Enable Pause (Ethereum)",
+        "enablePauseDesc": "Allow pausing of token transfers",
+        "enableMint": "Enable Mint (Ethereum)",
+        "enableMintDesc": "Allow minting of additional tokens",
+        "enableBurn": "Enable Burn (Ethereum)",
+        "enableBurnDesc": "Allow burning of tokens"
+      },
+      "hedera": {
+        "requireKyc": "Require KYC (Hedera)",
+        "requireKycDesc": "Require KYC verification for holders",
+        "enableFreeze": "Enable Freeze (Hedera)",
+        "enableFreezeDesc": "Allow freezing of holder accounts",
+        "enableWipe": "Enable Wipe (Hedera)",
+        "enableWipeDesc": "Allow wiping of tokens from accounts"
+      }
     },
     "actions": {
       "cancel": "Cancel",

@@ -195,22 +195,30 @@
     "controls": {
       "title": "Ledger-spezifische Steuerungen",
       "description": "Diese Steuerungen beeinflussen, wie sich das Asset im ausgewählten Ledger verhält. Einige Optionen sind möglicherweise nicht für alle Ledger verfügbar.",
-      "requireAuthorization": "Autorisierung erforderlich",
-      "requireAuthorizationDesc": "Inhaber müssen autorisiert sein, um dieses Asset zu halten",
-      "enableFreeze": "Einfrieren aktivieren",
-      "enableFreezeDesc": "Einfrieren von Inhaber-Konten erlauben",
-      "enableClawback": "Rückforderung aktivieren",
-      "enableClawbackDesc": "Rückforderung von Token von Inhabern erlauben",
-      "enablePause": "Pause aktivieren",
-      "enablePauseDesc": "Pausieren von Token-Übertragungen erlauben",
-      "enableMint": "Minting aktivieren",
-      "enableMintDesc": "Minting zusätzlicher Token erlauben",
-      "enableBurn": "Burning aktivieren",
-      "enableBurnDesc": "Burning von Token erlauben",
-      "requireKyc": "KYC erforderlich",
-      "requireKycDesc": "KYC-Verifizierung für Inhaber erforderlich",
-      "enableWipe": "Wipe aktivieren",
-      "enableWipeDesc": "Wiping von Token von Konten erlauben"
+      "xrpl": {
+        "requireAuthorization": "Autorisierung erforderlich (XRPL)",
+        "requireAuthorizationDesc": "Inhaber müssen autorisiert sein, um dieses Asset zu halten",
+        "enableFreeze": "Einfrieren aktivieren (XRPL)",
+        "enableFreezeDesc": "Einfrieren von Inhaber-Konten erlauben",
+        "enableClawback": "Rückforderung aktivieren (XRPL)",
+        "enableClawbackDesc": "Rückforderung von Token von Inhabern erlauben"
+      },
+      "ethereum": {
+        "enablePause": "Pause aktivieren (Ethereum)",
+        "enablePauseDesc": "Pausieren von Token-Übertragungen erlauben",
+        "enableMint": "Minting aktivieren (Ethereum)",
+        "enableMintDesc": "Minting zusätzlicher Token erlauben",
+        "enableBurn": "Burning aktivieren (Ethereum)",
+        "enableBurnDesc": "Burning von Token erlauben"
+      },
+      "hedera": {
+        "requireKyc": "KYC erforderlich (Hedera)",
+        "requireKycDesc": "KYC-Verifizierung für Inhaber erforderlich",
+        "enableFreeze": "Einfrieren aktivieren (Hedera)",
+        "enableFreezeDesc": "Einfrieren von Inhaber-Konten erlauben",
+        "enableWipe": "Wipe aktivieren (Hedera)",
+        "enableWipeDesc": "Wiping von Token von Konten erlauben"
+      }
     },
     "actions": {
       "cancel": "Abbrechen",
