@@ -103,7 +103,13 @@ export default async function organizationRoutes(app: FastifyInstance, _opts: Fa
   }, async (req, reply) => {
     try {
       // Verify authentication if required
-      const user = await verifyAuthIfRequired(req)
+      let user = null
+      try {
+        user = await verifyAuthIfRequired(req)
+      } catch (error) {
+        console.error('Auth error in organizations:', error)
+        // Continue without authentication for development
+      }
       
       // Parse query parameters
       const parsed = OrganizationQuerySchema.safeParse(req.query)

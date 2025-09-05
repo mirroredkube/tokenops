@@ -608,6 +608,22 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     }
   }
 
+  const getRegimeFromJurisdiction = (jurisdiction: string) => {
+    // EU countries - MiCA regime
+    const euCountries = ['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI', 'IE', 'GR', 'CZ', 'HU', 'SE', 'PL', 'RO', 'BG', 'HR', 'SK', 'SI', 'LT', 'LV', 'EE', 'CY', 'LU', 'MT']
+    
+    if (euCountries.includes(jurisdiction.toUpperCase())) {
+      return 'MiCA'
+    }
+    
+    // Future regimes can be added here
+    // if (jurisdiction === 'US') return 'SEC'
+    // if (jurisdiction === 'UK') return 'FCA'
+    // if (jurisdiction === 'SG') return 'MAS'
+    
+    return 'Custom'
+  }
+
   const resetFlow = () => {
     setCurrentStep('ledger-selection')
     setSelectedAsset(null)
@@ -1362,7 +1378,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     </svg>
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-1">Compliance</h3>
-                  <p className="text-sm text-gray-600">MiCA-compliant token management</p>
+                  <p className="text-sm text-gray-600">
+                    {getRegimeFromJurisdiction(complianceData.jurisdiction || selectedAsset?.registry?.jurisdiction || '')}-compliant token management
+                  </p>
                 </div>
               </div>
             </div>
@@ -1626,7 +1644,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-                          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('issuances:compliance.title', 'MiCA Compliance Metadata')}</h1>
+                          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            {getRegimeFromJurisdiction(complianceData.jurisdiction || selectedAsset?.registry?.jurisdiction || '')} Compliance Metadata
+                          </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               {t('issuances:compliance.description', 'Configure compliance metadata for regulatory reporting and audit trails.')}
             </p>
@@ -1663,6 +1683,15 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                         <label className="block text-sm font-medium text-gray-700 mb-2">Ledger</label>
                         <p className="text-gray-900 font-medium">{selectedAsset?.ledger?.toUpperCase() || 'N/A'}</p>
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Regulatory Regime</label>
+                        <p className="text-gray-900 font-medium">
+                          {getRegimeFromJurisdiction(selectedAsset?.registry?.jurisdiction || '')}
+                          {selectedAsset?.registry?.jurisdiction && (
+                            <span className="text-xs text-gray-500 ml-2">({selectedAsset.registry.jurisdiction})</span>
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -1685,9 +1714,11 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     </div>
                   </div>
 
-                  {/* MiCA Classification & KYC (classification read-only) */}
+                  {/* Regulatory Classification & KYC (classification read-only) */}
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">MiCA Classification & KYC</h3>
+                    <h3 className="text-lg font-semibold mb-4">
+                      {getRegimeFromJurisdiction(complianceData.jurisdiction || selectedAsset?.registry?.jurisdiction || '')} Classification & KYC
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Token Classification</label>
@@ -1720,6 +1751,72 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                       </div>
                     </div>
                   </div>
+
+                  {/* Ledger Controls (read-only from Asset) */}
+                  {selectedAsset?.controls && (
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4">Ledger Controls</h3>
+                      <div className="space-y-3">
+                        {selectedAsset.controls.requireAuth !== undefined && (
+                          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div>
+                              <h4 className="font-medium text-gray-900">Require Authorization</h4>
+                              <p className="text-sm text-gray-600">Holders must be authorized to hold this asset</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              selectedAsset.controls.requireAuth 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {selectedAsset.controls.requireAuth ? 'Enabled' : 'Disabled'}
+                            </span>
+                          </div>
+                        )}
+                        {selectedAsset.controls.freeze !== undefined && (
+                          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div>
+                              <h4 className="font-medium text-gray-900">Freeze</h4>
+                              <p className="text-sm text-gray-600">Asset can be frozen by the issuer</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              selectedAsset.controls.freeze 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {selectedAsset.controls.freeze ? 'Enabled' : 'Disabled'}
+                            </span>
+                          </div>
+                        )}
+                        {selectedAsset.controls.clawback !== undefined && (
+                          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div>
+                              <h4 className="font-medium text-gray-900">Clawback</h4>
+                              <p className="text-sm text-gray-600">Issuer can reclaim tokens from holders</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              selectedAsset.controls.clawback 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {selectedAsset.controls.clawback ? 'Enabled' : 'Disabled'}
+                            </span>
+                          </div>
+                        )}
+                        {selectedAsset.controls.transferFeeBps !== undefined && (
+                          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div>
+                              <h4 className="font-medium text-gray-900">Transfer Fee</h4>
+                              <p className="text-sm text-gray-600">Fee charged on transfers (basis points)</p>
+                            </div>
+                            <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                              {selectedAsset.controls.transferFeeBps} bps
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-3 text-xs text-gray-500">From Asset Configuration</p>
+                    </div>
+                  )}
 
                   {/* Transfer Restrictions */}
                   <div className="bg-gray-50 p-6 rounded-lg">

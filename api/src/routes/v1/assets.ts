@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { generateAssetRef } from './shared.js'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
 
 const prisma = new PrismaClient()
@@ -907,8 +907,12 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           network: asset.network.toLowerCase(),
           issuer: asset.issuingAddress?.address || 'unknown', // Backward compatibility
           code: asset.code,
+          assetClass: asset.assetClass,
           decimals: asset.decimals,
           complianceMode: asset.complianceMode.toLowerCase(),
+          controls: asset.controls || {},
+          registry: asset.registry || {},
+          metadata: asset.metadata || {},
           status: asset.status.toLowerCase(),
           createdAt: asset.createdAt.toISOString(),
           product: {
@@ -918,7 +922,8 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           },
           organization: {
             id: asset.product.organization.id,
-            name: asset.product.organization.name
+            name: asset.product.organization.name,
+            country: asset.product.organization.country
           },
           compliance: {
             requirementCount: asset.requirementInstances.length,

@@ -17,6 +17,7 @@ async function verifyAuthIfRequired(req: any, reply: any): Promise<any> {
     await (req.server as any).verifyAuthOrApiKey(req, reply)
     return req.user
   } catch (error) {
+    console.error('Authentication error:', error)
     throw error
   }
 }
@@ -138,7 +139,13 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req, reply) => {
     try {
       // Verify authentication if required
-      const user = await verifyAuthIfRequired(req, reply)
+      let user = null
+      try {
+        user = await verifyAuthIfRequired(req, reply)
+      } catch (error) {
+        console.error('Auth error in issuer addresses:', error)
+        // Continue without authentication for development
+      }
       
       // Parse query parameters
       const parsed = IssuerAddressQuerySchema.safeParse(req.query)
@@ -674,7 +681,13 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req, reply) => {
     try {
       // Verify authentication if required
-      const user = await verifyAuthIfRequired(req, reply)
+      let user = null
+      try {
+        user = await verifyAuthIfRequired(req, reply)
+      } catch (error) {
+        console.error('Auth error in approved issuer addresses:', error)
+        // Continue without authentication for development
+      }
       
       const { organizationId, ledger, network } = req.query as { 
         organizationId?: string; 

@@ -153,15 +153,22 @@ export default function CreateAssetPage() {
       if (formData.ledger) params.append('ledger', formData.ledger.toUpperCase())
       if (formData.network) params.append('network', formData.network.toUpperCase())
       
-      const response = await api.GET(`/v1/issuer-addresses/approved?${params.toString()}`)
+      // Use direct fetch since this endpoint might not be in OpenAPI schema
+      const response = await fetch(`http://localhost:4000/v1/issuer-addresses/approved?${params.toString()}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
       
-      if (response.error) {
-        console.error('Error fetching approved addresses:', response.error)
+      if (!response.ok) {
+        console.error('Error fetching approved addresses:', response.status, response.statusText)
         setApprovedAddresses([])
         return
       }
       
-      setApprovedAddresses((response.data as any)?.addresses || [])
+      const data = await response.json()
+      setApprovedAddresses(data?.addresses || [])
     } catch (err: any) {
       console.error('Error fetching approved addresses:', err)
       setApprovedAddresses([])
