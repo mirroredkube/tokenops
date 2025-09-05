@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { currencyToHex, isHexCurrency } from '../../utils/currency.js'
 import { Asset, assets, issuances, validateAsset, generateIssuanceId, checkIdempotency, storeIdempotency } from './shared.js'
+import { computeAssetReadiness } from '../../lib/readiness.js'
 import prisma from '../../db/client.js'
 import { issuanceWatcher } from '../../lib/issuanceWatcher.js'
 import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
@@ -343,18 +344,14 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       const snapshotService = new RequirementSnapshotService(prisma)
       const manifestBuilder = new ComplianceManifestBuilder(prisma)
       
-      // Validate that all required requirements are satisfied
-      const validation = await snapshotService.validateIssuanceRequirements(assetId)
-      if (!validation.valid) {
-        console.log('❌ Compliance validation failed:', validation.blockedRequirements)
+      // MVP readiness validation (policy-light)
+      const readiness = await computeAssetReadiness(assetId)
+      if (!readiness.ok) {
         return reply.status(422).send({ 
-          error: 'Issuance blocked by compliance requirements',
-          blockedRequirements: validation.blockedRequirements,
-          message: 'All required compliance requirements must be satisfied before issuance'
+          error: 'Issuance blocked by readiness checks',
+          blockers: readiness.blockers
         })
       }
-      
-      console.log('✅ Compliance validation passed - all requirements satisfied')
       
       const adapter = getLedgerAdapter()
       
@@ -408,6 +405,10 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       
       try {
         manifest = await manifestBuilder.buildManifest(issuance.id, issuanceFacts || {})
+        // Attach MVP readiness decision to manifest for audit
+        if (manifest) {
+          (manifest as any).readiness = readiness
+        }
         manifestHash = manifestBuilder.generateManifestHash(manifest)
         console.log(`✅ Created compliance manifest for issuance ${issuance.id}`)
       } catch (manifestError: any) {
@@ -522,6 +523,37 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       }
       
       return reply.status(502).send({ error: 'Ledger connection error' })
+    }
+  })
+
+  // 2a. POST /v1/assets/{assetId}/preflight - Readiness preflight (MVP)
+  app.post('/assets/:assetId/preflight', {
+    schema: {
+      summary: 'Validate readiness for issuance (MVP)',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['assetId'],
+        properties: { assetId: { type: 'string' } }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            ok: { type: 'boolean' },
+            blockers: { type: 'array', items: { type: 'object', properties: { code: { type: 'string' }, message: { type: 'string' }, hint: { type: 'string' } } } },
+            facts: { type: 'object' }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    const { assetId } = req.params as { assetId: string }
+    try {
+      const result = await computeAssetReadiness(assetId)
+      return reply.status(200).send(result)
+    } catch (e: any) {
+      return reply.status(500).send({ ok: false, blockers: [{ code: 'INTERNAL', message: 'Preflight failed' }] })
     }
   })
 

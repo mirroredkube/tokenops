@@ -79,6 +79,8 @@ export default function AssetDetailsPage() {
     variant: 'info'
   })
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [preflight, setPreflight] = useState<{ ok: boolean; blockers: { code: string; message: string; hint?: string }[] } | null>(null)
+  const [preflightLoading, setPreflightLoading] = useState(false)
 
   useEffect(() => {
     fetchAsset()
@@ -298,6 +300,29 @@ export default function AssetDetailsPage() {
 
   const { showToast } = useToast()
 
+  const runPreflight = async () => {
+    if (!assetId) return
+    setPreflightLoading(true)
+    try {
+      const { data, error } = await api.POST(`/v1/assets/${assetId}/preflight` as any, { body: {} as any })
+      if (error && (error as any).error) {
+        throw new Error((error as any).error)
+      }
+      if (!data) throw new Error('No response from preflight')
+      setPreflight(data as any)
+      if ((data as any).ok) {
+        showToast('success', 'Asset is ready for issuance')
+      } else {
+        showToast('warning', 'Issuance blocked. See blockers below.')
+      }
+    } catch (e: any) {
+      console.error('Preflight failed', e)
+      showToast('error', e.message || 'Preflight failed')
+    } finally {
+      setPreflightLoading(false)
+    }
+  }
+
   const copyToClipboard = async (text: string, type: string) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -359,12 +384,22 @@ export default function AssetDetailsPage() {
         {/* Quick Actions */}
         <div className="flex items-center gap-3">
           {asset.status === 'active' && (
-            <Link
-              href={`/app/issuance/new?assetId=${asset.id}`}
-              className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
-            >
-              Start Issuance
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={runPreflight}
+                disabled={preflightLoading}
+                className="px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50"
+              >
+                {preflightLoading ? 'Validating…' : 'Validate Issuance'}
+              </button>
+              <Link
+                href={preflight?.ok ? `/app/issuance/new?assetId=${asset.id}` : '#'}
+                className={`px-4 py-2 rounded-lg border ${preflight?.ok ? 'text-emerald-600 border-emerald-600 hover:bg-emerald-50' : 'text-gray-400 border-gray-300 cursor-not-allowed'}`}
+                onClick={(e) => { if (!preflight?.ok) e.preventDefault() }}
+              >
+                Start Issuance
+              </Link>
+            </div>
           )}
           {asset.status === 'draft' && (
             <button
@@ -533,6 +568,21 @@ export default function AssetDetailsPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Preflight Blockers */}
+          {preflight && !preflight.ok && (
+            <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+              <h3 className="text-lg font-semibold mb-2 text-red-800">Preflight Blockers</h3>
+              <ul className="list-disc pl-6 space-y-1 text-sm text-red-800">
+                {preflight.blockers.map((b) => (
+                  <li key={b.code}>
+                    <span className="font-medium">{b.message}</span>
+                    {b.hint && <span className="text-red-700"> — {b.hint}</span>}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

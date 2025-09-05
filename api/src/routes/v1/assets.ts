@@ -24,10 +24,13 @@ const AssetCreateSchema = z.object({
     transferFeeBps: z.number().int().min(0).max(10000).optional()
   }).optional(),
   registry: z.object({
-    isin: z.string().optional(),
+    jurisdiction: z.string().optional(),
     lei: z.string().optional(),
     micaClass: z.string().optional(),
-    jurisdiction: z.string().optional()
+    whitePaperRef: z.string().url().optional(),
+    reserveAssets: z.string().optional(),
+    custodian: z.string().optional(),
+    riskAssessment: z.string().optional()
   }).optional(),
   metadata: z.record(z.any()).optional()
 })
