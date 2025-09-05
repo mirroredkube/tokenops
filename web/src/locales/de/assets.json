@@ -172,16 +172,22 @@
       "title": "Register-Informationen",
       "description": "Register-Informationen helfen bei Compliance und regulatorischer Berichterstattung. Diese Daten werden Off-Chain gespeichert und können in Compliance-Datensätzen referenziert werden.",
       "fields": {
-        "isinCode": "ISIN-Code",
         "jurisdiction": "Gerichtsbarkeit",
         "regulatoryClassification": "Regulatorische Klassifizierung",
-        "leiCode": "LEI-Code"
+        "leiCode": "LEI-Code",
+        "whitePaperRef": "White Paper Referenz",
+        "reserveAssets": "Reserve-Assets",
+        "custodian": "Depotbank-Informationen",
+        "riskAssessment": "Risikobewertung"
       },
       "placeholders": {
-        "isinCode": "US0378331005",
         "jurisdiction": "DE, US, EU",
         "regulatoryClassification": "Regulatorische Klassifizierung auswählen",
-        "leiCode": "529900WXWXWXWXWXWXWX"
+        "leiCode": "529900WXWXWXWXWXWXWX",
+        "whitePaperRef": "https://example.com/whitepaper.pdf",
+        "reserveAssets": "Beschreiben Sie die Reserve-Assets, die diesen Token absichern...",
+        "custodian": "Depotbank-Name und Kontaktinformationen",
+        "riskAssessment": "Beschreiben Sie die Hauptrisiken dieses Krypto-Assets..."
       },
       "classifications": {
         "utilityToken": "Utility Token",

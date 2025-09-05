@@ -252,6 +252,15 @@ export default function CreateAssetPage() {
         else if (value === 'OTHER' && prev.complianceMode === 'OFF') {
           newData.complianceMode = 'RECORD_ONLY'
         }
+        
+        // Auto-set Regulatory Classification based on Asset Class
+        if (value === 'ART') {
+          newData.registry = { ...newData.registry, micaClass: 'Asset-Referenced Token (ART)' }
+        } else if (value === 'EMT') {
+          newData.registry = { ...newData.registry, micaClass: 'E-Money Token (EMT)' }
+        } else if (value === 'OTHER') {
+          newData.registry = { ...newData.registry, micaClass: 'Utility Token' }
+        }
       }
       
       return newData
@@ -566,44 +575,138 @@ export default function CreateAssetPage() {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label={t('assets:createAsset.registry.fields.isinCode', 'ISIN Code')}>
-                <input
-                  type="text"
-                  value={formData.registry?.isin || ''}
-                  onChange={(e) => handleNestedChange('registry', 'isin', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder={t('assets:createAsset.registry.placeholders.isinCode', 'US0378331005')}
-                />
-              </FormField>
-
-              <FormField label={t('assets:createAsset.registry.fields.jurisdiction', 'Jurisdiction')}>
-                <input
-                  type="text"
-                  value={formData.registry?.jurisdiction || ''}
-                  onChange={(e) => handleNestedChange('registry', 'jurisdiction', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder={t('assets:createAsset.registry.placeholders.jurisdiction', 'DE, US, EU')}
-                />
-              </FormField>
-
-              <FormField label={t('assets:createAsset.registry.fields.regulatoryClassification', 'Regulatory Classification')}>
+            <div className="space-y-4">
+              {/* Regulatory Classification - Full width for better visibility */}
+              <FormField label={t('assets:createAsset.registry.fields.regulatoryClassification', 'Regulatory Classification')} required>
                 <CustomDropdown
                   value={formData.registry?.micaClass || ''}
                   onChange={(value) => handleNestedChange('registry', 'micaClass', value)}
                   options={getRegulatoryClassificationOptions()}
                   placeholder={t('assets:createAsset.registry.placeholders.regulatoryClassification', 'Select Regulatory Classification')}
                 />
+                {formData.assetClass && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center">
+                      <svg className="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-xs text-green-700">
+                        <strong>Auto-linked:</strong> {formData.assetClass === 'ART' ? 'Asset-Referenced Token (ART)' : formData.assetClass === 'EMT' ? 'E-Money Token (EMT)' : 'Utility Token'} based on Asset Class selection
+                      </p>
+                    </div>
+                  </div>
+                )}
               </FormField>
 
-              <FormField label={t('assets:createAsset.registry.fields.leiCode', 'LEI Code')}>
+              {/* Jurisdiction and LEI Code - Two columns */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label={t('assets:createAsset.registry.fields.jurisdiction', 'Jurisdiction')} required>
+                  <input
+                    type="text"
+                    value={formData.registry?.jurisdiction || ''}
+                    onChange={(e) => handleNestedChange('registry', 'jurisdiction', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder={t('assets:createAsset.registry.placeholders.jurisdiction', 'DE, US, EU')}
+                    required
+                  />
+                </FormField>
+
+                <FormField label={t('assets:createAsset.registry.fields.leiCode', 'LEI Code')} required={formData.assetClass === 'ART' || formData.assetClass === 'EMT'}>
+                  <input
+                    type="text"
+                    value={formData.registry?.lei || ''}
+                    onChange={(e) => handleNestedChange('registry', 'lei', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder={t('assets:createAsset.registry.placeholders.leiCode', '529900WXWXWXWXWXWXWX')}
+                    required={formData.assetClass === 'ART' || formData.assetClass === 'EMT'}
+                  />
+                  {(formData.assetClass === 'ART' || formData.assetClass === 'EMT') && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      Required for {formData.assetClass === 'ART' ? 'Asset-Referenced Tokens' : 'E-Money Tokens'} under MiCA
+                    </p>
+                  )}
+                  {formData.assetClass === 'OTHER' && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Optional for Utility Tokens
+                    </p>
+                  )}
+                </FormField>
+              </div>
+
+              {/* White Paper Reference - Required for all crypto-assets */}
+              <FormField label={t('assets:createAsset.registry.fields.whitePaperRef', 'White Paper Reference')} required>
                 <input
-                  type="text"
-                  value={formData.registry?.lei || ''}
-                  onChange={(e) => handleNestedChange('registry', 'lei', e.target.value)}
+                  type="url"
+                  value={formData.registry?.whitePaperRef || ''}
+                  onChange={(e) => handleNestedChange('registry', 'whitePaperRef', e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder={t('assets:createAsset.registry.placeholders.leiCode', '529900WXWXWXWXWXWXWX')}
+                  placeholder={t('assets:createAsset.registry.placeholders.whitePaperRef', 'https://example.com/whitepaper.pdf')}
+                  required
                 />
+                <p className="mt-1 text-xs text-blue-600">
+                  Required for all crypto-assets under MiCA - must be published before public offer
+                </p>
+              </FormField>
+
+              {/* Conditional fields for ART/EMT */}
+              {(formData.assetClass === 'ART' || formData.assetClass === 'EMT') && (
+                <>
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center">
+                      <svg className="h-4 w-4 text-yellow-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-sm text-yellow-700">
+                        <strong>Additional Requirements:</strong> {formData.assetClass === 'ART' ? 'Asset-Referenced Tokens' : 'E-Money Tokens'} require additional compliance fields under MiCA
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Reserve Asset Information */}
+                  <FormField label={t('assets:createAsset.registry.fields.reserveAssets', 'Reserve Assets')} required>
+                    <textarea
+                      value={formData.registry?.reserveAssets || ''}
+                      onChange={(e) => handleNestedChange('registry', 'reserveAssets', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      placeholder={t('assets:createAsset.registry.placeholders.reserveAssets', 'Describe the reserve assets backing this token...')}
+                      rows={3}
+                      required
+                    />
+                    <p className="mt-1 text-xs text-blue-600">
+                      Required for {formData.assetClass === 'ART' ? 'Asset-Referenced Tokens' : 'E-Money Tokens'} - describe assets backing the token
+                    </p>
+                  </FormField>
+
+                  {/* Custodian Information */}
+                  <FormField label={t('assets:createAsset.registry.fields.custodian', 'Custodian Information')} required>
+                    <input
+                      type="text"
+                      value={formData.registry?.custodian || ''}
+                      onChange={(e) => handleNestedChange('registry', 'custodian', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      placeholder={t('assets:createAsset.registry.placeholders.custodian', 'Custodian name and contact information')}
+                      required
+                    />
+                    <p className="mt-1 text-xs text-blue-600">
+                      Required for {formData.assetClass === 'ART' ? 'Asset-Referenced Tokens' : 'E-Money Tokens'} - entity responsible for reserve assets
+                    </p>
+                  </FormField>
+                </>
+              )}
+
+              {/* Risk Assessment - Required for all crypto-assets */}
+              <FormField label={t('assets:createAsset.registry.fields.riskAssessment', 'Risk Assessment')} required>
+                <textarea
+                  value={formData.registry?.riskAssessment || ''}
+                  onChange={(e) => handleNestedChange('registry', 'riskAssessment', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  placeholder={t('assets:createAsset.registry.placeholders.riskAssessment', 'Describe the key risks associated with this crypto-asset...')}
+                  rows={3}
+                  required
+                />
+                <p className="mt-1 text-xs text-blue-600">
+                  Required for all crypto-assets under MiCA - must be included in white paper
+                </p>
               </FormField>
             </div>
           </div>
