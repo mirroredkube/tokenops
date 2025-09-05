@@ -43,15 +43,30 @@ interface Asset {
   complianceMode: 'OFF' | 'RECORD_ONLY' | 'GATED_BEFORE'
   status: 'draft' | 'active' | 'paused' | 'retired'
   createdAt: string
+  controls?: {
+    requireAuth?: boolean
+    freeze?: boolean
+    clawback?: boolean
+    transferFeeBps?: number
+  }
+  registry?: {
+    lei?: string
+    micaClass?: string
+    jurisdiction?: string
+    whitePaperRef?: string
+    reserveAssets?: string
+    custodian?: string
+    riskAssessment?: string
+  }
+  product?: { id: string; name: string; assetClass?: string }
+  organization?: { id: string; name: string; country?: string }
 }
 
 interface ComplianceData {
   isin: string
-  legalIssuerName: string
   micaClassification: 'stablecoin' | 'security_token' | 'utility_token' | 'asset_backed'
   kycRequirement: 'mandatory' | 'optional' | 'not_required'
   jurisdiction: string
-  purpose: string
   expirationDate?: string
   transferRestrictions: boolean
   maxTransferAmount?: string
@@ -119,11 +134,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
   })
   const [complianceData, setComplianceData] = useState<ComplianceData>({
     isin: '',
-    legalIssuerName: '',
     micaClassification: 'utility_token',
     kycRequirement: 'optional',
     jurisdiction: '',
-    purpose: '',
     expirationDate: '',
     transferRestrictions: false,
     maxTransferAmount: ''
@@ -180,7 +193,11 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         decimals: asset.decimals || 0,
         complianceMode: asset.complianceMode || 'RECORD_ONLY',
         status: asset.status || 'draft',
-        createdAt: asset.createdAt || new Date().toISOString()
+        createdAt: asset.createdAt || new Date().toISOString(),
+        controls: asset.controls,
+        registry: asset.registry,
+        product: asset.product,
+        organization: asset.organization
       }))
       
       setAssets(transformedAssets)
@@ -416,9 +433,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         holder: tokenData.destination,
         amount: tokenData.amount.toString(),
         issuanceFacts: {
-          purpose: complianceData.purpose,
           isin: complianceData.isin,
-          legal_issuer: complianceData.legalIssuerName,
+          legal_issuer: selectedAsset?.organization?.name || '',
           jurisdiction: complianceData.jurisdiction,
           mica_class: complianceData.micaClassification,
           kyc_requirement: complianceData.kycRequirement,
@@ -515,9 +531,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
       // Store compliance data for issuance (will be included in manifest)
       const issuanceFacts = {
-        purpose: complianceData.purpose,
         isin: complianceData.isin,
-        legal_issuer: complianceData.legalIssuerName,
+        legal_issuer: selectedAsset?.organization?.name || '',
         jurisdiction: complianceData.jurisdiction,
         mica_class: complianceData.micaClassification,
         kyc_requirement: complianceData.kycRequirement,
@@ -566,16 +581,32 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       try {
         const { data } = await api.GET(`/v1/assets/${selectedAsset.id}` as any, {})
         const registry = (data as any)?.registry || {}
+        console.log('Prefilling from asset registry:', registry)
         setAssetRegistryPrefill({ jurisdiction: registry.jurisdiction, micaClass: registry.micaClass })
         setComplianceData(prev => ({
           ...prev,
           jurisdiction: registry.jurisdiction || prev.jurisdiction,
           micaClassification: (mapMica(registry.micaClass) as any) || prev.micaClassification
         }))
-      } catch {}
+      } catch (err) {
+        console.error('Error prefilling from asset:', err)
+      }
     }
     if (currentStep === 'compliance-metadata') prefillFromAsset()
   }, [currentStep, selectedAsset?.id])
+
+  const getMicaLabel = (val: string) => {
+    switch (val) {
+      case 'asset_referenced_token':
+        return 'Asset-Referenced Token (ART)'
+      case 'e_money_token':
+        return 'E-Money Token (EMT)'
+      case 'utility_token':
+        return 'Utility Token'
+      default:
+        return val
+    }
+  }
 
   const resetFlow = () => {
     setCurrentStep('ledger-selection')
@@ -587,11 +618,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     setTokenData({ currencyCode: '', amount: '', destination: '', metadata: {}, metadataRaw: '' })
     setComplianceData({
       isin: '',
-      legalIssuerName: '',
       micaClassification: 'utility_token',
       kycRequirement: 'optional',
       jurisdiction: '',
-      purpose: '',
       expirationDate: '',
       transferRestrictions: false,
       maxTransferAmount: ''
@@ -1637,58 +1666,40 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     </div>
                   </div>
 
-                  {/* Basic Compliance Information */}
+                  {/* Basic Compliance Information (read-only from Asset) */}
                   <div className="bg-gray-50 p-6 rounded-lg">
                     <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.basicInformation', 'Basic Information')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label={t('issuances:compliance.fields.isinCode', 'ISIN Code *')} required>
-                        <input
-                          type="text"
-                          value={complianceData.isin}
-                          onChange={(e) => setComplianceData(prev => ({ ...prev, isin: e.target.value }))}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder={t('issuances:compliance.fields.isinCodePlaceholder', 'DE0001234567')}
-                          required
-                        />
-                      </FormField>
-                      <FormField label={t('issuances:compliance.fields.legalIssuerName', 'Legal Issuer Name *')} required>
-                        <input
-                          type="text"
-                          value={complianceData.legalIssuerName}
-                          onChange={(e) => setComplianceData(prev => ({ ...prev, legalIssuerName: e.target.value }))}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder={t('issuances:compliance.fields.legalIssuerNamePlaceholder', 'Acme Bank AG')}
-                          required
-                        />
-                      </FormField>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Regulatory Classification</label>
+                        <p className="text-gray-900 font-medium">{getMicaLabel(complianceData.micaClassification)}</p>
+                        {assetRegistryPrefill?.micaClass && (
+                          <p className="mt-1 text-xs text-gray-500">Pre-filled from Asset • Edit at Asset</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Legal Issuer Name</label>
+                        <p className="text-gray-900 font-medium">{selectedAsset?.organization?.name || '—'}</p>
+                        <p className="mt-1 text-xs text-gray-500">From Organization • Edit at Organization</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* MiCA Classification */}
+                  {/* MiCA Classification & KYC (classification read-only) */}
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">MiCA Classification</h3>
+                    <h3 className="text-lg font-semibold mb-4">MiCA Classification & KYC</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label={t('issuances:compliance.fields.tokenClassification', 'Token Classification *')} required>
-                        <CustomDropdown
-                          value={complianceData.micaClassification}
-                          onChange={(value) => setComplianceData(prev => ({ ...prev, micaClassification: value as any }))}
-                          options={[
-                            { value: 'stablecoin', label: 'Stablecoin' },
-                            { value: 'security_token', label: t('issuances:compliance.options.securityToken', 'Security Token') },
-                            { value: 'utility_token', label: t('issuances:compliance.options.utilityToken', 'Utility Token') },
-                            { value: 'asset_backed', label: 'Asset-Backed Token' }
-                          ]}
-                          placeholder={t('issuances:compliance.fields.tokenClassificationPlaceholder', 'Select token classification')}
-                        />
-                      </FormField>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Token Classification</label>
+                        <p className="text-gray-900 font-medium">{getMicaLabel(complianceData.micaClassification)}</p>
+                      </div>
                       <FormField label={t('issuances:compliance.fields.kycRequirement', 'KYC Requirement *')} required>
                         <CustomDropdown
                           value={complianceData.kycRequirement}
                           onChange={(value) => setComplianceData(prev => ({ ...prev, kycRequirement: value as any }))}
                           options={[
-                            { value: 'mandatory', label: t('issuances:compliance.options.required', 'Required') },
-                            { value: 'optional', label: t('issuances:compliance.options.optional', 'Optional') },
-                            { value: 'not_required', label: t('issuances:compliance.options.notRequired', 'Not Required') }
+                            { value: 'required', label: t('issuances:compliance.options.required', 'Required') },
+                            { value: 'optional', label: t('issuances:compliance.options.optional', 'Optional') }
                           ]}
                           placeholder={t('issuances:compliance.fields.kycRequirementPlaceholder', 'Select KYC requirement')}
                         />
@@ -1696,30 +1707,17 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                     </div>
                   </div>
 
-                  {/* Jurisdiction and Purpose */}
+                  {/* Jurisdiction (read-only) */}
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.jurisdictionAndPurpose', 'Jurisdiction & Purpose')}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label={t('issuances:compliance.fields.jurisdiction', 'Jurisdiction *')} required>
-                        <input
-                          type="text"
-                          value={complianceData.jurisdiction}
-                          onChange={(e) => setComplianceData(prev => ({ ...prev, jurisdiction: e.target.value }))}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder={t('issuances:compliance.fields.jurisdictionPlaceholder', 'DE, EEA, EU')}
-                          required
-                        />
-                      </FormField>
-                      <FormField label={t('issuances:compliance.fields.purpose', 'Purpose *')} required>
-                        <input
-                          type="text"
-                          value={complianceData.purpose}
-                          onChange={(e) => setComplianceData(prev => ({ ...prev, purpose: e.target.value }))}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                          placeholder={t('issuances:compliance.fields.purposePlaceholder', 'Payment, Investment, Utility')}
-                          required
-                        />
-                      </FormField>
+                    <h3 className="text-lg font-semibold mb-4">{t('issuances:compliance.sections.jurisdiction', 'Jurisdiction')}</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Jurisdiction</label>
+                        <p className="text-gray-900 font-medium">{complianceData.jurisdiction || '—'}</p>
+                        {assetRegistryPrefill?.jurisdiction && (
+                          <p className="mt-1 text-xs text-gray-500">Pre-filled from Asset • Edit at Asset</p>
+                        )}
+                      </div>
                     </div>
                   </div>
 

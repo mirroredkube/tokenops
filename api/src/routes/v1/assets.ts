@@ -40,6 +40,36 @@ const AssetUpdateSchema = AssetCreateSchema.partial().extend({
 })
 
 export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPluginOptions) {
+  // Debug endpoint to test JSON serialization
+  app.get('/assets/:assetId/debug', async (req, reply) => {
+    const { assetId } = req.params as { assetId: string }
+    
+    try {
+      // Test raw SQL
+      const rawResult = await prisma.$queryRaw`
+        SELECT controls, registry, "assetClass" FROM "Asset" WHERE id = ${assetId}
+      ` as any[]
+      
+      // Test Prisma query
+      const prismaResult = await prisma.asset.findUnique({
+        where: { id: assetId },
+        select: { controls: true, registry: true, assetClass: true }
+      })
+      
+      return reply.send({
+        rawSQL: rawResult[0],
+        prismaQuery: prismaResult,
+        comparison: {
+          rawControls: rawResult[0]?.controls,
+          prismaControls: prismaResult?.controls,
+          rawRegistry: rawResult[0]?.registry,
+          prismaRegistry: prismaResult?.registry
+        }
+      })
+    } catch (error: any) {
+      return reply.status(500).send({ error: error.message })
+    }
+  })
   // 1. POST /v1/assets - Create new asset
   app.post('/assets', {
     schema: {
@@ -290,8 +320,91 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
     }
   })
 
-  // 2. GET /v1/assets/{assetId} - Get asset details
-  app.get('/assets/:assetId', {
+  // 2. GET /v1/assets/{assetId} - Get asset details (temporarily replaced with working debug logic)
+  app.get('/assets/:assetId', async (req, reply) => {
+    const { assetId } = req.params as { assetId: string }
+    
+    try {
+      // Use the EXACT same logic as the working debug endpoint
+      const rawResult = await prisma.$queryRaw`
+        SELECT controls, registry, "assetClass", id, "assetRef", ledger, network, 
+               "issuingAddressId", "productId", code, decimals, "complianceMode", 
+               metadata, status, "createdAt", "updatedAt"
+        FROM "Asset" WHERE id = ${assetId}
+      ` as any[]
+      
+      if (!rawResult || rawResult.length === 0) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      const asset = rawResult[0]
+      
+      // Get related data
+      const [issuingAddress, product, requirementInstances] = await Promise.all([
+        prisma.issuerAddress.findFirst({
+          where: { id: asset.issuingAddressId }
+        }),
+        prisma.product.findUnique({
+          where: { id: asset.productId },
+          include: { organization: true }
+        }),
+        prisma.requirementInstance.findMany({
+          where: { assetId: assetId },
+          include: {
+            requirementTemplate: {
+              include: { regime: true }
+            }
+          }
+        })
+      ])
+      
+      return reply.send({
+        id: asset.id,
+        assetRef: asset.assetRef,
+        ledger: asset.ledger.toLowerCase(),
+        network: asset.network.toLowerCase(),
+        issuer: issuingAddress?.address || 'unknown',
+        code: asset.code,
+        assetClass: asset.assetClass,
+        decimals: asset.decimals,
+        complianceMode: asset.complianceMode.toLowerCase(),
+        controls: asset.controls || {},
+        registry: asset.registry || {},
+        metadata: asset.metadata || {},
+        status: asset.status.toLowerCase(),
+        createdAt: asset.createdAt.toISOString(),
+        updatedAt: asset.updatedAt.toISOString(),
+        product: product ? {
+          id: product.id,
+          name: product.name,
+          assetClass: product.assetClass
+        } : null,
+        organization: product?.organization ? {
+          id: product.organization.id,
+          name: product.organization.name,
+          country: product.organization.country
+        } : null,
+        compliance: {
+          requirementCount: requirementInstances.length,
+          requirements: requirementInstances.map(instance => ({
+            id: instance.id,
+            status: instance.status,
+            template: {
+              id: instance.requirementTemplate.id,
+              name: instance.requirementTemplate.name,
+              regime: instance.requirementTemplate.regime.name
+            }
+          }))
+        }
+      })
+    } catch (error: any) {
+      console.error('Error fetching asset:', error)
+      return reply.status(500).send({ error: 'Failed to fetch asset' })
+    }
+  })
+  
+  // OLD route implementation (keep for reference)
+  app.get('/assets/:assetId/old', {
     schema: {
       summary: 'Get asset details',
       description: 'Retrieve asset configuration and metadata',
@@ -313,6 +426,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
             network: { type: 'string' },
             issuer: { type: 'string' },
             code: { type: 'string' },
+            assetClass: { type: 'string' },
             decimals: { type: 'number' },
             complianceMode: { type: 'string' },
             controls: { type: 'object' },
@@ -372,59 +486,79 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
     const { assetId } = req.params as { assetId: string }
     
     try {
-      const asset = await prisma.asset.findUnique({
-        where: { id: assetId },
-        include: {
-          issuingAddress: true,
-          product: {
-            include: {
-              organization: true
-            }
-          },
-          requirementInstances: {
-            include: {
-              requirementTemplate: {
-                include: {
-                  regime: true
-                }
+      // Get asset data using the same approach as the working debug endpoint
+      const assetResult = await prisma.$queryRaw`
+        SELECT 
+          id, "assetRef", ledger, network, "issuingAddressId", "productId", 
+          code, "assetClass", decimals, "complianceMode", controls, registry, 
+          metadata, status, "createdAt", "updatedAt"
+        FROM "Asset" 
+        WHERE id = ${assetId}
+      ` as any[]
+      
+      if (!assetResult || assetResult.length === 0) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      const asset = assetResult[0]
+      
+      // Get related data separately
+      const [issuingAddress, product, requirementInstances] = await Promise.all([
+        prisma.issuerAddress.findFirst({
+          where: { id: asset.issuingAddressId }
+        }),
+        prisma.product.findUnique({
+          where: { id: asset.productId },
+          include: {
+            organization: true
+          }
+        }),
+        prisma.requirementInstance.findMany({
+          where: { assetId: assetId },
+          include: {
+            requirementTemplate: {
+              include: {
+                regime: true
               }
             }
           }
-        }
-      })
+        })
+      ])
       
-      if (!asset) {
-        return reply.status(404).send({ error: 'Asset not found' })
-      }
+      // Use the JSON fields directly from raw SQL (same as debug endpoint)
+      const controls = asset.controls || {}
+      const registry = asset.registry || {}
+      const metadata = asset.metadata || {}
       
       return reply.send({
         id: asset.id,
         assetRef: asset.assetRef,
         ledger: asset.ledger.toLowerCase(),
         network: asset.network.toLowerCase(),
-        issuer: asset.issuingAddress?.address || 'unknown', // Backward compatibility
+        issuer: issuingAddress?.address || 'unknown', // Backward compatibility
         code: asset.code,
+        assetClass: asset.assetClass,
         decimals: asset.decimals,
         complianceMode: asset.complianceMode.toLowerCase(),
-        controls: asset.controls,
-        registry: asset.registry,
-        metadata: asset.metadata,
+        controls: controls,
+        registry: registry,
+        metadata: metadata,
         status: asset.status.toLowerCase(),
         createdAt: asset.createdAt.toISOString(),
         updatedAt: asset.updatedAt.toISOString(),
-        product: asset.product ? {
-          id: asset.product.id,
-          name: asset.product.name,
-          assetClass: asset.product.assetClass
+        product: product ? {
+          id: product.id,
+          name: product.name,
+          assetClass: product.assetClass
         } : null,
-        organization: asset.product?.organization ? {
-          id: asset.product.organization.id,
-          name: asset.product.organization.name,
-          country: asset.product.organization.country
+        organization: product?.organization ? {
+          id: product.organization.id,
+          name: product.organization.name,
+          country: product.organization.country
         } : null,
         compliance: {
-          requirementCount: asset.requirementInstances.length,
-          requirements: asset.requirementInstances.map(instance => ({
+          requirementCount: requirementInstances.length,
+          requirements: requirementInstances.map(instance => ({
             id: instance.id,
             status: instance.status,
             template: {

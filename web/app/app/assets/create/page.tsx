@@ -29,6 +29,10 @@ interface AssetFormData {
     lei?: string
     micaClass?: string
     jurisdiction?: string
+    whitePaperRef?: string
+    reserveAssets?: string
+    custodian?: string
+    riskAssessment?: string
   }
 }
 
@@ -708,6 +712,7 @@ export default function CreateAssetPage() {
                   Required for all crypto-assets under MiCA - must be included in white paper
                 </p>
               </FormField>
+
             </div>
           </div>
         </Accordion>

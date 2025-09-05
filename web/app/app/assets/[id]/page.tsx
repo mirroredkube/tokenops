@@ -15,6 +15,7 @@ interface Asset {
   network: string
   issuer: string
   code: string
+  assetClass: 'ART' | 'EMT' | 'OTHER'
   decimals: number
   complianceMode: 'OFF' | 'RECORD_ONLY' | 'GATED_BEFORE'
   status: 'draft' | 'active' | 'paused' | 'retired'
@@ -27,11 +28,16 @@ interface Asset {
     transferFeeBps?: number
   }
   registry?: {
-    isin?: string
     lei?: string
     micaClass?: string
     jurisdiction?: string
+    whitePaperRef?: string
+    reserveAssets?: string
+    custodian?: string
+    riskAssessment?: string
   }
+  product?: { id: string; name: string; assetClass?: string }
+  organization?: { id: string; name: string; country?: string }
 }
 
 interface ComplianceRequirement {
@@ -81,6 +87,9 @@ export default function AssetDetailsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [preflight, setPreflight] = useState<{ ok: boolean; blockers: { code: string; message: string; hint?: string }[] } | null>(null)
   const [preflightLoading, setPreflightLoading] = useState(false)
+  const [authorizations, setAuthorizations] = useState<any[]>([])
+  const [issuances, setIssuances] = useState<any[]>([])
+  const [activityLoading, setActivityLoading] = useState(false)
 
   useEffect(() => {
     fetchAsset()
@@ -89,6 +98,12 @@ export default function AssetDetailsPage() {
       trackPageView('asset_details', { asset_id: assetId })
     }
   }, [assetId])
+
+  useEffect(() => {
+    if (asset) {
+      fetchActivity()
+    }
+  }, [asset])
 
   const fetchAsset = async () => {
     setLoading(true)
@@ -105,8 +120,6 @@ export default function AssetDetailsPage() {
         throw new Error('No asset data received')
       }
 
-      console.log('Asset fetched successfully:', data)
-      
       // Transform API response to match our Asset interface
       const transformedAsset: Asset = {
         id: (data as any).id || assetId,
@@ -115,13 +128,16 @@ export default function AssetDetailsPage() {
         network: (data as any).network || '',
         issuer: (data as any).issuer || '',
         code: (data as any).code || '',
+        assetClass: (data as any).assetClass || 'OTHER',
         decimals: (data as any).decimals || 0,
         complianceMode: (data as any).complianceMode || 'RECORD_ONLY',
         status: (data as any).status || 'draft',
         createdAt: (data as any).createdAt || new Date().toISOString(),
         updatedAt: (data as any).updatedAt,
         controls: (data as any).controls,
-        registry: (data as any).registry
+        registry: (data as any).registry,
+        product: (data as any).product,
+        organization: (data as any).organization
       }
       
       setAsset(transformedAsset)
@@ -180,6 +196,34 @@ export default function AssetDetailsPage() {
       await fetchComplianceRequirements()
     } catch (err: any) {
       console.error('Error updating requirement status:', err)
+    }
+  }
+
+  const fetchActivity = async () => {
+    if (!assetId) return
+    
+    setActivityLoading(true)
+    try {
+      // Fetch authorizations and issuances in parallel
+      const [authResponse, issuancesResponse] = await Promise.all([
+        api.GET('/v1/authorizations' as any, { 
+          params: { query: { assetId } } 
+        }),
+        api.GET(`/v1/assets/${assetId}/issuances` as any, {})
+      ])
+      
+      if (authResponse.data) {
+        setAuthorizations(authResponse.data.authorizations || [])
+      }
+      
+      if (issuancesResponse.data) {
+        setIssuances(issuancesResponse.data.issuances || [])
+      }
+    } catch (err: any) {
+      console.error('Error fetching activity:', err)
+      // Don't show error to user for activity data - it's not critical
+    } finally {
+      setActivityLoading(false)
     }
   }
 
@@ -298,6 +342,15 @@ export default function AssetDetailsPage() {
     }
   }
 
+  const getAssetClassLabel = (assetClass: string) => {
+    switch (assetClass) {
+      case 'ART': return 'Asset-Referenced Token (ART)'
+      case 'EMT': return 'E-Money Token (EMT)'
+      case 'OTHER': return 'Utility Token (OTHER)'
+      default: return assetClass
+    }
+  }
+
   const { showToast } = useToast()
 
   const runPreflight = async () => {
@@ -393,9 +446,9 @@ export default function AssetDetailsPage() {
                 {preflightLoading ? 'Validating…' : 'Validate Issuance'}
               </button>
               <Link
-                href={preflight?.ok ? `/app/issuance/new?assetId=${asset.id}` : '#'}
-                className={`px-4 py-2 rounded-lg border ${preflight?.ok ? 'text-emerald-600 border-emerald-600 hover:bg-emerald-50' : 'text-gray-400 border-gray-300 cursor-not-allowed'}`}
-                onClick={(e) => { if (!preflight?.ok) e.preventDefault() }}
+                href={preflight?.ok === false ? '#' : `/app/issuance/new?assetId=${asset.id}`}
+                className={`px-4 py-2 rounded-lg border ${preflight?.ok === false ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-emerald-600 border-emerald-600 hover:bg-emerald-50'}`}
+                onClick={(e) => { if (preflight?.ok === false) e.preventDefault() }}
               >
                 Start Issuance
               </Link>
@@ -524,6 +577,10 @@ export default function AssetDetailsPage() {
                 </div>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700">Asset Class</label>
+                <p className="mt-1 text-sm text-gray-900">{getAssetClassLabel(asset.assetClass)}</p>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700">Decimals</label>
                 <p className="mt-1 text-sm text-gray-900">{asset.decimals}</p>
               </div>
@@ -538,21 +595,42 @@ export default function AssetDetailsPage() {
             </div>
           </div>
 
+          {/* Product & Organization Information */}
+          {(asset.product || asset.organization) && (
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-semibold mb-4">Product & Organization</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {asset.product && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Product</label>
+                    <p className="mt-1 text-sm text-gray-900">{asset.product.name}</p>
+                    {asset.product.assetClass && (
+                      <p className="mt-1 text-xs text-gray-500">Class: {getAssetClassLabel(asset.product.assetClass)}</p>
+                    )}
+                  </div>
+                )}
+                {asset.organization && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Organization</label>
+                    <p className="mt-1 text-sm text-gray-900">{asset.organization.name}</p>
+                    {asset.organization.country && (
+                      <p className="mt-1 text-xs text-gray-500">Country: {asset.organization.country}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Registry Information */}
-          {asset.registry && Object.keys(asset.registry).length > 0 && (
+          {asset.registry && (
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <h3 className="text-lg font-semibold mb-4">Registry Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {asset.registry.isin && (
+                {asset.registry.micaClass && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">ISIN</label>
-                    <p className="mt-1 text-sm text-gray-900">{asset.registry.isin}</p>
-                  </div>
-                )}
-                {asset.registry.lei && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">LEI</label>
-                    <p className="mt-1 text-sm text-gray-900">{asset.registry.lei}</p>
+                    <label className="block text-sm font-medium text-gray-700">Regulatory Classification</label>
+                    <p className="mt-1 text-sm text-gray-900">{asset.registry.micaClass}</p>
                   </div>
                 )}
                 {asset.registry.jurisdiction && (
@@ -561,10 +639,34 @@ export default function AssetDetailsPage() {
                     <p className="mt-1 text-sm text-gray-900">{asset.registry.jurisdiction}</p>
                   </div>
                 )}
-                {asset.registry.micaClass && (
+                {asset.registry.lei && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">MiCA Classification</label>
-                    <p className="mt-1 text-sm text-gray-900">{asset.registry.micaClass}</p>
+                    <label className="block text-sm font-medium text-gray-700">LEI</label>
+                    <p className="mt-1 text-sm text-gray-900">{asset.registry.lei}</p>
+                  </div>
+                )}
+                {asset.registry.whitePaperRef && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">White Paper</label>
+                    <p className="mt-1 text-sm text-blue-700 underline break-all">{asset.registry.whitePaperRef}</p>
+                  </div>
+                )}
+                {asset.registry.reserveAssets && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Reserve Assets</label>
+                    <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{asset.registry.reserveAssets}</p>
+                  </div>
+                )}
+                {asset.registry.custodian && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Custodian</label>
+                    <p className="mt-1 text-sm text-gray-900">{asset.registry.custodian}</p>
+                  </div>
+                )}
+                {asset.registry.riskAssessment && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Risk Assessment</label>
+                    <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{asset.registry.riskAssessment}</p>
                   </div>
                 )}
               </div>
@@ -586,13 +688,91 @@ export default function AssetDetailsPage() {
             </div>
           )}
 
-          {/* Coming Soon Placeholders */}
-          <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          {/* Activity */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Activity</h3>
-            <div className="text-center py-8">
-                              <p className="text-gray-600 mb-2">Authorizations and Issuances coming in Phase 2</p>
-                <p className="text-sm text-gray-500">You'll be able to view authorization status and issuance history here.</p>
-            </div>
+            
+            {activityLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading activity...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Authorizations */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Authorizations ({authorizations.length})</h4>
+                  {authorizations.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">No authorizations found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {authorizations.slice(0, 5).map((auth: any) => (
+                        <div key={auth.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">{auth.holder}</p>
+                            <p className="text-xs text-gray-500">
+                              {auth.status} • {new Date(auth.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            auth.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                            auth.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {auth.status}
+                          </span>
+                        </div>
+                      ))}
+                      {authorizations.length > 5 && (
+                        <p className="text-xs text-gray-500 text-center pt-2">
+                          +{authorizations.length - 5} more authorizations
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Issuances */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Issuances ({issuances.length})</h4>
+                  {issuances.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">No issuances found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {issuances.slice(0, 5).map((issuance: any) => (
+                        <div key={issuance.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">
+                              {issuance.amount} {asset?.code} to {issuance.recipient}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {issuance.status} • {new Date(issuance.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            issuance.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                            issuance.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                            issuance.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {issuance.status}
+                          </span>
+                        </div>
+                      ))}
+                      {issuances.length > 5 && (
+                        <p className="text-xs text-gray-500 text-center pt-2">
+                          +{issuances.length - 5} more issuances
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
