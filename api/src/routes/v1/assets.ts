@@ -695,30 +695,51 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         where.status = status.toUpperCase()
       }
       
-      // 🔍 Use the same approach as the individual asset endpoint
-      const assets = await prisma.asset.findMany({
+      // 🔍 WORKAROUND: Get basic asset data first, then fetch full data individually
+      // This is needed because Prisma findMany has issues with JSON fields
+      const basicAssets = await prisma.asset.findMany({
         where,
         take: limit,
         skip: offset,
         orderBy: { createdAt: 'desc' },
-        include: {
-          issuingAddress: true,
-          product: {
-            include: {
-              organization: true
-            }
-          },
-          requirementInstances: {
-            include: {
-              requirementTemplate: {
-                include: {
-                  regime: true
+        select: {
+          id: true
+        }
+      })
+      
+      // Now fetch full data for each asset individually (this works correctly)
+      const assets = []
+      for (const basicAsset of basicAssets) {
+        const asset = await prisma.asset.findUnique({
+          where: { id: basicAsset.id },
+          include: {
+            issuingAddress: true,
+            product: {
+              include: {
+                organization: true
+              }
+            },
+            requirementInstances: {
+              include: {
+                requirementTemplate: {
+                  include: {
+                    regime: true
+                  }
                 }
               }
             }
           }
+        })
+        
+        // 🔍 Debug logging to see what we're getting
+        if (asset && (asset.code === 'SOMECOIN' || asset.code === 'COMP')) {
+          console.log(`Asset ${asset.code}: controls=`, asset.controls, 'registry=', asset.registry)
         }
-      })
+        
+        if (asset) {
+          assets.push(asset)
+        }
+      }
       
       const total = await prisma.asset.count({ where })
       
@@ -734,8 +755,8 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           assetClass: asset.assetClass,
           decimals: asset.decimals,
           complianceMode: asset.complianceMode.toLowerCase(),
-          controls: asset.controls || {},
-          registry: asset.registry || {},
+          controls: asset.controls,
+          registry: asset.registry,
           metadata: asset.metadata || {},
           status: asset.status.toLowerCase(),
           createdAt: asset.createdAt.toISOString(),

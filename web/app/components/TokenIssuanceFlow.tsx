@@ -206,15 +206,43 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       if (preSelectedAssetId) {
         const preSelectedAsset = transformedAssets.find(asset => asset.id === preSelectedAssetId)
         if (preSelectedAsset) {
-          setSelectedAsset(preSelectedAsset)
-          // Auto-proceed to next step
-          setCurrentStep('trustline-check')
-          // Update trustline check data with asset info
-          setTrustlineCheckData(prev => ({
-            ...prev,
-            currencyCode: preSelectedAsset.code,
-            issuerAddress: preSelectedAsset.issuer
-          }))
+          // Fetch full asset data for pre-selected asset
+          try {
+            const { data } = await api.GET(`/v1/assets/${preSelectedAssetId}` as any, {})
+            const fullAsset = data as any
+            
+            const enhancedAsset = {
+              ...preSelectedAsset,
+              controls: fullAsset.controls,
+              registry: fullAsset.registry,
+              metadata: fullAsset.metadata,
+              product: fullAsset.product,
+              organization: fullAsset.organization
+            }
+            
+            setSelectedAsset(enhancedAsset)
+            console.log('Pre-selected enhanced asset with controls:', enhancedAsset)
+            
+            // Auto-proceed to next step
+            setCurrentStep('trustline-check')
+            // Update trustline check data with asset info
+            setTrustlineCheckData(prev => ({
+              ...prev,
+              currencyCode: enhancedAsset.code,
+              issuerAddress: enhancedAsset.issuer
+            }))
+          } catch (error) {
+            console.error('Error fetching pre-selected asset data:', error)
+            setSelectedAsset(preSelectedAsset)
+            // Auto-proceed to next step
+            setCurrentStep('trustline-check')
+            // Update trustline check data with asset info
+            setTrustlineCheckData(prev => ({
+              ...prev,
+              currencyCode: preSelectedAsset.code,
+              issuerAddress: preSelectedAsset.issuer
+            }))
+          }
           // Update token data with asset info
           setTokenData(prev => ({
             ...prev,
@@ -285,21 +313,55 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     }
   }
 
-  const handleAssetSelection = (asset: Asset) => {
-    setSelectedAsset(asset)
-    
-    // Update trustline check data with asset info
-    setTrustlineCheckData(prev => ({
-      ...prev,
-      currencyCode: asset.code,
-      issuerAddress: asset.issuer
-    }))
-    
-    // Update token data with asset info
-    setTokenData(prev => ({
-      ...prev,
-      currencyCode: asset.code
-    }))
+  const handleAssetSelection = async (asset: Asset) => {
+    // Fetch full asset data including controls and registry
+    try {
+      const { data } = await api.GET(`/v1/assets/${asset.id}` as any, {})
+      const fullAsset = data as any
+      
+      // Merge the full asset data with the existing asset data
+      const enhancedAsset = {
+        ...asset,
+        controls: fullAsset.controls,
+        registry: fullAsset.registry,
+        metadata: fullAsset.metadata,
+        product: fullAsset.product,
+        organization: fullAsset.organization
+      }
+      
+      setSelectedAsset(enhancedAsset)
+      console.log('Enhanced asset with controls:', enhancedAsset)
+      
+      // Update trustline check data with asset info
+      setTrustlineCheckData(prev => ({
+        ...prev,
+        currencyCode: enhancedAsset.code,
+        issuerAddress: enhancedAsset.issuer
+      }))
+      
+      // Update token data with asset info
+      setTokenData(prev => ({
+        ...prev,
+        currencyCode: enhancedAsset.code
+      }))
+    } catch (error) {
+      console.error('Error fetching full asset data:', error)
+      // Fallback to the basic asset data
+      setSelectedAsset(asset)
+      
+      // Update trustline check data with asset info
+      setTrustlineCheckData(prev => ({
+        ...prev,
+        currencyCode: asset.code,
+        issuerAddress: asset.issuer
+      }))
+      
+      // Update token data with asset info
+      setTokenData(prev => ({
+        ...prev,
+        currencyCode: asset.code
+      }))
+    }
     
     // Proceed to next step
     setCurrentStep('trustline-check')
