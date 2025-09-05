@@ -138,6 +138,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
   const [complianceRecord, setComplianceRecord] = useState<ComplianceRecord | null>(null)
   const [anchorCompliance, setAnchorCompliance] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [assetRegistryPrefill, setAssetRegistryPrefill] = useState<{ jurisdiction?: string; micaClass?: string } | null>(null)
 
   // Security flags (in production, these would come from environment)
   const allowUiSecret = process.env.NEXT_PUBLIC_ALLOW_UI_SECRET === 'true'
@@ -549,6 +550,32 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       }))
     }
   }, [currentStep, selectedAsset, trustlineData, trustlineCheckData])
+
+  // Prefill compliance from asset.registry when entering compliance step (read-only intent)
+  useEffect(() => {
+    const mapMica = (val?: string) => {
+      if (!val) return undefined
+      const v = val.toLowerCase()
+      if (v.includes('asset-referenced')) return 'asset_referenced_token'
+      if (v.includes('e-money')) return 'e_money_token'
+      if (v.includes('utility')) return 'utility_token'
+      return undefined
+    }
+    const prefillFromAsset = async () => {
+      if (!selectedAsset?.id) return
+      try {
+        const { data } = await api.GET(`/v1/assets/${selectedAsset.id}` as any, {})
+        const registry = (data as any)?.registry || {}
+        setAssetRegistryPrefill({ jurisdiction: registry.jurisdiction, micaClass: registry.micaClass })
+        setComplianceData(prev => ({
+          ...prev,
+          jurisdiction: registry.jurisdiction || prev.jurisdiction,
+          micaClassification: (mapMica(registry.micaClass) as any) || prev.micaClassification
+        }))
+      } catch {}
+    }
+    if (currentStep === 'compliance-metadata') prefillFromAsset()
+  }, [currentStep, selectedAsset?.id])
 
   const resetFlow = () => {
     setCurrentStep('ledger-selection')
