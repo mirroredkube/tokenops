@@ -45,25 +45,24 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
     const { assetId } = req.params as { assetId: string }
     
     try {
-      // Test raw SQL
-      const rawResult = await prisma.$queryRaw`
-        SELECT controls, registry, "assetClass" FROM "Asset" WHERE id = ${assetId}
-      ` as any[]
-      
       // Test Prisma query
       const prismaResult = await prisma.asset.findUnique({
         where: { id: assetId },
-        select: { controls: true, registry: true, assetClass: true }
+        select: { 
+          id: true,
+          assetClass: true,
+          controls: true, 
+          registry: true 
+        }
       })
       
       return reply.send({
-        rawSQL: rawResult[0],
         prismaQuery: prismaResult,
-        comparison: {
-          rawControls: rawResult[0]?.controls,
-          prismaControls: prismaResult?.controls,
-          rawRegistry: rawResult[0]?.registry,
-          prismaRegistry: prismaResult?.registry
+        debug: {
+          controls: prismaResult?.controls,
+          registry: prismaResult?.registry,
+          controlsType: typeof prismaResult?.controls,
+          registryType: typeof prismaResult?.registry
         }
       })
     } catch (error: any) {
@@ -320,50 +319,43 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
     }
   })
 
-  // 2. GET /v1/assets/{assetId} - Get asset details (temporarily replaced with working debug logic)
+  // 2. GET /v1/assets/{assetId} - Get asset details
   app.get('/assets/:assetId', async (req, reply) => {
     const { assetId } = req.params as { assetId: string }
     
     try {
-      // Use the EXACT same logic as the working debug endpoint
-      const rawResult = await prisma.$queryRaw`
-        SELECT controls, registry, "assetClass", id, "assetRef", ledger, network, 
-               "issuingAddressId", "productId", code, decimals, "complianceMode", 
-               metadata, status, "createdAt", "updatedAt"
-        FROM "Asset" WHERE id = ${assetId}
-      ` as any[]
-      
-      if (!rawResult || rawResult.length === 0) {
-        return reply.status(404).send({ error: 'Asset not found' })
-      }
-      
-      const asset = rawResult[0]
-      
-      // Get related data
-      const [issuingAddress, product, requirementInstances] = await Promise.all([
-        prisma.issuerAddress.findFirst({
-          where: { id: asset.issuingAddressId }
-        }),
-        prisma.product.findUnique({
-          where: { id: asset.productId },
-          include: { organization: true }
-        }),
-        prisma.requirementInstance.findMany({
-          where: { assetId: assetId },
-          include: {
-            requirementTemplate: {
-              include: { regime: true }
+      // Get asset with related data using Prisma ORM
+      const asset = await prisma.asset.findUnique({
+        where: { id: assetId },
+        include: {
+          issuingAddress: true,
+          product: {
+            include: {
+              organization: true
+            }
+          },
+          requirementInstances: {
+            include: {
+              requirementTemplate: {
+                include: {
+                  regime: true
+                }
+              }
             }
           }
-        })
-      ])
+        }
+      })
+      
+      if (!asset) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
       
       return reply.send({
         id: asset.id,
         assetRef: asset.assetRef,
         ledger: asset.ledger.toLowerCase(),
         network: asset.network.toLowerCase(),
-        issuer: issuingAddress?.address || 'unknown',
+        issuer: asset.issuingAddress?.address || 'unknown',
         code: asset.code,
         assetClass: asset.assetClass,
         decimals: asset.decimals,
@@ -374,191 +366,19 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         status: asset.status.toLowerCase(),
         createdAt: asset.createdAt.toISOString(),
         updatedAt: asset.updatedAt.toISOString(),
-        product: product ? {
-          id: product.id,
-          name: product.name,
-          assetClass: product.assetClass
+        product: asset.product ? {
+          id: asset.product.id,
+          name: asset.product.name,
+          assetClass: asset.product.assetClass
         } : null,
-        organization: product?.organization ? {
-          id: product.organization.id,
-          name: product.organization.name,
-          country: product.organization.country
-        } : null,
-        compliance: {
-          requirementCount: requirementInstances.length,
-          requirements: requirementInstances.map(instance => ({
-            id: instance.id,
-            status: instance.status,
-            template: {
-              id: instance.requirementTemplate.id,
-              name: instance.requirementTemplate.name,
-              regime: instance.requirementTemplate.regime.name
-            }
-          }))
-        }
-      })
-    } catch (error: any) {
-      console.error('Error fetching asset:', error)
-      return reply.status(500).send({ error: 'Failed to fetch asset' })
-    }
-  })
-  
-  // OLD route implementation (keep for reference)
-  app.get('/assets/:assetId/old', {
-    schema: {
-      summary: 'Get asset details',
-      description: 'Retrieve asset configuration and metadata',
-      tags: ['v1'],
-      params: {
-        type: 'object',
-        required: ['assetId'],
-        properties: {
-          assetId: { type: 'string', description: 'Asset ID' }
-        }
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            assetRef: { type: 'string' },
-            ledger: { type: 'string' },
-            network: { type: 'string' },
-            issuer: { type: 'string' },
-            code: { type: 'string' },
-            assetClass: { type: 'string' },
-            decimals: { type: 'number' },
-            complianceMode: { type: 'string' },
-            controls: { type: 'object' },
-            registry: { type: 'object' },
-            metadata: { type: 'object' },
-            status: { type: 'string' },
-            createdAt: { type: 'string' },
-            updatedAt: { type: 'string' },
-            product: {
-              type: 'object',
-              nullable: true,
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                assetClass: { type: 'string' }
-              }
-            },
-            organization: {
-              type: 'object',
-              nullable: true,
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                country: { type: 'string' }
-              }
-            },
-            compliance: {
-              type: 'object',
-              properties: {
-                requirementCount: { type: 'number' },
-                requirements: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string' },
-                      status: { type: 'string' },
-                      template: {
-                        type: 'object',
-                        properties: {
-                          id: { type: 'string' },
-                          name: { type: 'string' },
-                          regime: { type: 'string' }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        404: { type: 'object', properties: { error: { type: 'string' } } }
-      }
-    }
-  }, async (req, reply) => {
-    const { assetId } = req.params as { assetId: string }
-    
-    try {
-      // Get asset data using the same approach as the working debug endpoint
-      const assetResult = await prisma.$queryRaw`
-        SELECT 
-          id, "assetRef", ledger, network, "issuingAddressId", "productId", 
-          code, "assetClass", decimals, "complianceMode", controls, registry, 
-          metadata, status, "createdAt", "updatedAt"
-        FROM "Asset" 
-        WHERE id = ${assetId}
-      ` as any[]
-      
-      if (!assetResult || assetResult.length === 0) {
-        return reply.status(404).send({ error: 'Asset not found' })
-      }
-      
-      const asset = assetResult[0]
-      
-      // Get related data separately
-      const [issuingAddress, product, requirementInstances] = await Promise.all([
-        prisma.issuerAddress.findFirst({
-          where: { id: asset.issuingAddressId }
-        }),
-        prisma.product.findUnique({
-          where: { id: asset.productId },
-          include: {
-            organization: true
-          }
-        }),
-        prisma.requirementInstance.findMany({
-          where: { assetId: assetId },
-          include: {
-            requirementTemplate: {
-              include: {
-                regime: true
-              }
-            }
-          }
-        })
-      ])
-      
-      // Use the JSON fields directly from raw SQL (same as debug endpoint)
-      const controls = asset.controls || {}
-      const registry = asset.registry || {}
-      const metadata = asset.metadata || {}
-      
-      return reply.send({
-        id: asset.id,
-        assetRef: asset.assetRef,
-        ledger: asset.ledger.toLowerCase(),
-        network: asset.network.toLowerCase(),
-        issuer: issuingAddress?.address || 'unknown', // Backward compatibility
-        code: asset.code,
-        assetClass: asset.assetClass,
-        decimals: asset.decimals,
-        complianceMode: asset.complianceMode.toLowerCase(),
-        controls: controls,
-        registry: registry,
-        metadata: metadata,
-        status: asset.status.toLowerCase(),
-        createdAt: asset.createdAt.toISOString(),
-        updatedAt: asset.updatedAt.toISOString(),
-        product: product ? {
-          id: product.id,
-          name: product.name,
-          assetClass: product.assetClass
-        } : null,
-        organization: product?.organization ? {
-          id: product.organization.id,
-          name: product.organization.name,
-          country: product.organization.country
+        organization: asset.product?.organization ? {
+          id: asset.product.organization.id,
+          name: asset.product.organization.name,
+          country: asset.product.organization.country
         } : null,
         compliance: {
-          requirementCount: requirementInstances.length,
-          requirements: requirementInstances.map(instance => ({
+          requirementCount: asset.requirementInstances.length,
+          requirements: asset.requirementInstances.map(instance => ({
             id: instance.id,
             status: instance.status,
             template: {
@@ -799,8 +619,12 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
                   network: { type: 'string' },
                   issuer: { type: 'string' },
                   code: { type: 'string' },
+                  assetClass: { type: 'string' },
                   decimals: { type: 'number' },
                   complianceMode: { type: 'string' },
+                  controls: { type: 'object' },
+                  registry: { type: 'object' },
+                  metadata: { type: 'object' },
                   status: { type: 'string' },
                   createdAt: { type: 'string' },
                   product: {
@@ -871,33 +695,33 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         where.status = status.toUpperCase()
       }
       
-      // Get assets from database
-      const [assets, total] = await Promise.all([
-        prisma.asset.findMany({
-          where,
-          take: limit,
-          skip: offset,
-          orderBy: { createdAt: 'desc' },
-          include: {
-            issuingAddress: true,
-            product: {
-              include: {
-                organization: true
-              }
-            },
-            requirementInstances: {
-              include: {
-                requirementTemplate: {
-                  include: {
-                    regime: true
-                  }
+      // 🔍 Use the same approach as the individual asset endpoint
+      const assets = await prisma.asset.findMany({
+        where,
+        take: limit,
+        skip: offset,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          issuingAddress: true,
+          product: {
+            include: {
+              organization: true
+            }
+          },
+          requirementInstances: {
+            include: {
+              requirementTemplate: {
+                include: {
+                  regime: true
                 }
               }
             }
           }
-        }),
-        prisma.asset.count({ where })
-      ])
+        }
+      })
+      
+      const total = await prisma.asset.count({ where })
+      
       
       return reply.send({
         assets: assets.map(asset => ({
@@ -905,7 +729,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
           assetRef: asset.assetRef,
           ledger: asset.ledger.toLowerCase(),
           network: asset.network.toLowerCase(),
-          issuer: asset.issuingAddress?.address || 'unknown', // Backward compatibility
+          issuer: asset.issuingAddress?.address || 'unknown',
           code: asset.code,
           assetClass: asset.assetClass,
           decimals: asset.decimals,
