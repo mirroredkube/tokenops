@@ -242,6 +242,18 @@ export default function CreateAssetPage() {
         newData.issuer = ''
       }
       
+      // MiCA Compliance Rules: Apply conditional logic between Asset Class and Compliance Mode
+      if (field === 'assetClass') {
+        // ART and EMT require GATED_BEFORE compliance under MiCA
+        if (value === 'ART' || value === 'EMT') {
+          newData.complianceMode = 'GATED_BEFORE'
+        }
+        // OTHER (Utility Tokens) can use RECORD_ONLY or GATED_BEFORE
+        else if (value === 'OTHER' && prev.complianceMode === 'OFF') {
+          newData.complianceMode = 'RECORD_ONLY'
+        }
+      }
+      
       return newData
     })
   }
@@ -254,6 +266,28 @@ export default function CreateAssetPage() {
         [field]: value
       }
     }))
+  }
+
+  // MiCA Compliance Rules: Get available compliance mode options based on asset class
+  const getComplianceModeOptions = (assetClass: string) => {
+    const allOptions = [
+      { value: 'OFF', label: t('assets:createAsset.options.noCompliance', 'No Compliance') },
+      { value: 'RECORD_ONLY', label: t('assets:createAsset.options.recordOnly', 'Record Only (Optional)') },
+      { value: 'GATED_BEFORE', label: t('assets:createAsset.options.gatedBefore', 'Gated Before (Required)') }
+    ]
+
+    // ART and EMT require GATED_BEFORE under MiCA
+    if (assetClass === 'ART' || assetClass === 'EMT') {
+      return allOptions.filter(option => option.value === 'GATED_BEFORE')
+    }
+    
+    // OTHER (Utility Tokens) can use RECORD_ONLY or GATED_BEFORE
+    if (assetClass === 'OTHER') {
+      return allOptions.filter(option => option.value !== 'OFF')
+    }
+    
+    // Default: show all options
+    return allOptions
   }
 
   return (
@@ -427,14 +461,26 @@ export default function CreateAssetPage() {
               <CustomDropdown
                 value={formData.complianceMode}
                 onChange={(value) => handleInputChange('complianceMode', value)}
-                options={[
-                  { value: 'OFF', label: t('assets:createAsset.options.noCompliance', 'No Compliance') },
-                  { value: 'RECORD_ONLY', label: t('assets:createAsset.options.recordOnly', 'Record Only (Optional)') },
-                  { value: 'GATED_BEFORE', label: t('assets:createAsset.options.gatedBefore', 'Gated Before (Required)') }
-                ]}
+                options={getComplianceModeOptions(formData.assetClass)}
                 placeholder={t('assets:createAsset.options.selectComplianceMode', 'Select Compliance Mode')}
                 required
               />
+              {formData.assetClass === 'ART' || formData.assetClass === 'EMT' ? (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">
+                        <strong>MiCA Compliance:</strong> {formData.assetClass === 'ART' ? t('assets:createAsset.micaCompliance.artRequired') : t('assets:createAsset.micaCompliance.emtRequired')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </FormField>
           </div>
         </Accordion>

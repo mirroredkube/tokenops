@@ -1,7 +1,6 @@
 {
   "title": "Assets",
   "description": "Verwalten Sie Ihre Token-Assets über mehrere Ledger hinweg.",
-  "createAsset": "Asset erstellen",
   "createAssetDraft": "Asset erstellen (Entwurf)",
   "assetDetails": "Asset-Details",
   "assetDetailsAndConfiguration": "Asset-Details und Konfiguration",
@@ -36,7 +35,9 @@
     "retire": "Zurückziehen",
     "activateAsset": "Asset aktivieren",
     "pauseAsset": "Asset pausieren",
-    "retireAsset": "Asset zurückziehen"
+    "retireAsset": "Asset zurückziehen",
+    "viewDetails": "Details anzeigen",
+    "issueTokens": "Token ausgeben"
   },
   "messages": {
     "activateAssetMessage": "Sind Sie sicher, dass Sie {{code}} aktivieren möchten? Dies macht es für Token-Emissionen verfügbar.",
@@ -48,7 +49,10 @@
     "assetCanNoLongerBeEdited": "Dieses Asset kann nicht mehr bearbeitet werden. Nur Lebenszyklus-Aktionen sind verfügbar.",
     "makeAssetAvailableForIssuance": "Asset für Emissionen verfügbar machen",
     "temporarilyStopNewIssuances": "Neue Emissionen vorübergehend stoppen",
-    "permanentlyDeactivateAsset": "Asset dauerhaft deaktivieren"
+    "permanentlyDeactivateAsset": "Asset dauerhaft deaktivieren",
+    "noAssetsFound": "Keine Assets gefunden",
+    "tryAdjustingFilters": "Versuchen Sie, Ihre Filter anzupassen",
+    "createFirstAsset": "Erstellen Sie Ihr erstes Asset, um zu beginnen"
   },
   "controls": {
     "requireAuthorization": "Autorisierung erforderlich",
@@ -79,18 +83,6 @@
     "status": "Status",
     "created": "Erstellt",
     "actions": "Aktionen"
-  },
-  "messages": {
-    "noAssetsFound": "Keine Assets gefunden",
-    "tryAdjustingFilters": "Versuchen Sie, Ihre Filter anzupassen",
-    "createFirstAsset": "Erstellen Sie Ihr erstes Asset, um zu beginnen"
-  },
-  "actions": {
-    "viewDetails": "Details anzeigen",
-    "activateAsset": "Asset aktivieren",
-    "pauseAsset": "Asset pausieren",
-    "retireAsset": "Asset zurückziehen",
-    "issueTokens": "Token ausgeben"
   },
   "assetLifecycleAndDocumentation": "Asset-Lebenszyklus & Dokumentation",
   "lifecycleStages": {
@@ -144,6 +136,10 @@
   "createAsset": {
     "title": "Asset erstellen",
     "description": "Erstellen Sie ein neues Token-Asset für Emissionen über mehrere Ledger hinweg.",
+    "micaCompliance": {
+      "artRequired": "Asset-Referenzierte Token erfordern eine obligatorische Compliance-Verifizierung vor der Emission.",
+      "emtRequired": "E-Geld-Token erfordern eine obligatorische Compliance-Verifizierung vor der Emission."
+    },
     "steps": {
       "identity": "Identität",
       "policy": "Richtlinie",
@@ -197,7 +193,7 @@
     },
     "actions": {
       "cancel": "Abbrechen",
-      "createAsset": "Asset erstellen (Entwurf)",
+      "createAssetDraft": "Asset erstellen (Entwurf)",
       "creatingAsset": "Asset wird erstellt..."
     },
     "messages": {

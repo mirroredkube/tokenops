@@ -147,6 +147,10 @@
   "createAsset": {
     "title": "Create Asset",
     "description": "Create a new token asset for issuance across multiple ledgers.",
+    "micaCompliance": {
+      "artRequired": "Asset-Referenced Tokens require mandatory compliance verification before issuance.",
+      "emtRequired": "E-Money Tokens require mandatory compliance verification before issuance."
+    },
     "steps": {
       "product": "Product Selection",
       "identity": "Identity",
