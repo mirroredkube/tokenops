@@ -541,7 +541,7 @@ export default function CompliancePage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Overview
+{t('requirements.overview')}
           </button>
           <button
             onClick={() => setActiveTab('requirements')}
@@ -551,7 +551,7 @@ export default function CompliancePage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Asset Requirements
+{t('requirements.assetRequirements')}
           </button>
           <button
             onClick={() => setActiveTab('issuances')}
@@ -561,7 +561,7 @@ export default function CompliancePage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Issuance Records
+{t('requirements.issuanceRecords')}
           </button>
         </nav>
       </div>
@@ -587,12 +587,12 @@ export default function CompliancePage() {
                 { value: 'VERIFIED', label: 'Verified' },
                 { value: 'REJECTED', label: 'Rejected' }
               ] : [
-                { value: '', label: 'All Statuses' },
-                { value: 'REQUIRED', label: 'Required' },
-                { value: 'SATISFIED', label: 'Satisfied' },
-                { value: 'EXCEPTION', label: 'Exception' }
+                { value: '', label: t('filters.allStatuses') },
+                { value: 'REQUIRED', label: t('status.required') },
+                { value: 'SATISFIED', label: t('status.satisfied') },
+                { value: 'EXCEPTION', label: t('status.exception') }
               ]}
-              placeholder="All Statuses"
+              placeholder={t('filters.allStatuses')}
             />
           </div>
           
@@ -667,7 +667,7 @@ export default function CompliancePage() {
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Satisfied</p>
+                  <p className="text-sm font-medium text-gray-600">{t('requirements.satisfied')}</p>
                   <p className="text-2xl font-bold text-green-600">
                     {allRequirements.filter(r => r.status === 'SATISFIED').length}
                   </p>
@@ -681,7 +681,7 @@ export default function CompliancePage() {
                   <XCircle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Exceptions</p>
+                  <p className="text-sm font-medium text-gray-600">{t('requirements.exceptions')}</p>
                   <p className="text-2xl font-bold text-red-600">
                     {allRequirements.filter(r => r.status === 'EXCEPTION').length}
                   </p>
@@ -795,13 +795,13 @@ export default function CompliancePage() {
                               onClick={() => handleRequirementStatusUpdate(req.id, 'SATISFIED')}
                               className="px-3 py-1 text-xs border border-green-600 text-green-600 bg-white rounded hover:bg-green-50"
                             >
-                              Mark Satisfied
+{t('actions.markSatisfied')}
                             </button>
                             <button
                               onClick={() => handleRequirementStatusUpdate(req.id, 'EXCEPTION')}
                               className="px-3 py-1 text-xs border border-red-600 text-red-600 bg-white rounded hover:bg-red-50"
                             >
-                              Mark Exception
+{t('actions.markException')}
                             </button>
                           </div>
                         )}
@@ -820,10 +820,10 @@ export default function CompliancePage() {
                         <button
                           onClick={() => handleExportEvidenceBundle(req.id)}
                           className="px-3 py-1 text-xs border border-gray-600 text-gray-600 bg-white rounded hover:bg-gray-50"
-                          title="Export evidence bundle"
+                          title={t('actions.exportBundle')}
                         >
                           <Download className="w-3 h-3 mr-1 inline" />
-                          Export Bundle
+{t('actions.exportBundle')}
                         </button>
                       </div>
                     </div>
@@ -1077,7 +1077,7 @@ export default function CompliancePage() {
                 disabled={!exceptionReason.trim()}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Mark Exception
+{t('actions.markException')}
               </button>
             </div>
           </div>
@@ -1105,7 +1105,7 @@ export default function CompliancePage() {
                   { value: 'json', label: 'JSON Data (structured data only)' },
                   { value: 'csv', label: 'CSV Data (spreadsheet analysis)' }
                 ]}
-                placeholder="Select export format"
+                placeholder={t('requirements.selectExportFormat')}
               />
               <div className="mt-2 text-xs text-gray-500">
                 {exportFormat === 'zip' && 'Complete bundle with evidence files and manifest'}

@@ -22,7 +22,11 @@
   "actions": {
     "backToCompliance": "Back to Compliance",
     "retry": "Retry",
-    "viewOnExplorer": "View on Explorer"
+    "viewOnExplorer": "View on Explorer",
+    "markSatisfied": "Mark Satisfied",
+    "markException": "Mark Exception",
+    "exportBundle": "Export Bundle",
+    "platformAcknowledgement": "Platform Acknowledgement"
   },
   "messages": {
     "thisRecordHasBeenReferenced": "This record has been referenced by {{count}} issuance(s)",
@@ -40,15 +44,22 @@
   "status": {
     "unverified": "Unverified",
     "verified": "Verified",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "required": "Required",
+    "satisfied": "Satisfied",
+    "exception": "Exception",
+    "available": "Available"
   },
   "filters": {
     "allStatuses": "All Statuses",
+    "allAssets": "All Assets",
     "unverified": "Unverified",
     "verified": "Verified",
     "rejected": "Rejected",
     "status": "Status",
+    "requirementStatus": "Requirement Status",
     "assetId": "Asset ID",
+    "asset": "Asset",
     "holderAddress": "Holder Address",
     "filterByAssetId": "Filter by asset ID",
     "filterByHolderAddress": "Filter by holder address"
@@ -73,5 +84,17 @@
     "pageOf": "Page {{current}} of {{total}}",
     "previous": "Previous",
     "next": "Next"
+  },
+  "requirements": {
+    "title": "Asset Compliance Requirements",
+    "overview": "Overview",
+    "assetRequirements": "Asset Requirements",
+    "issuanceRecords": "Issuance Records",
+    "satisfied": "Satisfied",
+    "exceptions": "Exceptions",
+    "required": "Required",
+    "available": "Available",
+    "exportFormat": "Export Format",
+    "selectExportFormat": "Select export format"
   }
 }

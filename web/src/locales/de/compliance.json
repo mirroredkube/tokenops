@@ -22,7 +22,11 @@
   "actions": {
     "backToCompliance": "Zurück zur Compliance",
     "retry": "Erneut versuchen",
-    "viewOnExplorer": "Im Explorer anzeigen"
+    "viewOnExplorer": "Im Explorer anzeigen",
+    "markSatisfied": "Als erfüllt markieren",
+    "markException": "Als Ausnahme markieren",
+    "exportBundle": "Bundle exportieren",
+    "platformAcknowledgement": "Plattform-Bestätigung"
   },
   "messages": {
     "thisRecordHasBeenReferenced": "Dieser Datensatz wurde von {{count}} Emission(en) referenziert",
@@ -40,15 +44,22 @@
   "status": {
     "unverified": "Nicht verifiziert",
     "verified": "Verifiziert",
-    "rejected": "Abgelehnt"
+    "rejected": "Abgelehnt",
+    "required": "Erforderlich",
+    "satisfied": "Erfüllt",
+    "exception": "Ausnahme",
+    "available": "Verfügbar"
   },
   "filters": {
     "allStatuses": "Alle Status",
+    "allAssets": "Alle Assets",
     "unverified": "Nicht verifiziert",
     "verified": "Verifiziert",
     "rejected": "Abgelehnt",
     "status": "Status",
+    "requirementStatus": "Anforderungsstatus",
     "assetId": "Asset-ID",
+    "asset": "Asset",
     "holderAddress": "Inhaber-Adresse",
     "filterByAssetId": "Nach Asset-ID filtern",
     "filterByHolderAddress": "Nach Inhaber-Adresse filtern"
@@ -73,5 +84,17 @@
     "pageOf": "Seite {{current}} von {{total}}",
     "previous": "Zurück",
     "next": "Weiter"
+  },
+  "requirements": {
+    "title": "Asset-Compliance-Anforderungen",
+    "overview": "Übersicht",
+    "assetRequirements": "Asset-Anforderungen",
+    "issuanceRecords": "Emissions-Datensätze",
+    "satisfied": "Erfüllt",
+    "exceptions": "Ausnahmen",
+    "required": "Erforderlich",
+    "available": "Verfügbar",
+    "exportFormat": "Export-Format",
+    "selectExportFormat": "Export-Format auswählen"
   }
 }
