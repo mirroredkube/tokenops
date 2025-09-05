@@ -1,0 +1,102 @@
+{
+  "title": "Issuer Address Management",
+  "description": "Manage and approve blockchain addresses for token issuance",
+  "organization": "Organization: {{organizationName}}",
+  "filters": {
+    "title": "Filters",
+    "status": "Status",
+    "ledger": "Ledger", 
+    "network": "Network",
+    "allStatuses": "All Statuses",
+    "allLedgers": "All Ledgers",
+    "allNetworks": "All Networks",
+    "selectStatus": "Select Status",
+    "selectLedger": "Select Ledger",
+    "selectNetwork": "Select Network"
+  },
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved", 
+    "suspended": "Suspended",
+    "revoked": "Revoked"
+  },
+  "ledger": {
+    "xrpl": "XRPL",
+    "ethereum": "Ethereum",
+    "hedera": "Hedera"
+  },
+  "network": {
+    "mainnet": "Mainnet",
+    "testnet": "Testnet", 
+    "devnet": "Devnet"
+  },
+  "table": {
+    "title": "Issuer Addresses ({{count}})",
+    "address": "ADDRESS",
+    "ledgerNetwork": "LEDGER/NETWORK",
+    "useTags": "USE TAGS",
+    "status": "STATUS",
+    "created": "CREATED",
+    "actions": "ACTIONS",
+    "noAddresses": "No issuer addresses found",
+    "loading": "Loading addresses..."
+  },
+  "actions": {
+    "registerAddress": "Register Address",
+    "approveAddress": "Approve Address",
+    "suspendAddress": "Suspend Address",
+    "creating": "Creating...",
+    "approving": "Approving...",
+    "suspending": "Suspending...",
+    "manageAddresses": "Manage Addresses"
+  },
+  "modals": {
+    "create": {
+      "title": "Register New Issuer Address",
+      "description": "Register a new blockchain address for token issuance. The address will be pending approval.",
+      "organization": "Organization",
+      "address": "Address",
+      "ledger": "Ledger",
+      "network": "Network",
+      "allowedUseTags": "Allowed Use Tags",
+      "addressPlaceholder": "Enter blockchain address",
+      "loading": "Loading...",
+      "cancel": "Cancel",
+      "register": "Register Address"
+    },
+    "approve": {
+      "title": "Approve Issuer Address",
+      "description": "Approve this issuer address for token issuance. This action will make the address available for asset creation.",
+      "reason": "Approval Reason",
+      "reasonPlaceholder": "Enter reason for approval...",
+      "reasonRequired": "Approval reason is required",
+      "cancel": "Cancel",
+      "approve": "Approve Address"
+    },
+    "suspend": {
+      "title": "Suspend Issuer Address", 
+      "description": "Suspend this issuer address. Suspended addresses cannot be used for new asset creation.",
+      "reason": "Suspension Reason",
+      "reasonPlaceholder": "Enter reason for suspension...",
+      "reasonRequired": "Suspension reason is required",
+      "cancel": "Cancel",
+      "suspend": "Suspend Address"
+    }
+  },
+  "messages": {
+    "createSuccess": "Issuer address created successfully and is pending approval",
+    "approveSuccess": "Issuer address approved successfully",
+    "suspendSuccess": "Issuer address suspended successfully",
+    "createError": "Failed to create address",
+    "approveError": "Failed to approve address", 
+    "suspendError": "Failed to suspend address",
+    "fetchError": "Failed to fetch addresses",
+    "noApprovedAddresses": "No approved addresses found",
+    "registerFirst": "Register and approve an address first"
+  },
+  "useTags": {
+    "art": "ART",
+    "emt": "EMT", 
+    "other": "OTHER"
+  }
+}

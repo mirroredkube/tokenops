@@ -2,6 +2,7 @@
   "navigation": {
     "dashboard": "Dashboard",
     "assets": "Assets",
+    "issuerAddresses": "Issuer Addresses",
     "issuances": "Issuances",
     "authorizations": "Authorizations",
     "compliance": "Compliance",

@@ -51,7 +51,7 @@ interface ApprovedAddress {
 }
 
 export default function CreateAssetPage() {
-  const { t } = useTranslation(['assets', 'common'])
+  const { t } = useTranslation(['assets', 'common', 'issuerAddresses'])
   const { user } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -356,14 +356,14 @@ export default function CreateAssetPage() {
                 <div className="w-full p-3 border border-gray-300 rounded-lg bg-yellow-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-yellow-800">No approved addresses found</p>
-                      <p className="text-xs text-yellow-600">Register and approve an address first</p>
+                      <p className="text-sm text-yellow-800">{t('issuerAddresses:messages.noApprovedAddresses')}</p>
+                      <p className="text-xs text-yellow-600">{t('issuerAddresses:messages.registerFirst')}</p>
                     </div>
                     <a
                       href="/app/issuer-addresses"
                       className="text-sm text-blue-600 hover:text-blue-800 underline"
                     >
-                      Manage Addresses
+{t('issuerAddresses:actions.manageAddresses')}
                     </a>
                   </div>
                 </div>

@@ -112,7 +112,7 @@ export default function IssuerAddressesPage() {
       setAddresses(data?.addresses || [])
     } catch (err: any) {
       console.error('Error fetching addresses:', err)
-      setError(err.message || 'Failed to fetch addresses')
+      setError(err.message || t('messages.fetchError'))
     } finally {
       setLoading(false)
     }
@@ -149,10 +149,10 @@ export default function IssuerAddressesPage() {
       })
       
       if (response.error) {
-        throw new Error((response.error as any).error || 'Failed to create address')
+        throw new Error((response.error as any).error || t('messages.createError'))
       }
       
-      setSuccessMessage('Issuer address created successfully and is pending approval')
+      setSuccessMessage(t('messages.createSuccess'))
       setShowCreateModal(false)
       setCreateData({
         organizationId: '',
@@ -164,7 +164,7 @@ export default function IssuerAddressesPage() {
       fetchAddresses()
     } catch (err: any) {
       console.error('Error creating address:', err)
-      setError(err.message || 'Failed to create address')
+      setError(err.message || t('messages.createError'))
     } finally {
       setCreateLoading(false)
     }
@@ -185,17 +185,17 @@ export default function IssuerAddressesPage() {
       })
       
       if (response.error) {
-        throw new Error((response.error as any).error || 'Failed to approve address')
+        throw new Error((response.error as any).error || t('messages.approveError'))
       }
       
-      setSuccessMessage('Issuer address approved successfully')
+      setSuccessMessage(t('messages.approveSuccess'))
       setShowApprovalModal(false)
       setPendingAddressId(null)
       setApprovalReason('')
       fetchAddresses()
     } catch (err: any) {
       console.error('Error approving address:', err)
-      setError(err.message || 'Failed to approve address')
+      setError(err.message || t('messages.approveError'))
     } finally {
       setApprovalLoading(false)
     }
@@ -215,16 +215,16 @@ export default function IssuerAddressesPage() {
       })
       
       if (response.error) {
-        throw new Error((response.error as any).error || 'Failed to suspend address')
+        throw new Error((response.error as any).error || t('messages.suspendError'))
       }
       
-      setSuccessMessage('Issuer address suspended successfully')
+      setSuccessMessage(t('messages.suspendSuccess'))
       setShowSuspensionModal(false)
       setSuspensionReason('')
       fetchAddresses()
     } catch (err: any) {
       console.error('Error suspending address:', err)
-      setError(err.message || 'Failed to suspend address')
+      setError(err.message || t('messages.suspendError'))
     } finally {
       setSuspensionLoading(false)
     }
@@ -265,12 +265,12 @@ export default function IssuerAddressesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Issuer Address Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-gray-600 mt-1">
-            Manage and approve blockchain addresses for token issuance
+            {t('description')}
             {userOrganization && (
               <span className="block text-sm text-gray-500 mt-1">
-                Organization: {userOrganization.name}
+                {t('organization', { organizationName: userOrganization.name })}
               </span>
             )}
           </p>
@@ -279,8 +279,8 @@ export default function IssuerAddressesPage() {
           onClick={() => setShowCreateModal(true)}
           className="inline-flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
         >
-          <Plus className="h-5 w-5 mr-2" />
-          Register Address
+          <Plus className='h-5 w-5 mr-2' />
+          {t('actions.registerAddress')}
         </button>
       </div>
 
@@ -305,48 +305,48 @@ export default function IssuerAddressesPage() {
 
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4">Filters</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('filters.title')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField label="Status">
+          <FormField label={t('filters.status')}>
             <CustomDropdown
               value={filters.status}
               onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
               options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'PENDING', label: 'Pending' },
-                { value: 'APPROVED', label: 'Approved' },
-                { value: 'SUSPENDED', label: 'Suspended' },
-                { value: 'REVOKED', label: 'Revoked' }
+                { value: '', label: t('filters.allStatuses') },
+                { value: 'PENDING', label: t('status.pending') },
+                { value: 'APPROVED', label: t('status.approved') },
+                { value: 'SUSPENDED', label: t('status.suspended') },
+                { value: 'REVOKED', label: t('status.revoked') }
               ]}
-              placeholder="Select Status"
+              placeholder={t('filters.selectStatus')}
             />
           </FormField>
 
-          <FormField label="Ledger">
+          <FormField label={t('filters.ledger')}>
             <CustomDropdown
               value={filters.ledger}
               onChange={(value) => setFilters(prev => ({ ...prev, ledger: value }))}
               options={[
-                { value: '', label: 'All Ledgers' },
-                { value: 'XRPL', label: 'XRPL' },
-                { value: 'ETHEREUM', label: 'Ethereum' },
-                { value: 'HEDERA', label: 'Hedera' }
+                { value: '', label: t('filters.allLedgers') },
+                { value: 'XRPL', label: t('ledger.xrpl') },
+                { value: 'ETHEREUM', label: t('ledger.ethereum') },
+                { value: 'HEDERA', label: t('ledger.hedera') }
               ]}
-              placeholder="Select Ledger"
+              placeholder={t('filters.selectLedger')}
             />
           </FormField>
 
-          <FormField label="Network">
+          <FormField label={t('filters.network')}>
             <CustomDropdown
               value={filters.network}
               onChange={(value) => setFilters(prev => ({ ...prev, network: value }))}
               options={[
-                { value: '', label: 'All Networks' },
-                { value: 'MAINNET', label: 'Mainnet' },
-                { value: 'TESTNET', label: 'Testnet' },
-                { value: 'DEVNET', label: 'Devnet' }
+                { value: '', label: t('filters.allNetworks') },
+                { value: 'MAINNET', label: t('network.mainnet') },
+                { value: 'TESTNET', label: t('network.testnet') },
+                { value: 'DEVNET', label: t('network.devnet') }
               ]}
-              placeholder="Select Network"
+              placeholder={t('filters.selectNetwork')}
             />
           </FormField>
         </div>
@@ -355,19 +355,19 @@ export default function IssuerAddressesPage() {
       {/* Addresses Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold">Issuer Addresses ({addresses.length})</h3>
+          <h3 className='text-lg font-semibold'>{t('table.title', { count: addresses.length })}</h3>
         </div>
         
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Loading addresses...</p>
+            <p className="text-gray-600 mt-2">{t('table.loading')}</p>
           </div>
         ) : addresses.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p>No issuer addresses found</p>
-            <p className="text-sm">Register a new address to get started</p>
+            <p>{t('table.noAddresses')}</p>
+            <p className="text-sm">{t('actions.registerAddress')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -375,22 +375,22 @@ export default function IssuerAddressesPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Address
+                    {t('table.address')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ledger/Network
+                    {t('table.ledgerNetwork')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Use Tags
+                    {t('table.useTags')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t('table.status')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
+                    {t('table.created')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    {t('table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -441,7 +441,7 @@ export default function IssuerAddressesPage() {
                               setShowApprovalModal(true)
                             }}
                             className="text-green-600 hover:text-green-900"
-                            title="Approve Address"
+                            title={t('actions.approveAddress')}
                           >
                             <CheckCircle className="h-5 w-5" />
                           </button>
@@ -453,7 +453,7 @@ export default function IssuerAddressesPage() {
                               setShowSuspensionModal(true)
                             }}
                             className="text-red-600 hover:text-red-900"
-                            title="Suspend Address"
+                            title={t('actions.suspendAddress')}
                           >
                             <XCircle className="h-5 w-5" />
                           </button>
@@ -472,52 +472,52 @@ export default function IssuerAddressesPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">Register New Issuer Address</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('modals.create.title')}</h3>
             
             <div className="space-y-4">
-              <FormField label="Organization" required>
+              <FormField label={t('modals.create.organization')} required>
                 <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50">
-                  <span className="text-gray-700">{userOrganization?.name || 'Loading...'}</span>
+                  <span className='text-gray-700'>{userOrganization?.name || t('modals.create.loading')}</span>
                 </div>
               </FormField>
 
-              <FormField label="Address" required>
+              <FormField label={t('modals.create.address')} required>
                 <input
                   type="text"
                   value={createData.address}
                   onChange={(e) => setCreateData(prev => ({ ...prev, address: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="r... (XRPL) / 0x... (Ethereum)"
+                  placeholder={t('modals.create.addressPlaceholder')}
                 />
               </FormField>
 
-              <FormField label="Ledger" required>
+              <FormField label={t('modals.create.ledger')} required>
                 <CustomDropdown
                   value={createData.ledger}
                   onChange={(value) => setCreateData(prev => ({ ...prev, ledger: value as any }))}
                   options={[
-                    { value: 'XRPL', label: 'XRPL' },
-                    { value: 'ETHEREUM', label: 'Ethereum' },
-                    { value: 'HEDERA', label: 'Hedera' }
+                    { value: 'XRPL', label: t('ledger.xrpl') },
+                    { value: 'ETHEREUM', label: t('ledger.ethereum') },
+                    { value: 'HEDERA', label: t('ledger.hedera') }
                   ]}
-                  placeholder="Select Ledger"
+                  placeholder={t('filters.selectLedger')}
                 />
               </FormField>
 
-              <FormField label="Network" required>
+              <FormField label={t('modals.create.network')} required>
                 <CustomDropdown
                   value={createData.network}
                   onChange={(value) => setCreateData(prev => ({ ...prev, network: value as any }))}
                   options={[
-                    { value: 'MAINNET', label: 'Mainnet' },
-                    { value: 'TESTNET', label: 'Testnet' },
-                    { value: 'DEVNET', label: 'Devnet' }
+                    { value: 'MAINNET', label: t('network.mainnet') },
+                    { value: 'TESTNET', label: t('network.testnet') },
+                    { value: 'DEVNET', label: t('network.devnet') }
                   ]}
-                  placeholder="Select Network"
+                  placeholder={t('filters.selectNetwork')}
                 />
               </FormField>
 
-              <FormField label="Allowed Use Tags" required>
+              <FormField label={t('modals.create.allowedUseTags')} required>
                 <div className="space-y-2">
                   {['ART', 'EMT', 'OTHER'].map((tag) => (
                     <label key={tag} className="flex items-center">
@@ -558,7 +558,7 @@ export default function IssuerAddressesPage() {
                 disabled={createLoading || !createData.organizationId || !createData.address}
                 className="px-4 py-2 text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 disabled:opacity-50"
               >
-                {createLoading ? 'Creating...' : 'Register Address'}
+                {createLoading ? t('actions.creating') : t('actions.registerAddress')}
               </button>
             </div>
           </div>
@@ -569,10 +569,10 @@ export default function IssuerAddressesPage() {
       {showApprovalModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">Approve Issuer Address</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('modals.approve.title')}</h3>
             
             <div className="space-y-4">
-              <FormField label="Approval Reason" required>
+              <FormField label={t('modals.approve.reason')} required>
                 <textarea
                   value={approvalReason}
                   onChange={(e) => setApprovalReason(e.target.value)}
@@ -599,7 +599,7 @@ export default function IssuerAddressesPage() {
                 disabled={approvalLoading || !approvalReason.trim()}
                 className="px-4 py-2 text-green-600 border border-green-600 rounded-md hover:bg-green-50 disabled:opacity-50"
               >
-                {approvalLoading ? 'Approving...' : 'Approve Address'}
+                {approvalLoading ? t('actions.approving') : t('actions.approveAddress')}
               </button>
             </div>
           </div>
@@ -610,10 +610,10 @@ export default function IssuerAddressesPage() {
       {showSuspensionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">Suspend Issuer Address</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('modals.suspend.title')}</h3>
             
             <div className="space-y-4">
-              <FormField label="Suspension Reason" required>
+              <FormField label={t('modals.suspend.reason')} required>
                 <textarea
                   value={suspensionReason}
                   onChange={(e) => setSuspensionReason(e.target.value)}
@@ -640,7 +640,7 @@ export default function IssuerAddressesPage() {
                 disabled={suspensionLoading || !suspensionReason.trim()}
                 className="px-4 py-2 text-red-600 border border-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
               >
-                {suspensionLoading ? 'Suspending...' : 'Suspend Address'}
+                {suspensionLoading ? t('actions.suspending') : t('actions.suspendAddress')}
               </button>
             </div>
           </div>

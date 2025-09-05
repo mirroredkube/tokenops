@@ -1,0 +1,102 @@
+{
+  "title": "Emittenten-Adressen-Verwaltung",
+  "description": "Blockchain-Adressen für Token-Emission verwalten und genehmigen",
+  "organization": "Organisation: {{organizationName}}",
+  "filters": {
+    "title": "Filter",
+    "status": "Status",
+    "ledger": "Ledger",
+    "network": "Netzwerk",
+    "allStatuses": "Alle Status",
+    "allLedgers": "Alle Ledger",
+    "allNetworks": "Alle Netzwerke",
+    "selectStatus": "Status auswählen",
+    "selectLedger": "Ledger auswählen",
+    "selectNetwork": "Netzwerk auswählen"
+  },
+  "status": {
+    "pending": "Ausstehend",
+    "approved": "Genehmigt",
+    "suspended": "Ausgesetzt",
+    "revoked": "Widerrufen"
+  },
+  "ledger": {
+    "xrpl": "XRPL",
+    "ethereum": "Ethereum",
+    "hedera": "Hedera"
+  },
+  "network": {
+    "mainnet": "Mainnet",
+    "testnet": "Testnet",
+    "devnet": "Devnet"
+  },
+  "table": {
+    "title": "Emittenten-Adressen ({{count}})",
+    "address": "ADRESSE",
+    "ledgerNetwork": "LEDGER/NETZWERK",
+    "useTags": "VERWENDUNGS-TAGS",
+    "status": "STATUS",
+    "created": "ERSTELLT",
+    "actions": "AKTIONEN",
+    "noAddresses": "Keine Emittenten-Adressen gefunden",
+    "loading": "Adressen werden geladen..."
+  },
+  "actions": {
+    "registerAddress": "Adresse registrieren",
+    "approveAddress": "Adresse genehmigen",
+    "suspendAddress": "Adresse aussetzen",
+    "creating": "Wird erstellt...",
+    "approving": "Wird genehmigt...",
+    "suspending": "Wird ausgesetzt...",
+    "manageAddresses": "Adressen verwalten"
+  },
+  "modals": {
+    "create": {
+      "title": "Neue Emittenten-Adresse registrieren",
+      "description": "Registrieren Sie eine neue Blockchain-Adresse für die Token-Emission. Die Adresse wird zur Genehmigung ausstehen.",
+      "organization": "Organisation",
+      "address": "Adresse",
+      "ledger": "Ledger",
+      "network": "Netzwerk",
+      "allowedUseTags": "Erlaubte Verwendungs-Tags",
+      "addressPlaceholder": "Blockchain-Adresse eingeben",
+      "loading": "Wird geladen...",
+      "cancel": "Abbrechen",
+      "register": "Adresse registrieren"
+    },
+    "approve": {
+      "title": "Emittenten-Adresse genehmigen",
+      "description": "Genehmigen Sie diese Emittenten-Adresse für die Token-Emission. Diese Aktion macht die Adresse für die Asset-Erstellung verfügbar.",
+      "reason": "Genehmigungsgrund",
+      "reasonPlaceholder": "Grund für die Genehmigung eingeben...",
+      "reasonRequired": "Genehmigungsgrund ist erforderlich",
+      "cancel": "Abbrechen",
+      "approve": "Adresse genehmigen"
+    },
+    "suspend": {
+      "title": "Emittenten-Adresse aussetzen",
+      "description": "Setzen Sie diese Emittenten-Adresse aus. Ausgesetzte Adressen können nicht für neue Asset-Erstellung verwendet werden.",
+      "reason": "Aussetzungsgrund",
+      "reasonPlaceholder": "Grund für die Aussetzung eingeben...",
+      "reasonRequired": "Aussetzungsgrund ist erforderlich",
+      "cancel": "Abbrechen",
+      "suspend": "Adresse aussetzen"
+    }
+  },
+  "messages": {
+    "createSuccess": "Emittenten-Adresse erfolgreich erstellt und steht zur Genehmigung aus",
+    "approveSuccess": "Emittenten-Adresse erfolgreich genehmigt",
+    "suspendSuccess": "Emittenten-Adresse erfolgreich ausgesetzt",
+    "createError": "Adresse konnte nicht erstellt werden",
+    "approveError": "Adresse konnte nicht genehmigt werden",
+    "suspendError": "Adresse konnte nicht ausgesetzt werden",
+    "fetchError": "Adressen konnten nicht abgerufen werden",
+    "noApprovedAddresses": "Keine genehmigten Adressen gefunden",
+    "registerFirst": "Registrieren und genehmigen Sie zuerst eine Adresse"
+  },
+  "useTags": {
+    "art": "ART",
+    "emt": "EMT",
+    "other": "ANDERE"
+  }
+}

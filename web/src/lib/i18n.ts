@@ -13,6 +13,7 @@ import enReports from '../locales/en/reports.json'
 import enBalances from '../locales/en/balances.json'
 import enSettings from '../locales/en/settings.json'
 import enHelp from '../locales/en/help.json'
+import enIssuerAddresses from '../locales/en/issuerAddresses.json'
 
 import deCommon from '../locales/de/common.json'
 import deAssets from '../locales/de/assets.json'
@@ -24,6 +25,7 @@ import deReports from '../locales/de/reports.json'
 import deBalances from '../locales/de/balances.json'
 import deSettings from '../locales/de/settings.json'
 import deHelp from '../locales/de/help.json'
+import deIssuerAddresses from '../locales/de/issuerAddresses.json'
 
 const resources = {
   en: {
@@ -37,6 +39,7 @@ const resources = {
     balances: enBalances,
     settings: enSettings,
     help: enHelp,
+    issuerAddresses: enIssuerAddresses,
   },
   de: {
     common: deCommon,
@@ -49,6 +52,7 @@ const resources = {
     balances: deBalances,
     settings: deSettings,
     help: deHelp,
+    issuerAddresses: deIssuerAddresses,
   },
 }
 
@@ -69,7 +73,7 @@ i18n
     },
     
     defaultNS: 'common',
-    ns: ['common', 'assets', 'dashboard', 'issuances', 'authorizations', 'compliance', 'reports', 'balances', 'settings', 'help'],
+    ns: ['common', 'assets', 'dashboard', 'issuances', 'authorizations', 'compliance', 'reports', 'balances', 'settings', 'help', 'issuerAddresses'],
     
     // Ensure fallback to English for missing translations
     fallbackLng: 'en',
