@@ -253,11 +253,11 @@ export default function CreateAssetPage() {
           newData.complianceMode = 'RECORD_ONLY'
         }
         
-        // Auto-set Regulatory Classification based on Asset Class
+        // Auto-set Regulatory Classification (value must match dropdown option values)
         if (value === 'ART') {
-          newData.registry = { ...newData.registry, micaClass: 'Asset-Referenced Token (ART)' }
+          newData.registry = { ...newData.registry, micaClass: 'Asset-Referenced Token' }
         } else if (value === 'EMT') {
-          newData.registry = { ...newData.registry, micaClass: 'E-Money Token (EMT)' }
+          newData.registry = { ...newData.registry, micaClass: 'E-Money Token' }
         } else if (value === 'OTHER') {
           newData.registry = { ...newData.registry, micaClass: 'Utility Token' }
         }
@@ -591,7 +591,7 @@ export default function CreateAssetPage() {
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                       <p className="text-xs text-green-700">
-                        <strong>Auto-linked:</strong> {formData.assetClass === 'ART' ? 'Asset-Referenced Token (ART)' : formData.assetClass === 'EMT' ? 'E-Money Token (EMT)' : 'Utility Token'} based on Asset Class selection
+                        <strong>Auto-linked:</strong> {formData.assetClass === 'ART' ? 'Asset-Referenced Token' : formData.assetClass === 'EMT' ? 'E-Money Token' : 'Utility Token'} based on Asset Class selection
                       </p>
                     </div>
                   </div>

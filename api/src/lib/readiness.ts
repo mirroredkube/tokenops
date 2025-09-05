@@ -31,30 +31,6 @@ export async function computeAssetReadiness(assetId: string): Promise<ReadinessR
   const controls = (asset.controls || {}) as Record<string, any>
   const assetClass = asset.assetClass
 
-  // Core required fields (all classes)
-  if (!registry.jurisdiction) {
-    blockers.push({ code: 'JURISDICTION_MISSING', message: 'Jurisdiction is required', hint: 'Add one or more jurisdictions in the Registry section' })
-  }
-  if (!registry.whitePaperRef) {
-    blockers.push({ code: 'WHITEPAPER_MISSING', message: 'White Paper reference is required', hint: 'Provide a URL to the published white paper' })
-  }
-  if (!registry.riskAssessment) {
-    blockers.push({ code: 'RISK_ASSESSMENT_MISSING', message: 'Risk assessment is required', hint: 'Summarize key risks in the Registry section' })
-  }
-
-  // ART/EMT specific
-  if (assetClass === 'ART' || assetClass === 'EMT') {
-    if (!registry.lei) {
-      blockers.push({ code: 'LEI_MISSING', message: 'LEI code is required for ART/EMT' })
-    }
-    if (!registry.reserveAssets) {
-      blockers.push({ code: 'RESERVE_ASSETS_MISSING', message: 'Reserve assets description is required for ART/EMT' })
-    }
-    if (!registry.custodian) {
-      blockers.push({ code: 'CUSTODIAN_MISSING', message: 'Custodian information is required for ART/EMT' })
-    }
-  }
-
   // Issuer address must be approved
   if (!asset.issuingAddress || asset.issuingAddress.status !== 'APPROVED') {
     blockers.push({ code: 'ISSUER_NOT_APPROVED', message: 'Issuing address must be registered and approved' })
