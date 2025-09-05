@@ -290,6 +290,41 @@ export default function CreateAssetPage() {
     return allOptions
   }
 
+  // Get regulatory classification options (regulation-agnostic)
+  const getRegulatoryClassificationOptions = () => {
+    return [
+      { value: 'Utility Token', label: t('assets:createAsset.registry.classifications.utilityToken', 'Utility Token') },
+      { value: 'Security Token', label: t('assets:createAsset.registry.classifications.securityToken', 'Security Token') },
+      { value: 'Asset-Referenced Token', label: t('assets:createAsset.registry.classifications.assetReferencedToken', 'Asset-Referenced Token (ART)') },
+      { value: 'E-Money Token', label: t('assets:createAsset.registry.classifications.eMoneyToken', 'E-Money Token (EMT)') },
+      { value: 'Payment Token', label: t('assets:createAsset.registry.classifications.paymentToken', 'Payment Token') },
+      { value: 'Stablecoin', label: t('assets:createAsset.registry.classifications.stablecoin', 'Stablecoin') }
+    ]
+  }
+
+  // Get ledger-specific control options
+  const getLedgerControls = (ledger: string) => {
+    const controls = {
+      xrpl: [
+        { key: 'requireAuth', label: t('assets:createAsset.controls.requireAuthorization', 'Require Authorization'), description: t('assets:createAsset.controls.requireAuthorizationDesc', 'Holders must be authorized to hold this asset') },
+        { key: 'freeze', label: t('assets:createAsset.controls.enableFreeze', 'Enable Freeze'), description: t('assets:createAsset.controls.enableFreezeDesc', 'Allow freezing of holder accounts') },
+        { key: 'clawback', label: t('assets:createAsset.controls.enableClawback', 'Enable Clawback'), description: t('assets:createAsset.controls.enableClawbackDesc', 'Allow clawback of tokens from holders') }
+      ],
+      ethereum: [
+        { key: 'pausable', label: t('assets:createAsset.controls.enablePause', 'Enable Pause'), description: t('assets:createAsset.controls.enablePauseDesc', 'Allow pausing of token transfers') },
+        { key: 'mintable', label: t('assets:createAsset.controls.enableMint', 'Enable Mint'), description: t('assets:createAsset.controls.enableMintDesc', 'Allow minting of additional tokens') },
+        { key: 'burnable', label: t('assets:createAsset.controls.enableBurn', 'Enable Burn'), description: t('assets:createAsset.controls.enableBurnDesc', 'Allow burning of tokens') }
+      ],
+      hedera: [
+        { key: 'kycRequired', label: t('assets:createAsset.controls.requireKyc', 'Require KYC'), description: t('assets:createAsset.controls.requireKycDesc', 'Require KYC verification for holders') },
+        { key: 'freeze', label: t('assets:createAsset.controls.enableFreeze', 'Enable Freeze'), description: t('assets:createAsset.controls.enableFreezeDesc', 'Allow freezing of holder accounts') },
+        { key: 'wipe', label: t('assets:createAsset.controls.enableWipe', 'Enable Wipe'), description: t('assets:createAsset.controls.enableWipeDesc', 'Allow wiping of tokens from accounts') }
+      ]
+    }
+    
+    return controls[ledger as keyof typeof controls] || []
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -516,17 +551,12 @@ export default function CreateAssetPage() {
                 />
               </FormField>
 
-              <FormField label={t('assets:createAsset.registry.fields.micaClassification', 'MiCA Classification')}>
+              <FormField label={t('assets:createAsset.registry.fields.regulatoryClassification', 'Regulatory Classification')}>
                 <CustomDropdown
                   value={formData.registry?.micaClass || ''}
                   onChange={(value) => handleNestedChange('registry', 'micaClass', value)}
-                  options={[
-                    { value: 'Utility Token', label: 'Utility Token' },
-                    { value: 'Security Token', label: 'Security Token' },
-                    { value: 'Asset-Referenced Token', label: 'Asset-Referenced Token (ART)' },
-                    { value: 'E-Money Token', label: 'E-Money Token (EMT)' }
-                  ]}
-                  placeholder={t('assets:createAsset.registry.placeholders.micaClassification', 'Select MiCA Classification')}
+                  options={getRegulatoryClassificationOptions()}
+                  placeholder={t('assets:createAsset.registry.placeholders.regulatoryClassification', 'Select Regulatory Classification')}
                 />
               </FormField>
 
@@ -553,46 +583,29 @@ export default function CreateAssetPage() {
               </p>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="requireAuth"
-                  checked={formData.controls?.requireAuth || false}
-                  onChange={(e) => handleNestedChange('controls', 'requireAuth', e.target.checked)}
-                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                />
-                <label htmlFor="requireAuth" className="ml-2 text-sm text-gray-700">
-                  {t('assets:createAsset.controls.requireAuthorization', 'Require Authorization (XRPL)')}
-                </label>
-              </div>
+            <div className="space-y-4">
+              {/* Ledger-specific controls */}
+              {getLedgerControls(formData.ledger).map((control) => (
+                <div key={control.key} className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id={control.key}
+                    checked={Boolean(formData.controls?.[control.key as keyof typeof formData.controls])}
+                    onChange={(e) => handleNestedChange('controls', control.key, e.target.checked)}
+                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor={control.key} className="text-sm font-medium text-gray-700">
+                      {control.label}
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {control.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="freeze"
-                  checked={formData.controls?.freeze || false}
-                  onChange={(e) => handleNestedChange('controls', 'freeze', e.target.checked)}
-                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                />
-                <label htmlFor="freeze" className="ml-2 text-sm text-gray-700">
-                  {t('assets:createAsset.controls.enableFreeze', 'Enable Freeze (XRPL)')}
-                </label>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="clawback"
-                  checked={formData.controls?.clawback || false}
-                  onChange={(e) => handleNestedChange('controls', 'clawback', e.target.checked)}
-                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                />
-                <label htmlFor="clawback" className="ml-2 text-sm text-gray-700">
-                  {t('assets:createAsset.controls.enableClawback', 'Enable Clawback (XRPL)')}
-                </label>
-              </div>
-
+              {/* Transfer Fee - available for all ledgers */}
               <FormField label={t('assets:createAsset.fields.transferFee', 'Transfer Fee (basis points)')}>
                 <input
                   type="number"

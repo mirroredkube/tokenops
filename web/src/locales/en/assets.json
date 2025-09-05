@@ -191,22 +191,43 @@
       "fields": {
         "isinCode": "ISIN Code",
         "jurisdiction": "Jurisdiction",
-        "micaClassification": "MiCA Classification",
+        "regulatoryClassification": "Regulatory Classification",
         "leiCode": "LEI Code"
       },
       "placeholders": {
         "isinCode": "US0378331005",
         "jurisdiction": "DE, US, EU",
-        "micaClassification": "Utility Token, Security Token",
+        "regulatoryClassification": "Select Regulatory Classification",
         "leiCode": "529900WXWXWXWXWXWXWX"
+      },
+      "classifications": {
+        "utilityToken": "Utility Token",
+        "securityToken": "Security Token",
+        "assetReferencedToken": "Asset-Referenced Token (ART)",
+        "eMoneyToken": "E-Money Token (EMT)",
+        "paymentToken": "Payment Token",
+        "stablecoin": "Stablecoin"
       }
     },
     "controls": {
       "title": "Ledger-Specific Controls",
       "description": "These controls affect how the asset behaves on the selected ledger. Some options may not be available for all ledgers.",
-      "requireAuthorization": "Require Authorization (XRPL)",
-      "enableFreeze": "Enable Freeze (XRPL)",
-      "enableClawback": "Enable Clawback (XRPL)"
+      "requireAuthorization": "Require Authorization",
+      "requireAuthorizationDesc": "Holders must be authorized to hold this asset",
+      "enableFreeze": "Enable Freeze",
+      "enableFreezeDesc": "Allow freezing of holder accounts",
+      "enableClawback": "Enable Clawback",
+      "enableClawbackDesc": "Allow clawback of tokens from holders",
+      "enablePause": "Enable Pause",
+      "enablePauseDesc": "Allow pausing of token transfers",
+      "enableMint": "Enable Mint",
+      "enableMintDesc": "Allow minting of additional tokens",
+      "enableBurn": "Enable Burn",
+      "enableBurnDesc": "Allow burning of tokens",
+      "requireKyc": "Require KYC",
+      "requireKycDesc": "Require KYC verification for holders",
+      "enableWipe": "Enable Wipe",
+      "enableWipeDesc": "Allow wiping of tokens from accounts"
     },
     "actions": {
       "cancel": "Cancel",

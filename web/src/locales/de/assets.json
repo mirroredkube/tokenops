@@ -174,22 +174,43 @@
       "fields": {
         "isinCode": "ISIN-Code",
         "jurisdiction": "Gerichtsbarkeit",
-        "micaClassification": "MiCA-Klassifizierung",
+        "regulatoryClassification": "Regulatorische Klassifizierung",
         "leiCode": "LEI-Code"
       },
       "placeholders": {
         "isinCode": "US0378331005",
         "jurisdiction": "DE, US, EU",
-        "micaClassification": "Utility Token, Security Token",
+        "regulatoryClassification": "Regulatorische Klassifizierung auswählen",
         "leiCode": "529900WXWXWXWXWXWXWX"
+      },
+      "classifications": {
+        "utilityToken": "Utility Token",
+        "securityToken": "Security Token",
+        "assetReferencedToken": "Asset-Referenzierter Token (ART)",
+        "eMoneyToken": "E-Geld-Token (EMT)",
+        "paymentToken": "Zahlungstoken",
+        "stablecoin": "Stablecoin"
       }
     },
     "controls": {
       "title": "Ledger-spezifische Steuerungen",
       "description": "Diese Steuerungen beeinflussen, wie sich das Asset im ausgewählten Ledger verhält. Einige Optionen sind möglicherweise nicht für alle Ledger verfügbar.",
-      "requireAuthorization": "Autorisierung erforderlich (XRPL)",
-      "enableFreeze": "Einfrieren aktivieren (XRPL)",
-      "enableClawback": "Rückforderung aktivieren (XRPL)"
+      "requireAuthorization": "Autorisierung erforderlich",
+      "requireAuthorizationDesc": "Inhaber müssen autorisiert sein, um dieses Asset zu halten",
+      "enableFreeze": "Einfrieren aktivieren",
+      "enableFreezeDesc": "Einfrieren von Inhaber-Konten erlauben",
+      "enableClawback": "Rückforderung aktivieren",
+      "enableClawbackDesc": "Rückforderung von Token von Inhabern erlauben",
+      "enablePause": "Pause aktivieren",
+      "enablePauseDesc": "Pausieren von Token-Übertragungen erlauben",
+      "enableMint": "Minting aktivieren",
+      "enableMintDesc": "Minting zusätzlicher Token erlauben",
+      "enableBurn": "Burning aktivieren",
+      "enableBurnDesc": "Burning von Token erlauben",
+      "requireKyc": "KYC erforderlich",
+      "requireKycDesc": "KYC-Verifizierung für Inhaber erforderlich",
+      "enableWipe": "Wipe aktivieren",
+      "enableWipeDesc": "Wiping von Token von Konten erlauben"
     },
     "actions": {
       "cancel": "Abbrechen",
