@@ -190,12 +190,19 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       
       // Validate state parameter
       const storedState = req.cookies.oauth_state;
-      if (!state || !storedState || state !== storedState) {
+      if (!state || !storedState) {
         return reply.status(400).send({ error: 'Invalid state parameter' });
       }
       
-      // Extract tenant from state parameter
-      const [stateToken, tenant] = state.split(':');
+      // Extract tenant from state parameter (decode URL encoding first)
+      const decodedState = decodeURIComponent(state);
+      const decodedStoredState = decodeURIComponent(storedState);
+      
+      if (decodedState !== decodedStoredState) {
+        return reply.status(400).send({ error: 'Invalid state parameter' });
+      }
+      
+      const [stateToken, tenant] = decodedState.split(':');
       if (!tenant) {
         return reply.status(400).send({ error: 'Invalid state format' });
       }
@@ -439,7 +446,22 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       console.error('Error in /auth/me:', error);
       
       // If it's a JWT verification error, return 401
-      if (error instanceof Error && (error.message.includes('jwt') || error.message.includes('token') || error.message.includes('Unauthorized'))) {
+      
+      if (error instanceof Error && (
+        error.message.includes('jwt') || 
+        error.message.includes('token') || 
+        error.message.includes('Unauthorized') ||
+        error.message.includes('No authorization') ||
+        error.message.includes('Missing authorization') ||
+        error.message.includes('No token') ||
+        error.message.includes('Invalid token') ||
+        error.message.includes('authorization') ||
+        error.message.includes('Authorization') ||
+        error.name === 'UnauthorizedError' ||
+        error.name === 'JsonWebTokenError' ||
+        error.name === 'TokenExpiredError' ||
+        error.name === 'NotBeforeError'
+      )) {
         return reply.code(401).send({ 
           error: 'Unauthorized',
           message: 'Invalid or expired token'
