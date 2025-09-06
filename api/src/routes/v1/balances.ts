@@ -1,10 +1,17 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
-import { getLedgerAdapter } from '../adapters/index.js'
+import { getLedgerAdapter } from '../../adapters/index.js'
+import { tenantMiddleware } from '../../middleware/tenantMiddleware.js'
+import type { TenantRequest } from '../../middleware/tenantMiddleware.js'
+import { requireActiveTenant } from '../../plugins/auth.js'
 
 export default async function routes(app: FastifyInstance, _opts: FastifyPluginOptions) {
-  app.get('/:account', {
+  // Apply tenant middleware to all routes
+  app.addHook('preHandler', tenantMiddleware)
+  
+  app.get('/balances/:account', {
+    preHandler: [requireActiveTenant],
     schema: {
-      summary: 'Get issued token balances for an account',
+      summary: 'Get issued token balances for an account (tenant-scoped)',
       tags: ['balances'],
       params: {
         type: 'object',
@@ -14,7 +21,7 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
       querystring: {
         type: 'object',
         properties: {
-          issuer: { type: 'string', description: 'Optional issuer r-address filter' },
+          issuer: { type: 'string', description: 'Optional issuer r-address filter (must belong to tenant)' },
           currency: { type: 'string', description: 'Optional currency filter (3-char like USD/EUR or 160-bit hex)' },
         },
         examples: [{ issuer: 'rISSUER...', currency: 'USD' }],
@@ -46,11 +53,30 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
           },
         },
         400: { type: 'object', properties: { ok: { type: 'boolean' }, error: { type: 'string' } } },
+        404: { type: 'object', properties: { ok: { type: 'boolean' }, error: { type: 'string' } } },
       },
     },
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
     const { account } = req.params as { account: string }
     const { issuer, currency } = req.query as { issuer?: string; currency?: string }
+
+    // If issuer filter is provided, validate it belongs to the tenant
+    if (issuer) {
+      const issuerAddress = await app.prisma.issuerAddress.findFirst({
+        where: {
+          address: issuer,
+          organizationId: req.tenant!.id,
+          status: 'APPROVED'
+        }
+      })
+      
+      if (!issuerAddress) {
+        return reply.status(404).send({ 
+          ok: false, 
+          error: 'Issuer address not found or not approved for this organization' 
+        })
+      }
+    }
 
     const adapter = getLedgerAdapter()
     try {

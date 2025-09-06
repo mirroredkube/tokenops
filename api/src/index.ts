@@ -79,7 +79,7 @@ await app.register(authPlugin)
 // ----------------------------------------------------------------------------
 // Keep the .js extensions if your dev/runtime resolves TS via tsx
 import systemRoutes from './routes/system.js'
-import balancesRoutes from './routes/balances.js'
+import v1BalancesRoutes from './routes/v1/balances.js'
 
 // New v1 routes (asset-centric)
 import v1ComplianceRoutes from './routes/v1/compliance.js'
@@ -96,7 +96,6 @@ import { startIssuanceWatcherJob } from './jobs/issuanceWatcherJob.js'
 
 // Essential routes (no v1 equivalent)
 await app.register(systemRoutes,     { prefix: '/system' })
-await app.register(balancesRoutes,   { prefix: '/balances' })
 
 // New v1 routes (asset-centric)
 await app.register(v1ComplianceRoutes, { prefix: '/v1' })
@@ -107,6 +106,7 @@ await app.register(v1UsersRoutes,    { prefix: '/v1/users' })
 await app.register(v1OrganizationRoutes, { prefix: '/v1' })
 await app.register(v1ProductRoutes,  { prefix: '/v1' })
 await app.register(v1IssuerAddressRoutes, { prefix: '/v1' })
+await app.register(v1BalancesRoutes, { prefix: '/v1' })
 
 // ----------------------------------------------------------------------------
 // Startup
