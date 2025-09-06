@@ -62,6 +62,32 @@ export default function AuthorizationFlow() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Restore issuance data when coming from issuance flow
+  useEffect(() => {
+    const issuanceData = sessionStorage.getItem('issuanceData')
+    if (issuanceData) {
+      try {
+        const data = JSON.parse(issuanceData)
+        if (data.selectedAssetId) {
+          // Pre-select the asset if it exists
+          setSelectedAsset(assets.find(asset => asset.id === data.selectedAssetId) || null)
+        }
+        if (data.holderAddress) {
+          setAuthorizationData(prev => ({
+            ...prev,
+            holderAddress: data.holderAddress,
+            currencyCode: data.currencyCode || prev.currencyCode,
+            issuerAddress: data.issuerAddress || prev.issuerAddress
+          }))
+        }
+        // Clear the stored data
+        sessionStorage.removeItem('issuanceData')
+      } catch (error) {
+        console.error('Error parsing issuance data:', error)
+      }
+    }
+  }, [assets])
+
   // Security: Always use wallet signing mode, never handle private keys
 
   // Check if trustline exists on XRPL ledger

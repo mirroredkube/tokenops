@@ -370,32 +370,22 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     setCurrentStep('trustline-check')
   }
 
-  // Create external authorization record for existing trustlines
-  const createExternalAuthorization = async () => {
-    if (!selectedAsset || !trustlineCheckResult?.exists) {
-      throw new Error('No asset selected or trustline not found')
+  // Check if authorization exists and is in ISSUER_AUTHORIZED state
+  const checkAuthorizationStatus = async () => {
+    if (!selectedAsset || !trustlineCheckData.holderAddress) {
+      throw new Error('No asset selected or holder address provided')
     }
 
     try {
-      const { data, error } = await api.POST('/v1/authorizations/external', {
-        body: {
-          assetId: selectedAsset.id,
-          holderAddress: trustlineCheckData.holderAddress,
-          currency: trustlineCheckData.currencyCode,
-          issuerAddress: trustlineCheckData.issuerAddress,
-          limit: trustlineCheckResult.details?.limit || '1000000000',
-          externalSource: 'xrpl_external'
-        }
-      })
+      const { data, error } = await api.GET(`/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}` as any, {})
 
       if (error) {
-        throw new Error((error as any).error || 'Failed to create external authorization record')
+        throw new Error((error as any).error || 'Failed to check authorization status')
       }
 
-      console.log('External authorization handled:', data)
       return data
     } catch (err: any) {
-      console.error('Error creating external authorization:', err)
+      console.error('Error checking authorization status:', err)
       throw err
     }
   }
@@ -514,102 +504,45 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     }
   }
 
-  // Check for existing authorization
-  const checkExistingAuthorization = async () => {
-    if (!selectedAsset || !trustlineCheckData.holderAddress) return null
-    
+  // Validate authorization for issuance
+  const validateAuthorizationForIssuance = async () => {
+    if (!selectedAsset || !trustlineCheckData.holderAddress) {
+      throw new Error('No asset selected or holder address provided')
+    }
+
     try {
-      const { data } = await api.GET('/v1/authorizations', {
-        params: {
-          query: {
-            assetId: selectedAsset.id,
-            holder: trustlineCheckData.holderAddress,
-            limit: 10
-          }
-        }
-      })
+      const authData = await checkAuthorizationStatus()
       
-      return data?.authorizations?.find((auth: any) => 
-        auth.assetId === selectedAsset.id && 
-        auth.holder === trustlineCheckData.holderAddress
-      )
-    } catch (error) {
-      console.error('Error checking existing authorization:', error)
-      return null
+      // Check if authorization exists and is in ISSUER_AUTHORIZED state
+      if (!authData.exists) {
+        throw new Error('No authorization found. Please create an authorization first using the Authorization Flow.')
+      }
+
+      if (authData.status !== 'ISSUER_AUTHORIZED') {
+        throw new Error(`Authorization exists but is not authorized. Current status: ${authData.status}. Please complete the authorization process first.`)
+      }
+
+      return authData
+    } catch (err: any) {
+      console.error('Error validating authorization:', err)
+      throw err
     }
   }
 
-  // Create authorization request for the "Send Authorization Request" button
-  const createAuthorizationRequest = async () => {
-    if (!selectedAsset) {
-      setError('Please select an asset first')
-      return
+  // Redirect to authorization flow
+  const redirectToAuthorizationFlow = () => {
+    // Store the current issuance data in sessionStorage to restore later
+    const issuanceData = {
+      selectedAssetId: selectedAsset?.id,
+      holderAddress: trustlineCheckData.holderAddress,
+      currencyCode: trustlineCheckData.currencyCode,
+      issuerAddress: trustlineCheckData.issuerAddress
     }
-
-    if (!trustlineCheckData.holderAddress) {
-      setError('Please enter a holder address')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      // Check for existing authorization first
-      const existingAuth = await checkExistingAuthorization()
-      if (existingAuth) {
-        setError(`An authorization already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
-        setLoading(false)
-        return
-      }
-      // Use direct fetch to avoid openapi-fetch body wrapping issues
-      const response = await fetch(`http://localhost:4000/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          params: {
-            holderAddress: trustlineCheckData.holderAddress,
-            currencyCode: selectedAsset.code, // Use asset code
-            issuerAddress: selectedAsset.issuer, // Use asset issuer
-            limit: trustlineData.limit || '1000000000', // Use trustlineData for limit, fallback to default
-            noRipple: trustlineData.noRipple || false,
-            requireAuth: trustlineData.requireAuth || true,
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-            callbackUrl: `${window.location.origin}/app/issuance/history`
-          },
-          signing: {
-            mode: 'wallet'
-          }
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      if (!data) {
-        throw new Error('No data received from server')
-      }
-
-      // Show success message and the authorization URL
-      setResult({
-        txId: (data as any).id,
-        explorer: (data as any).authUrl,
-        message: 'Authorization request created successfully! The holder can now use the secure link to set up their trustline.'
-      })
-      
-      setCurrentStep('success')
-    } catch (err: any) {
-      console.error('Error creating authorization request:', err)
-      setError(err.message || 'Failed to create authorization request')
-    } finally {
-      setLoading(false)
-    }
+    
+    sessionStorage.setItem('issuanceData', JSON.stringify(issuanceData))
+    
+    // Redirect to authorization flow
+    window.location.href = '/app/authorizations'
   }
 
   const handleTokenIssuance = async (e: React.FormEvent) => {
@@ -1408,59 +1341,45 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                 limit: trustlineCheckResult.details?.limit || 'unknown',
                                 balance: trustlineCheckResult.details?.balance || '0'
                               })
-                            : t('issuances:trustlineDetails.trustlineNotFoundMessage', 'No trustline found for {{currency}} from {{issuer}}. Please provide additional details to create one.', {
+                            : t('issuances:trustlineDetails.trustlineNotFoundMessage', 'No trustline found for {{currency}} from {{issuer}}.', {
                                 currency: trustlineCheckData.currencyCode,
                                 issuer: trustlineCheckData.issuerAddress
                               })
                           }
                         </p>
                         
-                        {/* Additional Fields for Creation */}
+                        {/* Authorization Required Message */}
                         {!trustlineCheckResult.exists && (
-                          <div className="mt-8 p-6 bg-white rounded-xl border border-gray-200">
-                            <h4 className="text-lg font-semibold text-gray-800 mb-4">{t('issuances:trustlineDetails.createNewTrustline', 'Create New Trustline')}</h4>
-                                                         <div className="space-y-6">
-                               <div className="space-y-2">
-                                 <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                   {t('issuances:trustlineDetails.trustLimit', 'TRUST LIMIT *')}
-                                 </label>
-                                 <input
-                                   type="text"
-                                   value={trustlineData.limit}
-                                   onChange={(e) => setTrustlineData(prev => ({ ...prev, limit: e.target.value }))}
-                                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base transition-all duration-200"
-                                   placeholder={t('issuances:trustlineDetails.trustLimitPlaceholder', '1000000')}
-                                   required
-                                 />
-                               </div>
-                               
-                               <div className="space-y-2">
-                                 <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                   {t('issuances:trustlineDetails.authorizationRequest', 'AUTHORIZATION REQUEST *')}
-                                 </label>
-                                 <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
-                                   <div className="flex items-center gap-3">
-                                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                     </svg>
-                                     <div>
-                                       <p className="text-sm font-medium text-green-900">Send Authorization Request</p>
-                                       <p className="text-sm text-green-700">Send a secure authorization request to the holder to set up their trustline</p>
-                                     </div>
-                                   </div>
-                                   <button
-                                     type="button"
-                                     onClick={createAuthorizationRequest}
-                                     disabled={loading || !selectedAsset || !trustlineCheckData.holderAddress || !trustlineCheckData.currencyCode}
-                                     className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                   >
-                                     {loading ? 'Creating Request...' : 'Send Authorization Request'}
-                                   </button>
-                                 </div>
-                                 <p className="text-sm text-gray-500 mt-2">The holder will receive a secure link to set up their trustline using their own wallet</p>
-                               </div>
-                             </div>
-                            
+                          <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-xl">
+                            <div className="flex items-start gap-4">
+                              <div className="flex-shrink-0">
+                                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-amber-900 mb-3">Authorization Required</h3>
+                                <p className="text-amber-800 mb-4">
+                                  You need to create an authorization before issuing tokens. The holder must set up their trustline first.
+                                </p>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={redirectToAuthorizationFlow}
+                                    disabled={!selectedAsset || !trustlineCheckData.holderAddress || !trustlineCheckData.currencyCode}
+                                    className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                                  >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                    Go to Authorization Flow
+                                  </button>
+                                  <span className="text-sm text-amber-700">
+                                    Return here after authorization is complete
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )}
                         
@@ -1473,12 +1392,12 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                 setLoading(true)
                                 setError(null)
                                 try {
-                                  // Handle external authorization record for existing trustline
-                                  const result = await createExternalAuthorization()
-                                  console.log('Authorization result:', result)
+                                  // Validate authorization for issuance
+                                  const result = await validateAuthorizationForIssuance()
+                                  console.log('Authorization validation result:', result)
                                   setCurrentStep('compliance-metadata')
                                 } catch (err: any) {
-                                  setError(err.message || 'Failed to process authorization')
+                                  setError(err.message || 'Failed to validate authorization')
                                 } finally {
                                   setLoading(false)
                                 }
@@ -1496,7 +1415,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                 </>
                               ) : (
                                 <>
-                                  {t('issuances:tokenIssuance.continueToIssue', 'Continue to Issue')}
+                                  Validate Authorization & Continue
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                   </svg>

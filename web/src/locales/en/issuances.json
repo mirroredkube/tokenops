@@ -186,7 +186,7 @@
     "trustlineFound": "Trustline Found",
     "trustlineNotFound": "⚠️ Trustline Not Found",
     "trustlineFoundMessage": "A trustline exists for {{currency}} from {{issuer}} with limit {{limit}} and balance {{balance}}.",
-    "trustlineNotFoundMessage": "No trustline found for {{currency}} from {{issuer}}. Please provide additional details to create one.",
+    "trustlineNotFoundMessage": "No trustline found for {{currency}} from {{issuer}}.",
     "createNewTrustline": "Create New Trustline",
     "trustLimit": "TRUST LIMIT *",
     "trustLimitPlaceholder": "1000000",
