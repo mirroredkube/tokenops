@@ -60,6 +60,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
                   validatedAt: { type: 'string' },
                   noRipple: { type: 'boolean' },
                   requireAuth: { type: 'boolean' },
+                  external: { type: 'boolean' },
+                  externalSource: { type: 'string' },
                   createdAt: { type: 'string' },
                   updatedAt: { type: 'string' },
                   asset: {

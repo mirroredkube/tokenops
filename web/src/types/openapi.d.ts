@@ -136,6 +136,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
     "/auth/2fa/setup": {
         parameters: {
             query?: never;
@@ -399,27 +449,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/balances/{account}": {
+    "/v1/compliance/evaluate": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get issued token balances for an account */
+        get?: never;
+        put?: never;
+        /**
+         * Evaluate compliance policy facts
+         * @description Evaluate policy facts and generate requirement instances and enforcement plan
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        issuerCountry: string;
+                        /** @enum {string} */
+                        assetClass: "ART" | "EMT" | "OTHER";
+                        targetMarkets: string[];
+                        /** @enum {string} */
+                        ledger: "XRPL" | "ETHEREUM" | "HEDERA";
+                        /** @enum {string} */
+                        distributionType: "offer" | "admission" | "private";
+                        /** @enum {string} */
+                        investorAudience: "retail" | "professional" | "institutional";
+                        isCaspInvolved: boolean;
+                        /** @enum {string} */
+                        transferType: "CASP_TO_CASP" | "CASP_TO_SELF_HOSTED" | "SELF_HOSTED_TO_CASP" | "SELF_HOSTED_TO_SELF_HOSTED";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            requirementInstances?: {
+                                id?: string;
+                                requirementTemplateId?: string;
+                                /** @enum {string} */
+                                status?: "NA" | "REQUIRED" | "SATISFIED" | "EXCEPTION";
+                                rationale?: string;
+                            }[];
+                            enforcementPlan?: {
+                                xrpl?: {
+                                    requireAuth?: boolean;
+                                    trustlineAuthorization?: boolean;
+                                    freezeControl?: boolean;
+                                };
+                                evm?: {
+                                    allowlistGating?: boolean;
+                                    pauseControl?: boolean;
+                                    mintControl?: boolean;
+                                    transferControl?: boolean;
+                                };
+                            };
+                            rationale?: string[];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List requirement instances for an asset or requirement templates
+         * @description Get requirement instances for a specific asset, or all requirement templates if no assetId provided
+         */
         get: {
             parameters: {
                 query?: {
-                    /** @description Optional issuer r-address filter */
-                    issuer?: string;
-                    /** @description Optional currency filter (3-char like USD/EUR or 160-bit hex) */
-                    currency?: string;
+                    /** @description Asset ID to get requirement instances for */
+                    assetId?: string;
+                    /** @description Filter by regulatory regime (when getting templates) */
+                    regime?: string;
+                    /** @description Filter by active status (when getting templates) */
+                    active?: boolean;
                 };
                 header?: never;
-                path: {
-                    /** @description Account r-address */
-                    account: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -431,32 +562,39 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            ok?: boolean;
-                            account?: string;
-                            xrpBalance?: string;
-                            trustLines?: {
-                                currency?: string;
-                                currencyHex?: string;
-                                issuer?: string;
-                                balance?: string;
-                                limit?: string;
-                                frozen?: boolean;
-                                noRipple?: boolean;
-                                qualityIn?: number;
-                                qualityOut?: number;
+                            requirements?: {
+                                id?: string;
+                                status?: string;
+                                rationale?: string;
+                                evidenceRefs?: Record<string, never>;
+                                exceptionReason?: string;
+                                notes?: string;
+                                createdAt?: string;
+                                updatedAt?: string;
+                                requirementTemplate?: {
+                                    id?: string;
+                                    name?: string;
+                                    description?: string;
+                                    regime?: {
+                                        id?: string;
+                                        name?: string;
+                                        jurisdiction?: string;
+                                    };
+                                };
                             }[];
-                        };
-                    };
-                };
-                /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            ok?: boolean;
-                            error?: string;
+                            templates?: {
+                                id?: string;
+                                name?: string;
+                                description?: string;
+                                applicabilityExpr?: string;
+                                effectiveFrom?: string;
+                                effectiveTo?: string;
+                                regime?: {
+                                    id?: string;
+                                    name?: string;
+                                    jurisdiction?: string;
+                                };
+                            }[];
                         };
                     };
                 };
@@ -470,7 +608,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/compliance-records": {
+    "/v1/compliance/instances": {
         parameters: {
             query?: never;
             header?: never;
@@ -478,17 +616,17 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List compliance records
-         * @description Get paginated list of compliance records with filters
+         * List requirement instances
+         * @description Get all requirement instances with optional filtering
          */
         get: {
             parameters: {
                 query?: {
-                    page?: number;
-                    limit?: number;
-                    status?: "UNVERIFIED" | "VERIFIED" | "REJECTED";
                     assetId?: string;
-                    holder?: string;
+                    status?: "NA" | "REQUIRED" | "SATISFIED" | "EXCEPTION";
+                    regime?: string;
+                    limit?: number;
+                    offset?: number;
                 };
                 header?: never;
                 path?: never;
@@ -503,24 +641,30 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            records?: {
+                            instances?: {
                                 id?: string;
-                                recordId?: string;
                                 assetId?: string;
-                                assetRef?: string;
-                                holder?: string;
+                                issuanceId?: string;
                                 status?: string;
-                                sha256?: string;
-                                createdAt?: string;
-                                verifiedAt?: string;
-                                verifiedBy?: string;
+                                rationale?: string;
+                                requirementTemplate?: {
+                                    id?: string;
+                                    name?: string;
+                                    regime?: {
+                                        id?: string;
+                                        name?: string;
+                                    };
+                                };
+                                asset?: {
+                                    id?: string;
+                                    assetRef?: string;
+                                    code?: string;
+                                    assetClass?: string;
+                                };
                             }[];
-                            pagination?: {
-                                page?: number;
-                                limit?: number;
-                                total?: number;
-                                pages?: number;
-                            };
+                            total?: number;
+                            limit?: number;
+                            offset?: number;
                         };
                     };
                 };
@@ -528,8 +672,8 @@ export interface paths {
         };
         put?: never;
         /**
-         * Create compliance record
-         * @description Store off-ledger compliance metadata (MiCA, ISIN, jurisdiction)
+         * Create requirement instances for an asset
+         * @description Create requirement instances based on asset and product information
          */
         post: {
             parameters: {
@@ -541,31 +685,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @default cmp.v1 */
-                        version?: string;
-                        /** @description Asset identifier */
                         assetId: string;
-                        holder: string;
-                        /** @description ISIN code */
-                        isin?: string;
-                        /** @description Legal issuer name */
-                        legalIssuer?: string;
-                        /** @description Jurisdiction code */
-                        jurisdiction?: string;
-                        /** @description MiCA classification */
-                        micaClass?: string;
-                        /** @description KYC requirement level */
-                        kycRequirement?: string;
-                        /** @default false */
-                        transferRestrictions?: boolean;
-                        /** @description Token purpose */
-                        purpose?: string;
-                        docs?: {
-                            type?: string;
-                            hash?: string;
-                        }[];
-                        /** Format: date-time */
-                        consentTs?: string;
+                        productId: string;
                     };
                 };
             };
@@ -577,20 +698,13 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            recordId?: string;
-                            sha256?: string;
-                            status?: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
+                            message?: string;
+                            instances?: {
+                                id?: string;
+                                requirementTemplateId?: string;
+                                status?: string;
+                                rationale?: string;
+                            }[];
                         };
                     };
                 };
@@ -602,7 +716,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/compliance-records/{recordId}": {
+    "/v1/compliance/instances/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -610,15 +724,15 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get compliance record
-         * @description Fetch compliance record details
+         * Get requirement instance details
+         * @description Get detailed information about a specific requirement instance
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    recordId: string;
+                    id: string;
                 };
                 cookie?: never;
             };
@@ -632,37 +746,21 @@ export interface paths {
                     content: {
                         "application/json": {
                             id?: string;
-                            recordId?: string;
-                            assetId?: string;
-                            assetRef?: string;
-                            holder?: string;
-                            sha256?: string;
                             status?: string;
+                            rationale?: string;
+                            evidenceRefs?: Record<string, never>;
+                            verifierId?: string;
                             verifiedAt?: string;
-                            verifiedBy?: string;
-                            reason?: string;
-                            isin?: string;
-                            legalIssuer?: string;
-                            jurisdiction?: string;
-                            micaClass?: string;
-                            kycRequirement?: string;
-                            transferRestrictions?: boolean;
-                            purpose?: string;
-                            docs?: unknown[];
-                            consentTs?: string;
-                            createdAt?: string;
-                            updatedAt?: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
+                            exceptionReason?: string;
+                            requirementTemplate?: {
+                                id?: string;
+                                name?: string;
+                                description?: string;
+                                regime?: {
+                                    id?: string;
+                                    name?: string;
+                                };
+                            };
                         };
                     };
                 };
@@ -676,7 +774,124 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/compliance-records/{recordId}/verify": {
+    "/v1/compliance/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get assets for compliance filter dropdown
+         * @description Get a simplified list of assets for use in compliance filtering
+         */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assets?: {
+                                id?: string;
+                                code?: string;
+                                assetRef?: string;
+                                ledger?: string;
+                                status?: string;
+                                product?: {
+                                    id?: string;
+                                    name?: string;
+                                    assetClass?: string;
+                                };
+                                organization?: {
+                                    id?: string;
+                                    name?: string;
+                                };
+                            }[];
+                            total?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create compliance record with hash for anchoring
+         * @description Create a compliance record with SHA256 hash for blockchain anchoring
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        assetId: string;
+                        holder: string;
+                        purpose?: string;
+                        isin?: string;
+                        legalIssuer?: string;
+                        jurisdiction?: string;
+                        micaClass?: string;
+                        kycRequirement?: string;
+                        transferRestrictions?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            recordId?: string;
+                            sha256?: string;
+                            createdAt?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/requirements/{requirementId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -690,25 +905,31 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Verify compliance record
-         * @description Update compliance record status (auditor/regulator only)
+         * Update requirement status
+         * @description Update the status of a compliance requirement (SATISFIED, EXCEPTION)
          */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    recordId: string;
+                    /** @description Requirement instance ID */
+                    requirementId: string;
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @enum {string} */
-                        status: "VERIFIED" | "REJECTED";
-                        /** @description Reason for rejection */
-                        reason?: string;
+                        /**
+                         * @description New status for the requirement
+                         * @enum {string}
+                         */
+                        status: "REQUIRED" | "SATISFIED" | "EXCEPTION";
+                        /** @description Reason for exception (if status is EXCEPTION) */
+                        exceptionReason?: string;
+                        /** @description Rationale for the status change */
+                        rationale?: string;
                     };
                 };
             };
@@ -720,10 +941,12 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            recordId?: string;
+                            id?: string;
                             status?: string;
+                            exceptionReason?: string;
+                            rationale?: string;
+                            verifierId?: string;
                             verifiedAt?: string;
-                            reason?: string;
                         };
                     };
                 };
@@ -749,8 +972,573 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
             };
         };
+        trace?: never;
+    };
+    "/v1/compliance/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload evidence for a compliance requirement
+         * @description Upload a file as evidence for a specific requirement instance
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description ID of the requirement instance */
+                        requirementInstanceId: string;
+                        /** @description Original filename */
+                        fileName: string;
+                        /** @description MIME type of the file */
+                        fileType: string;
+                        /** @description File size in bytes */
+                        fileSize: number;
+                        /** @description SHA256 hash of the file */
+                        fileHash: string;
+                        /** @description Path where file is stored */
+                        uploadPath: string;
+                        /** @description Optional description of the evidence */
+                        description?: string;
+                        /** @description Optional tags for categorization */
+                        tags?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            requirementInstanceId?: string;
+                            fileName?: string;
+                            fileType?: string;
+                            fileSize?: number;
+                            fileHash?: string;
+                            uploadPath?: string;
+                            description?: string;
+                            tags?: string[];
+                            uploadedBy?: string;
+                            uploadedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/evidence/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload evidence file for a compliance requirement
+         * @description Upload a file as evidence using multipart form data
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            requirementInstanceId?: string;
+                            fileName?: string;
+                            fileType?: string;
+                            fileSize?: number;
+                            fileHash?: string;
+                            uploadPath?: string;
+                            description?: string;
+                            tags?: string[];
+                            uploadedBy?: string;
+                            uploadedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/evidence/{requirementInstanceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get evidence for a compliance requirement
+         * @description Retrieve all evidence files for a specific requirement instance
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description ID of the requirement instance */
+                    requirementInstanceId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            evidence?: {
+                                id?: string;
+                                fileName?: string;
+                                fileType?: string;
+                                fileSize?: number;
+                                fileHash?: string;
+                                description?: string;
+                                tags?: string[];
+                                uploadedBy?: string;
+                                uploadedAt?: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/requirements/{requirementId}/platform-acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Platform co-acknowledge ART/EMT compliance requirement
+         * @description Platform admin acknowledges compliance requirement for ART/EMT tokens
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Requirement instance ID */
+                    requirementId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Reason for platform acknowledgement */
+                        acknowledgmentReason: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            platformAcknowledged?: boolean;
+                            platformAcknowledgedBy?: string;
+                            platformAcknowledgedAt?: string;
+                            platformAcknowledgmentReason?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/requirements/{requirementId}/platform-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get platform acknowledgement status for a requirement
+         * @description Retrieve platform acknowledgement status and details for a specific requirement
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Requirement instance ID */
+                    requirementId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            platformAcknowledged?: boolean;
+                            platformAcknowledgedBy?: string;
+                            platformAcknowledgedAt?: string;
+                            platformAcknowledgmentReason?: string;
+                            platformAcknowledger?: {
+                                id?: string;
+                                name?: string;
+                                email?: string;
+                            };
+                            assetClass?: string;
+                            requiresPlatformAcknowledgement?: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/compliance/evidence/bundle/{requirementInstanceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export evidence bundle for a compliance requirement
+         * @description Download evidence bundle in multiple formats: ZIP (with files), JSON (data only), or PDF (human-readable report)
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Export format: zip (with evidence files), json (data only), csv (spreadsheet analysis) */
+                    format?: "zip" | "json" | "csv";
+                };
+                header?: never;
+                path: {
+                    /** @description ID of the requirement instance */
+                    requirementInstanceId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description File containing evidence bundle (format depends on format parameter) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assets/{assetId}/debug": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/assets": {
@@ -767,6 +1555,8 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
+                    /** @description Filter by product ID */
+                    productId?: string;
                     ledger?: "xrpl" | "hedera" | "ethereum";
                     status?: "draft" | "active" | "paused" | "retired";
                     limit?: number;
@@ -792,10 +1582,35 @@ export interface paths {
                                 network?: string;
                                 issuer?: string;
                                 code?: string;
+                                assetClass?: string;
                                 decimals?: number;
                                 complianceMode?: string;
+                                controls?: Record<string, never>;
+                                registry?: Record<string, never>;
+                                metadata?: Record<string, never>;
                                 status?: string;
                                 createdAt?: string;
+                                product?: {
+                                    id?: string;
+                                    name?: string;
+                                    assetClass?: string;
+                                };
+                                organization?: {
+                                    id?: string;
+                                    name?: string;
+                                };
+                                compliance?: {
+                                    requirementCount?: number;
+                                    requirements?: {
+                                        id?: string;
+                                        status?: string;
+                                        template?: {
+                                            id?: string;
+                                            name?: string;
+                                            regime?: string;
+                                        };
+                                    }[];
+                                };
                             }[];
                             total?: number;
                             limit?: number;
@@ -820,6 +1635,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description Product ID that this asset belongs to */
+                        productId: string;
                         /**
                          * @description Target ledger for the asset
                          * @enum {string}
@@ -835,6 +1652,12 @@ export interface paths {
                         issuer: string;
                         /** @description Currency code/symbol */
                         code: string;
+                        /**
+                         * @description Asset class for compliance evaluation (OTHER, ART, EMT)
+                         * @default OTHER
+                         * @enum {string}
+                         */
+                        assetClass?: "OTHER" | "ART" | "EMT";
                         /** @description Number of decimal places */
                         decimals: number;
                         /**
@@ -917,16 +1740,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get asset details
-         * @description Retrieve asset configuration and metadata
-         */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    /** @description Asset ID */
                     assetId: string;
                 };
                 cookie?: never;
@@ -938,35 +1756,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": {
-                            id?: string;
-                            assetRef?: string;
-                            ledger?: string;
-                            network?: string;
-                            issuer?: string;
-                            code?: string;
-                            decimals?: number;
-                            complianceMode?: string;
-                            controls?: Record<string, never>;
-                            registry?: Record<string, never>;
-                            metadata?: Record<string, never>;
-                            status?: string;
-                            createdAt?: string;
-                            updatedAt?: string;
-                        };
-                    };
-                };
-                /** @description Default Response */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            error?: string;
-                        };
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1153,6 +1943,8 @@ export interface paths {
                                 validatedAt?: string;
                                 noRipple?: boolean;
                                 requireAuth?: boolean;
+                                external?: boolean;
+                                externalSource?: string;
                                 createdAt?: string;
                                 updatedAt?: string;
                                 asset?: {
@@ -1262,8 +2054,8 @@ export interface paths {
             };
         };
         /**
-         * Create or update authorization for a holder and asset
-         * @description Create trustline (XRPL) or equivalent authorization mechanism
+         * Create authorization request for holder
+         * @description Create a secure authorization request that generates a URL for the holder to set up their trustline using their own wallet. Never handles private keys.
          */
         put: {
             parameters: {
@@ -1280,27 +2072,47 @@ export interface paths {
                     "application/json": {
                         params?: {
                             limit?: string;
+                            holderAddress: string;
+                            currencyCode: string;
+                            issuerAddress: string;
+                            /** @default false */
+                            noRipple?: boolean;
+                            /** @default false */
+                            requireAuth?: boolean;
+                            /** Format: date-time */
+                            expiresAt?: string;
+                            /** Format: uri */
+                            callbackUrl?: string;
                         };
                         signing?: {
-                            /** @enum {string} */
-                            mode?: "wallet" | "server";
+                            /**
+                             * @default wallet
+                             * @enum {string}
+                             */
+                            mode?: "wallet";
                         };
                     };
                 };
             };
             responses: {
                 /** @description Default Response */
-                202: {
+                201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
+                            id?: string;
                             assetId?: string;
                             assetRef?: string;
                             holder?: string;
-                            txId?: string;
+                            currency?: string;
+                            issuerAddress?: string;
+                            limit?: string;
                             status?: string;
+                            authUrl?: string;
+                            expiresAt?: string;
+                            oneTimeToken?: string;
                         };
                     };
                 };
@@ -1411,6 +2223,297 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/authorizations/token/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get authorization request by token
+         * @description Retrieve authorization request details using the one-time token
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description One-time authorization token */
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            assetId?: string;
+                            holder?: string;
+                            currency?: string;
+                            issuerAddress?: string;
+                            limit?: string;
+                            status?: string;
+                            expiresAt?: string;
+                            noRipple?: boolean;
+                            requireAuth?: boolean;
+                            metadata?: Record<string, never>;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/authorizations/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get trustline status
+         * @description Check the current status of a trustline on the ledger
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Authorization ID */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            exists?: boolean;
+                            authorized?: boolean;
+                            limit?: string;
+                            balance?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/authorizations/{id}/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Authorize trustline as issuer
+         * @description Issuer authorizes a trustline using tfSetfAuth flag (4-eyes approval required)
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Authorization ID */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Issuer secret for signing authorization */
+                        issuerSecret?: string;
+                        /** @description User ID who approved the authorization */
+                        approvedBy?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            status?: string;
+                            txId?: string;
+                            authorizedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/authorizations/external": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create external trustline entry
+         * @description Add a trustline that was created outside our platform to our database
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        assetId: string;
+                        holder: string;
+                        currency: string;
+                        issuerAddress: string;
+                        limit?: string;
+                        externalSource?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            assetId?: string;
+                            holder?: string;
+                            status?: string;
+                            external?: boolean;
+                            externalSource?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/issuances": {
         parameters: {
             query?: never;
@@ -1448,15 +2551,85 @@ export interface paths {
                                 assetId?: string;
                                 assetRef?: string;
                                 to?: string;
+                                holder?: string;
                                 amount?: string;
                                 txId?: string;
                                 status?: string;
+                                complianceRef?: Record<string, never>;
+                                complianceStatus?: string;
+                                manifestHash?: string;
                                 createdAt?: string;
                                 updatedAt?: string;
                             }[];
                             total?: number;
                             limit?: number;
                             offset?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuances/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get individual issuance details
+         * @description Get detailed information about a specific token issuance
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Issuance ID */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            assetId?: string;
+                            assetRef?: string;
+                            holder?: string;
+                            amount?: string;
+                            txId?: string;
+                            status?: string;
+                            complianceRef?: Record<string, never>;
+                            complianceStatus?: string;
+                            manifestHash?: string;
+                            createdAt?: string;
+                            updatedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
                         };
                     };
                 };
@@ -1550,17 +2723,26 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @description Recipient address */
-                        to: string;
+                        holder: string;
                         /** @description Amount to issue */
                         amount: string;
-                        /** @description Compliance record reference */
-                        complianceRef?: {
-                            recordId?: string;
-                            sha256?: string;
+                        /** @description Compliance facts for issuance */
+                        issuanceFacts?: {
+                            purpose?: string;
+                            isin?: string;
+                            legal_issuer?: string;
+                            jurisdiction?: string;
+                            mica_class?: string;
+                            kyc_requirement?: string;
+                            transfer_restrictions?: string;
+                            max_transfer_amount?: string;
+                            expiration_date?: string;
+                            tranche_series?: string;
+                            references?: string[];
                         };
                         /**
                          * @description Anchor compliance data to blockchain
-                         * @default true
+                         * @default false
                          */
                         anchor?: boolean;
                     };
@@ -1577,15 +2759,30 @@ export interface paths {
                             issuanceId?: string;
                             assetId?: string;
                             assetRef?: string;
-                            to?: string;
+                            holder?: string;
                             amount?: string;
-                            complianceRef?: {
-                                recordId?: string;
-                                sha256?: string;
+                            manifest?: {
+                                manifestHash?: string;
+                                manifestVersion?: string;
                             };
                             txId?: string;
                             explorer?: string;
                             status?: string;
+                            compliance?: {
+                                evaluated?: boolean;
+                                status?: string;
+                                requirementCount?: number;
+                                requirements?: {
+                                    id?: string;
+                                    status?: string;
+                                    template?: {
+                                        id?: string;
+                                        name?: string;
+                                        regime?: string;
+                                    };
+                                }[];
+                                enforcementPlan?: Record<string, never>;
+                            };
                         };
                     };
                 };
@@ -1619,6 +2816,52 @@ export interface paths {
                     content: {
                         "application/json": {
                             error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assets/{assetId}/preflight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate readiness for issuance (MVP) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                            blockers?: {
+                                code?: string;
+                                message?: string;
+                                hint?: string;
+                            }[];
+                            facts?: Record<string, never>;
                         };
                     };
                 };
@@ -1757,6 +3000,1239 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/users/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List organizations
+         * @description List organizations with optional filtering and pagination
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Filter by organization status */
+                    status?: "ACTIVE" | "SUSPENDED" | "INACTIVE";
+                    /** @description Filter by country (ISO 3166-1 alpha-2) */
+                    country?: string;
+                    /** @description Number of organizations to return */
+                    limit?: number;
+                    /** @description Number of organizations to skip */
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            organizations?: {
+                                id?: string;
+                                name?: string;
+                                legalName?: string;
+                                country?: string;
+                                jurisdiction?: string;
+                                status?: string;
+                                createdAt?: string;
+                                updatedAt?: string;
+                            }[];
+                            total?: number;
+                            limit?: number;
+                            offset?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create organization
+         * @description Create a new organization
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Organization name */
+                        name: string;
+                        /** @description Legal name of the organization */
+                        legalName?: string;
+                        /** @description Country code (ISO 3166-1 alpha-2) */
+                        country: string;
+                        /** @description Legal jurisdiction */
+                        jurisdiction?: string;
+                        /** @description Tax identification number */
+                        taxId?: string;
+                        /**
+                         * Format: uri
+                         * @description Organization website
+                         */
+                        website?: string;
+                        /** @description Additional metadata */
+                        metadata?: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            name?: string;
+                            legalName?: string;
+                            country?: string;
+                            jurisdiction?: string;
+                            status?: string;
+                            createdAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/organizations/{organizationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get organization details
+         * @description Retrieve organization information and statistics
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Organization ID */
+                    organizationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            name?: string;
+                            legalName?: string;
+                            country?: string;
+                            jurisdiction?: string;
+                            taxId?: string;
+                            website?: string;
+                            status?: string;
+                            metadata?: Record<string, never>;
+                            createdAt?: string;
+                            updatedAt?: string;
+                            stats?: {
+                                users?: number;
+                                products?: number;
+                                assets?: number;
+                                issuerAddresses?: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        /**
+         * Update organization
+         * @description Update organization information
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Organization ID */
+                    organizationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        legalName?: string;
+                        country?: string;
+                        jurisdiction?: string;
+                        taxId?: string;
+                        /** Format: uri */
+                        website?: string;
+                        /** @enum {string} */
+                        status?: "ACTIVE" | "SUSPENDED" | "INACTIVE";
+                        metadata?: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            name?: string;
+                            legalName?: string;
+                            country?: string;
+                            jurisdiction?: string;
+                            status?: string;
+                            updatedAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/organizations/{organizationId}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List organization users
+         * @description List users belonging to an organization
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Filter by user role */
+                    role?: "ADMIN" | "COMPLIANCE_OFFICER" | "AUDITOR" | "ISSUER_ADMIN" | "COMPLIANCE_REVIEWER" | "OPERATOR" | "VIEWER";
+                    /** @description Filter by user status */
+                    status?: "ACTIVE" | "SUSPENDED" | "INACTIVE";
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path: {
+                    /** @description Organization ID */
+                    organizationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            users?: {
+                                id?: string;
+                                email?: string;
+                                name?: string;
+                                role?: string;
+                                status?: string;
+                                twoFactorEnabled?: boolean;
+                                createdAt?: string;
+                            }[];
+                            total?: number;
+                            limit?: number;
+                            offset?: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/products/{id}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuer-addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List issuer addresses
+         * @description List issuer addresses with optional filtering and pagination
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Filter by organization ID */
+                    organizationId?: string;
+                    /** @description Filter by address status */
+                    status?: "PENDING" | "APPROVED" | "SUSPENDED" | "REVOKED";
+                    /** @description Filter by ledger */
+                    ledger?: "XRPL" | "ETHEREUM" | "HEDERA";
+                    /** @description Filter by network */
+                    network?: "MAINNET" | "TESTNET" | "DEVNET";
+                    /** @description Number of addresses to return */
+                    limit?: number;
+                    /** @description Number of addresses to skip */
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            addresses?: {
+                                id?: string;
+                                organizationId?: string;
+                                address?: string;
+                                ledger?: string;
+                                network?: string;
+                                allowedUseTags?: string[];
+                                status?: string;
+                                approvedAt?: string;
+                                approvedBy?: string;
+                                suspendedAt?: string;
+                                suspendedBy?: string;
+                                reason?: string;
+                                createdAt?: string;
+                                updatedAt?: string;
+                            }[];
+                            total?: number;
+                            limit?: number;
+                            offset?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create issuer address
+         * @description Register a new issuer address for approval
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Organization ID that owns this address */
+                        organizationId: string;
+                        /** @description Blockchain address */
+                        address: string;
+                        /**
+                         * @description Target ledger
+                         * @enum {string}
+                         */
+                        ledger: "XRPL" | "ETHEREUM" | "HEDERA";
+                        /**
+                         * @description Network environment
+                         * @enum {string}
+                         */
+                        network: "MAINNET" | "TESTNET" | "DEVNET";
+                        /**
+                         * @description Allowed use tags for this address
+                         * @default [
+                         *       "OTHER"
+                         *     ]
+                         */
+                        allowedUseTags?: ("ART" | "EMT" | "OTHER")[];
+                        /** @description Proof of control challenge response */
+                        proofOfControl?: {
+                            challenge?: string;
+                            signature?: string;
+                            publicKey?: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            organizationId?: string;
+                            address?: string;
+                            ledger?: string;
+                            network?: string;
+                            allowedUseTags?: string[];
+                            status?: string;
+                            createdAt?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuer-addresses/{addressId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get issuer address details
+         * @description Retrieve issuer address information and audit trail
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Issuer address ID */
+                    addressId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            organizationId?: string;
+                            address?: string;
+                            ledger?: string;
+                            network?: string;
+                            allowedUseTags?: string[];
+                            status?: string;
+                            proofOfControl?: Record<string, never>;
+                            approvedAt?: string;
+                            approvedBy?: string;
+                            suspendedAt?: string;
+                            suspendedBy?: string;
+                            reason?: string;
+                            metadata?: Record<string, never>;
+                            createdAt?: string;
+                            updatedAt?: string;
+                            organization?: {
+                                id?: string;
+                                name?: string;
+                                legalName?: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuer-addresses/{addressId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Approve issuer address
+         * @description Approve an issuer address with 4-eyes verification
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Issuer address ID */
+                    addressId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Reason for approval */
+                        reason: string;
+                        /** @description Updated allowed use tags */
+                        allowedUseTags?: ("ART" | "EMT" | "OTHER")[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            status?: string;
+                            approvedAt?: string;
+                            approvedBy?: string;
+                            reason?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuer-addresses/{addressId}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Suspend issuer address
+         * @description Suspend an issuer address
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Issuer address ID */
+                    addressId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Reason for suspension */
+                        reason: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            status?: string;
+                            suspendedAt?: string;
+                            suspendedBy?: string;
+                            reason?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuer-addresses/approved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get approved issuer addresses
+         * @description Get list of approved issuer addresses for asset creation
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Filter by organization ID */
+                    organizationId?: string;
+                    /** @description Filter by ledger */
+                    ledger?: "XRPL" | "ETHEREUM" | "HEDERA";
+                    /** @description Filter by network */
+                    network?: "MAINNET" | "TESTNET" | "DEVNET";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            addresses?: {
+                                id?: string;
+                                address?: string;
+                                ledger?: string;
+                                network?: string;
+                                allowedUseTags?: string[];
+                                approvedAt?: string;
+                                approvedBy?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/issuer-addresses/{addressId}/proof-of-control": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit proof of control
+         * @description Submit proof of control challenge response
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Issuer address ID */
+                    addressId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Challenge string */
+                        challenge: string;
+                        /** @description Signature of the challenge */
+                        signature: string;
+                        /** @description Public key (optional) */
+                        publicKey?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: string;
+                            verified?: boolean;
+                            message?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error?: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/balances/{account}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get issued token balances for an account (tenant-scoped) */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Optional issuer r-address filter (must belong to tenant) */
+                    issuer?: string;
+                    /** @description Optional currency filter (3-char like USD/EUR or 160-bit hex) */
+                    currency?: string;
+                };
+                header?: never;
+                path: {
+                    /** @description Account r-address */
+                    account: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                            account?: string;
+                            xrpBalance?: string;
+                            trustLines?: {
+                                currency?: string;
+                                currencyHex?: string;
+                                issuer?: string;
+                                balance?: string;
+                                limit?: string;
+                                frozen?: boolean;
+                                noRipple?: boolean;
+                                qualityIn?: number;
+                                qualityOut?: number;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
                             error?: string;
                         };
                     };

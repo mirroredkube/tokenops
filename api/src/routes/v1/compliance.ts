@@ -615,6 +615,8 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
                 type: 'object',
                 properties: {
                   id: { type: 'string' },
+                  assetId: { type: 'string' },
+                  issuanceId: { type: 'string' },
                   status: { type: 'string' },
                   rationale: { type: 'string' },
                   requirementTemplate: {
@@ -629,6 +631,15 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
                           name: { type: 'string' }
                         }
                       }
+                    }
+                  },
+                  asset: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      assetRef: { type: 'string' },
+                      code: { type: 'string' },
+                      assetClass: { type: 'string' }
                     }
                   }
                 }
@@ -694,6 +705,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       const instancesWithAssets = instances.map((instance: any) => ({
         id: instance.id,
         assetId: instance.assetId,
+        issuanceId: instance.issuanceId, // Include issuanceId for grouping
         status: instance.status,
         rationale: instance.rationale,
         platformAcknowledged: instance.platformAcknowledged || false,

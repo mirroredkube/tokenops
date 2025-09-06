@@ -17,6 +17,8 @@ interface Authorization {
   validatedAt?: string
   noRipple?: boolean
   requireAuth?: boolean
+  external?: boolean
+  externalSource?: string
   createdAt?: string
   updatedAt?: string
   asset?: {
@@ -216,12 +218,13 @@ export default function AuthorizationHistoryPage() {
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <colgroup>
-                <col className="w-1/6" />
-                <col className="w-1/6" />
-                <col className="w-1/6" />
-                <col className="w-1/6" />
-                <col className="w-1/6" />
-                <col className="w-1/6" />
+                <col className="w-1/7" />
+                <col className="w-1/7" />
+                <col className="w-1/7" />
+                <col className="w-1/7" />
+                <col className="w-1/7" />
+                <col className="w-1/7" />
+                <col className="w-1/7" />
               </colgroup>
               <thead className="bg-gray-50">
                 <tr>
@@ -229,6 +232,7 @@ export default function AuthorizationHistoryPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.holder', 'Holder')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.limit', 'Limit')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.status', 'Status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.created', 'Created')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('authorizations:history.table.actions', 'Actions')}</th>
                 </tr>
@@ -256,6 +260,24 @@ export default function AuthorizationHistoryPage() {
                          <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(auth.status || 'PENDING')}`}>
                            {auth.status || 'PENDING'}
                          </span>
+                       </div>
+                     </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <div className="flex items-center gap-2">
+                         {auth.external ? (
+                           <div className="flex items-center gap-1">
+                             <ExternalLink className="h-3 w-3 text-orange-500" />
+                             <span className="text-xs text-orange-600 font-medium">External</span>
+                             {auth.externalSource && (
+                               <span className="text-xs text-gray-500">({auth.externalSource})</span>
+                             )}
+                           </div>
+                         ) : (
+                           <div className="flex items-center gap-1">
+                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                             <span className="text-xs text-green-600 font-medium">Platform</span>
+                           </div>
+                         )}
                        </div>
                      </td>
                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

@@ -38,6 +38,11 @@ interface ComplianceRequirement {
   platformAcknowledgmentReason?: string
   assetClass?: string
   requiresPlatformAcknowledgement?: boolean
+  // Grouping information
+  isAssetLevel?: boolean
+  isIssuanceLevel?: boolean
+  issuanceId?: string | null
+  requirementType?: string
 }
 
 interface ComplianceListResponse {
@@ -292,7 +297,7 @@ export default function CompliancePage() {
       }
       
       if (data && data.instances) {
-        // Transform requirement instances to our format
+        // Transform requirement instances to our format with proper grouping
         const transformedRequirements = data.instances.map((req: any) => ({
           id: req.id,
           assetId: req.assetId || 'N/A',
@@ -309,7 +314,12 @@ export default function CompliancePage() {
           platformAcknowledgedAt: req.platformAcknowledgedAt,
           platformAcknowledgmentReason: req.platformAcknowledgmentReason,
           assetClass: req.asset?.product?.assetClass || 'OTHER',
-          requiresPlatformAcknowledgement: ['ART', 'EMT'].includes(req.asset?.product?.assetClass)
+          requiresPlatformAcknowledgement: ['ART', 'EMT'].includes(req.asset?.product?.assetClass),
+          // Add grouping information
+          isAssetLevel: !req.issuanceId, // Asset-level if no issuanceId
+          isIssuanceLevel: !!req.issuanceId, // Issuance-level if has issuanceId
+          issuanceId: req.issuanceId || null,
+          requirementType: req.issuanceId ? 'Issuance Snapshot' : 'Asset Live'
         }))
         
         setAllRequirements(transformedRequirements)
@@ -690,32 +700,73 @@ export default function CompliancePage() {
             </div>
           </div>
 
-          {/* Recent Requirements */}
+          {/* Compliance Requirements by Type */}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">Recent Compliance Requirements</h3>
+              <h3 className="text-lg font-semibold">Compliance Requirements</h3>
             </div>
             <div className="p-6">
-              {requirements.length === 0 ? (
+              {allRequirements.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No compliance requirements found</p>
               ) : (
-                <div className="space-y-3">
-                  {requirements.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{req.requirementName}</p>
-                        <p className="text-sm text-gray-600">{req.assetCode} - {req.regime}</p>
+                <div className="space-y-6">
+                  {/* Asset-Level Requirements */}
+                  {allRequirements.filter(req => req.isAssetLevel).length > 0 && (
+                    <div>
+                      <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Asset-Level Requirements (Live)
+                      </h4>
+                      <div className="space-y-3">
+                        {allRequirements.filter(req => req.isAssetLevel).map((req) => (
+                          <div key={req.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div>
+                              <p className="font-medium text-gray-900">{req.requirementName}</p>
+                              <p className="text-sm text-gray-600">{req.assetCode} - {req.regime}</p>
+                              <p className="text-xs text-blue-600">Live requirement for ongoing compliance</p>
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
+                              req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
+                              req.status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {req.status}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
-                        req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
-                        req.status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {req.status}
-                      </span>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Issuance-Level Requirements */}
+                  {allRequirements.filter(req => req.isIssuanceLevel).length > 0 && (
+                    <div>
+                      <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Issuance-Level Requirements (Snapshots)
+                      </h4>
+                      <div className="space-y-3">
+                        {allRequirements.filter(req => req.isIssuanceLevel).map((req) => (
+                          <div key={req.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                            <div>
+                              <p className="font-medium text-gray-900">{req.requirementName}</p>
+                              <p className="text-sm text-gray-600">{req.assetCode} - {req.regime}</p>
+                              <p className="text-xs text-green-600">Snapshot for issuance: {req.issuanceId?.substring(0, 8)}...</p>
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
+                              req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
+                              req.status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {req.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
