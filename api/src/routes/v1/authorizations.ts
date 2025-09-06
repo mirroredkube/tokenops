@@ -1,18 +1,25 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
+import crypto from 'crypto'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../../utils/currency.js'
 import { Asset, assets, validateAsset } from './shared.js'
 import prisma from '../../db/client.js'
 
 // ---------- Validation Schemas ----------
-const AuthorizationParamsSchema = z.object({
+const AuthorizationRequestSchema = z.object({
   params: z.object({
     limit: z.string().regex(/^[0-9]{1,16}$/).optional(),
-    holderSecret: z.string().regex(/^s[a-zA-Z0-9]{24,34}$/).optional() // Optional now, will be validated based on mode
+    holderAddress: z.string().regex(/^r[a-zA-Z0-9]{24,34}$/),
+    currencyCode: z.string().min(1),
+    issuerAddress: z.string().regex(/^r[a-zA-Z0-9]{24,34}$/),
+    noRipple: z.boolean().default(false),
+    requireAuth: z.boolean().default(false),
+    expiresAt: z.string().datetime().optional(), // ISO string
+    callbackUrl: z.string().url().optional()
   }),
   signing: z.object({
-    mode: z.enum(['wallet', 'server']).default('server')
+    mode: z.enum(['wallet']).default('wallet') // Always wallet mode for security
   }).optional()
 })
 
@@ -231,8 +238,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
   // 2. PUT /v1/assets/{assetId}/authorizations/{holder} - Create/update authorization
   app.put('/assets/:assetId/authorizations/:holder', {
     schema: {
-      summary: 'Create or update authorization for a holder and asset',
-      description: 'Create trustline (XRPL) or equivalent authorization mechanism',
+      summary: 'Create authorization request for holder',
+      description: 'Create a secure authorization request that generates a URL for the holder to set up their trustline using their own wallet. Never handles private keys.',
       tags: ['v1'],
       params: {
         type: 'object',
@@ -247,27 +254,41 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         properties: {
           params: {
             type: 'object',
+            required: ['holderAddress', 'currencyCode', 'issuerAddress'],
             properties: {
-              limit: { type: 'string', pattern: '^[0-9]{1,16}$' }
+              limit: { type: 'string', pattern: '^[0-9]{1,16}$' },
+              holderAddress: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
+              currencyCode: { type: 'string', minLength: 1 },
+              issuerAddress: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
+              noRipple: { type: 'boolean', default: false },
+              requireAuth: { type: 'boolean', default: false },
+              expiresAt: { type: 'string', format: 'date-time' },
+              callbackUrl: { type: 'string', format: 'uri' }
             }
           },
           signing: {
             type: 'object',
             properties: {
-              mode: { type: 'string', enum: ['wallet', 'server'] }
+              mode: { type: 'string', enum: ['wallet'], default: 'wallet' }
             }
           }
         }
       },
       response: {
-        202: {
+        201: {
           type: 'object',
           properties: {
+            id: { type: 'string' },
             assetId: { type: 'string' },
             assetRef: { type: 'string' },
             holder: { type: 'string' },
-            txId: { type: 'string' },
-            status: { type: 'string' }
+            currency: { type: 'string' },
+            issuerAddress: { type: 'string' },
+            limit: { type: 'string' },
+            status: { type: 'string' },
+            authUrl: { type: 'string' },
+            expiresAt: { type: 'string' },
+            oneTimeToken: { type: 'string' }
           }
         },
         400: { type: 'object', properties: { error: { type: 'string' } } },
@@ -277,88 +298,93 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
     }
   }, async (req, reply) => {
     const { assetId, holder } = req.params as { assetId: string; holder: string }
-    const body = AuthorizationParamsSchema.safeParse(req.body)
+    const body = AuthorizationRequestSchema.safeParse(req.body)
     
     if (!body.success) {
-      return reply.status(400).send({ error: 'Invalid request body' })
+      return reply.status(400).send({ error: 'Invalid request body', details: body.error.errors })
     }
 
     const { params, signing } = body.data
-    const limit = params?.limit || '1000000000' // Safe high default
-    const holderSecret = params?.holderSecret
-    const mode = signing?.mode || 'server'
+    const limit = params.limit || '1000000000' // Safe high default
+    const mode = signing?.mode || 'wallet'
     
-    // Security validation based on environment flags
-    const allowUiSecret = process.env.ALLOW_UI_SECRET === 'true'
-    const devAllowRawSecret = process.env.DEV_ALLOW_RAW_SECRET === 'true'
-    const isDev = process.env.NODE_ENV !== 'production'
+    // Security: Always use wallet mode, never handle private keys
+    if (mode !== 'wallet') {
+      return reply.status(400).send({ 
+        error: 'Only wallet signing mode is supported for security. Private keys are never handled.' 
+      })
+    }
     
     try {
       // Validate asset exists and is active
       const asset = await validateAsset(assetId)
       
-      // Handle different signing modes
-      if (mode === 'wallet') {
-        // TODO: Implement wallet signing flow
-        return reply.status(400).send({ error: 'Wallet mode not implemented yet' })
-      }
+      // Generate secure one-time token for authorization URL
+      const oneTimeToken = crypto.randomUUID()
       
-      // Server mode - validate secret handling
-      if (mode === 'server') {
-        if (!holderSecret) {
-          return reply.status(400).send({ error: 'Holder secret is required for server mode' })
-        }
-        
-        // Security check: only allow raw secrets in dev with explicit flag
-        if (!allowUiSecret && !devAllowRawSecret) {
-          return reply.status(403).send({ 
-            error: 'Raw secret input is disabled in production. Use wallet signing mode.' 
-          })
-        }
-        
-        // Additional dev-only check
-        if (!isDev && !devAllowRawSecret) {
-          return reply.status(403).send({ 
-            error: 'Raw secret input is not allowed in production environment' 
-          })
-        }
-      }
+      // Set expiration time (default 24 hours from now)
+      const expiresAt = params.expiresAt 
+        ? new Date(params.expiresAt)
+        : new Date(Date.now() + 24 * 60 * 60 * 1000)
       
-      const adapter = getLedgerAdapter()
+      // Generate authorization URL
+      const baseUrl = process.env.PUBLIC_AUTH_BASE_URL || 'http://localhost:3000'
+      const authUrl = `${baseUrl}/auth/authorize/${oneTimeToken}`
       
-      // Use existing createTrustline method
-      const result = await adapter.createTrustline({
-        currencyCode: asset.code,
-        limit,
-        holderSecret: holderSecret!
-      })
-      
-      // Record authorization in database
+      // Create authorization request in database
       const authorization = await prisma.authorization.create({
         data: {
           assetId: asset.id,
-          holder,
+          holder: params.holderAddress,
           limit,
-          txId: result.txHash,
-          status: 'SUBMITTED',
-          explorer: `https://testnet.xrpl.org/transactions/${result.txHash}`,
-          noRipple: false, // TODO: Add to request body
-          requireAuth: false, // TODO: Add to request body
+          status: 'PENDING', // Start as INVITED/PENDING
+          // TODO: Uncomment after database migration
+          // currency: params.currencyCode,
+          // issuerAddress: params.issuerAddress,
+          // expiresAt,
+          // oneTimeToken,
+          // callbackUrl: params.callbackUrl,
+          // requestedLimit: limit,
+          // authUrl,
+          noRipple: params.noRipple,
+          requireAuth: params.requireAuth,
           metadata: {
             ledger: asset.ledger,
             network: asset.network,
-            currencyCode: asset.code
+            currencyCode: asset.code,
+            mode: 'wallet',
+            createdAt: new Date().toISOString(),
+            // Store new fields in metadata temporarily
+            currency: params.currencyCode,
+            issuerAddress: params.issuerAddress,
+            expiresAt: expiresAt.toISOString(),
+            oneTimeToken,
+            callbackUrl: params.callbackUrl,
+            requestedLimit: limit,
+            authUrl
           }
         }
       })
       
-      return reply.status(202).send({
+      console.log('Authorization request created:', {
+        id: authorization.id,
+        holder: params.holderAddress,
+        currency: params.currencyCode,
+        authUrl
+      })
+      
+      return reply.status(201).send({
+        id: authorization.id,
         assetId: asset.id,
         assetRef: asset.assetRef,
-        holder,
-        txId: result.txHash,
-        status: 'submitted',
-        authorizationId: authorization.id
+        holder: params.holderAddress,
+        currency: params.currencyCode,
+        issuerAddress: params.issuerAddress,
+        limit,
+        status: 'PENDING',
+        authUrl,
+        expiresAt: expiresAt.toISOString(),
+        oneTimeToken
       })
     } catch (error: any) {
       console.error('Error creating authorization:', error)
