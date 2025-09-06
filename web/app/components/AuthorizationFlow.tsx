@@ -69,21 +69,17 @@ export default function AuthorizationFlow() {
     if (!selectedAsset || !authorizationData.holderAddress) return null
     
     try {
-      const { data } = await api.GET('/v1/authorizations/{id}/status', {
+      const { data } = await api.GET('/v1/assets/{assetId}/authorizations/{holder}', {
         params: {
           path: {
-            id: 'temp-check' // We'll use a temporary ID for this check
-          },
-          query: {
-            holder: authorizationData.holderAddress,
-            currency: selectedAsset.code,
-            issuer: selectedAsset.issuer
+            assetId: selectedAsset.id,
+            holder: authorizationData.holderAddress
           }
         }
       })
       
       // If we get a response, check if trustline exists
-      return data?.trustlineExists || false
+      return data?.exists || false
     } catch (error) {
       console.error('Error checking trustline existence:', error)
       return false
@@ -115,8 +111,45 @@ export default function AuthorizationFlow() {
     }
   }
 
+  // Check if limit has changed for existing authorization
+  const checkLimitChange = async (existingAuth: any) => {
+    if (!existingAuth || !authorizationData.holderAddress) return false
+    
+    try {
+      // Get current trustline from ledger to compare limits
+      const { data } = await api.GET('/v1/balances/{account}', {
+        params: {
+          path: { account: authorizationData.holderAddress },
+          query: { 
+            issuer: selectedAsset?.issuer,
+            currency: selectedAsset?.code
+          }
+        }
+      })
+      
+      const currentTrustline = data?.trustLines?.find((line: any) => 
+        line.currency === selectedAsset?.code && 
+        line.issuer === selectedAsset?.issuer
+      )
+      
+      const currentLimit = currentTrustline?.limit || '0'
+      const newLimit = authorizationData.limit
+      
+      // Return true if limits are different (allowing for limit updates)
+      return currentLimit !== newLimit
+    } catch (error) {
+      console.error('Error checking limit change:', error)
+      return false
+    }
+  }
+
   // Create external trustline entry
   const createExternalTrustlineEntry = async () => {
+    if (!selectedAsset) {
+      setError('No asset selected')
+      return
+    }
+    
     try {
       const { data, error } = await api.POST('/v1/authorizations/external', {
         body: {
@@ -147,6 +180,43 @@ export default function AuthorizationFlow() {
     }
   }
 
+  // Create limit update authorization entry
+  const createLimitUpdateAuthorization = async () => {
+    if (!selectedAsset) {
+      setError('No asset selected')
+      return
+    }
+    
+    try {
+      const { data, error } = await api.POST('/v1/authorizations/external', {
+        body: {
+          assetId: selectedAsset.id,
+          holder: authorizationData.holderAddress,
+          currency: selectedAsset.code,
+          issuerAddress: selectedAsset.issuer,
+          limit: authorizationData.limit,
+          externalSource: 'xrpl_limit_update'
+        }
+      })
+
+      if (error) {
+        throw new Error(error.error || 'Failed to create limit update authorization entry')
+      }
+
+      setResult({
+        authorizationId: data.id,
+        explorer: '',
+        message: `Trustline limit update recorded successfully! Status: ${data.status}`
+      })
+      setCurrentStep('success')
+    } catch (err: any) {
+      console.error('Error creating limit update authorization:', err)
+      setError(err.message || 'Failed to create limit update authorization entry')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Create authorization request
   const createAuthorizationRequest = async () => {
     if (!selectedAsset) {
@@ -163,28 +233,44 @@ export default function AuthorizationFlow() {
     setError(null)
 
     try {
+      // Check for existing authorization in database first
+      const existingAuth = await checkExistingAuthorization()
+      
       // First check if trustline already exists on XRPL
       const trustlineExists = await checkTrustlineExists()
+      
       if (trustlineExists) {
-        // Check if we already have this external trustline in our database
-        const existingAuth = await checkExistingAuthorization()
         if (existingAuth) {
-          setError(`A trustline already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
+          // Trustline exists on ledger AND in our database
+          // Check if this is a limit update scenario
+          const limitChanged = await checkLimitChange(existingAuth)
+          
+          if (limitChanged) {
+            // Scenario 3: Trustline exists but limit is being updated
+            // Create a new authorization entry for the limit update
+            console.log('Limit update detected - creating new authorization entry for limit update')
+            await createLimitUpdateAuthorization()
+            return
+          } else {
+            // Same limit - show existing authorization
+            setError(`A trustline with the same limit already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
+            setLoading(false)
+            return
+          }
+        } else {
+          // Scenario 1: Trustline exists externally but not in our DB - create external entry
+          await createExternalTrustlineEntry()
+          return
+        }
+      } else {
+        // Trustline doesn't exist on XRPL
+        if (existingAuth) {
+          // This shouldn't happen - we have a DB entry but no ledger trustline
+          setError(`Database inconsistency detected. Please contact support.`)
           setLoading(false)
           return
         }
-        
-        // Trustline exists externally but not in our DB - create external entry
-        await createExternalTrustlineEntry()
-        return
-      }
-
-      // Trustline doesn't exist on XRPL - check for existing authorization request in database
-      const existingAuth = await checkExistingAuthorization()
-      if (existingAuth) {
-        setError(`An authorization request already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
-        setLoading(false)
-        return
+        // Scenario 4: New trustline setup - proceed with creation
       }
 
       console.log('Creating authorization request with data:', {
