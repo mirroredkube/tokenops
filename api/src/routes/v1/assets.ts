@@ -4,6 +4,7 @@ import { getLedgerAdapter } from '../../adapters/index.js'
 import { generateAssetRef } from './shared.js'
 import { PrismaClient, Prisma } from '@prisma/client'
 import { policyKernel, PolicyFacts } from '../../lib/policyKernel.js'
+import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
 
 const prisma = new PrismaClient()
 
@@ -161,7 +162,11 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         409: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const parsed = AssetCreateSchema.safeParse(req.body)
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Invalid request body' })
@@ -182,20 +187,20 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         return reply.status(409).send({ error: 'Asset already exists' })
       }
       
-      // Validate that the product exists and belongs to the user's organization
+      // Validate that the product exists and belongs to the tenant's organization
       const product = await prisma.product.findUnique({
-        where: { id: assetData.productId },
+        where: { 
+          id: assetData.productId,
+          organizationId: req.tenant!.id // Ensure product belongs to tenant
+        },
         include: {
           organization: true
         }
       });
       
       if (!product) {
-        return reply.status(404).send({ error: 'Product not found' });
+        return reply.status(404).send({ error: 'Product not found or not accessible' });
       }
-      
-      // TODO: Add user authentication check to verify organization ownership
-      // For now, we'll allow any valid product
       
       // Find issuer address - must be APPROVED
       const issuerAddress = await prisma.issuerAddress.findFirst({
@@ -320,13 +325,22 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
   })
 
   // 2. GET /v1/assets/{assetId} - Get asset details
-  app.get('/assets/:assetId', async (req, reply) => {
+  app.get('/assets/:assetId', async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const { assetId } = req.params as { assetId: string }
     
     try {
       // Get asset with related data using Prisma ORM
       const asset = await prisma.asset.findUnique({
-        where: { id: assetId },
+        where: { 
+          id: assetId,
+          product: {
+            organizationId: req.tenant!.id // Ensure asset belongs to tenant
+          }
+        },
         include: {
           issuingAddress: true,
           product: {
@@ -433,7 +447,11 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         409: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const { assetId } = req.params as { assetId: string }
     const parsed = AssetUpdateSchema.safeParse(req.body)
     
@@ -443,7 +461,12 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
     
     try {
       const asset = await prisma.asset.findUnique({
-        where: { id: assetId }
+        where: { 
+          id: assetId,
+          product: {
+            organizationId: req.tenant!.id // Ensure asset belongs to tenant
+          }
+        }
       })
       
       if (!asset) {
@@ -561,12 +584,21 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         409: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const { assetId } = req.params as { assetId: string }
     
     try {
       const asset = await prisma.asset.findUnique({
-        where: { id: assetId }
+        where: { 
+          id: assetId,
+          product: {
+            organizationId: req.tenant!.id // Ensure asset belongs to tenant
+          }
+        }
       })
       
       if (!asset) {
@@ -676,12 +708,20 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const { productId, ledger, status, limit = 20, offset = 0 } = req.query as any
     
     try {
-      // Build where clause
-      const where: any = {}
+      // Build where clause - now scoped to tenant
+      const where: any = {
+        product: {
+          organizationId: req.tenant!.id // Use tenant context
+        }
+      }
       
       if (productId) {
         where.productId = productId
