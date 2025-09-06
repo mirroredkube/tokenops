@@ -246,6 +246,7 @@ export default function AuthorizationHistoryPage() {
             options={[
               { value: 'all', label: t('authorizations:history.filters.allStatuses', 'All Statuses') },
               { value: 'HOLDER_REQUESTED', label: t('authorizations:history.filters.holderRequested', 'Holder Requested') },
+              { value: 'AWAITING_ISSUER_AUTHORIZATION', label: t('authorizations:history.filters.awaitingIssuerAuthorization', 'Awaiting Issuer Authorization') },
               { value: 'ISSUER_AUTHORIZED', label: t('authorizations:history.filters.issuerAuthorized', 'Issuer Authorized') },
               { value: 'EXTERNAL', label: t('authorizations:history.filters.external', 'External') },
               { value: 'LIMIT_UPDATED', label: t('authorizations:history.filters.limitUpdated', 'Limit Updated') },

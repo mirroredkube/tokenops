@@ -1,3 +1,4 @@
+
 import { FastifyInstance } from 'fastify'
 import { PrismaClient, AuthorizationStatus, AuthorizationRequestStatus } from '@prisma/client'
 import { generateOneTimeToken, hashToken, generateExpirationTime, createAuthUrl } from '../../lib/oneTimeToken.js'
