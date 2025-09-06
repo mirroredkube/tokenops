@@ -684,7 +684,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         }
         
         // Update authorization status if trustline exists
-        if (status.exists && authorization.status === AuthorizationStatus.HOLDER_REQUESTED) {
+        if (status.exists && authorization.status === AuthorizationStatus.AWAITING_ISSUER_AUTHORIZATION) {
           await prisma.authorization.update({
             where: { id: authorization.id },
             data: { 

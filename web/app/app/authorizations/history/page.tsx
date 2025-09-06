@@ -12,7 +12,7 @@ interface Authorization {
   holderAddress?: string
   limit?: string
   txHash?: string
-  status?: 'HOLDER_REQUESTED' | 'ISSUER_AUTHORIZED' | 'EXTERNAL' | 'LIMIT_UPDATED' | 'TRUSTLINE_CLOSED' | 'FROZEN' | 'UNFROZEN'
+  status?: 'HOLDER_REQUESTED' | 'AWAITING_ISSUER_AUTHORIZATION' | 'ISSUER_AUTHORIZED' | 'EXTERNAL' | 'LIMIT_UPDATED' | 'TRUSTLINE_CLOSED' | 'FROZEN' | 'UNFROZEN'
   initiatedBy?: 'HOLDER' | 'ISSUER' | 'SYSTEM'
   external?: boolean
   externalSource?: string
@@ -124,6 +124,8 @@ export default function AuthorizationHistoryPage() {
     switch (status) {
       case 'HOLDER_REQUESTED':
         return <Clock className="h-4 w-4 text-yellow-600" />
+      case 'AWAITING_ISSUER_AUTHORIZATION':
+        return <Clock className="h-4 w-4 text-orange-600" />
       case 'ISSUER_AUTHORIZED':
         return <CheckCircle className="h-4 w-4 text-green-600" />
       case 'EXTERNAL':
@@ -145,6 +147,8 @@ export default function AuthorizationHistoryPage() {
     switch (status) {
       case 'HOLDER_REQUESTED':
         return 'bg-yellow-100 text-yellow-800'
+      case 'AWAITING_ISSUER_AUTHORIZATION':
+        return 'bg-orange-100 text-orange-800'
       case 'ISSUER_AUTHORIZED':
         return 'bg-green-100 text-green-800'
       case 'EXTERNAL':

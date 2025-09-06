@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "AuthorizationStatus" ADD VALUE 'AWAITING_ISSUER_AUTHORIZATION';

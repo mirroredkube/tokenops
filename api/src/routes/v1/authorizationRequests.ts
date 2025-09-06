@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { PrismaClient, AuthorizationRequestStatus } from '@prisma/client'
+import { PrismaClient, AuthorizationStatus, AuthorizationRequestStatus } from '@prisma/client'
 import { generateOneTimeToken, hashToken, generateExpirationTime, createAuthUrl } from '../../lib/oneTimeToken.js'
 import { validateAssetRequireAuth } from '../../lib/requireAuthChecker.js'
 import { checkIdempotency, generateIdempotencyKey } from '../../lib/idempotency.js'
@@ -318,13 +318,13 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
         currency: authRequest.asset.code,
         holderAddress: authRequest.holderAddress,
         limit: authRequest.requestedLimit,
-        status: 'HOLDER_REQUESTED',
+        status: AuthorizationStatus.AWAITING_ISSUER_AUTHORIZATION,
         initiatedBy: 'HOLDER',
         txHash
       }
     })
 
-    return reply.send({ recorded: 'HOLDER_REQUESTED' })
+    return reply.send({ recorded: 'AWAITING_ISSUER_AUTHORIZATION' })
   })
 
   // POST /authorization-requests/:id/authorize
@@ -393,7 +393,7 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
         currency: authRequest.asset.code,
         holderAddress: authRequest.holderAddress,
         limit: authRequest.requestedLimit,
-        status: 'ISSUER_AUTHORIZED',
+        status: AuthorizationStatus.ISSUER_AUTHORIZED,
         initiatedBy: 'ISSUER',
         txHash: result.txid
       }
