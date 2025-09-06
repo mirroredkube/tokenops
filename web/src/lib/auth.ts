@@ -20,16 +20,16 @@ export interface AuthSession {
   user: User | null;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { getTenantApiUrl } from './tenantApi';
 
 export async function loginWithGoogle(): Promise<void> {
-  // Redirect to backend OAuth endpoint
-  window.location.href = `${API_BASE}/auth/google`;
+  // Redirect to backend OAuth endpoint using tenant-aware URL
+  window.location.href = `${getTenantApiUrl()}/auth/google`;
 }
 
 export async function logout(): Promise<void> {
   try {
-    await fetch(`${API_BASE}/auth/logout`, {
+    await fetch(`${getTenantApiUrl()}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -43,7 +43,7 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const response = await fetch(`${API_BASE}/auth/me`, {
+    const response = await fetch(`${getTenantApiUrl()}/auth/me`, {
       credentials: 'include',
     });
     
