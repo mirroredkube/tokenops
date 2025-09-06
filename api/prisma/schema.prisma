@@ -113,6 +113,7 @@ model Asset {
   issuingAddress       IssuerAddress?        @relation(fields: [issuingAddressId], references: [id])
   product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
   authorizations       Authorization[]
+  authorizationRequests AuthorizationRequest[]
   events               Event[]
   issuances            Issuance[]
   requirementInstances RequirementInstance[]
@@ -306,43 +307,58 @@ model Issuance {
 }
 
 model Authorization {
-  id                   String              @id @default(cuid())
-  assetId              String
-  holder               String
-  limit                String
-  txId                 String?
-  explorer             String?
-  status               AuthorizationStatus @default(PENDING)
-  validatedAt          DateTime?
-  validatedLedgerIndex BigInt?
-  failureCode          String?
-  noRipple             Boolean             @default(false)
-  requireAuth          Boolean             @default(false)
-  metadata             Json?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-  issuanceId           String?
-  // New fields for authorization request flow
-  currency             String?             // Currency code (e.g., "SOMECOIN")
-  issuerAddress        String?             // Issuer address for the authorization
-  expiresAt            DateTime?           // Expiration time for the authorization request
-  oneTimeToken         String?             @unique // One-time token for secure authorization URL
-  callbackUrl          String?             // Callback URL for status updates
-  requestedLimit       String?             // Original requested limit before approval
-  authUrl              String?             // Generated authorization URL for holder
-  external             Boolean             @default(false) // true if trustline was created outside our platform
-  externalSource       String?             // optional: where it was created (e.g., "xrpl_explorer", "other_wallet")
-  asset                Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  issuance             Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
+  id             String                 @id @default(cuid())
+  tenantId       String
+  assetId        String
+  ledger         String                 // XRPL-Testnet | XRPL-Mainnet
+  currency       String                 // e.g., CHIMP
+  holderAddress  String
+  limit          String                 // store as string to avoid precision issues
+  status         AuthorizationStatus
+  initiatedBy    AuthorizationInitiator
+  txHash         String?                @db.VarChar(64)
+  createdAt      DateTime               @default(now())
+  // Legacy fields for backward compatibility
+  issuanceId     String?
+  external       Boolean                @default(false)
+  externalSource String?
+  asset          Asset                  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  issuance       Issuance?              @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
 
-  @@index([assetId])
-  @@index([holder])
+  @@index([tenantId, assetId, holderAddress])
+  @@index([tenantId, ledger, currency, holderAddress])
   @@index([status])
   @@index([createdAt])
   @@index([issuanceId])
-  @@index([oneTimeToken])
+}
+
+model AuthorizationRequest {
+  id                String                     @id @default(cuid())
+  tenantId          String
+  assetId           String
+  holderAddress     String
+  requestedLimit    String
+  oneTimeTokenHash  String                     // hash, never store raw token
+  authUrl           String
+  status            AuthorizationRequestStatus @default(INVITED)
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  createdAt         DateTime                   @default(now())
+  
+  asset             Asset                      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, assetId, holderAddress])
+}
+
+model IdempotencyKey {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  result    Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([key])
   @@index([expiresAt])
-  @@index([currency, issuerAddress])
 }
 
 enum OrganizationStatus {
@@ -419,11 +435,26 @@ enum AssetStatus {
 }
 
 enum AuthorizationStatus {
-  PENDING
-  SUBMITTED
-  VALIDATED
-  FAILED
-  EXPIRED
+  HOLDER_REQUESTED
+  ISSUER_AUTHORIZED
+  EXTERNAL
+  LIMIT_UPDATED
+  TRUSTLINE_CLOSED
+  FROZEN
+  UNFROZEN
+}
+
+enum AuthorizationInitiator { 
+  HOLDER 
+  ISSUER 
+  SYSTEM 
+}
+
+enum AuthorizationRequestStatus { 
+  INVITED 
+  CONSUMED 
+  EXPIRED 
+  CANCELLED 
 }
 
 enum IssuanceStatus {

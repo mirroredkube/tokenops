@@ -55,5 +55,15 @@ export interface LedgerAdapter {
   }): Promise<TxResult>
   
   explorerTxUrl?(txid: string): string
+  
+  // New methods for authorization flow
+  getAccountInfo?(account: string): Promise<any>
+  getTransaction?(txHash: string): Promise<any>
+  authorizeTrustline?(params: {
+    holderAddress: string
+    currency: string
+    issuerAddress: string
+    issuerLimit?: string
+  }): Promise<TxResult>
 }
   

@@ -206,5 +206,59 @@ export const xrplAdapter: LedgerAdapter = {
 
   explorerTxUrl(txid: string): string {
     return `https://livenet.xrpl.org/transactions/${txid}`
+  },
+
+  // New method to get account info for RequireAuth checking
+  async getAccountInfo(account: string): Promise<any> {
+    return await withClient(async (client: Client) => {
+      const response = await client.request({
+        command: 'account_info',
+        account: account,
+        ledger_index: 'validated'
+      })
+      return response.result.account_data
+    })
+  },
+
+  // New method to get transaction details
+  async getTransaction(txHash: string): Promise<any> {
+    return await withClient(async (client: Client) => {
+      const response = await client.request({
+        command: 'tx',
+        transaction: txHash
+      })
+      return response.result
+    })
+  },
+
+  // New method to create issuer authorization TrustSet
+  async authorizeTrustline({ holderAddress, currency, issuerAddress, issuerLimit = "0" }: {
+    holderAddress: string
+    currency: string
+    issuerAddress: string
+    issuerLimit?: string
+  }): Promise<TxResult> {
+    const seed = process.env.ISSUER_SEED || process.env.ISSUER_SECRET
+    if (!seed) throw new Error('Missing ISSUER_SEED')
+    const wallet = Wallet.fromSeed(seed)
+    const currencyHex = normalize(currency)
+
+    return await withClient(async (client: Client) => {
+      const prepared = await client.autofill({
+        TransactionType: 'TrustSet',
+        Account: wallet.address,
+        LimitAmount: {
+          currency: currencyHex,
+          issuer: holderAddress,
+          value: issuerLimit
+        },
+        Flags: 65536 // tfSetfAuth
+      })
+      const signed = wallet.sign(prepared)
+      const res = await client.submitAndWait(signed.tx_blob)
+      const ok = ((res.result as any)?.engine_result || (res.result as any)?.meta?.TransactionResult) === 'tesSUCCESS'
+      if (!ok) throw new Error((res.result as any)?.engine_result ?? 'submit_failed')
+      return { txid: signed.hash }
+    })
   }
 }
