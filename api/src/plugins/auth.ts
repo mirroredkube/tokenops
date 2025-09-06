@@ -428,8 +428,23 @@ const authPlugin: FastifyPluginAsync = async (app) => {
           message: 'User not found'
         });
       }
-    } catch {
-      return reply.code(200).send({ user: null });
+    } catch (error) {
+      // Log the error for debugging
+      console.error('Error in /auth/me:', error);
+      
+      // If it's a JWT verification error, return 401
+      if (error instanceof Error && error.message.includes('jwt')) {
+        return reply.code(401).send({ 
+          error: 'Unauthorized',
+          message: 'Invalid or expired token'
+        });
+      }
+      
+      // For other errors, return 500
+      return reply.code(500).send({ 
+        error: 'Internal Server Error',
+        message: 'Failed to fetch user information'
+      });
     }
   });
 
