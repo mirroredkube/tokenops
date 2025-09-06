@@ -454,4 +454,136 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       return reply.status(502).send({ error: 'Ledger connection error' })
     }
   })
+
+  // 3. GET /v1/authorizations/token/{token} - Get authorization request by token
+  app.get('/authorizations/token/:token', {
+    schema: {
+      summary: 'Get authorization request by token',
+      description: 'Retrieve authorization request details using the one-time token',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['token'],
+        properties: {
+          token: { type: 'string', description: 'One-time authorization token' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            assetId: { type: 'string' },
+            holder: { type: 'string' },
+            currency: { type: 'string' },
+            issuerAddress: { type: 'string' },
+            limit: { type: 'string' },
+            status: { type: 'string' },
+            expiresAt: { type: 'string' },
+            noRipple: { type: 'boolean' },
+            requireAuth: { type: 'boolean' },
+            metadata: { type: 'object' }
+          }
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } },
+        410: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { token } = req.params as { token: string }
+      
+      // Find authorization request by one-time token
+      const authorization = await prisma.authorization.findUnique({
+        where: { oneTimeToken: token },
+        include: {
+          asset: true
+        }
+      })
+      
+      if (!authorization) {
+        return reply.status(404).send({ error: 'Authorization request not found' })
+      }
+      
+      // Check if expired
+      if (authorization.expiresAt && new Date(authorization.expiresAt) < new Date()) {
+        return reply.status(410).send({ error: 'Authorization request has expired' })
+      }
+      
+      return reply.send({
+        id: authorization.id,
+        assetId: authorization.assetId,
+        holder: authorization.holder,
+        currency: authorization.currency,
+        issuerAddress: authorization.issuerAddress,
+        limit: authorization.limit,
+        status: authorization.status,
+        expiresAt: authorization.expiresAt?.toISOString(),
+        noRipple: authorization.noRipple,
+        requireAuth: authorization.requireAuth,
+        metadata: authorization.metadata
+      })
+    } catch (error: any) {
+      console.error('Error fetching authorization request:', error)
+      return reply.status(500).send({ error: 'Failed to fetch authorization request' })
+    }
+  })
+
+  // 4. GET /v1/authorizations/{id}/status - Get trustline status
+  app.get('/authorizations/:id/status', {
+    schema: {
+      summary: 'Get trustline status',
+      description: 'Check the current status of a trustline on the ledger',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string', description: 'Authorization ID' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            exists: { type: 'boolean' },
+            authorized: { type: 'boolean' },
+            limit: { type: 'string' },
+            balance: { type: 'string' }
+          }
+        },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { id } = req.params as { id: string }
+      
+      // Find authorization request
+      const authorization = await prisma.authorization.findUnique({
+        where: { id },
+        include: {
+          asset: true
+        }
+      })
+      
+      if (!authorization) {
+        return reply.status(404).send({ error: 'Authorization request not found' })
+      }
+      
+      // TODO: Implement actual ledger query using account_lines
+      // For now, return mock status
+      const mockStatus = {
+        exists: authorization.status === 'VALIDATED',
+        authorized: authorization.status === 'VALIDATED' && authorization.requireAuth,
+        limit: authorization.limit,
+        balance: '0'
+      }
+      
+      return reply.send(mockStatus)
+    } catch (error: any) {
+      console.error('Error checking trustline status:', error)
+      return reply.status(500).send({ error: 'Failed to check trustline status' })
+    }
+  })
 }
