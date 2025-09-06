@@ -5,6 +5,7 @@ import { getLedgerAdapter } from '../../adapters/index.js'
 import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../../utils/currency.js'
 import { Asset, assets, validateAsset } from './shared.js'
 import prisma from '../../db/client.js'
+import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
 
 // ---------- Validation Schemas ----------
 const AuthorizationRequestSchema = z.object({
@@ -87,7 +88,11 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const { limit = 20, offset = 0, status, assetId, holder } = req.query as {
       limit?: number
       offset?: number
@@ -97,8 +102,14 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
     }
     
     try {
-      // Build where clause
-      const where: any = {}
+      // Build where clause - scope to tenant's organization
+      const where: any = {
+        asset: {
+          product: {
+            organizationId: req.tenant!.id // Scope to tenant's organization
+          }
+        }
+      }
       if (status) where.status = status
       if (assetId) where.assetId = assetId
       if (holder) where.holder = holder
@@ -296,7 +307,11 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         502: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const { assetId, holder } = req.params as { assetId: string; holder: string }
     const body = AuthorizationRequestSchema.safeParse(req.body)
     
@@ -316,8 +331,23 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
     }
     
     try {
-      // Validate asset exists and is active
-      const asset = await validateAsset(assetId)
+      // Validate asset exists, is active, and belongs to tenant
+      const asset = await prisma.asset.findUnique({
+        where: { 
+          id: assetId,
+          product: {
+            organizationId: req.tenant!.id // Ensure asset belongs to tenant
+          }
+        }
+      })
+      
+      if (!asset) {
+        return reply.status(404).send({ error: 'Asset not found or not accessible' })
+      }
+      
+      if (asset.status !== 'ACTIVE') {
+        return reply.status(422).send({ error: 'Asset is not active' })
+      }
       
       // Generate secure one-time token for authorization URL
       const oneTimeToken = crypto.randomUUID()
@@ -555,13 +585,24 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       const { id } = req.params as { id: string }
       
       // Find authorization request
       const authorization = await prisma.authorization.findUnique({
-        where: { id },
+        where: { 
+          id,
+          asset: {
+            product: {
+              organizationId: req.tenant!.id // Ensure authorization belongs to tenant
+            }
+          }
+        },
         include: {
           asset: true
         }
@@ -670,14 +711,25 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       const { id } = req.params as { id: string }
       const { issuerSecret, approvedBy } = req.body as { issuerSecret?: string; approvedBy?: string }
       
       // Find authorization request
       const authorization = await prisma.authorization.findUnique({
-        where: { id },
+        where: { 
+          id,
+          asset: {
+            product: {
+              organizationId: req.tenant!.id // Ensure authorization belongs to tenant
+            }
+          }
+        },
         include: {
           asset: true
         }
