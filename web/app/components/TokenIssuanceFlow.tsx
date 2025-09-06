@@ -15,6 +15,8 @@ interface TrustlineData {
   holderAddress: string
   issuerAddress: string
   limit: string
+  noRipple: boolean
+  requireAuth: boolean
 }
 
 interface TrustlineCheckData {
@@ -97,6 +99,9 @@ interface IssuanceResult {
       }
     }>
   }
+  id?: string
+  authUrl?: string
+  message?: string
 }
 
 interface TokenIssuanceFlowProps {
@@ -121,7 +126,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     currencyCode: '',
     holderAddress: '',
     issuerAddress: '',
-    limit: ''
+    limit: '',
+    noRipple: false,
+    requireAuth: true // Default to true for institutional use cases
   })
   const [tokenData, setTokenData] = useState<TokenData>({
     currencyCode: '',
@@ -477,6 +484,65 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     }
   }
 
+  // Create authorization request for the "Send Authorization Request" button
+  const createAuthorizationRequest = async () => {
+    if (!selectedAsset) {
+      setError('Please select an asset first')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data, error } = await api.PUT('/v1/assets/{assetId}/authorizations/{holder}', {
+        params: {
+          path: {
+            assetId: selectedAsset.id,
+            holder: trustlineData.holderAddress
+          },
+          body: {
+            params: {
+              holderAddress: trustlineData.holderAddress,
+              currencyCode: trustlineData.currencyCode,
+              issuerAddress: trustlineData.issuerAddress,
+              limit: trustlineData.limit,
+              noRipple: trustlineData.noRipple,
+              requireAuth: trustlineData.requireAuth,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+              callbackUrl: `${window.location.origin}/app/issuance/history`
+            },
+            signing: {
+              mode: 'wallet'
+            }
+          }
+        }
+      })
+
+      if (error) {
+        throw new Error(error.error || 'Failed to create authorization request')
+      }
+
+      if (!data) {
+        throw new Error('No data received from server')
+      }
+
+      // Show success message and the authorization URL
+      setResult({
+        txId: (data as any).id,
+        explorer: (data as any).authUrl,
+        message: 'Authorization request created successfully! The holder can now use the secure link to set up their trustline.'
+      })
+      
+      setCurrentStep('success')
+    } catch (err: any) {
+      console.error('Error creating authorization request:', err)
+      setError(err.message || 'Failed to create authorization request')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleTokenIssuance = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -690,7 +756,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     setAssets([])
     setAssetsError(null)
     setTrustlineCheckData({ currencyCode: '', holderAddress: '', issuerAddress: '' })
-    setTrustlineData({ currencyCode: '', holderAddress: '', issuerAddress: '', limit: '' })
+    setTrustlineData({ currencyCode: '', holderAddress: '', issuerAddress: '', limit: '', noRipple: false, requireAuth: true })
     setTokenData({ currencyCode: '', amount: '', destination: '', metadata: {}, metadataRaw: '' })
     setComplianceData({
       isin: '',
@@ -1315,9 +1381,11 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                    </div>
                                    <button
                                      type="button"
-                                     className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200"
+                                     onClick={createAuthorizationRequest}
+                                     disabled={loading || !selectedAsset || !trustlineData.holderAddress || !trustlineData.currencyCode}
+                                     className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                    >
-                                     Send Authorization Request
+                                     {loading ? 'Creating Request...' : 'Send Authorization Request'}
                                    </button>
                                  </div>
                                  <p className="text-sm text-gray-500 mt-2">The holder will receive a secure link to set up their trustline using their own wallet</p>

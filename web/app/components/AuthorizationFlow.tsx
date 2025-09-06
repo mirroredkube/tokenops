@@ -37,6 +37,9 @@ interface AuthorizationResult {
   txId?: string
   explorer?: string
   authorizationId?: string
+  id?: string
+  authUrl?: string
+  message?: string
 }
 
 export default function AuthorizationFlow() {
@@ -53,13 +56,71 @@ export default function AuthorizationFlow() {
     issuerAddress: '',
     limit: '1000000000',
     noRipple: false,
-    requireAuth: false
+    requireAuth: true // Default to true for institutional use cases
   })
   const [result, setResult] = useState<AuthorizationResult>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Security: Always use wallet signing mode, never handle private keys
+
+  // Create authorization request
+  const createAuthorizationRequest = async () => {
+    if (!selectedAsset) {
+      setError('Please select an asset first')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data, error } = await api.PUT('/v1/assets/{assetId}/authorizations/{holder}', {
+        params: {
+          path: {
+            assetId: selectedAsset.id,
+            holder: authorizationData.holderAddress
+          },
+          body: {
+            params: {
+              holderAddress: authorizationData.holderAddress,
+              currencyCode: authorizationData.currencyCode,
+              issuerAddress: authorizationData.issuerAddress,
+              limit: authorizationData.limit,
+              noRipple: authorizationData.noRipple,
+              requireAuth: authorizationData.requireAuth,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+              callbackUrl: `${window.location.origin}/app/authorizations`
+            },
+            signing: {
+              mode: 'wallet'
+            }
+          }
+        }
+      })
+
+      if (error) {
+        throw new Error(error.error || 'Failed to create authorization request')
+      }
+
+      if (!data) {
+        throw new Error('No data received from server')
+      }
+
+      // Store the result and show success
+      setResult({
+        authorizationId: (data as any).id,
+        explorer: (data as any).authUrl
+      })
+      
+      setCurrentStep('success')
+    } catch (err: any) {
+      console.error('Error creating authorization request:', err)
+      setError(err.message || 'Failed to create authorization request')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Fetch assets for the selected ledger
   const fetchAssets = async () => {
@@ -646,9 +707,11 @@ export default function AuthorizationFlow() {
                 </div>
                 <button
                   type="button"
-                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200"
+                  onClick={createAuthorizationRequest}
+                  disabled={loading || !selectedAsset || !authorizationData.holderAddress || !authorizationData.currencyCode}
+                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  Send Authorization Request
+                  {loading ? 'Creating Request...' : 'Send Authorization Request'}
                 </button>
               </div>
             </FormField>
@@ -796,7 +859,7 @@ export default function AuthorizationFlow() {
                     issuerAddress: '',
                     limit: '1000000000',
                     noRipple: false,
-                    requireAuth: false
+                    requireAuth: true // Default to true for institutional use cases
                   })
                 }}
                 className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors duration-200"
