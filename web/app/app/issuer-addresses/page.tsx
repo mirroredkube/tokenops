@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Plus, CheckCircle, XCircle, Clock, AlertTriangle, Eye, EyeOff } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { getTenantApiUrl } from '@/lib/tenantApi'
 import FormField from '../../components/FormField'
 import CustomDropdown from '../../components/CustomDropdown'
 
@@ -86,6 +87,15 @@ export default function IssuerAddressesPage() {
     fetchOrganizations()
   }, [])
 
+  // Update organization when user changes
+  useEffect(() => {
+    if (user?.organization) {
+      setUserOrganization(user.organization)
+      setFilters(prev => ({ ...prev, organizationId: user.organization.id }))
+      setCreateData(prev => ({ ...prev, organizationId: user.organization.id }))
+    }
+  }, [user])
+
   // Fetch addresses when filters change
   useEffect(() => {
     fetchAddresses()
@@ -102,7 +112,7 @@ export default function IssuerAddressesPage() {
       if (filters.ledger) params.append('ledger', filters.ledger)
       if (filters.network) params.append('network', filters.network)
       
-      const response = await fetch(`http://localhost:4000/v1/issuer-addresses?${params.toString()}`)
+      const response = await fetch(`${getTenantApiUrl()}/v1/issuer-addresses?${params.toString()}`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -125,10 +135,14 @@ export default function IssuerAddressesPage() {
         const orgs = (response.data as any).organizations
         setOrganizations(orgs)
         
-        // For now, we'll use the first organization as the user's organization
-        // In a real app, this would come from the user's profile or JWT token
-        if (orgs.length > 0) {
-          const userOrg = orgs[0] // TODO: Get from user context
+        // Use the user's organization from the auth context
+        if (user?.organization) {
+          setUserOrganization(user.organization)
+          setFilters(prev => ({ ...prev, organizationId: user.organization.id }))
+          setCreateData(prev => ({ ...prev, organizationId: user.organization.id }))
+        } else if (orgs.length > 0) {
+          // Fallback to first organization if user context not available
+          const userOrg = orgs[0]
           setUserOrganization(userOrg)
           setFilters(prev => ({ ...prev, organizationId: userOrg.id }))
           setCreateData(prev => ({ ...prev, organizationId: userOrg.id }))
