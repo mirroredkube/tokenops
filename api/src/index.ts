@@ -51,7 +51,11 @@ await app.register(swagger, {
       description: 'Multi-ledger tokenization APIs',
       version: '0.1.0',
     },
-    servers: [{ url: serverUrl }],
+    servers: [
+      { url: 'http://localhost:4000', description: 'Default tenant (localhost)' },
+      { url: 'http://default.api.localhost:4000', description: 'Default Organization' },
+      { url: 'http://am1.api.localhost:4000', description: 'Asset Manager 1' }
+    ],
     tags: [
       { name: 'system', description: 'Liveness & ledger connectivity' },
       { name: 'balances', description: 'Account balances & queries' },
