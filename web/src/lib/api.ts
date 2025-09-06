@@ -1,11 +1,16 @@
 import createClient from 'openapi-fetch'
 import type { paths } from '@/types/openapi'
+import { getTenantApiUrl } from './tenantApi'
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
-
-// Create a fetch wrapper that always includes credentials
+// Create a fetch wrapper that always includes credentials and uses tenant-specific URL
 const fetchWithCredentials = (input: Request | string, init?: RequestInit) => {
-  return fetch(input, {
+  // If input is a string and it's a relative URL, make it absolute with tenant API URL
+  let url = input
+  if (typeof input === 'string' && input.startsWith('/')) {
+    url = `${getTenantApiUrl()}${input}`
+  }
+  
+  return fetch(url, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -16,7 +21,7 @@ const fetchWithCredentials = (input: Request | string, init?: RequestInit) => {
 }
 
 export const api = createClient<paths>({ 
-  baseUrl,
+  baseUrl: getTenantApiUrl(),
   fetch: fetchWithCredentials
 })
 
@@ -36,7 +41,7 @@ export interface UserSettings {
 // Get user settings
 export async function getUserSettings(): Promise<UserSettings> {
   try {
-    const response = await fetch(`${baseUrl}/v1/users/me/settings`, {
+    const response = await fetch(`${getTenantApiUrl()}/v1/users/me/settings`, {
       credentials: 'include'
     })
     
@@ -55,7 +60,7 @@ export async function getUserSettings(): Promise<UserSettings> {
 // Update user settings
 export async function updateUserSettings(updates: Partial<UserSettings>): Promise<UserSettings> {
   try {
-    const response = await fetch(`${baseUrl}/v1/users/me/settings`, {
+    const response = await fetch(`${getTenantApiUrl()}/v1/users/me/settings`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -79,7 +84,7 @@ export async function updateUserSettings(updates: Partial<UserSettings>): Promis
 // Update user profile
 export async function updateUserProfile(updates: { name?: string; email?: string }): Promise<any> {
   try {
-    const response = await fetch(`${baseUrl}/v1/users/me/profile`, {
+    const response = await fetch(`${getTenantApiUrl()}/v1/users/me/profile`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
