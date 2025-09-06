@@ -431,7 +431,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       await prisma.authorization.updateMany({
         where: {
           assetId: asset.id,
-          holder: holder,
+          holderAddress: holder,
           issuanceId: null // Only link authorizations that aren't already linked
         },
         data: {
