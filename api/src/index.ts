@@ -26,10 +26,12 @@ const uiOrigin = process.env.UI_ORIGIN || 'http://localhost:3000'  // UI on :300
 await app.register(cors, {
   origin: [
     uiOrigin,
-    // Allow tenant subdomains for development
-    /^http:\/\/[a-z0-9-]+\.api\.localhost:4000$/,
+    // Allow tenant subdomains for development (web app calling API)
     /^http:\/\/[a-z0-9-]+\.app\.localhost:3000$/,
-    // Allow direct localhost access
+    // Allow direct localhost access (fallback)
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    // Allow direct API access for testing
     'http://localhost:4000',
     'http://127.0.0.1:4000'
   ],
