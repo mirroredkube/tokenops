@@ -847,8 +847,15 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       })
       
       if (existingExternal) {
-        return reply.status(400).send({ 
-          error: 'External trustline already exists in our database' 
+        // For token issuance flow, existing external trustline is a success case
+        return reply.status(200).send({
+          id: existingExternal.id,
+          assetId: existingExternal.assetId,
+          holder: existingExternal.holder,
+          status: existingExternal.status,
+          external: existingExternal.external,
+          externalSource: existingExternal.externalSource,
+          message: 'External trustline already exists and is ready for token issuance'
         })
       }
       
