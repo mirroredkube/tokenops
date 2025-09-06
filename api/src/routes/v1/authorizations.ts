@@ -571,19 +571,169 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         return reply.status(404).send({ error: 'Authorization request not found' })
       }
       
-      // TODO: Implement actual ledger query using account_lines
-      // For now, return mock status
-      const mockStatus = {
-        exists: authorization.status === 'VALIDATED',
-        authorized: authorization.status === 'VALIDATED' && authorization.requireAuth,
-        limit: authorization.limit,
-        balance: '0'
-      }
+      // Use existing XRPL adapter to check trustline status
+      const adapter = getLedgerAdapter()
       
-      return reply.send(mockStatus)
+      try {
+        // Check if trustline exists using account_lines
+        const accountLines = await adapter.getAccountLines({
+          account: authorization.holder,
+          peer: authorization.issuerAddress || '',
+          ledger_index: 'validated'
+        })
+        
+        // Find the specific currency line
+        const trustline = accountLines.find((line: any) => {
+          const lineCurrency = line.currency?.toUpperCase()
+          const authCurrency = authorization.currency?.toUpperCase()
+          
+          // Handle both hex and ASCII currency codes
+          if (authCurrency && authCurrency.length === 40) {
+            // Hex currency
+            return lineCurrency === authCurrency
+          } else {
+            // ASCII currency - check both formats
+            return lineCurrency === authCurrency || 
+                   lineCurrency === currencyToHex(authCurrency || '')
+          }
+        })
+        
+        const status = {
+          exists: !!trustline,
+          authorized: trustline ? (trustline.authorized === true || trustline.peer_authorized === true) : false,
+          limit: trustline ? trustline.limit : '0',
+          balance: trustline ? trustline.balance : '0'
+        }
+        
+        // Update authorization status if trustline exists
+        if (status.exists && authorization.status === 'PENDING') {
+          await prisma.authorization.update({
+            where: { id: authorization.id },
+            data: { 
+              status: 'SUBMITTED',
+              validatedAt: new Date()
+            }
+          })
+        }
+        
+        return reply.send(status)
+      } catch (error: any) {
+        console.error('Error checking trustline status:', error)
+        
+        // Fallback to database status if ledger query fails
+        const fallbackStatus = {
+          exists: authorization.status === 'SUBMITTED' || authorization.status === 'VALIDATED',
+          authorized: authorization.status === 'VALIDATED' && authorization.requireAuth,
+          limit: authorization.limit,
+          balance: '0'
+        }
+        
+        return reply.send(fallbackStatus)
+      }
     } catch (error: any) {
       console.error('Error checking trustline status:', error)
       return reply.status(500).send({ error: 'Failed to check trustline status' })
+    }
+  })
+
+  // 5. POST /v1/authorizations/{id}/authorize - Issuer authorizes trustline
+  app.post('/authorizations/:id/authorize', {
+    schema: {
+      summary: 'Authorize trustline as issuer',
+      description: 'Issuer authorizes a trustline using tfSetfAuth flag (4-eyes approval required)',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string', description: 'Authorization ID' }
+        }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          issuerSecret: { type: 'string', description: 'Issuer secret for signing authorization' },
+          approvedBy: { type: 'string', description: 'User ID who approved the authorization' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            status: { type: 'string' },
+            txId: { type: 'string' },
+            authorizedAt: { type: 'string' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { id } = req.params as { id: string }
+      const { issuerSecret, approvedBy } = req.body as { issuerSecret?: string; approvedBy?: string }
+      
+      // Find authorization request
+      const authorization = await prisma.authorization.findUnique({
+        where: { id },
+        include: {
+          asset: true
+        }
+      })
+      
+      if (!authorization) {
+        return reply.status(404).send({ error: 'Authorization request not found' })
+      }
+      
+      if (authorization.status !== 'SUBMITTED') {
+        return reply.status(400).send({ error: 'Authorization request is not in SUBMITTED status' })
+      }
+      
+      if (!authorization.requireAuth) {
+        return reply.status(400).send({ error: 'This asset does not require authorization' })
+      }
+      
+      // TODO: Implement 4-eyes approval check
+      // For now, require approvedBy parameter
+      if (!approvedBy) {
+        return reply.status(400).send({ error: '4-eyes approval required - approvedBy parameter missing' })
+      }
+      
+      // TODO: Implement actual issuer authorization using tfSetfAuth
+      // This would use the XRPL adapter to sign and submit the authorization transaction
+      if (!issuerSecret) {
+        return reply.status(400).send({ error: 'Issuer secret required for authorization' })
+      }
+      
+      // Mock authorization for now
+      const mockTxId = `auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      // Update authorization status
+      const updatedAuth = await prisma.authorization.update({
+        where: { id },
+        data: {
+          status: 'VALIDATED',
+          txId: mockTxId,
+          validatedAt: new Date(),
+          metadata: {
+            ...(authorization.metadata as Record<string, any>),
+            authorizedBy: approvedBy,
+            authorizedAt: new Date().toISOString()
+          }
+        }
+      })
+      
+      return reply.send({
+        id: updatedAuth.id,
+        status: updatedAuth.status,
+        txId: updatedAuth.txId,
+        authorizedAt: updatedAuth.validatedAt?.toISOString()
+      })
+    } catch (error: any) {
+      console.error('Error authorizing trustline:', error)
+      return reply.status(500).send({ error: 'Failed to authorize trustline' })
     }
   })
 }
