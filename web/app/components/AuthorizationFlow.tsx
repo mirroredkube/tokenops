@@ -64,6 +64,31 @@ export default function AuthorizationFlow() {
 
   // Security: Always use wallet signing mode, never handle private keys
 
+  // Check for existing authorization
+  const checkExistingAuthorization = async () => {
+    if (!selectedAsset || !authorizationData.holderAddress) return null
+    
+    try {
+      const { data } = await api.GET('/v1/authorizations', {
+        params: {
+          query: {
+            assetId: selectedAsset.id,
+            holder: authorizationData.holderAddress,
+            limit: 10
+          }
+        }
+      })
+      
+      return data?.authorizations?.find((auth: any) => 
+        auth.assetId === selectedAsset.id && 
+        auth.holder === authorizationData.holderAddress
+      )
+    } catch (error) {
+      console.error('Error checking existing authorization:', error)
+      return null
+    }
+  }
+
   // Create authorization request
   const createAuthorizationRequest = async () => {
     if (!selectedAsset) {
@@ -71,10 +96,22 @@ export default function AuthorizationFlow() {
       return
     }
 
+    if (!authorizationData.holderAddress) {
+      setError('Please enter a holder address')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
     try {
+      // Check for existing authorization first
+      const existingAuth = await checkExistingAuthorization()
+      if (existingAuth) {
+        setError(`An authorization already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
+        setLoading(false)
+        return
+      }
       const { data, error } = await api.PUT('/v1/assets/{assetId}/authorizations/{holder}', {
         params: {
           path: {
@@ -84,8 +121,8 @@ export default function AuthorizationFlow() {
           body: {
             params: {
               holderAddress: authorizationData.holderAddress,
-              currencyCode: authorizationData.currencyCode,
-              issuerAddress: authorizationData.issuerAddress,
+              currencyCode: selectedAsset.code, // Use asset code
+              issuerAddress: selectedAsset.issuer, // Use asset issuer
               limit: authorizationData.limit,
               noRipple: authorizationData.noRipple,
               requireAuth: authorizationData.requireAuth,
@@ -100,7 +137,13 @@ export default function AuthorizationFlow() {
       })
 
       if (error) {
-        throw new Error(error.error || 'Failed to create authorization request')
+        console.error('API Error:', error)
+        const errorMessage = typeof error === 'object' && error.error 
+          ? error.error 
+          : typeof error === 'string' 
+            ? error 
+            : 'Failed to create authorization request'
+        throw new Error(errorMessage)
       }
 
       if (!data) {
