@@ -338,14 +338,13 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
           holder: params.holderAddress,
           limit,
           status: 'PENDING', // Start as INVITED/PENDING
-          // TODO: Uncomment after database migration
-          // currency: params.currencyCode,
-          // issuerAddress: params.issuerAddress,
-          // expiresAt,
-          // oneTimeToken,
-          // callbackUrl: params.callbackUrl,
-          // requestedLimit: limit,
-          // authUrl,
+          currency: params.currencyCode,
+          issuerAddress: params.issuerAddress,
+          expiresAt,
+          oneTimeToken,
+          callbackUrl: params.callbackUrl,
+          requestedLimit: limit,
+          authUrl,
           noRipple: params.noRipple,
           requireAuth: params.requireAuth,
           metadata: {
@@ -353,15 +352,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
             network: asset.network,
             currencyCode: asset.code,
             mode: 'wallet',
-            createdAt: new Date().toISOString(),
-            // Store new fields in metadata temporarily
-            currency: params.currencyCode,
-            issuerAddress: params.issuerAddress,
-            expiresAt: expiresAt.toISOString(),
-            oneTimeToken,
-            callbackUrl: params.callbackUrl,
-            requestedLimit: limit,
-            authUrl
+            createdAt: new Date().toISOString()
           }
         }
       })
