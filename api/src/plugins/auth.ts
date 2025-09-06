@@ -6,6 +6,91 @@ import { authenticator } from 'otplib';
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 
+/**
+ * Extract tenant subdomain from host header
+ */
+function extractTenantFromHost(host: string): string {
+  // Remove port if present
+  const hostWithoutPort = host.split(':')[0].toLowerCase();
+  
+  // Check for tenant subdomain pattern: {tenant}.api.localhost
+  if (hostWithoutPort.endsWith('.api.localhost')) {
+    const tenant = hostWithoutPort.replace('.api.localhost', '');
+    // Validate tenant format (simple alphanumeric + hyphens)
+    if (/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(tenant) && tenant.length <= 63) {
+      return tenant;
+    }
+  }
+  
+  // Check for production pattern: {tenant}.api.tokenops.com
+  if (hostWithoutPort.endsWith('.api.tokenops.com')) {
+    const tenant = hostWithoutPort.replace('.api.tokenops.com', '');
+    if (/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(tenant) && tenant.length <= 63) {
+      return tenant;
+    }
+  }
+  
+  // Development fallback: plain localhost defaults to 'default' tenant
+  if (hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1') {
+    return 'default';
+  }
+  
+  // Production fallback: if no subdomain pattern matches, default to 'default'
+  return 'default';
+}
+
+/**
+ * Get the callback URL based on the host
+ */
+function getTenantCallbackUrl(host: string): string {
+  const tenant = extractTenantFromHost(host);
+  
+  // Build tenant-specific callback URL
+  if (host.includes('.api.localhost')) {
+    // Development: use tenant subdomain for callback
+    return `http://${tenant}.api.localhost:4000/auth/google/callback`;
+  } else if (host.includes('.api.tokenops.com')) {
+    // Production: use tenant subdomain for callback
+    return `https://${tenant}.api.tokenops.com/auth/google/callback`;
+  } else {
+    // Fallback: use default callback URL
+    return 'http://localhost:4000/auth/google/callback';
+  }
+}
+
+/**
+ * Get the web URL based on the host
+ */
+function getTenantWebUrl(host: string): string {
+  const tenant = extractTenantFromHost(host);
+  
+  // Build tenant-specific web URL
+  if (host.includes('.api.localhost')) {
+    // Development: use tenant subdomain for web
+    return `http://${tenant}.app.localhost:3000`;
+  } else if (host.includes('.api.tokenops.com')) {
+    // Production: use tenant subdomain for web
+    return `https://${tenant}.app.tokenops.com`;
+  } else {
+    // Fallback: use default web URL
+    return process.env.UI_ORIGIN || 'http://localhost:3000';
+  }
+}
+
+/**
+ * Get the web URL based on tenant name
+ */
+function getTenantWebUrlFromTenant(tenant: string): string {
+  // Build tenant-specific web URL
+  if (tenant === 'default') {
+    // Default tenant uses localhost in development
+    return 'http://localhost:3000';
+  } else {
+    // Other tenants use subdomain in development
+    return `http://${tenant}.app.localhost:3000`;
+  }
+}
+
 const prisma = new PrismaClient();
 
 // ✅ Correct type augmentation: tell @fastify/jwt what our payload/user look like
@@ -55,33 +140,104 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   // Google OAuth (optional; enabled if envs are present)
   const GOOGLE_READY =
     !!process.env.GOOGLE_CLIENT_ID &&
-    !!process.env.GOOGLE_CLIENT_SECRET &&
-    !!process.env.GOOGLE_CALLBACK_URL;
+    !!process.env.GOOGLE_CLIENT_SECRET;
 
   if (GOOGLE_READY) {
-    await app.register(fastifyOauth2, {
-      name: "googleOAuth2",
-      scope: ["openid", "email", "profile"],
-      credentials: {
-        client: {
-          id: process.env.GOOGLE_CLIENT_ID!,
-          secret: process.env.GOOGLE_CLIENT_SECRET!,
-        },
-        auth: fastifyOauth2.GOOGLE_CONFIGURATION,
-      },
-      startRedirectPath: "/auth/google",
-      callbackUri: process.env.GOOGLE_CALLBACK_URL!,
+    // Custom OAuth handler that's tenant-aware
+    app.get("/auth/google", async (req, reply) => {
+      const host = req.headers.host || '';
+      const tenant = extractTenantFromHost(host);
+      
+      // Generate state parameter for CSRF protection + tenant info
+      const state = crypto.randomBytes(32).toString('hex');
+      const stateWithTenant = `${state}:${tenant}`;
+      
+      // Store state in session/cookie for validation
+      reply.setCookie('oauth_state', stateWithTenant, {
+        httpOnly: true,
+        secure: false, // Set to true in production
+        sameSite: 'lax',
+        maxAge: 600000, // 10 minutes
+        domain: 'localhost', // Make cookie available across all localhost subdomains
+      });
+      
+      // Use single callback URL that Google accepts
+      const callbackUrl = 'http://localhost:4000/auth/google/callback';
+      
+      // Construct Google OAuth URL
+      const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      googleAuthUrl.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID!);
+      googleAuthUrl.searchParams.set('redirect_uri', callbackUrl);
+      googleAuthUrl.searchParams.set('response_type', 'code');
+      googleAuthUrl.searchParams.set('scope', 'openid email profile');
+      googleAuthUrl.searchParams.set('state', stateWithTenant);
+      
+      return reply.redirect(googleAuthUrl.toString());
     });
 
     // OAuth callback → issue our JWT in an HttpOnly cookie
     app.get("/auth/google/callback", async (req, reply) => {
-      const token = await (app as any).googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(req);
-      const idToken = token?.token?.id_token as string | undefined;
-      const payload =
-        idToken ? JSON.parse(Buffer.from(idToken.split(".")[1], "base64").toString("utf8")) : {};
-      const email = payload.email as string | undefined;
-      const name = payload.name as string | undefined;
-      const sub = (payload.sub as string | undefined) || "unknown";
+      const { code, state } = req.query as { code?: string; state?: string };
+      
+      // Validate state parameter
+      const storedState = req.cookies.oauth_state;
+      if (!state || !storedState || state !== storedState) {
+        return reply.status(400).send({ error: 'Invalid state parameter' });
+      }
+      
+      // Extract tenant from state parameter
+      const [stateToken, tenant] = state.split(':');
+      if (!tenant) {
+        return reply.status(400).send({ error: 'Invalid state format' });
+      }
+      
+      // Clear the state cookie with proper domain
+      reply.clearCookie('oauth_state', { 
+        path: "/", 
+        domain: "localhost",
+        httpOnly: true,
+        sameSite: "lax"
+      });
+      
+      if (!code) {
+        return reply.status(400).send({ error: 'Authorization code not provided' });
+      }
+      
+      // Use single callback URL that Google accepts
+      const callbackUrl = 'http://localhost:4000/auth/google/callback';
+      
+      try {
+        // Exchange authorization code for access token
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            client_id: process.env.GOOGLE_CLIENT_ID!,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+            code,
+            grant_type: 'authorization_code',
+            redirect_uri: callbackUrl,
+          }),
+        });
+        
+        if (!tokenResponse.ok) {
+          throw new Error('Failed to exchange authorization code');
+        }
+        
+        const tokenData = await tokenResponse.json();
+        const idToken = tokenData.id_token;
+        
+        if (!idToken) {
+          throw new Error('No ID token received');
+        }
+        
+        // Decode the ID token
+        const payload = JSON.parse(Buffer.from(idToken.split(".")[1], "base64").toString("utf8"));
+        const email = payload.email as string | undefined;
+        const name = payload.name as string | undefined;
+        const sub = (payload.sub as string | undefined) || "unknown";
 
       const admins = (process.env.ADMIN_EMAILS || "")
         .split(",")
@@ -95,22 +251,29 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       });
 
       if (!dbUser) {
-        // Get or create default organization
-        let defaultOrg = await prisma.organization.findFirst({
-          where: { name: 'Default Organization' }
+        // For new users, assign to the organization based on the tenant they're logging in from
+        let targetOrg = await prisma.organization.findFirst({
+          where: { subdomain: tenant }
         });
         
-        if (!defaultOrg) {
-          defaultOrg = await prisma.organization.create({
-            data: {
-              name: 'Default Organization',
-              legalName: 'Default Organization',
-              country: 'US',
-              jurisdiction: 'US',
-              status: 'ACTIVE',
-              subdomain: 'default'
-            }
+        if (!targetOrg) {
+          // Fallback to default organization if tenant org doesn't exist
+          targetOrg = await prisma.organization.findFirst({
+            where: { name: 'Default Organization' }
           });
+          
+          if (!targetOrg) {
+            targetOrg = await prisma.organization.create({
+              data: {
+                name: 'Default Organization',
+                legalName: 'Default Organization',
+                country: 'US',
+                jurisdiction: 'US',
+                status: 'ACTIVE',
+                subdomain: 'default'
+              }
+            });
+          }
         }
         
         // Convert role to new enum format
@@ -123,10 +286,11 @@ const authPlugin: FastifyPluginAsync = async (app) => {
             name: name || '',
             sub,
             role: newRole,
-            organizationId: defaultOrg.id
+            organizationId: targetOrg.id
           }
         });
       }
+      // Note: We don't validate existing users during login - that validation happens in /auth/me
 
       if (dbUser?.twoFactorEnabled) {
         // Store temporary session for 2FA verification
@@ -145,6 +309,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
             secure: process.env.NODE_ENV === "production",
             path: "/",
             maxAge: 60 * 5, // 5 minutes
+            domain: "localhost", // Make temp auth cookie available across all localhost subdomains
           })
           .redirect((process.env.UI_ORIGIN || "http://localhost:3000") + "/login/2fa");
         return;
@@ -171,8 +336,13 @@ const authPlugin: FastifyPluginAsync = async (app) => {
           secure: process.env.NODE_ENV === "production",
           path: "/",
           maxAge: 60 * 60 * 12,
+          domain: "localhost", // Make JWT cookie available across all localhost subdomains
         })
-        .redirect((process.env.UI_ORIGIN || "http://localhost:3000") + "/app/dashboard");
+        .redirect(getTenantWebUrlFromTenant(tenant) + "/app/dashboard");
+      } catch (error) {
+        console.error('OAuth callback error:', error);
+        return reply.status(500).send({ error: 'Authentication failed' });
+      }
     });
   } else {
     app.log.warn("Google OAuth not configured; set GOOGLE_* envs to enable /auth/google");
@@ -205,6 +375,10 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       await req.jwtVerify();
       const jwtUser = req.user as any;
       
+      // Extract tenant from host for validation
+      const host = req.headers.host || '';
+      const tenant = extractTenantFromHost(host);
+      
       // Fetch complete user data from database with organization
       const dbUser = await prisma.user.findUnique({
         where: { sub: jwtUser.sub },
@@ -224,6 +398,15 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       });
       
       if (dbUser) {
+        // Validate that user belongs to the correct organization
+        if (dbUser.organization?.subdomain !== tenant) {
+          // User doesn't belong to this organization - return 404
+          return reply.code(404).send({ 
+            error: 'Not Found',
+            message: 'User not found in this organization'
+          });
+        }
+        
         // Return database user data with organization
         return reply.send({ 
           user: {
@@ -239,8 +422,11 @@ const authPlugin: FastifyPluginAsync = async (app) => {
           }
         });
       } else {
-        // Fallback to JWT data if user not in database
-        return reply.send({ user: jwtUser });
+        // User not found in database - return 404
+        return reply.code(404).send({ 
+          error: 'Not Found',
+          message: 'User not found'
+        });
       }
     } catch {
       return reply.code(200).send({ user: null });
@@ -248,7 +434,21 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   });
 
   app.post("/auth/logout", async (_req, reply) => {
-    reply.clearCookie("auth", { path: "/" }).send({ ok: true });
+    // Clear cookies with the same settings they were set with
+    reply
+      .clearCookie("auth", { 
+        path: "/", 
+        domain: "localhost",
+        httpOnly: true,
+        sameSite: "lax"
+      })
+      .clearCookie("temp_auth", { 
+        path: "/", 
+        domain: "localhost",
+        httpOnly: true,
+        sameSite: "lax"
+      })
+      .send({ ok: true });
   });
 
   // Test user settings endpoint in auth plugin
@@ -565,13 +765,19 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       }, { expiresIn: "12h" });
 
       reply
-        .clearCookie("temp_auth", { path: "/" })
+        .clearCookie("temp_auth", { 
+          path: "/", 
+          domain: "localhost",
+          httpOnly: true,
+          sameSite: "lax"
+        })
         .setCookie("auth", jwt, {
           httpOnly: true,
           sameSite: "lax",
           secure: process.env.NODE_ENV === "production",
           path: "/",
           maxAge: 60 * 60 * 12,
+          domain: "localhost", // Make JWT cookie available across all localhost subdomains
         })
         .send({ success: true, redirect: "/app/dashboard" });
     } catch (error) {

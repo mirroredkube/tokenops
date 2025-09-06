@@ -24,6 +24,10 @@ export function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
+
+    // For authenticated routes, we need to validate organization access
+    // This will be handled by the client-side auth context
+    // The API will return 404 if the user doesn't belong to the correct organization
   }
 
   // Allow access to login page and public routes

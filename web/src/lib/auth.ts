@@ -37,8 +37,12 @@ export async function logout(): Promise<void> {
     console.error('Logout error:', error);
   }
   
-  // Redirect to home page
-  window.location.href = '/';
+  // Clear any local storage or session storage
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Redirect to login page
+  window.location.href = '/login';
 }
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -48,6 +52,10 @@ export async function getCurrentUser(): Promise<User | null> {
     });
     
     if (!response.ok) {
+      if (response.status === 404) {
+        // User doesn't belong to this organization
+        throw new Error('404: User not found in this organization');
+      }
       return null;
     }
     
@@ -55,7 +63,7 @@ export async function getCurrentUser(): Promise<User | null> {
     return data.user;
   } catch (error) {
     console.error('Error fetching user:', error);
-    return null;
+    throw error; // Re-throw to let the caller handle it
   }
 }
 

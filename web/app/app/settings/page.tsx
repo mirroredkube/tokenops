@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { user, refreshUser } = useAuth()
+  const { user, loading, refreshUser } = useAuth()
   const { currentLanguage, setLanguage, availableLanguages } = useLanguage()
   const { t, ready } = useTranslation(['settings', 'common'])
   const [hasChanges, setHasChanges] = useState(false)
@@ -92,6 +92,19 @@ export default function SettingsPage() {
     
     if (user) {
       loadSettings()
+    } else {
+      // If no user, set empty form data
+      setFormData({
+        name: '',
+        email: '',
+        timezone: 'UTC',
+        language: currentLanguage === 'en' ? 'English' : 'German',
+        notifications: {
+          email: true,
+          push: false,
+          security: true
+        }
+      })
     }
   }, [user, currentLanguage])
 
@@ -310,13 +323,25 @@ export default function SettingsPage() {
     getTwoFactorStatus()
   }, [])
 
-  // Show loading state while translations are not ready
-  if (!ready) {
+  // Show loading state while translations are not ready or user is loading
+  if (!ready || loading) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-          <p className="text-gray-600 mt-2">Loading translations...</p>
+          <p className="text-gray-600 mt-2">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state if user is not available
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
+          <p className="text-gray-600 mt-2">Unable to load user information. Please try refreshing the page.</p>
         </div>
       </div>
     )
@@ -331,9 +356,6 @@ export default function SettingsPage() {
     currentLanguage
   })
 
-  // Debug: Check user and organization data
-  console.log('User data:', user)
-  console.log('Organization data:', user?.organization)
 
   return (
     <div className="max-w-4xl mx-auto">

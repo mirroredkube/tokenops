@@ -112,9 +112,6 @@ export default function CreateAssetPage() {
         ...(orgId && { orgId })
       })
       
-      console.log('User:', user)
-      console.log('Organization ID:', orgId)
-      console.log('Query params:', queryParams.toString())
       
       const response = await fetch(`${apiUrl}/v1/products?${queryParams}`, {
         credentials: 'include'
