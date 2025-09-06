@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
+import { getTenantApiUrl } from '@/lib/tenantApi'
 import { useAuth } from '@/contexts/AuthContext'
 import FormField from '../../../components/FormField'
 import CustomDropdown from '../../../components/CustomDropdown'
@@ -98,20 +99,12 @@ export default function CreateAssetPage() {
     setProductsError(null)
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-      // Get organization ID from user context or fetch it
-      let orgId = user?.organization?.id
-      if (!orgId && user?.organizationId) {
-        orgId = user.organizationId
-      }
-      
-
+      // Use tenant-aware API URL instead of hardcoded URL
+      const apiUrl = getTenantApiUrl()
       
       const queryParams = new URLSearchParams({
-        limit: '50',
-        ...(orgId && { orgId })
+        limit: '50'
       })
-      
       
       const response = await fetch(`${apiUrl}/v1/products?${queryParams}`, {
         credentials: 'include'
@@ -150,8 +143,9 @@ export default function CreateAssetPage() {
       if (formData.ledger) params.append('ledger', formData.ledger.toUpperCase())
       if (formData.network) params.append('network', formData.network.toUpperCase())
       
-      // Use direct fetch since this endpoint might not be in OpenAPI schema
-      const response = await fetch(`http://localhost:4000/v1/issuer-addresses/approved?${params.toString()}`, {
+      // Use tenant-aware API URL for approved addresses
+      const apiUrl = getTenantApiUrl()
+      const response = await fetch(`${apiUrl}/v1/issuer-addresses/approved?${params.toString()}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',

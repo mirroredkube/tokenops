@@ -4,7 +4,6 @@ import { lookupTenantBySubdomain, validateSubdomain } from '../lib/tenantService
 export interface TenantRequest extends FastifyRequest {
   tenant?: {
     id: string;
-    tenantId: string;
     subdomain: string;
     name: string;
     status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
@@ -98,7 +97,7 @@ export async function tenantMiddleware(request: TenantRequest, reply: FastifyRep
     request.tenant = lookupResult.tenant!;
 
     // Add tenant headers for observability
-    reply.header('x-tenant-id', lookupResult.tenant!.tenantId);
+    reply.header('x-tenant-id', lookupResult.tenant!.id);
     reply.header('x-tenant-subdomain', lookupResult.tenant!.subdomain);
 
   } catch (error) {
@@ -133,7 +132,7 @@ export function validateTenantAuth(request: TenantRequest, reply: FastifyReply):
     return false;
   }
 
-  if (jwtTenantId !== tenant.tenantId) {
+  if (jwtTenantId !== tenant.id) {
     // Return 404 to avoid revealing tenant existence
     reply.status(404).send({
       error: 'Not Found',

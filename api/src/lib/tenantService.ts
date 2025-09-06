@@ -12,7 +12,6 @@ const SUBDOMAIN_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
 export interface TenantInfo {
   id: string;
-  tenantId: string;
   subdomain: string;
   name: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
@@ -78,7 +77,6 @@ export async function lookupTenantBySubdomain(subdomain: string): Promise<Tenant
       where: { subdomain: normalizedSubdomain },
       select: {
         id: true,
-        tenantId: true,
         subdomain: true,
         name: true,
         status: true,
@@ -97,7 +95,6 @@ export async function lookupTenantBySubdomain(subdomain: string): Promise<Tenant
 
     const tenant: TenantInfo = {
       id: organization.id,
-      tenantId: organization.tenantId,
       subdomain: organization.subdomain,
       name: organization.name,
       status: organization.status as 'ACTIVE' | 'SUSPENDED' | 'INACTIVE',
@@ -119,53 +116,6 @@ export async function lookupTenantBySubdomain(subdomain: string): Promise<Tenant
   }
 }
 
-/**
- * Looks up tenant by tenantId (for JWT validation)
- */
-export async function lookupTenantById(tenantId: string): Promise<TenantLookupResult> {
-  try {
-    if (!tenantId || typeof tenantId !== 'string') {
-      return { success: false, error: 'TENANT_NOT_FOUND' };
-    }
-
-    const organization = await prisma.organization.findUnique({
-      where: { tenantId },
-      select: {
-        id: true,
-        tenantId: true,
-        subdomain: true,
-        name: true,
-        status: true,
-        country: true,
-        jurisdiction: true
-      }
-    });
-
-    if (!organization) {
-      return { success: false, error: 'TENANT_NOT_FOUND' };
-    }
-
-    if (organization.status === 'SUSPENDED') {
-      return { success: false, error: 'TENANT_SUSPENDED' };
-    }
-
-    const tenant: TenantInfo = {
-      id: organization.id,
-      tenantId: organization.tenantId,
-      subdomain: organization.subdomain,
-      name: organization.name,
-      status: organization.status as 'ACTIVE' | 'SUSPENDED' | 'INACTIVE',
-      country: organization.country,
-      jurisdiction: organization.jurisdiction || undefined
-    };
-
-    return { success: true, tenant };
-
-  } catch (error) {
-    console.error('Error looking up tenant by ID:', error);
-    return { success: false, error: 'DATABASE_ERROR' };
-  }
-}
 
 /**
  * Clears tenant cache (useful for testing or when tenant data changes)

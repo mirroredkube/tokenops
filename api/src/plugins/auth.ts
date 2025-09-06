@@ -22,6 +22,15 @@ function extractTenantFromHost(host: string): string {
     }
   }
   
+  // Check for tenant subdomain pattern: {tenant}.app.localhost
+  if (hostWithoutPort.endsWith('.app.localhost')) {
+    const tenant = hostWithoutPort.replace('.app.localhost', '');
+    // Validate tenant format (simple alphanumeric + hyphens)
+    if (/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(tenant) && tenant.length <= 63) {
+      return tenant;
+    }
+  }
+  
   // Check for production pattern: {tenant}.api.tokenops.com
   if (hostWithoutPort.endsWith('.api.tokenops.com')) {
     const tenant = hostWithoutPort.replace('.api.tokenops.com', '');
@@ -104,7 +113,7 @@ declare module "@fastify/jwt" {
       picture?: string;
       role?: "admin" | "user";
       requires2FA?: boolean;
-      tenant_id?: string;
+      organizationId?: string;
     };
     // what req.user becomes after jwtVerify()
     user: {
@@ -114,7 +123,7 @@ declare module "@fastify/jwt" {
       picture?: string;
       role?: "admin" | "user";
       requires2FA?: boolean;
-      tenant_id?: string;
+      organizationId?: string;
     };
   }
 }
@@ -316,7 +325,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       }
 
       // No 2FA required, proceed with normal login
-      // Get user's organization to include tenant_id
+      // Get user's organization to include organizationId
       const userWithOrg = await prisma.user.findUnique({
         where: { sub },
         include: { organization: true }
@@ -327,7 +336,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
         email, 
         name, 
         role,
-        tenant_id: userWithOrg?.organization?.tenantId
+        organizationId: userWithOrg?.organizationId
       }, { expiresIn: "12h" });
       reply
         .setCookie("auth", jwt, {
@@ -386,7 +395,6 @@ const authPlugin: FastifyPluginAsync = async (app) => {
           organization: {
             select: {
               id: true,
-              tenantId: true,
               subdomain: true,
               name: true,
               legalName: true,
@@ -416,9 +424,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
             role: dbUser.role,
             twoFactorEnabled: dbUser.twoFactorEnabled,
             organizationId: dbUser.organizationId,
-            organization: dbUser.organization,
-            tenant_id: dbUser.organization?.tenantId,
-            tenant_subdomain: dbUser.organization?.subdomain
+            organization: dbUser.organization
           }
         });
       } else {
@@ -433,14 +439,15 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       console.error('Error in /auth/me:', error);
       
       // If it's a JWT verification error, return 401
-      if (error instanceof Error && error.message.includes('jwt')) {
+      if (error instanceof Error && (error.message.includes('jwt') || error.message.includes('token') || error.message.includes('Unauthorized'))) {
         return reply.code(401).send({ 
           error: 'Unauthorized',
           message: 'Invalid or expired token'
         });
       }
       
-      // For other errors, return 500
+      // For other errors, return 500 but log the details
+      console.error('Unexpected error in /auth/me:', error);
       return reply.code(500).send({ 
         error: 'Internal Server Error',
         message: 'Failed to fetch user information'
@@ -765,7 +772,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       }
 
       // Issue final JWT and clear temp cookie
-      // Get user's organization to include tenant_id
+      // Get user's organization to include organizationId
       const userWithOrg = await prisma.user.findUnique({
         where: { sub: decoded.sub },
         include: { organization: true }
@@ -776,7 +783,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
         email: decoded.email, 
         name: decoded.name, 
         role: decoded.role,
-        tenant_id: userWithOrg?.organization?.tenantId
+        organizationId: userWithOrg?.organizationId
       }, { expiresIn: "12h" });
 
       reply
