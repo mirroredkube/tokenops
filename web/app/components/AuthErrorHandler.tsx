@@ -26,22 +26,22 @@ export default function AuthErrorHandler({ children }: { children: React.ReactNo
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
+              <AlertTriangle className="h-6 w-6 text-gray-600" />
             </div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Access Denied
+              404 - Not Found
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              You don't have access to this organization's resources.
+              The requested resource could not be found.
             </p>
           </div>
 
           <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-6">
-                It appears you're trying to access an organization that you don't belong to. 
-                Please contact your administrator or try accessing the correct organization subdomain.
+                The page or organization you're looking for doesn't exist. 
+                Please check the URL or contact your administrator.
               </p>
               
               <div className="space-y-3">
