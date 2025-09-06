@@ -427,6 +427,18 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         } as any
       })
       
+      // Link existing authorizations to this issuance
+      await prisma.authorization.updateMany({
+        where: {
+          assetId: asset.id,
+          holder: holder,
+          issuanceId: null // Only link authorizations that aren't already linked
+        },
+        data: {
+          issuanceId: issuance.id
+        }
+      })
+      
       // Create snapshot of live requirements for this issuance
       await snapshotService.createIssuanceSnapshot(assetId, issuance.id)
       
