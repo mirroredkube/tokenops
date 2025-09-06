@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') || ''
   
@@ -25,9 +25,42 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // For authenticated routes, we need to validate organization access
-    // This will be handled by the client-side auth context
-    // The API will return 404 if the user doesn't belong to the correct organization
+    // Validate user organization access by calling our validation endpoint
+    try {
+      const validationUrl = new URL('/api/validate-user', request.url)
+      const validationResponse = await fetch(validationUrl, {
+        headers: {
+          'Cookie': request.headers.get('cookie') || '',
+          'Host': host
+        }
+      })
+      
+      if (validationResponse.ok) {
+        const validation = await validationResponse.json()
+        if (!validation.valid) {
+          if (validation.reason === 'wrong_organization') {
+            // User doesn't belong to this organization - redirect to login with error message
+            const loginUrl = new URL('/login', request.url)
+            loginUrl.searchParams.set('error', 'organization_mismatch')
+            return NextResponse.redirect(loginUrl)
+          } else {
+            // Other auth issues - redirect to login
+            const loginUrl = new URL('/login', request.url)
+            loginUrl.searchParams.set('error', 'auth_failed')
+            return NextResponse.redirect(loginUrl)
+          }
+        }
+      } else {
+        // Validation failed - redirect to login
+        const loginUrl = new URL('/login', request.url)
+        return NextResponse.redirect(loginUrl)
+      }
+    } catch (error) {
+      console.error('User validation error in middleware:', error)
+      // If validation fails, redirect to login for safety
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
   // Allow access to login page and public routes

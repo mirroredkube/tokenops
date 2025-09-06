@@ -29,7 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       // If we get a 404, it means the user doesn't belong to this organization
       if (error instanceof Error && error.message.includes('404')) {
-        setError('You do not have access to this organization')
+        // Clear the auth cookie and redirect to login immediately with error message
+        await logout()
+        window.location.href = '/login?error=organization_mismatch'
+        return
       } else {
         setError('Failed to load user information')
       }

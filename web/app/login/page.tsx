@@ -1,12 +1,15 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { AlertTriangle, X } from 'lucide-react'
 
 export default function LoginPage() {
   const { user, loading, login } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (user && !loading) {
@@ -14,6 +17,15 @@ export default function LoginPage() {
       router.push('/app/dashboard')
     }
   }, [user, loading, router])
+
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error === 'organization_mismatch') {
+      setErrorMessage('You tried to access an organization that you don\'t belong to. Please log in with the correct organization subdomain.')
+    } else if (error === 'auth_failed') {
+      setErrorMessage('Authentication failed. Please try logging in again.')
+    }
+  }, [searchParams])
 
   if (loading) {
     return (
@@ -99,6 +111,24 @@ export default function LoginPage() {
               Sign in to access your tokenization dashboard
             </p>
           </div>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-red-800">{errorMessage}</p>
+                </div>
+                <button
+                  onClick={() => setErrorMessage(null)}
+                  className="text-red-400 hover:text-red-600 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white rounded-2xl border p-8 shadow-sm">
             <button
