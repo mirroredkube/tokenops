@@ -107,7 +107,8 @@ const authPlugin: FastifyPluginAsync = async (app) => {
               legalName: 'Default Organization',
               country: 'US',
               jurisdiction: 'US',
-              status: 'ACTIVE'
+              status: 'ACTIVE',
+              subdomain: 'default'
             }
           });
         }
@@ -358,7 +359,8 @@ const authPlugin: FastifyPluginAsync = async (app) => {
               legalName: 'Default Organization',
               country: 'US',
               jurisdiction: 'US',
-              status: 'ACTIVE'
+              status: 'ACTIVE',
+              subdomain: 'default'
             }
           });
         }

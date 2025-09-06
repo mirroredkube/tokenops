@@ -16,6 +16,17 @@ async function verifyAuthIfRequired(req: any): Promise<any> {
   return req.user
 }
 
+// ---------- Utility Functions ----------
+function generateSubdomainFromName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+    .substring(0, 63) // Limit to 63 characters
+}
+
 // ---------- Validation Schemas ----------
 const OrganizationCreateSchema = z.object({
   name: z.string().min(1).max(100),
@@ -24,7 +35,8 @@ const OrganizationCreateSchema = z.object({
   jurisdiction: z.string().optional(),
   taxId: z.string().optional(),
   website: z.string().url().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
+  subdomain: z.string().min(1).max(63).optional() // Optional, will be generated from name if not provided
 })
 
 const OrganizationUpdateSchema = OrganizationCreateSchema.partial()
@@ -245,6 +257,18 @@ export default async function organizationRoutes(app: FastifyInstance, _opts: Fa
         return reply.status(409).send({ error: 'Organization with this name already exists' })
       }
       
+      // Generate subdomain if not provided
+      const subdomain = orgData.subdomain || generateSubdomainFromName(orgData.name)
+      
+      // Check if subdomain is already taken
+      const existingSubdomain = await prisma.organization.findUnique({
+        where: { subdomain }
+      })
+      
+      if (existingSubdomain) {
+        return reply.status(409).send({ error: 'Subdomain already taken' })
+      }
+      
       // Create organization
       const organization = await prisma.organization.create({
         data: {
@@ -255,7 +279,8 @@ export default async function organizationRoutes(app: FastifyInstance, _opts: Fa
           taxId: orgData.taxId,
           website: orgData.website,
           metadata: orgData.metadata,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
+          subdomain
         }
       })
       
