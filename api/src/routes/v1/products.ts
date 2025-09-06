@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient, AssetClass, ProductStatus } from '@prisma/client'
+import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
 
 const prisma = new PrismaClient()
 
@@ -22,8 +23,8 @@ const listProductsQuerySchema = z.object({
   limit: z.string().transform(Number).default('10'),
   status: z.nativeEnum(ProductStatus).optional(),
   assetClass: z.nativeEnum(AssetClass).optional(),
-  search: z.string().optional(),
-  orgId: z.string().optional()
+  search: z.string().optional()
+  // Removed orgId - now using tenant context from subdomain
 })
 
 // Authentication helper - simplified for now
@@ -34,17 +35,23 @@ async function verifyAuthIfRequired(req: any): Promise<any> {
 }
 
 export default async function productRoutes(fastify: FastifyInstance) {
-  // GET /v1/products - List products
-  fastify.get('/products', async (request, reply) => {
+  // GET /v1/products - List products (tenant-scoped)
+  fastify.get('/products', async (request: TenantRequest, reply) => {
     try {
+      // Apply tenant middleware
+      await tenantMiddleware(request, reply)
+      requireActiveTenant(request, reply)
+      
       const user = await verifyAuthIfRequired(request)
       const query = listProductsQuerySchema.parse(request.query)
       
-      const { page, limit, status, assetClass, search, orgId } = query
+      const { page, limit, status, assetClass, search } = query
       const offset = (page - 1) * limit
 
-      // Build where clause
-      const where: any = {}
+      // Build where clause - now scoped to tenant
+      const where: any = {
+        organizationId: request.tenant!.id // Use tenant context instead of orgId
+      }
       
       if (status) where.status = status
       if (assetClass) where.assetClass = assetClass
@@ -55,16 +62,8 @@ export default async function productRoutes(fastify: FastifyInstance) {
         ]
       }
 
-      // If authenticated, scope to user's organization
-      if (user) {
-        where.organizationId = user.organizationId
-      } else {
-        // For now, allow filtering by organization ID in query params
-        // This is a temporary solution until proper authentication is implemented
-        if (orgId) {
-          where.organizationId = orgId
-        }
-      }
+      // Organization scoping is now handled by tenant middleware
+      // No need for additional organization filtering
 
       // Get products with organization info
       const [products, total] = await Promise.all([
@@ -109,26 +108,18 @@ export default async function productRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // POST /v1/products - Create product
-  fastify.post('/products', async (request, reply) => {
+  // POST /v1/products - Create product (tenant-scoped)
+  fastify.post('/products', async (request: TenantRequest, reply) => {
     try {
+      // Apply tenant middleware
+      await tenantMiddleware(request, reply)
+      requireActiveTenant(request, reply)
+      
       const user = await verifyAuthIfRequired(request)
       const data = createProductSchema.parse(request.body)
 
-      // Get organization ID
-      let organizationId: string
-      if (user) {
-        organizationId = user.organizationId
-      } else {
-        // For unauthenticated mode, use default organization
-        const defaultOrg = await prisma.organization.findFirst({
-          where: { name: 'Default Organization' }
-        })
-        if (!defaultOrg) {
-          return reply.status(500).send({ error: 'Default organization not found' })
-        }
-        organizationId = defaultOrg.id
-      }
+      // Use tenant's organization ID
+      const organizationId = request.tenant!.id
 
       // Check if product name already exists in organization
       const existingProduct = await prisma.product.findFirst({

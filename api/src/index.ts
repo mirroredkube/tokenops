@@ -11,7 +11,10 @@ dotenv.config()
 // ----------------------------------------------------------------------------
 // App
 // ----------------------------------------------------------------------------
-const app = Fastify({ logger: true })
+const app = Fastify({ 
+  logger: true,
+  trustProxy: true // Trust proxy for X-Forwarded-Host headers (required for tenant middleware)
+})
 const port = Number(process.env.PORT || 4000)
 const serverUrl = `http://localhost:${port}`
 const uiOrigin = process.env.UI_ORIGIN || 'http://localhost:3000'  // UI on :3000

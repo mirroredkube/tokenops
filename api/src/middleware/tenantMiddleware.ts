@@ -47,6 +47,11 @@ function extractSubdomainFromHost(host: string): string | null {
     }
   }
 
+  // Development fallback: plain localhost defaults to 'default' tenant
+  if (hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1') {
+    return 'default';
+  }
+
   return null;
 }
 
