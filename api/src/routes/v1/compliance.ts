@@ -6,6 +6,7 @@ import archiver from 'archiver'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
 
 const prisma = new PrismaClient()
 
@@ -113,7 +114,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const facts = PolicyFactsSchema.parse(req.body) as PolicyFacts
       
@@ -207,7 +211,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { assetId, regime, active } = req.query as any
       
@@ -308,7 +315,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { assetId, productId } = AssetComplianceSchema.parse(req.body)
       
@@ -422,7 +432,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { id } = req.params as { id: string }
       
@@ -515,7 +528,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { limit = 50, offset = 0 } = req.query as any
       
@@ -625,7 +641,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { assetId, status, regime, limit = 20, offset = 0 } = req.query as any
       
@@ -745,7 +764,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { assetId, holder, purpose, isin, legalIssuer, jurisdiction, micaClass, kycRequirement, transferRestrictions } = req.body as any
       
@@ -827,7 +849,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { requirementId } = req.params as { requirementId: string }
       const { status, exceptionReason, rationale } = req.body as any
@@ -923,7 +948,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { 
         requirementInstanceId, 
@@ -1014,7 +1042,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       // Get user from auth context
       const user = await verifyAuthIfRequired(req, reply)
@@ -1150,7 +1181,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { requirementInstanceId } = req.params as { requirementInstanceId: string }
 
@@ -1230,7 +1264,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { requirementId } = req.params as { requirementId: string }
       const { acknowledgmentReason } = req.body as any
@@ -1346,7 +1383,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { requirementId } = req.params as { requirementId: string }
 
@@ -1426,7 +1466,10 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         500: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       const { requirementInstanceId } = req.params as { requirementInstanceId: string }
                    const { format = 'zip' } = req.query as { format?: 'zip' | 'json' | 'csv' }

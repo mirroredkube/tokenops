@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import { getLedgerAdapter } from '../../adapters/index.js'
+import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
 
 const prisma = new PrismaClient()
 
@@ -136,7 +137,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       // Verify authentication if required
       let user = null
@@ -155,9 +160,10 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
       
       const { organizationId, status, ledger, network, limit, offset } = parsed.data
       
-      // Build where clause
-      const where: any = {}
-      if (organizationId) where.organizationId = organizationId
+      // Build where clause - scope to tenant's organization
+      const where: any = {
+        organizationId: req.tenant!.id // Scope to tenant's organization
+      }
       if (status) where.status = status
       if (ledger) where.ledger = ledger
       if (network) where.network = network
@@ -270,7 +276,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         409: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       // Verify authentication if required
       const user = await verifyAuthIfRequired(req, reply)
@@ -283,14 +293,8 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
       
       const addressData = parsed.data
       
-      // Check if organization exists
-      const organization = await prisma.organization.findUnique({
-        where: { id: addressData.organizationId }
-      })
-      
-      if (!organization) {
-        return reply.status(404).send({ error: 'Organization not found' })
-      }
+      // Use tenant's organization ID
+      const organizationId = req.tenant!.id
       
       // Check if address already exists
       const existingAddress = await prisma.issuerAddress.findFirst({
@@ -311,7 +315,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
       // Create issuer address
       const issuerAddress = await prisma.issuerAddress.create({
         data: {
-          organizationId: addressData.organizationId,
+          organizationId: organizationId,
           address: addressData.address,
           ledger: addressData.ledger,
           network: addressData.network,
@@ -385,7 +389,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       // Verify authentication if required
       const user = await verifyAuthIfRequired(req, reply)
@@ -394,7 +402,10 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
       
       // Get issuer address with organization
       const issuerAddress = await prisma.issuerAddress.findUnique({
-        where: { id: addressId },
+        where: { 
+          id: addressId,
+          organizationId: req.tenant!.id // Ensure address belongs to tenant
+        },
         include: {
           organization: {
             select: {
@@ -479,7 +490,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         422: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       // Verify authentication if required
       const user = await verifyAuthIfRequired(req, reply)
@@ -493,7 +508,10 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
       
       // Get issuer address
       const issuerAddress = await prisma.issuerAddress.findUnique({
-        where: { id: addressId }
+        where: { 
+          id: addressId,
+          organizationId: req.tenant!.id // Ensure address belongs to tenant
+        }
       })
       
       if (!issuerAddress) {
@@ -576,7 +594,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         422: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       // Verify authentication if required
       const user = await verifyAuthIfRequired(req, reply)
@@ -590,7 +612,10 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
       
       // Get issuer address
       const issuerAddress = await prisma.issuerAddress.findUnique({
-        where: { id: addressId }
+        where: { 
+          id: addressId,
+          organizationId: req.tenant!.id // Ensure address belongs to tenant
+        }
       })
       
       if (!issuerAddress) {
@@ -678,7 +703,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       // Verify authentication if required
       let user = null
@@ -695,9 +724,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         network?: string 
       }
       
-      // Build where clause - only APPROVED addresses
-      const where: any = { status: 'APPROVED' }
-      if (organizationId) where.organizationId = organizationId
+      // Build where clause - only APPROVED addresses for tenant
+      const where: any = { 
+        status: 'APPROVED',
+        organizationId: req.tenant!.id // Scope to tenant's organization
+      }
       if (ledger) where.ledger = ledger
       if (network) where.network = network
       
@@ -772,7 +803,11 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
         404: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     try {
       // Verify authentication if required
       const user = await verifyAuthIfRequired(req, reply)
@@ -786,7 +821,10 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
       
       // Get issuer address
       const issuerAddress = await prisma.issuerAddress.findUnique({
-        where: { id: addressId }
+        where: { 
+          id: addressId,
+          organizationId: req.tenant!.id // Ensure address belongs to tenant
+        }
       })
       
       if (!issuerAddress) {

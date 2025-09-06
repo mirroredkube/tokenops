@@ -1,11 +1,15 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { PrismaClient } from '@prisma/client'
+import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
 
 const prisma = new PrismaClient()
 
 const usersPlugin: FastifyPluginAsync = async (app) => {
   // Get user settings
-  app.get("/me/settings", async (req, reply) => {
+  app.get("/me/settings", async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       await req.jwtVerify()
       const user = req.user as any
@@ -38,7 +42,10 @@ const usersPlugin: FastifyPluginAsync = async (app) => {
   })
 
   // Update user settings
-  app.patch("/me/settings", async (req, reply) => {
+  app.patch("/me/settings", async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       await req.jwtVerify()
       const user = req.user as any
@@ -87,7 +94,10 @@ const usersPlugin: FastifyPluginAsync = async (app) => {
   })
 
   // Update user profile (name, email)
-  app.patch("/me/profile", async (req, reply) => {
+  app.patch("/me/profile", async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
     try {
       await req.jwtVerify()
       const user = req.user as any
