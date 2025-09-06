@@ -64,7 +64,33 @@ export default function AuthorizationFlow() {
 
   // Security: Always use wallet signing mode, never handle private keys
 
-  // Check for existing authorization
+  // Check if trustline exists on XRPL ledger
+  const checkTrustlineExists = async () => {
+    if (!selectedAsset || !authorizationData.holderAddress) return null
+    
+    try {
+      const { data } = await api.GET('/v1/authorizations/{id}/status', {
+        params: {
+          path: {
+            id: 'temp-check' // We'll use a temporary ID for this check
+          },
+          query: {
+            holder: authorizationData.holderAddress,
+            currency: selectedAsset.code,
+            issuer: selectedAsset.issuer
+          }
+        }
+      })
+      
+      // If we get a response, check if trustline exists
+      return data?.trustlineExists || false
+    } catch (error) {
+      console.error('Error checking trustline existence:', error)
+      return false
+    }
+  }
+
+  // Check for existing authorization request in database
   const checkExistingAuthorization = async () => {
     if (!selectedAsset || !authorizationData.holderAddress) return null
     
@@ -89,6 +115,38 @@ export default function AuthorizationFlow() {
     }
   }
 
+  // Create external trustline entry
+  const createExternalTrustlineEntry = async () => {
+    try {
+      const { data, error } = await api.POST('/v1/authorizations/external', {
+        body: {
+          assetId: selectedAsset.id,
+          holder: authorizationData.holderAddress,
+          currency: selectedAsset.code,
+          issuerAddress: selectedAsset.issuer,
+          limit: authorizationData.limit,
+          externalSource: 'xrpl_external'
+        }
+      })
+
+      if (error) {
+        throw new Error(error.error || 'Failed to create external trustline entry')
+      }
+
+      setResult({
+        authorizationId: data.id,
+        explorer: '',
+        message: `External trustline added to our system successfully! Status: ${data.status}`
+      })
+      setCurrentStep('success')
+    } catch (err: any) {
+      console.error('Error creating external trustline entry:', err)
+      setError(err.message || 'Failed to create external trustline entry')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Create authorization request
   const createAuthorizationRequest = async () => {
     if (!selectedAsset) {
@@ -105,13 +163,40 @@ export default function AuthorizationFlow() {
     setError(null)
 
     try {
-      // Check for existing authorization first
+      // First check if trustline already exists on XRPL
+      const trustlineExists = await checkTrustlineExists()
+      if (trustlineExists) {
+        // Check if we already have this external trustline in our database
+        const existingAuth = await checkExistingAuthorization()
+        if (existingAuth) {
+          setError(`A trustline already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
+          setLoading(false)
+          return
+        }
+        
+        // Trustline exists externally but not in our DB - create external entry
+        await createExternalTrustlineEntry()
+        return
+      }
+
+      // Trustline doesn't exist on XRPL - check for existing authorization request in database
       const existingAuth = await checkExistingAuthorization()
       if (existingAuth) {
-        setError(`An authorization already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
+        setError(`An authorization request already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
         setLoading(false)
         return
       }
+
+      console.log('Creating authorization request with data:', {
+        assetId: selectedAsset.id,
+        holder: authorizationData.holderAddress,
+        currencyCode: selectedAsset.code,
+        issuerAddress: selectedAsset.issuer,
+        limit: authorizationData.limit,
+        noRipple: authorizationData.noRipple,
+        requireAuth: authorizationData.requireAuth
+      })
+
       const { data, error } = await api.PUT('/v1/assets/{assetId}/authorizations/{holder}', {
         params: {
           path: {

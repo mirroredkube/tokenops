@@ -736,4 +736,106 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       return reply.status(500).send({ error: 'Failed to authorize trustline' })
     }
   })
+
+  // 6. POST /v1/authorizations/external - Create external trustline entry
+  app.post('/authorizations/external', {
+    schema: {
+      summary: 'Create external trustline entry',
+      description: 'Add a trustline that was created outside our platform to our database',
+      tags: ['v1'],
+      body: {
+        type: 'object',
+        required: ['assetId', 'holder', 'currency', 'issuerAddress'],
+        properties: {
+          assetId: { type: 'string' },
+          holder: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
+          currency: { type: 'string' },
+          issuerAddress: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
+          limit: { type: 'string' },
+          externalSource: { type: 'string' }
+        }
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            assetId: { type: 'string' },
+            holder: { type: 'string' },
+            status: { type: 'string' },
+            external: { type: 'boolean' },
+            externalSource: { type: 'string' }
+          }
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        404: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const { assetId, holder, currency, issuerAddress, limit = '1000000000', externalSource = 'xrpl_external' } = req.body as {
+        assetId: string
+        holder: string
+        currency: string
+        issuerAddress: string
+        limit?: string
+        externalSource?: string
+      }
+      
+      // Validate asset exists
+      const asset = await validateAsset(assetId)
+      
+      // Check if external trustline already exists
+      const existingExternal = await prisma.authorization.findFirst({
+        where: {
+          assetId: asset.id,
+          holder,
+          external: true
+        }
+      })
+      
+      if (existingExternal) {
+        return reply.status(400).send({ 
+          error: 'External trustline already exists in our database' 
+        })
+      }
+      
+      // Create external trustline entry
+      const externalAuth = await prisma.authorization.create({
+        data: {
+          assetId: asset.id,
+          holder,
+          limit,
+          status: 'VALIDATED', // External trustlines are considered validated
+          currency,
+          issuerAddress,
+          external: true,
+          externalSource,
+          validatedAt: new Date(),
+          metadata: {
+            createdExternally: true,
+            source: externalSource,
+            createdAt: new Date().toISOString()
+          }
+        }
+      })
+      
+      return reply.status(201).send({
+        id: externalAuth.id,
+        assetId: externalAuth.assetId,
+        holder: externalAuth.holder,
+        status: externalAuth.status,
+        external: externalAuth.external,
+        externalSource: externalAuth.externalSource
+      })
+    } catch (error: any) {
+      console.error('Error creating external trustline entry:', error)
+      
+      if (error.message === 'Asset not found') {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      return reply.status(500).send({ error: 'Failed to create external trustline entry' })
+    }
+  })
 }

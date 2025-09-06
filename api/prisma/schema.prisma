@@ -328,6 +328,8 @@ model Authorization {
   callbackUrl          String?             // Callback URL for status updates
   requestedLimit       String?             // Original requested limit before approval
   authUrl              String?             // Generated authorization URL for holder
+  external             Boolean             @default(false) // true if trustline was created outside our platform
+  externalSource       String?             // optional: where it was created (e.g., "xrpl_explorer", "other_wallet")
   asset                Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
   issuance             Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
 
