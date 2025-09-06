@@ -320,6 +320,14 @@ model Authorization {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   issuanceId           String?
+  // New fields for authorization request flow
+  currency             String?             // Currency code (e.g., "SOMECOIN")
+  issuerAddress        String?             // Issuer address for the authorization
+  expiresAt            DateTime?           // Expiration time for the authorization request
+  oneTimeToken         String?             @unique // One-time token for secure authorization URL
+  callbackUrl          String?             // Callback URL for status updates
+  requestedLimit       String?             // Original requested limit before approval
+  authUrl              String?             // Generated authorization URL for holder
   asset                Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
   issuance             Issuance?           @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
 
@@ -328,6 +336,9 @@ model Authorization {
   @@index([status])
   @@index([createdAt])
   @@index([issuanceId])
+  @@index([oneTimeToken])
+  @@index([expiresAt])
+  @@index([currency, issuerAddress])
 }
 
 enum OrganizationStatus {

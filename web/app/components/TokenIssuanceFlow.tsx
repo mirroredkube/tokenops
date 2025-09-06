@@ -15,7 +15,6 @@ interface TrustlineData {
   holderAddress: string
   issuerAddress: string
   limit: string
-  holderSecret: string
 }
 
 interface TrustlineCheckData {
@@ -118,12 +117,11 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     issuerAddress: ''
   })
   
-  const [trustlineData, setTrustlineData] = useState<TrustlineData>({ 
-    currencyCode: '', 
+  const [trustlineData, setTrustlineData] = useState<TrustlineData>({
+    currencyCode: '',
     holderAddress: '',
     issuerAddress: '',
-    limit: '', 
-    holderSecret: '' 
+    limit: ''
   })
   const [tokenData, setTokenData] = useState<TokenData>({
     currencyCode: '',
@@ -153,9 +151,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
   const [searchQuery, setSearchQuery] = useState('')
   const [assetRegistryPrefill, setAssetRegistryPrefill] = useState<{ jurisdiction?: string; micaClass?: string } | null>(null)
 
-  // Security flags (in production, these would come from environment)
-  const allowUiSecret = process.env.NEXT_PUBLIC_ALLOW_UI_SECRET === 'true'
-  const devAllowRawSecret = process.env.NEXT_PUBLIC_DEV_ALLOW_RAW_SECRET === 'true'
+  // Security: Always use wallet signing mode, never handle private keys
 
   // Fetch assets for the selected ledger
   const fetchAssets = async () => {
@@ -446,10 +442,12 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         body: {
           params: {
             limit: trustlineData.limit || '1000000000', // Default limit if not specified
-            holderSecret: allowUiSecret && devAllowRawSecret ? trustlineData.holderSecret : undefined
+            holderAddress: trustlineData.holderAddress,
+            currencyCode: trustlineData.currencyCode,
+            issuerAddress: trustlineData.issuerAddress
           },
           signing: {
-            mode: allowUiSecret && devAllowRawSecret ? 'server' : 'wallet'
+            mode: 'wallet' // Always use wallet mode for security
           }
         }
       })
@@ -692,7 +690,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     setAssets([])
     setAssetsError(null)
     setTrustlineCheckData({ currencyCode: '', holderAddress: '', issuerAddress: '' })
-    setTrustlineData({ currencyCode: '', holderAddress: '', issuerAddress: '', limit: '', holderSecret: '' })
+    setTrustlineData({ currencyCode: '', holderAddress: '', issuerAddress: '', limit: '' })
     setTokenData({ currencyCode: '', amount: '', destination: '', metadata: {}, metadataRaw: '' })
     setComplianceData({
       isin: '',
@@ -1302,46 +1300,27 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                </div>
                                
                                <div className="space-y-2">
-                                 {allowUiSecret && devAllowRawSecret ? (
-                                   <>
-                                     <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                       {t('issuances:trustlineDetails.holderSecret', 'HOLDER SECRET (FAMILY SEED) *')}
-                                     </label>
-                                     <input
-                                       type="password"
-                                       value={trustlineData.holderSecret}
-                                       onChange={(e) => setTrustlineData(prev => ({ ...prev, holderSecret: e.target.value }))}
-                                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-100 focus:border-gray-400 text-base font-mono transition-all duration-200"
-                                       placeholder={t('issuances:trustlineDetails.holderSecretPlaceholder', 'sEd7...')}
-                                       required
-                                     />
-                                     <p className="text-sm text-gray-500 mt-2">{t('issuances:trustlineDetails.holderSecretHint', 'Private key of the holder account')}</p>
-                                   </>
-                                 ) : (
-                                   <>
-                                     <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                       {t('issuances:trustlineDetails.signWithWallet', 'SIGN WITH WALLET *')}
-                                     </label>
-                                     <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-                                       <div className="flex items-center gap-3">
-                                         <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                         </svg>
-                                         <div>
-                                           <p className="text-sm font-medium text-blue-900">Wallet Signing Required</p>
-                                           <p className="text-sm text-blue-700">Connect your wallet to sign the trustline transaction securely</p>
-                                         </div>
-                                       </div>
-                                       <button
-                                         type="button"
-                                         className="mt-3 px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 font-medium text-sm transition-colors duration-200"
-                                       >
-                                         Connect Wallet
-                                       </button>
+                                 <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                   {t('issuances:trustlineDetails.authorizationRequest', 'AUTHORIZATION REQUEST *')}
+                                 </label>
+                                 <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                                   <div className="flex items-center gap-3">
+                                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                     </svg>
+                                     <div>
+                                       <p className="text-sm font-medium text-green-900">Send Authorization Request</p>
+                                       <p className="text-sm text-green-700">Send a secure authorization request to the holder to set up their trustline</p>
                                      </div>
-                                     <p className="text-sm text-gray-500 mt-2">For security, we never handle your private keys</p>
-                                   </>
-                                 )}
+                                   </div>
+                                   <button
+                                     type="button"
+                                     className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200"
+                                   >
+                                     Send Authorization Request
+                                   </button>
+                                 </div>
+                                 <p className="text-sm text-gray-500 mt-2">The holder will receive a secure link to set up their trustline using their own wallet</p>
                                </div>
                              </div>
                             

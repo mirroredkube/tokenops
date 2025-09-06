@@ -16,7 +16,6 @@ interface AuthorizationData {
   holderAddress: string
   issuerAddress: string
   limit: string
-  holderSecret: string
   noRipple: boolean
   requireAuth: boolean
 }
@@ -53,7 +52,6 @@ export default function AuthorizationFlow() {
     holderAddress: '',
     issuerAddress: '',
     limit: '1000000000',
-    holderSecret: '',
     noRipple: false,
     requireAuth: false
   })
@@ -61,9 +59,7 @@ export default function AuthorizationFlow() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Environment flags for development
-  const allowUiSecret = process.env.NEXT_PUBLIC_ALLOW_UI_SECRET === 'true'
-  const devAllowRawSecret = process.env.NEXT_PUBLIC_DEV_ALLOW_RAW_SECRET === 'true'
+  // Security: Always use wallet signing mode, never handle private keys
 
   // Fetch assets for the selected ledger
   const fetchAssets = async () => {
@@ -193,10 +189,14 @@ export default function AuthorizationFlow() {
         body: {
           params: {
             limit: authorizationData.limit || '1000000000',
-            holderSecret: allowUiSecret && devAllowRawSecret ? authorizationData.holderSecret : undefined
+            holderAddress: authorizationData.holderAddress,
+            currencyCode: authorizationData.currencyCode,
+            issuerAddress: authorizationData.issuerAddress,
+            noRipple: authorizationData.noRipple,
+            requireAuth: authorizationData.requireAuth
           },
           signing: {
-            mode: allowUiSecret && devAllowRawSecret ? 'server' : 'wallet'
+            mode: 'wallet' // Always use wallet mode for security
           }
         }
       })
@@ -629,22 +629,29 @@ export default function AuthorizationFlow() {
               <p className="text-sm text-gray-500 mt-1">{t('authorizations:authorizationSetup.fields.limitHint', 'Maximum amount the holder is willing to accept')}</p>
             </FormField>
 
-            {allowUiSecret && devAllowRawSecret && (
-              <FormField 
-                label={t('authorizations:authorizationSetup.fields.holderSecret', 'Holder Secret (Family Seed)')} 
-                required
-                helperText={t('authorizations:authorizationSetup.fields.holderSecretHint', 'Private key of the holder account (development only)')}
-              >
-                <input
-                  type="password"
-                  value={authorizationData.holderSecret}
-                  onChange={(e) => setAuthorizationData(prev => ({ ...prev, holderSecret: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder={t('authorizations:authorizationSetup.fields.holderSecretPlaceholder', 'sEd7...')}
-                  required
-                />
-              </FormField>
-            )}
+            <FormField 
+              label={t('authorizations:authorizationSetup.fields.authorizationRequest', 'Authorization Request')} 
+              required
+              helperText={t('authorizations:authorizationSetup.fields.authorizationRequestHint', 'Send a secure authorization request to the holder')}
+            >
+              <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-green-900">Send Authorization Request</p>
+                    <p className="text-sm text-green-700">Send a secure authorization request to the holder to set up their trustline</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200"
+                >
+                  Send Authorization Request
+                </button>
+              </div>
+            </FormField>
 
             <div className="space-y-3">
               <div className="flex items-center">
@@ -788,7 +795,6 @@ export default function AuthorizationFlow() {
                     holderAddress: '',
                     issuerAddress: '',
                     limit: '1000000000',
-                    holderSecret: '',
                     noRipple: false,
                     requireAuth: false
                   })
