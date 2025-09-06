@@ -9,6 +9,8 @@ datasource db {
 
 model Organization {
   id              String             @id @default(cuid())
+  tenantId        String             @unique @default(cuid()) // Separate UUID for FK relationships
+  subdomain       String             @unique // Lookup alias, not FK
   name            String             @unique @db.VarChar(100)
   legalName       String?            @db.VarChar(200)
   country         String             @db.Char(2)
@@ -27,6 +29,8 @@ model Organization {
   @@index([country])
   @@index([status])
   @@index([createdAt])
+  @@index([subdomain])
+  @@index([tenantId])
 }
 
 model User {

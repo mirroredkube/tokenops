@@ -19,6 +19,7 @@ declare module "@fastify/jwt" {
       picture?: string;
       role?: "admin" | "user";
       requires2FA?: boolean;
+      tenant_id?: string;
     };
     // what req.user becomes after jwtVerify()
     user: {
@@ -28,6 +29,7 @@ declare module "@fastify/jwt" {
       picture?: string;
       role?: "admin" | "user";
       requires2FA?: boolean;
+      tenant_id?: string;
     };
   }
 }
@@ -148,7 +150,19 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       }
 
       // No 2FA required, proceed with normal login
-      const jwt = await reply.jwtSign({ sub, email, name, role }, { expiresIn: "12h" });
+      // Get user's organization to include tenant_id
+      const userWithOrg = await prisma.user.findUnique({
+        where: { sub },
+        include: { organization: true }
+      });
+      
+      const jwt = await reply.jwtSign({ 
+        sub, 
+        email, 
+        name, 
+        role,
+        tenant_id: userWithOrg?.organization?.tenantId
+      }, { expiresIn: "12h" });
       reply
         .setCookie("auth", jwt, {
           httpOnly: true,
@@ -197,6 +211,8 @@ const authPlugin: FastifyPluginAsync = async (app) => {
           organization: {
             select: {
               id: true,
+              tenantId: true,
+              subdomain: true,
               name: true,
               legalName: true,
               country: true,
@@ -216,7 +232,9 @@ const authPlugin: FastifyPluginAsync = async (app) => {
             role: dbUser.role,
             twoFactorEnabled: dbUser.twoFactorEnabled,
             organizationId: dbUser.organizationId,
-            organization: dbUser.organization
+            organization: dbUser.organization,
+            tenant_id: dbUser.organization?.tenantId,
+            tenant_subdomain: dbUser.organization?.subdomain
           }
         });
       } else {
@@ -530,11 +548,18 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       }
 
       // Issue final JWT and clear temp cookie
+      // Get user's organization to include tenant_id
+      const userWithOrg = await prisma.user.findUnique({
+        where: { sub: decoded.sub },
+        include: { organization: true }
+      });
+      
       const jwt = await reply.jwtSign({ 
         sub: decoded.sub, 
         email: decoded.email, 
         name: decoded.name, 
-        role: decoded.role 
+        role: decoded.role,
+        tenant_id: userWithOrg?.organization?.tenantId
       }, { expiresIn: "12h" });
 
       reply
