@@ -2,7 +2,8 @@ import type { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { getLedgerAdapter } from '../../adapters/index.js'
 import { tenantMiddleware } from '../../middleware/tenantMiddleware.js'
 import type { TenantRequest } from '../../middleware/tenantMiddleware.js'
-import { requireActiveTenant } from '../../plugins/auth.js'
+import { requireActiveTenant } from '../../middleware/tenantMiddleware.js'
+import prisma from '../../db/client.js'
 
 export default async function routes(app: FastifyInstance, _opts: FastifyPluginOptions) {
   // Apply tenant middleware to all routes
@@ -62,7 +63,7 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
 
     // If issuer filter is provided, validate it belongs to the tenant
     if (issuer) {
-      const issuerAddress = await app.prisma.issuerAddress.findFirst({
+      const issuerAddress = await prisma.issuerAddress.findFirst({
         where: {
           address: issuer,
           organizationId: req.tenant!.id,
