@@ -14,6 +14,11 @@ export async function middleware(request: NextRequest) {
   // Set tenant header for server components
   response.headers.set('x-tenant-subdomain', tenant)
   
+  // Allow public access to authorization routes
+  if (pathname.startsWith('/auth/authorize/')) {
+    return response
+  }
+
   // Protect all /app routes
   if (pathname.startsWith('/app')) {
     // Check if user has auth cookie

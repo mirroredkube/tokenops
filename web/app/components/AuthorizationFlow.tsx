@@ -233,89 +233,47 @@ export default function AuthorizationFlow() {
     setError(null)
 
     try {
-      // Check for existing authorization in database first
-      const existingAuth = await checkExistingAuthorization()
+      console.log('Creating authorization request with data:', {
+        assetId: selectedAsset.id,
+        holderAddress: authorizationData.holderAddress,
+        requestedLimit: authorizationData.limit
+      })
+
+      // First, check if authorization already exists
+      const existingAuthResponse = await fetch(`http://localhost:4000/v1/assets/${selectedAsset.id}/authorizations/${authorizationData.holderAddress}`)
       
-      // First check if trustline already exists on XRPL
-      const trustlineExists = await checkTrustlineExists()
-      
-      if (trustlineExists) {
-        if (existingAuth) {
-          // Trustline exists on ledger AND in our database
-          // Check if this is a limit update scenario
-          const limitChanged = await checkLimitChange(existingAuth)
-          
-          if (limitChanged) {
-            // Scenario 3: Trustline exists but limit is being updated
-            // Create a new authorization entry for the limit update
-            console.log('Limit update detected - creating new authorization entry for limit update')
-            await createLimitUpdateAuthorization()
-            return
-          } else {
-            // Same limit - show existing authorization
-            setError(`A trustline with the same limit already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
-            setLoading(false)
-            return
-          }
-        } else {
-          // Scenario 1: Trustline exists externally but not in our DB - create external entry
-          await createExternalTrustlineEntry()
-          return
-        }
-      } else {
-        // Trustline doesn't exist on XRPL
-        if (existingAuth) {
-          // This shouldn't happen - we have a DB entry but no ledger trustline
-          setError(`Database inconsistency detected. Please contact support.`)
+      if (existingAuthResponse.ok) {
+        const existingAuth = await existingAuthResponse.json()
+        if (existingAuth.exists) {
+          setError(`Authorization already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
           setLoading(false)
           return
         }
-        // Scenario 4: New trustline setup - proceed with creation
       }
 
-      console.log('Creating authorization request with data:', {
-        assetId: selectedAsset.id,
-        holder: authorizationData.holderAddress,
-        currencyCode: selectedAsset.code,
-        issuerAddress: selectedAsset.issuer,
-        limit: authorizationData.limit,
-        noRipple: authorizationData.noRipple,
-        requireAuth: authorizationData.requireAuth
+      // Use the new authorization request API endpoint
+      const response = await fetch('http://localhost:4000/v1/authorization-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assetId: selectedAsset.id,
+          holderAddress: authorizationData.holderAddress,
+          requestedLimit: authorizationData.limit
+        })
       })
 
-      const { data, error } = await api.PUT('/v1/assets/{assetId}/authorizations/{holder}', {
-        params: {
-          path: {
-            assetId: selectedAsset.id,
-            holder: authorizationData.holderAddress
-          },
-          body: {
-            params: {
-              holderAddress: authorizationData.holderAddress,
-              currencyCode: selectedAsset.code, // Use asset code
-              issuerAddress: selectedAsset.issuer, // Use asset issuer
-              limit: authorizationData.limit,
-              noRipple: authorizationData.noRipple,
-              requireAuth: authorizationData.requireAuth,
-              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-              callbackUrl: `${window.location.origin}/app/authorizations`
-            },
-            signing: {
-              mode: 'wallet'
-            }
-          }
-        }
-      })
-
-      if (error) {
-        console.error('API Error:', error)
-        const errorMessage = typeof error === 'object' && error.error 
-          ? error.error 
-          : typeof error === 'string' 
-            ? error 
-            : 'Failed to create authorization request'
-        throw new Error(errorMessage)
+      if (!response.ok) {
+        const errorData = await response.json()
+        
+        // Use the user-friendly message from the API if available
+        const errorMessage = errorData.message || errorData.error || 'Failed to create authorization request'
+        setError(errorMessage)
+        return
       }
+
+      const data = await response.json()
 
       if (!data) {
         throw new Error('No data received from server')
@@ -323,8 +281,8 @@ export default function AuthorizationFlow() {
 
       // Store the result and show success
       setResult({
-        authorizationId: (data as any).id,
-        explorer: (data as any).authUrl
+        id: data.id,
+        authUrl: data.authUrl
       })
       
       setCurrentStep('success')
@@ -1013,42 +971,41 @@ export default function AuthorizationFlow() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('authorizations:success.title', 'Authorization Created Successfully!')}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('authorizations:success.title', 'Authorization Request Created Successfully!')}</h1>
               <p className="text-lg text-gray-600">
-                {t('authorizations:success.description', 'Your authorization has been submitted to {{ledger}} and recorded in the database.', { ledger: selectedLedger })}
+                {t('authorizations:success.description', 'A secure authorization request has been created and is waiting for the holder to set up their trustline. Share the link below with the holder to complete the process.', { ledger: selectedLedger })}
               </p>
             </div>
 
-            {/* Transaction Details */}
+            {/* Authorization Request Details */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('authorizations:success.transactionDetails', 'Transaction Details')}</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Authorization Request Details</h2>
               <div className="space-y-4">
-                {result.txId && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">{t('authorizations:success.authorizationTransaction', 'Transaction ID:')}</p>
-                    <div className="flex items-center justify-between">
-                      <code className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded font-mono break-all">
-                        {result.txId}
-                      </code>
-                      {result.explorer && (
-                        <a
-                          href={result.explorer}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-4 inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors duration-200 shadow-sm hover:shadow-md"
-                        >
-                          {t('authorizations:success.viewOnExplorer', 'View on Explorer →')}
-                        </a>
-                      )}
-                    </div>
+                {result.id && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-blue-700 mb-2">Request ID:</p>
+                    <code className="text-sm text-blue-700 bg-blue-100 px-3 py-2 rounded font-mono">
+                      {result.id}
+                    </code>
                   </div>
                 )}
-                {result.authorizationId && (
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-blue-700 mb-2">Authorization ID:</p>
-                    <code className="text-sm text-blue-700 bg-blue-100 px-3 py-2 rounded font-mono">
-                      {result.authorizationId}
-                    </code>
+                {result.authUrl && (
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-green-700 mb-2">Authorization URL:</p>
+                    <div className="flex items-center justify-between">
+                      <code className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded font-mono break-all flex-1 mr-4">
+                        {result.authUrl}
+                      </code>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(result.authUrl || '')}
+                        className="inline-flex items-center px-3 py-2 text-green-600 border border-green-600 rounded-lg hover:bg-green-50 transition-colors duration-200 text-sm"
+                      >
+                        Copy Link
+                      </button>
+                    </div>
+                    <p className="text-xs text-green-600 mt-2">
+                      Share this secure link with the holder to set up their trustline
+                    </p>
                   </div>
                 )}
               </div>

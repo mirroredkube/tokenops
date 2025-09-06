@@ -4,10 +4,107 @@ import { generateOneTimeToken, hashToken, generateExpirationTime, createAuthUrl 
 import { validateAssetRequireAuth } from '../../lib/requireAuthChecker.js'
 import { checkIdempotency, generateIdempotencyKey } from '../../lib/idempotency.js'
 import { getLedgerAdapter } from '../../adapters/index.js'
+import { tenantMiddleware, TenantRequest } from '../../middleware/tenantMiddleware.js'
 
 const prisma = new PrismaClient()
 
 export default async function authorizationRequestRoutes(fastify: FastifyInstance) {
+  
+  // GET /authorization-requests/token/:token
+  fastify.get('/authorization-requests/token/:token', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['token'],
+        properties: {
+          token: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            assetId: { type: 'string' },
+            holderAddress: { type: 'string' },
+            requestedLimit: { type: 'string' },
+            authUrl: { type: 'string' },
+            status: { type: 'string' },
+            expiresAt: { type: 'string' },
+            consumedAt: { type: 'string' },
+            createdAt: { type: 'string' },
+            asset: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                code: { type: 'string' },
+                ledger: { type: 'string' },
+                network: { type: 'string' },
+                issuingAddress: {
+                  type: 'object',
+                  properties: {
+                    address: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { token } = request.params as any
+    
+    try {
+      // Hash the token to find the authorization request
+      const tokenHash = hashToken(token)
+      
+      const authRequest = await prisma.authorizationRequest.findFirst({
+        where: {
+          oneTimeTokenHash: tokenHash,
+          status: AuthorizationRequestStatus.INVITED,
+          expiresAt: {
+            gt: new Date()
+          }
+        },
+        include: {
+          asset: {
+            include: {
+              issuingAddress: true
+            }
+          }
+        }
+      })
+
+      if (!authRequest) {
+        return reply.status(404).send({ error: 'Authorization request not found or expired' })
+      }
+
+      return {
+        id: authRequest.id,
+        assetId: authRequest.assetId,
+        holderAddress: authRequest.holderAddress,
+        requestedLimit: authRequest.requestedLimit,
+        authUrl: authRequest.authUrl,
+        status: authRequest.status,
+        expiresAt: authRequest.expiresAt.toISOString(),
+        consumedAt: authRequest.consumedAt?.toISOString(),
+        createdAt: authRequest.createdAt.toISOString(),
+        asset: {
+          id: authRequest.asset.id,
+          code: authRequest.asset.code,
+          ledger: authRequest.asset.ledger,
+          network: authRequest.asset.network,
+          issuingAddress: {
+            address: authRequest.asset.issuingAddress?.address || ''
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching authorization request by token:', error)
+      return reply.status(500).send({ error: 'Internal server error' })
+    }
+  })
   
   // POST /authorization-requests
   fastify.post('/authorization-requests', {
@@ -32,8 +129,11 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
       }
     }
   }, async (request, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(request as TenantRequest, reply)
+    
     const { assetId, holderAddress, requestedLimit } = request.body as any
-    const tenantId = (request as any).tenantId
+    const tenantId = (request as TenantRequest).tenant?.id
 
     // Generate idempotency key
     const idempotencyKey = generateIdempotencyKey('create_authorization_request', {
@@ -44,7 +144,12 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
       // Validate RequireAuth
       const requireAuthCheck = await validateAssetRequireAuth(assetId)
       if (!requireAuthCheck.hasRequireAuth) {
-        throw new Error(`RequireAuth validation failed: ${requireAuthCheck.error}`)
+        // Return user-friendly error message
+        return reply.status(400).send({
+          error: 'Authorization not available',
+          message: 'The issuer account does not have RequireAuth enabled. Please contact your administrator to enable RequireAuth on the issuer account before creating authorization requests.',
+          details: requireAuthCheck.error
+        })
       }
 
       // Get asset info
@@ -148,10 +253,51 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
     if (!adapter.getTransaction) {
       return reply.code(400).send({ error: 'Transaction verification not supported' })
     }
+    
     const tx = await adapter.getTransaction(txHash)
     
-    if (!tx || tx.TransactionType !== 'TrustSet') {
-      return reply.code(400).send({ error: 'Invalid transaction type' })
+    if (!tx) {
+      return reply.code(400).send({ error: 'Transaction not found on ledger' })
+    }
+    
+    if (tx.TransactionType !== 'TrustSet') {
+      return reply.code(400).send({ error: 'Invalid transaction type - expected TrustSet' })
+    }
+    
+    // Verify transaction is validated
+    if (tx.validated !== true) {
+      return reply.code(400).send({ error: 'Transaction not yet validated on ledger' })
+    }
+    
+    // Verify the account matches the holder address
+    if (tx.Account !== authRequest.holderAddress) {
+      return reply.code(400).send({ error: 'Transaction account does not match holder address' })
+    }
+    
+    // Verify the LimitAmount matches the asset
+    if (!tx.LimitAmount) {
+      return reply.code(400).send({ error: 'Transaction missing LimitAmount' })
+    }
+    
+    if (tx.LimitAmount.currency !== authRequest.asset.code) {
+      return reply.code(400).send({ error: 'Transaction currency does not match asset code' })
+    }
+    
+    if (tx.LimitAmount.issuer !== authRequest.asset.issuingAddress?.address) {
+      return reply.code(400).send({ error: 'Transaction issuer does not match asset issuer' })
+    }
+    
+    // Verify the limit is greater than 0
+    const limitValue = parseFloat(tx.LimitAmount.value)
+    if (limitValue <= 0) {
+      return reply.code(400).send({ error: 'TrustSet limit must be greater than 0' })
+    }
+    
+    // Verify the limit matches the requested limit (with some tolerance for precision)
+    const requestedLimit = parseFloat(authRequest.requestedLimit)
+    const tolerance = 0.000001 // Small tolerance for floating point precision
+    if (Math.abs(limitValue - requestedLimit) > tolerance) {
+      return reply.code(400).send({ error: 'Transaction limit does not match requested limit' })
     }
 
     // Mark request as consumed

@@ -31,12 +31,13 @@ export async function checkRequireAuth(issuerAddress: string): Promise<RequireAu
       }
     }
     
-    // Check if RequireAuth flag is set
-    const hasRequireAuth = accountInfo.Flags && (accountInfo.Flags & 0x00010000) !== 0
+    // Check if RequireAuth flag is set (0x00040000)
+    const hasRequireAuth = accountInfo.Flags && (accountInfo.Flags & 0x00040000) !== 0
     
     return {
       hasRequireAuth,
-      accountInfo
+      accountInfo,
+      error: hasRequireAuth ? undefined : 'RequireAuth is not enabled on the issuer account'
     }
   } catch (error: any) {
     console.error('Error checking RequireAuth:', error)

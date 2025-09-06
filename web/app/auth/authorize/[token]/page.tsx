@@ -6,18 +6,21 @@ import { useParams } from 'next/navigation'
 interface AuthorizationRequest {
   id: string
   assetId: string
-  holder: string
-  currency: string
-  issuerAddress: string
-  limit: string
-  status: string
+  holderAddress: string
+  requestedLimit: string
+  authUrl: string
+  status: 'INVITED' | 'CONSUMED' | 'EXPIRED' | 'CANCELLED'
   expiresAt: string
-  noRipple: boolean
-  requireAuth: boolean
-  metadata: {
+  consumedAt?: string
+  createdAt: string
+  asset: {
+    id: string
+    code: string
     ledger: string
     network: string
-    currencyCode: string
+    issuingAddress: {
+      address: string
+    }
   }
 }
 
@@ -44,7 +47,8 @@ export default function AuthorizationPage() {
   useEffect(() => {
     const fetchAuthRequest = async () => {
       try {
-        const response = await fetch(`/api/v1/authorizations/token/${token}`)
+        // Use the new authorization request API endpoint
+        const response = await fetch(`http://localhost:4000/v1/authorization-requests/token/${token}`)
         if (!response.ok) {
           throw new Error('Authorization request not found or expired')
         }
@@ -67,10 +71,16 @@ export default function AuthorizationPage() {
     if (!authRequest) return
 
     try {
-      const response = await fetch(`/api/v1/authorizations/${authRequest.id}/status`)
+      // Check authorization status using the new API
+      const response = await fetch(`http://localhost:4000/v1/assets/${authRequest.assetId}/authorizations/${authRequest.holderAddress}`)
       if (response.ok) {
-        const status = await response.json()
-        setTrustlineStatus(status)
+        const data = await response.json()
+        setTrustlineStatus({
+          exists: data.exists || false,
+          authorized: data.status === 'ISSUER_AUTHORIZED',
+          limit: data.limit || '0',
+          balance: data.balance || '0'
+        })
       }
     } catch (err) {
       console.error('Failed to check trustline status:', err)
@@ -85,13 +95,13 @@ export default function AuthorizationPage() {
       // Build TrustSet transaction for XRPL
       const trustSetTransaction = {
         TransactionType: 'TrustSet',
-        Account: authRequest?.holder,
+        Account: authRequest?.holderAddress,
         LimitAmount: {
-          currency: authRequest?.currency,
-          issuer: authRequest?.issuerAddress,
-          value: authRequest?.limit
+          currency: authRequest?.asset.code,
+          issuer: authRequest?.asset.issuingAddress.address,
+          value: authRequest?.requestedLimit
         },
-        Flags: authRequest?.noRipple ? 131072 : 0 // tfSetNoRipple flag
+        Flags: 0 // No special flags for now
       }
 
       // For now, show the transaction details
@@ -115,14 +125,29 @@ export default function AuthorizationPage() {
       // 1. Sign the transaction with the holder's wallet
       // 2. Submit to XRPL network
       // 3. Wait for validation
-      // 4. Update authorization status
+      // 4. Call the holder callback endpoint
       
       // Simulate transaction submission
-      setTimeout(() => {
-        setTransactionHash('simulated_tx_hash_12345')
+      const simulatedTxHash = 'simulated_tx_hash_' + Date.now()
+      
+      // Call the holder callback endpoint
+      const response = await fetch(`http://localhost:4000/v1/authorization-requests/${authRequest?.id}/holder-callback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          txHash: simulatedTxHash
+        })
+      })
+      
+      if (response.ok) {
+        setTransactionHash(simulatedTxHash)
         setTransactionPending(false)
         checkTrustlineStatus()
-      }, 3000)
+      } else {
+        throw new Error('Failed to record transaction')
+      }
       
     } catch (err) {
       setError('Failed to submit transaction')
@@ -171,7 +196,7 @@ export default function AuthorizationPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Trustline Authorization</h1>
-              <p className="text-gray-600 mt-1">Set up your trustline to receive {authRequest.currency} tokens</p>
+              <p className="text-gray-600 mt-1">Set up your trustline to receive {authRequest.asset.code} tokens</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">Expires</p>
@@ -192,27 +217,27 @@ export default function AuthorizationPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Currency</label>
-                <p className="mt-1 text-sm text-gray-900 font-mono">{authRequest.currency}</p>
+                <p className="mt-1 text-sm text-gray-900 font-mono">{authRequest.asset.code}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700">Issuer Address</label>
-                <p className="mt-1 text-sm text-gray-900 font-mono break-all">{authRequest.issuerAddress}</p>
+                <p className="mt-1 text-sm text-gray-900 font-mono break-all">{authRequest.asset.issuingAddress.address}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700">Your Address</label>
-                <p className="mt-1 text-sm text-gray-900 font-mono break-all">{authRequest.holder}</p>
+                <p className="mt-1 text-sm text-gray-900 font-mono break-all">{authRequest.holderAddress}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700">Trust Limit</label>
-                <p className="mt-1 text-sm text-gray-900">{authRequest.limit} {authRequest.currency}</p>
+                <p className="mt-1 text-sm text-gray-900">{authRequest.requestedLimit} {authRequest.asset.code}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700">Network</label>
-                <p className="mt-1 text-sm text-gray-900">{authRequest.metadata.network} ({authRequest.metadata.ledger})</p>
+                <p className="mt-1 text-sm text-gray-900">{authRequest.asset.network} ({authRequest.asset.ledger})</p>
               </div>
             </div>
 
@@ -226,7 +251,7 @@ export default function AuthorizationPage() {
                   <h3 className="text-sm font-medium text-yellow-800">Important Security Notice</h3>
                   <div className="mt-2 text-sm text-yellow-700">
                     <ul className="list-disc list-inside space-y-1">
-                      <li>This will create a trustline that allows you to hold {authRequest.currency} tokens</li>
+                      <li>This will create a trustline that allows you to hold {authRequest.asset.code} tokens</li>
                       <li>You will need to maintain a small XRP reserve (typically 2 XRP)</li>
                       <li>Only sign transactions from trusted sources</li>
                       <li>Verify the issuer address matches the expected issuer</li>

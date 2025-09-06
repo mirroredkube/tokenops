@@ -9,14 +9,11 @@ import CustomDropdown from '../../../components/CustomDropdown'
 interface Authorization {
   id?: string
   assetId?: string
-  holder?: string
+  holderAddress?: string
   limit?: string
-  txId?: string
-  explorer?: string
-  status?: 'PENDING' | 'SUBMITTED' | 'VALIDATED' | 'FAILED' | 'EXPIRED'
-  validatedAt?: string
-  noRipple?: boolean
-  requireAuth?: boolean
+  txHash?: string
+  status?: 'HOLDER_REQUESTED' | 'ISSUER_AUTHORIZED' | 'EXTERNAL' | 'LIMIT_UPDATED' | 'TRUSTLINE_CLOSED' | 'FROZEN' | 'UNFROZEN'
+  initiatedBy?: 'HOLDER' | 'ISSUER' | 'SYSTEM'
   external?: boolean
   externalSource?: string
   createdAt?: string
@@ -27,6 +24,9 @@ interface Authorization {
     assetRef?: string
     ledger?: string
     network?: string
+    issuingAddress?: {
+      address?: string
+    }
   }
 }
 
@@ -58,19 +58,55 @@ export default function AuthorizationHistoryPage() {
         params.status = statusFilter
       }
 
-      const { data, error } = await api.GET('/v1/authorizations', { params })
+      // Fetch both authorizations and authorization requests
+      const [authorizationsResponse, requestsResponse] = await Promise.all([
+        api.GET('/v1/authorizations', { params }),
+        fetch(`http://localhost:4000/v1/authorization-requests?status=${statusFilter === 'all' ? '' : statusFilter}`)
+      ])
 
-      if (error && typeof error === 'object' && 'error' in error) {
-        throw new Error((error as any).error || t('authorizations:history.messages.failedToFetchAuthorizations', 'Failed to fetch authorizations'))
+      if (authorizationsResponse.error) {
+        throw new Error(t('authorizations:history.messages.failedToFetchAuthorizations', 'Failed to fetch authorizations'))
       }
 
-      if (!data) {
+      if (!authorizationsResponse.data) {
         throw new Error(t('common:messages.noDataReceived', 'No data received'))
       }
 
-      setAuthorizations((data.authorizations || []) as Authorization[])
-      setTotalCount(data.pagination?.total || 0)
-      setTotalPages(Math.ceil((data.pagination?.total || 0) / limit))
+      // Get authorization requests
+      let requests: any[] = []
+      if (requestsResponse.ok) {
+        requests = await requestsResponse.json()
+      }
+
+      // Convert authorization requests to authorization format for display
+      const convertedRequests: Authorization[] = requests.map((req: any) => ({
+        id: req.id,
+        assetId: req.assetId,
+        holderAddress: req.holderAddress,
+        limit: req.requestedLimit,
+        status: 'HOLDER_REQUESTED' as const,
+        initiatedBy: 'HOLDER' as const,
+        createdAt: req.createdAt,
+        asset: {
+          id: req.asset.id,
+          code: req.asset.code,
+          ledger: req.asset.ledger,
+          network: req.asset.network,
+          issuingAddress: {
+            address: req.asset.issuingAddress.address
+          }
+        }
+      }))
+
+      // Combine and sort by creation date
+      const allAuthorizations = [
+        ...(authorizationsResponse.data.authorizations || []),
+        ...convertedRequests
+      ].sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
+
+      setAuthorizations(allAuthorizations as Authorization[])
+      setTotalCount(allAuthorizations.length)
+      setTotalPages(Math.ceil(allAuthorizations.length / limit))
     } catch (err: any) {
       console.error('Error fetching authorizations:', err)
       setError(err.message || t('authorizations:history.messages.failedToFetchAuthorizations', 'Failed to fetch authorizations'))
@@ -86,16 +122,20 @@ export default function AuthorizationHistoryPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'PENDING':
+      case 'HOLDER_REQUESTED':
         return <Clock className="h-4 w-4 text-yellow-600" />
-      case 'SUBMITTED':
-        return <Clock className="h-4 w-4 text-blue-600" />
-      case 'VALIDATED':
+      case 'ISSUER_AUTHORIZED':
         return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'FAILED':
+      case 'EXTERNAL':
+        return <ExternalLink className="h-4 w-4 text-blue-600" />
+      case 'LIMIT_UPDATED':
+        return <Clock className="h-4 w-4 text-blue-600" />
+      case 'TRUSTLINE_CLOSED':
         return <XCircle className="h-4 w-4 text-red-600" />
-      case 'EXPIRED':
+      case 'FROZEN':
         return <AlertTriangle className="h-4 w-4 text-orange-600" />
+      case 'UNFROZEN':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
       default:
         return <Clock className="h-4 w-4 text-gray-600" />
     }
@@ -103,16 +143,20 @@ export default function AuthorizationHistoryPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING':
+      case 'HOLDER_REQUESTED':
         return 'bg-yellow-100 text-yellow-800'
-      case 'SUBMITTED':
-        return 'bg-blue-100 text-blue-800'
-      case 'VALIDATED':
+      case 'ISSUER_AUTHORIZED':
         return 'bg-green-100 text-green-800'
-      case 'FAILED':
+      case 'EXTERNAL':
+        return 'bg-blue-100 text-blue-800'
+      case 'LIMIT_UPDATED':
+        return 'bg-blue-100 text-blue-800'
+      case 'TRUSTLINE_CLOSED':
         return 'bg-red-100 text-red-800'
-      case 'EXPIRED':
+      case 'FROZEN':
         return 'bg-orange-100 text-orange-800'
+      case 'UNFROZEN':
+        return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -197,11 +241,11 @@ export default function AuthorizationHistoryPage() {
             onChange={handleFilterChange}
             options={[
               { value: 'all', label: t('authorizations:history.filters.allStatuses', 'All Statuses') },
-              { value: 'PENDING', label: t('authorizations:history.filters.pending', 'Pending') },
-              { value: 'SUBMITTED', label: t('authorizations:history.filters.submitted', 'Submitted') },
-              { value: 'VALIDATED', label: t('authorizations:history.filters.validated', 'Validated') },
-              { value: 'FAILED', label: t('authorizations:history.filters.failed', 'Failed') },
-              { value: 'EXPIRED', label: t('authorizations:history.filters.expired', 'Expired') }
+              { value: 'HOLDER_REQUESTED', label: t('authorizations:history.filters.holderRequested', 'Holder Requested') },
+              { value: 'ISSUER_AUTHORIZED', label: t('authorizations:history.filters.issuerAuthorized', 'Issuer Authorized') },
+              { value: 'EXTERNAL', label: t('authorizations:history.filters.external', 'External') },
+              { value: 'LIMIT_UPDATED', label: t('authorizations:history.filters.limitUpdated', 'Limit Updated') },
+              { value: 'TRUSTLINE_CLOSED', label: t('authorizations:history.filters.trustlineClosed', 'Trustline Closed') }
             ]}
             className="w-48"
           />
@@ -248,7 +292,7 @@ export default function AuthorizationHistoryPage() {
                      </td>
                      <td className="px-6 py-4 whitespace-nowrap">
                        <div className="text-sm text-gray-900 font-mono">
-                         {auth.holder ? `${auth.holder.substring(0, 8)}...${auth.holder.substring(auth.holder.length - 8)}` : 'Unknown'}
+                         {auth.holderAddress ? `${auth.holderAddress.substring(0, 8)}...${auth.holderAddress.substring(auth.holderAddress.length - 8)}` : 'Unknown'}
                        </div>
                      </td>
                      <td className="px-6 py-4 whitespace-nowrap">
@@ -285,9 +329,9 @@ export default function AuthorizationHistoryPage() {
                      </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center gap-2">
-                        {auth.txId && auth.explorer && (
+                        {auth.txHash && (
                           <a
-                            href={auth.explorer}
+                            href={`https://testnet.xrpl.org/transactions/${auth.txHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-emerald-600 hover:text-emerald-900 flex items-center gap-1"

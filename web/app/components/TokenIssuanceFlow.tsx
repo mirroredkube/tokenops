@@ -380,7 +380,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       const { data, error } = await api.POST('/v1/authorizations/external', {
         body: {
           assetId: selectedAsset.id,
-          holder: trustlineCheckData.holderAddress,
+          holderAddress: trustlineCheckData.holderAddress,
           currency: trustlineCheckData.currencyCode,
           issuerAddress: trustlineCheckData.issuerAddress,
           limit: trustlineCheckResult.details?.limit || '1000000000',
@@ -516,14 +516,14 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
   // Check for existing authorization
   const checkExistingAuthorization = async () => {
-    if (!selectedAsset || !trustlineData.holderAddress) return null
+    if (!selectedAsset || !trustlineCheckData.holderAddress) return null
     
     try {
       const { data } = await api.GET('/v1/authorizations', {
         params: {
           query: {
             assetId: selectedAsset.id,
-            holder: trustlineData.holderAddress,
+            holder: trustlineCheckData.holderAddress,
             limit: 10
           }
         }
@@ -531,7 +531,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       
       return data?.authorizations?.find((auth: any) => 
         auth.assetId === selectedAsset.id && 
-        auth.holder === trustlineData.holderAddress
+        auth.holder === trustlineCheckData.holderAddress
       )
     } catch (error) {
       console.error('Error checking existing authorization:', error)
@@ -546,7 +546,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       return
     }
 
-    if (!trustlineData.holderAddress) {
+    if (!trustlineCheckData.holderAddress) {
       setError('Please enter a holder address')
       return
     }
@@ -562,39 +562,35 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         setLoading(false)
         return
       }
-      const { data, error } = await api.PUT('/v1/assets/{assetId}/authorizations/{holder}', {
-        params: {
-          path: {
-            assetId: selectedAsset.id,
-            holder: trustlineData.holderAddress
+      // Use direct fetch to avoid openapi-fetch body wrapping issues
+      const response = await fetch(`http://localhost:4000/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          params: {
+            holderAddress: trustlineCheckData.holderAddress,
+            currencyCode: selectedAsset.code, // Use asset code
+            issuerAddress: selectedAsset.issuer, // Use asset issuer
+            limit: trustlineData.limit || '1000000000', // Use trustlineData for limit, fallback to default
+            noRipple: trustlineData.noRipple || false,
+            requireAuth: trustlineData.requireAuth || true,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+            callbackUrl: `${window.location.origin}/app/issuance/history`
           },
-          body: {
-            params: {
-              holderAddress: trustlineData.holderAddress,
-              currencyCode: selectedAsset.code, // Use asset code
-              issuerAddress: selectedAsset.issuer, // Use asset issuer
-              limit: trustlineData.limit,
-              noRipple: trustlineData.noRipple,
-              requireAuth: trustlineData.requireAuth,
-              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-              callbackUrl: `${window.location.origin}/app/issuance/history`
-            },
-            signing: {
-              mode: 'wallet'
-            }
+          signing: {
+            mode: 'wallet'
           }
-        }
+        })
       })
 
-      if (error) {
-        console.error('API Error:', error)
-        const errorMessage = typeof error === 'object' && error.error 
-          ? error.error 
-          : typeof error === 'string' 
-            ? error 
-            : 'Failed to create authorization request'
-        throw new Error(errorMessage)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
       }
+
+      const data = await response.json()
 
       if (!data) {
         throw new Error('No data received from server')
@@ -1455,7 +1451,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                    <button
                                      type="button"
                                      onClick={createAuthorizationRequest}
-                                     disabled={loading || !selectedAsset || !trustlineData.holderAddress || !trustlineData.currencyCode}
+                                     disabled={loading || !selectedAsset || !trustlineCheckData.holderAddress || !trustlineCheckData.currencyCode}
                                      className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                    >
                                      {loading ? 'Creating Request...' : 'Send Authorization Request'}
@@ -1465,16 +1461,6 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                                </div>
                              </div>
                             
-                            <div className="mt-6">
-                                                                                           <button
-                                type="button"
-                                onClick={handleOptInSubmit}
-                                disabled={loading}
-                                className="px-6 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
-                              >
-                                {loading ? 'Creating Trustline...' : 'Create Trustline'}
-                              </button>
-                            </div>
                           </div>
                         )}
                         

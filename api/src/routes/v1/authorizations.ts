@@ -6,6 +6,7 @@ import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../../utils/cu
 import { Asset, assets, validateAsset } from './shared.js'
 import prisma from '../../db/client.js'
 import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
+import { AuthorizationStatus, AuthorizationInitiator } from '@prisma/client'
 
 // ---------- Validation Schemas ----------
 const AuthorizationRequestSchema = z.object({
@@ -355,6 +356,17 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         return reply.status(422).send({ error: 'Asset is not active' })
       }
       
+      // Validate RequireAuth is enabled on the issuer account
+      const { validateAssetRequireAuth } = await import('../../lib/requireAuthChecker.js')
+      const requireAuthCheck = await validateAssetRequireAuth(assetId)
+      if (!requireAuthCheck.hasRequireAuth) {
+        return reply.status(400).send({
+          error: 'Authorization not available',
+          message: 'The issuer account does not have RequireAuth enabled. Please contact your administrator to enable RequireAuth on the issuer account before creating authorization requests.',
+          details: requireAuthCheck.error
+        })
+      }
+      
       // Generate secure one-time token for authorization URL
       const oneTimeToken = crypto.randomUUID()
       
@@ -376,8 +388,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
           currency: params.currencyCode,
           holderAddress: params.holderAddress,
           limit,
-          status: 'HOLDER_REQUESTED',
-          initiatedBy: 'HOLDER',
+          status: AuthorizationStatus.HOLDER_REQUESTED,
+          initiatedBy: AuthorizationInitiator.HOLDER,
           txHash: null,
           external: false,
           externalSource: null
@@ -399,7 +411,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         currency: params.currencyCode,
         issuerAddress: params.issuerAddress,
         limit,
-        status: 'HOLDER_REQUESTED',
+        status: AuthorizationStatus.HOLDER_REQUESTED,
         authUrl,
         expiresAt: expiresAt.toISOString(),
         oneTimeToken
@@ -672,11 +684,11 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         }
         
         // Update authorization status if trustline exists
-        if (status.exists && authorization.status === 'HOLDER_REQUESTED') {
+        if (status.exists && authorization.status === AuthorizationStatus.HOLDER_REQUESTED) {
           await prisma.authorization.update({
             where: { id: authorization.id },
             data: { 
-              status: 'ISSUER_AUTHORIZED',
+              status: AuthorizationStatus.ISSUER_AUTHORIZED,
               txHash: 'ledger-detected'
             }
           })
@@ -688,8 +700,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         
         // Fallback to database status if ledger query fails
         const fallbackStatus = {
-          exists: authorization.status === 'ISSUER_AUTHORIZED' || authorization.status === 'EXTERNAL',
-          authorized: authorization.status === 'ISSUER_AUTHORIZED',
+          exists: authorization.status === AuthorizationStatus.ISSUER_AUTHORIZED || authorization.status === AuthorizationStatus.EXTERNAL,
+          authorized: authorization.status === AuthorizationStatus.ISSUER_AUTHORIZED,
           limit: authorization.limit,
           balance: '0'
         }
@@ -768,7 +780,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         return reply.status(404).send({ error: 'Authorization request not found' })
       }
       
-      if (authorization.status !== 'HOLDER_REQUESTED') {
+      if (authorization.status !== AuthorizationStatus.HOLDER_REQUESTED) {
         return reply.status(400).send({ error: 'Authorization request is not in HOLDER_REQUESTED status' })
       }
       
@@ -793,7 +805,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       const updatedAuth = await prisma.authorization.update({
         where: { id },
         data: {
-          status: 'ISSUER_AUTHORIZED',
+          status: AuthorizationStatus.ISSUER_AUTHORIZED,
           txHash: mockTxId
         }
       })
@@ -818,10 +830,10 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       tags: ['v1'],
       body: {
         type: 'object',
-        required: ['assetId', 'holder', 'currency', 'issuerAddress'],
+        required: ['assetId', 'holderAddress', 'currency', 'issuerAddress'],
         properties: {
           assetId: { type: 'string' },
-          holder: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
+          holderAddress: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
           currency: { type: 'string' },
           issuerAddress: { type: 'string', pattern: '^r[a-zA-Z0-9]{24,34}$' },
           limit: { type: 'string' },
@@ -834,7 +846,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
           properties: {
             id: { type: 'string' },
             assetId: { type: 'string' },
-            holder: { type: 'string' },
+            holderAddress: { type: 'string' },
             status: { type: 'string' },
             external: { type: 'boolean' },
             externalSource: { type: 'string' }
@@ -846,23 +858,37 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
     }
   }, async (req, reply) => {
     try {
-      const { assetId, holder, currency, issuerAddress, limit = '1000000000', externalSource = 'xrpl_external' } = req.body as {
+      const { assetId, holderAddress, currency, issuerAddress, limit = '1000000000', externalSource = 'xrpl_external' } = req.body as {
         assetId: string
-        holder: string
+        holderAddress: string
         currency: string
         issuerAddress: string
         limit?: string
         externalSource?: string
       }
       
-      // Validate asset exists
-      const asset = await validateAsset(assetId)
+      // Validate asset exists and get organizationId
+      const asset = await prisma.asset.findUnique({
+        where: { id: assetId },
+        include: {
+          product: true,
+          issuingAddress: true
+        }
+      })
+      
+      if (!asset) {
+        return reply.status(404).send({ error: 'Asset not found' })
+      }
+      
+      if (asset.status !== 'ACTIVE') {
+        return reply.status(422).send({ error: `Asset is ${asset.status.toLowerCase()}, must be active` })
+      }
       
       // Check if external trustline already exists
       const existingExternal = await prisma.authorization.findFirst({
         where: {
           assetId: asset.id,
-          holderAddress: holder,
+          holderAddress: holderAddress,
           external: true
         }
       })
@@ -872,7 +898,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         return reply.status(200).send({
           id: existingExternal.id,
           assetId: existingExternal.assetId,
-          holder: existingExternal.holderAddress,
+          holderAddress: existingExternal.holderAddress,
           status: existingExternal.status,
           external: existingExternal.external,
           externalSource: existingExternal.externalSource,
@@ -883,14 +909,14 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       // Create external trustline entry
       const externalAuth = await prisma.authorization.create({
         data: {
-          tenantId: (asset as any).product.organizationId,
+          tenantId: asset.product.organizationId,
           assetId: asset.id,
           ledger: `${asset.ledger}-${asset.network}`,
           currency,
-          holderAddress: holder,
+          holderAddress: holderAddress,
           limit,
-          status: 'EXTERNAL', // External trustlines are considered external
-          initiatedBy: 'SYSTEM',
+          status: AuthorizationStatus.EXTERNAL, // External trustlines are considered external
+          initiatedBy: AuthorizationInitiator.SYSTEM,
           txHash: null,
           external: true,
           externalSource
@@ -900,7 +926,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       return reply.status(201).send({
         id: externalAuth.id,
         assetId: externalAuth.assetId,
-        holder: externalAuth.holderAddress,
+        holderAddress: externalAuth.holderAddress,
         status: externalAuth.status,
         external: externalAuth.external,
         externalSource: externalAuth.externalSource
