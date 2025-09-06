@@ -22,9 +22,17 @@ const uiOrigin = process.env.UI_ORIGIN || 'http://localhost:3000'  // UI on :300
 // ----------------------------------------------------------------------------
 // Plugins
 // ----------------------------------------------------------------------------
-// CORS: allow UI origin + send cookies
+// CORS: allow UI origin + tenant subdomains + send cookies
 await app.register(cors, {
-  origin: [uiOrigin],
+  origin: [
+    uiOrigin,
+    // Allow tenant subdomains for development
+    /^http:\/\/[a-z0-9-]+\.api\.localhost:4000$/,
+    /^http:\/\/[a-z0-9-]+\.app\.localhost:3000$/,
+    // Allow direct localhost access
+    'http://localhost:4000',
+    'http://127.0.0.1:4000'
+  ],
   credentials: true,
 })
 
