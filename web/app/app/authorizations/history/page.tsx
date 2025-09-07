@@ -36,6 +36,8 @@ export default function AuthorizationHistoryPage() {
   const [authorizations, setAuthorizations] = useState<Authorization[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [authorizingId, setAuthorizingId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -55,6 +57,16 @@ export default function AuthorizationHistoryPage() {
       return () => clearTimeout(timer)
     }
   }, [error])
+
+  // Auto-dismiss success after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [success])
 
   const fetchAuthorizations = async () => {
     setLoading(true)
@@ -144,7 +156,10 @@ export default function AuthorizationHistoryPage() {
 
   const handleIssuerAuthorize = async (authorizationId: string) => {
     try {
-      setLoading(true)
+      setAuthorizingId(authorizationId)
+      setError(null)
+      setSuccess(null)
+      
       const response = await fetch(`http://localhost:4000/v1/authorizations/${authorizationId}/authorize`, {
         method: 'POST',
         headers: {
@@ -158,16 +173,19 @@ export default function AuthorizationHistoryPage() {
         throw new Error(errorData.error || 'Failed to authorize trustline as issuer')
       }
       
+      const result = await response.json()
+      
       // Refresh the authorizations list
       await fetchAuthorizations()
       
-      // Show success message (you could add a toast notification here)
-      console.log('Issuer authorization successful')
+      // Show success message with transaction details
+      setSuccess(`✅ Trustline authorized successfully! Transaction: ${result.txId || 'Completed'}`)
+      console.log('Issuer authorization successful:', result)
     } catch (error: any) {
       console.error('Issuer authorization failed:', error)
       setError(error.message || 'Failed to authorize trustline as issuer')
     } finally {
-      setLoading(false)
+      setAuthorizingId(null)
     }
   }
 
@@ -296,6 +314,24 @@ export default function AuthorizationHistoryPage() {
         </div>
       )}
 
+      {success && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-green-600 mr-2">🎉</span>
+              <span className="text-green-800">{success}</span>
+            </div>
+            <button
+              onClick={() => setSuccess(null)}
+              className="text-green-400 hover:text-green-600 transition-colors"
+              aria-label="Close success message"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
@@ -408,11 +444,25 @@ export default function AuthorizationHistoryPage() {
                         {auth.status === 'AWAITING_ISSUER_AUTHORIZATION' && auth.id && (
                           <button
                             onClick={() => handleIssuerAuthorize(auth.id!)}
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-emerald-600 border border-transparent rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+                            disabled={authorizingId === auth.id}
+                            className={`inline-flex items-center px-3 py-1 text-xs font-medium border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                              authorizingId === auth.id
+                                ? 'text-white bg-emerald-400 cursor-not-allowed'
+                                : 'text-white bg-emerald-600 hover:bg-emerald-700 hover:scale-105 focus:ring-emerald-500 active:scale-95'
+                            }`}
                             title="Authorize trustline as issuer (tfSetfAuth)"
                           >
-                            <Check className="h-3 w-3 mr-1" />
-                            Authorize Trustline
+                            {authorizingId === auth.id ? (
+                              <>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                Authorizing...
+                              </>
+                            ) : (
+                              <>
+                                <Check className="h-3 w-3 mr-1" />
+                                Authorize Trustline
+                              </>
+                            )}
                           </button>
                         )}
                         <button
