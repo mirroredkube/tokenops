@@ -29,6 +29,7 @@ const IssuanceSchema = z.object({
     references: z.array(z.string()).optional()
   }).optional(),
   anchor: z.boolean().default(false),
+  status: z.enum(['PENDING', 'SUBMITTED']).default('SUBMITTED'),
   publicMetadata: z.record(z.any()).optional()
 })
 
@@ -386,29 +387,50 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       
       const adapter = getLedgerAdapter()
       
-      // Pre-flight checks
-      const lines = await adapter.getAccountLines({ 
-        account: holder, 
-        peer: asset.issuer, 
-        ledger_index: 'validated' 
-      })
-      
-      const line = lines.find((l: any) => {
-        const lineCurrency = l.currency?.toUpperCase()
+      // Pre-flight checks - only for submitted issuances, not pending ones
+      if (body.data.status === 'SUBMITTED') {
+        const lines = await adapter.getAccountLines({ 
+          account: holder, 
+          peer: asset.issuer, 
+          ledger_index: 'validated' 
+        })
         
-        if (isHexCurrency(asset.code)) {
-          return lineCurrency === asset.code
-        } else {
-          return lineCurrency === asset.code || lineCurrency === currencyToHex(asset.code)
+        const line = lines.find((l: any) => {
+          const lineCurrency = l.currency?.toUpperCase()
+          
+          if (isHexCurrency(asset.code)) {
+            return lineCurrency === asset.code
+          } else {
+            return lineCurrency === asset.code || lineCurrency === currencyToHex(asset.code)
+          }
+        })
+        
+        if (!line) {
+          return reply.status(422).send({ error: 'Trustline does not exist' })
         }
-      })
-      
-      if (!line) {
-        return reply.status(422).send({ error: 'Trustline does not exist' })
       }
       
-      if (Number(line.limit) < Number(amount)) {
+      // Check trustline limit - only for submitted issuances
+      if (body.data.status === 'SUBMITTED' && line && Number(line.limit) < Number(amount)) {
         return reply.status(422).send({ error: 'Amount exceeds trustline limit' })
+      }
+      
+      // Check for existing pending issuance for the same asset and holder
+      if (body.data.status === 'PENDING') {
+        const existingPendingIssuance = await prisma.issuance.findFirst({
+          where: {
+            assetId: asset.id,
+            holder,
+            status: 'PENDING'
+          }
+        })
+        
+        if (existingPendingIssuance) {
+          return reply.status(409).send({ 
+            error: 'A pending issuance already exists for this asset and holder',
+            existingIssuanceId: existingPendingIssuance.id
+          })
+        }
       }
       
       const issuanceId = generateIssuanceId()
@@ -421,7 +443,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
           holder,
           amount,
           anchor,
-          status: 'SUBMITTED',
+          status: body.data.status,
           complianceEvaluated: false,
           complianceStatus: 'PENDING'
         } as any
@@ -476,38 +498,47 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       // Combine memos or use undefined if no memos
       const memoHex = memos.length > 0 ? memos.join(' | ') : undefined
       
-      console.log('🔍 Submitting transaction to XRPL with memoHex:', memoHex)
+      // Only perform actual issuance if status is SUBMITTED
+      if (body.data.status === 'SUBMITTED') {
+        console.log('🔍 Submitting transaction to XRPL with memoHex:', memoHex)
+        
+        const result = await (adapter as any).issue({
+          to: holder,
+          asset: {
+            ledger: asset.ledger.toLowerCase() as any,
+            code: asset.code,
+            issuer: asset.issuer
+          },
+          amount,
+          memoHex
+        })
+        
+        console.log('✅ XRPL transaction result:', result)
+        console.log('🔍 Transaction ID:', result.txid)
+        
+        // Update issuance with transaction details and manifest
+        await prisma.issuance.update({
+          where: { id: issuance.id },
+          data: {
+            txId: result.txid,
+            explorer: `https://testnet.xrpl.org/transactions/${result.txid}`,
+            ...(manifest && manifestHash ? {
+              complianceRef: manifest as any,
+              manifestHash: manifestHash as any,
+              complianceEvaluated: true,
+              complianceStatus: 'READY'
+            } : {})
+          } as any
+        })
+      } else {
+        console.log('📝 Issuance saved as PENDING - waiting for authorization')
+      }
       
-      const result = await (adapter as any).issue({
-        to: holder,
-        asset: {
-          ledger: asset.ledger.toLowerCase() as any,
-          code: asset.code,
-          issuer: asset.issuer
-        },
-        amount,
-        memoHex
-      })
-      
-      console.log('✅ XRPL transaction result:', result)
-      console.log('🔍 Transaction ID:', result.txid)
-      
-      // Update issuance with transaction details and manifest
-      await prisma.issuance.update({
-        where: { id: issuance.id },
-        data: {
-          txId: result.txid,
-          explorer: `https://testnet.xrpl.org/transactions/${result.txid}`,
-          ...(manifest && manifestHash ? {
-            complianceRef: manifest as any,
-            manifestHash: manifestHash as any,
-            complianceEvaluated: true,
-            complianceStatus: 'READY'
-          } : {})
-        } as any
-      })
-      
-      console.log('✅ Updated issuance with txId:', result.txid)
+      if (body.data.status === 'SUBMITTED') {
+        console.log('✅ Updated issuance with txId:', issuance.txId)
+      } else {
+        console.log('📝 Pending issuance created:', issuance.id)
+      }
       
       // Get snapshot requirements for response
       const requirementInstances = await snapshotService.getIssuanceSnapshot(issuance.id)
@@ -535,8 +566,8 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         holder: (issuance as any).holder,
         amount: issuance.amount,
         manifestHash,
-        txId: result.txid,
-        explorer: `https://testnet.xrpl.org/transactions/${result.txid}`,
+        txId: issuance.txId,
+        explorer: issuance.explorer,
         status: issuance.status,
         createdAt: issuance.createdAt.toISOString(),
         compliance: {

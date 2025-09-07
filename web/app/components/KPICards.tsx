@@ -47,9 +47,9 @@ export default function KPICards() {
       const { data: allAssetsResponse } = await api.GET('/v1/assets?limit=1' as any, {})
       const totalTokens = allAssetsResponse?.total || 0
 
-      // Fetch total issuances count
-      const { data: issuancesResponse } = await api.GET('/v1/issuances?limit=1' as any, {})
-      const totalIssuances = issuancesResponse?.total || 0
+      // Fetch validated issuances count (completed issuances)
+      const { data: validatedIssuancesResponse } = await api.GET('/v1/issuances?status=validated&limit=1' as any, {})
+      const totalIssuances = validatedIssuancesResponse?.total || 0
 
       // Fetch compliance records
       const { data: complianceResponse } = await api.GET('/v1/issuances?limit=100' as any, {})
@@ -79,8 +79,9 @@ export default function KPICards() {
       
       const totalComplianceRecords = complianceResponse?.pagination?.total || complianceRecords.length
 
-      // Fetch pending issuances (we'll need to aggregate this)
-      const pendingIssuances = 0 // TODO: Implement when we have the endpoint
+      // Fetch pending issuances count
+      const { data: pendingIssuancesResponse } = await api.GET('/v1/issuances?status=pending&limit=1' as any, {})
+      const pendingIssuances = pendingIssuancesResponse?.total || 0
 
       // Fetch authorizations
       const { data: authorizationsResponse } = await api.GET('/v1/authorizations?limit=1' as any, {})
@@ -150,8 +151,8 @@ export default function KPICards() {
       icon: Coins,
       color: 'bg-indigo-500',
       hoverColor: 'hover:bg-indigo-50',
-      onClick: () => router.push('/app/issuance/history'),
-      tooltip: t('dashboard:kpi.totalIssuancesTooltip', 'Lifetime count of all asset issuance transactions')
+      onClick: () => router.push('/app/issuance/history?status=validated'),
+      tooltip: t('dashboard:kpi.totalIssuancesTooltip', 'Number of completed and validated asset issuances')
     },
     {
       title: t('dashboard:kpi.complianceRecords', 'Compliance Records'),
@@ -169,7 +170,7 @@ export default function KPICards() {
       icon: Clock,
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-50',
-      onClick: () => router.push('/app/issuance/history?status=submitted'),
+      onClick: () => router.push('/app/issuance/history?status=pending'),
       tooltip: t('dashboard:kpi.pendingIssuancesTooltip', 'Number of asset issuances waiting for ledger validation')
     },
     

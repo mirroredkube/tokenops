@@ -175,6 +175,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
             assetRef: { type: 'string' },
             holder: { type: 'string' },
             exists: { type: 'boolean' },
+            status: { type: 'string' },
             details: {
               type: 'object',
               properties: {
@@ -190,12 +191,28 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         502: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
-  }, async (req, reply) => {
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
     const { assetId, holder } = req.params as { assetId: string; holder: string }
     
     try {
       // Validate asset exists and is active
       const asset = await validateAsset(assetId)
+      
+      // Check our database for authorization records
+      const authorization = await prisma.authorization.findFirst({
+        where: {
+          assetId: asset.id,
+          holderAddress: holder,
+          tenantId: (req as TenantRequest).tenant?.id
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
       
       const adapter = getLedgerAdapter()
       const lines = await adapter.getAccountLines({ 
@@ -216,25 +233,61 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       })
       
       if (!line) {
+        // No trustline on ledger
+        if (authorization) {
+          // We have a database record but no trustline - this shouldn't happen normally
+          return reply.send({
+            assetId: asset.id,
+            assetRef: asset.assetRef,
+            holder,
+            exists: true,
+            status: authorization.status,
+            details: {
+              limit: authorization.limit,
+              balance: '0',
+              authorized: false
+            }
+          })
+        } else {
+          return reply.send({
+            assetId: asset.id,
+            assetRef: asset.assetRef,
+            holder,
+            exists: false
+          })
+        }
+      }
+      
+      // Trustline exists on ledger
+      if (authorization) {
+        // We have both ledger trustline and database record
         return reply.send({
           assetId: asset.id,
           assetRef: asset.assetRef,
           holder,
-          exists: false
+          exists: true,
+          status: authorization.status,
+          details: {
+            limit: line.limit,
+            balance: line.balance,
+            authorized: line.authorized || false
+          }
+        })
+      } else {
+        // Trustline exists on ledger but not in our database - this is an external trustline
+        return reply.send({
+          assetId: asset.id,
+          assetRef: asset.assetRef,
+          holder,
+          exists: true,
+          status: 'EXTERNAL',
+          details: {
+            limit: line.limit,
+            balance: line.balance,
+            authorized: line.authorized || false
+          }
         })
       }
-      
-      return reply.send({
-        assetId: asset.id,
-        assetRef: asset.assetRef,
-        holder,
-        exists: true,
-        details: {
-          limit: line.limit,
-          balance: line.balance,
-          authorized: line.authorized || false
-        }
-      })
     } catch (error: any) {
       console.error('Error checking authorization status:', error)
       
@@ -246,6 +299,89 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       }
       
       return reply.status(502).send({ error: 'Ledger connection error' })
+    }
+  })
+
+  // 1.5. GET /v1/assets/{assetId}/authorizations/{holder}/ledger-check - Check trustline on XRPL ledger
+  app.get('/assets/:assetId/authorizations/:holder/ledger-check', {
+    schema: {
+      summary: 'Check if trustline exists on XRPL ledger',
+      description: 'Check the XRPL ledger directly to see if a trustline exists for the given holder and asset',
+      tags: ['v1'],
+      params: {
+        type: 'object',
+        properties: {
+          assetId: { type: 'string' },
+          holder: { type: 'string' }
+        },
+        required: ['assetId', 'holder']
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            exists: { type: 'boolean' },
+            limit: { type: 'string' },
+            balance: { type: 'string' },
+            authorized: { type: 'boolean' },
+            noRipple: { type: 'boolean' },
+            freeze: { type: 'boolean' }
+          }
+        }
+      }
+    }
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    
+    const { assetId, holder } = req.params as { assetId: string, holder: string }
+    
+    try {
+      // Validate asset exists and belongs to tenant
+      const asset = await validateAsset(assetId)
+      
+      const adapter = getLedgerAdapter()
+      
+      // Check trustline on XRPL ledger
+      const lines = await adapter.getAccountLines({ 
+        account: holder, 
+        peer: asset.issuer, 
+        ledger_index: 'validated' 
+      })
+      
+      const line = lines.find((l: any) => {
+        const lineCurrency = l.currency?.toUpperCase()
+        
+        if (isHexCurrency(asset.code)) {
+          return lineCurrency === asset.code
+        } else {
+          return lineCurrency === asset.code || lineCurrency === currencyToHex(asset.code)
+        }
+      })
+      
+      if (line) {
+        return reply.send({
+          exists: true,
+          limit: line.limit_peer || '0',
+          balance: line.balance || '0',
+          authorized: line.authorized || false,
+          noRipple: line.no_ripple || false,
+          freeze: line.freeze || false
+        })
+      } else {
+        return reply.send({
+          exists: false,
+          limit: '0',
+          balance: '0',
+          authorized: false,
+          noRipple: false,
+          freeze: false
+        })
+      }
+    } catch (error: any) {
+      console.error('Error checking ledger trustline:', error)
+      return reply.status(500).send({ error: 'Failed to check ledger trustline' })
     }
   })
 
@@ -277,7 +413,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
               noRipple: { type: 'boolean', default: false },
               requireAuth: { type: 'boolean', default: false },
               expiresAt: { type: 'string', format: 'date-time' },
-              callbackUrl: { type: 'string', format: 'uri' }
+              callbackUrl: { type: 'string', format: 'uri' },
+              status: { type: 'string', enum: ['HOLDER_REQUESTED', 'EXTERNAL'], default: 'HOLDER_REQUESTED' }
             }
           },
           signing: {
@@ -326,6 +463,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
     const limit = params.limit || '1000000000' // Safe high default
     const mode = signing?.mode || 'wallet'
     
+    console.log('Authorization request params:', { status: params.status, limit, mode })
+    
     // Security: Always use wallet mode, never handle private keys
     if (mode !== 'wallet') {
       return reply.status(400).send({ 
@@ -356,15 +495,22 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         return reply.status(422).send({ error: 'Asset is not active' })
       }
       
-      // Validate RequireAuth is enabled on the issuer account
-      const { validateAssetRequireAuth } = await import('../../lib/requireAuthChecker.js')
-      const requireAuthCheck = await validateAssetRequireAuth(assetId)
-      if (!requireAuthCheck.hasRequireAuth) {
-        return reply.status(400).send({
-          error: 'Authorization not available',
-          message: 'The issuer account does not have RequireAuth enabled. Please contact your administrator to enable RequireAuth on the issuer account before creating authorization requests.',
-          details: requireAuthCheck.error
-        })
+      // Validate RequireAuth is enabled on the issuer account (skip for external authorizations)
+      console.log('Checking RequireAuth for status:', params.status)
+      if (params.status !== 'EXTERNAL') {
+        console.log('Performing RequireAuth check for non-external authorization')
+        const { validateAssetRequireAuth } = await import('../../lib/requireAuthChecker.js')
+        const requireAuthCheck = await validateAssetRequireAuth(assetId)
+        console.log('RequireAuth check result:', requireAuthCheck)
+        if (!requireAuthCheck.hasRequireAuth) {
+          return reply.status(400).send({
+            error: 'Authorization not available',
+            message: 'The issuer account does not have RequireAuth enabled. Please contact your administrator to enable RequireAuth on the issuer account before creating authorization requests.',
+            details: requireAuthCheck.error
+          })
+        }
+      } else {
+        console.log('Skipping RequireAuth check for external authorization')
       }
       
       // Generate secure one-time token for authorization URL
@@ -379,6 +525,10 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       const baseUrl = process.env.PUBLIC_AUTH_BASE_URL || 'http://localhost:3000'
       const authUrl = `${baseUrl}/auth/authorize/${oneTimeToken}`
       
+      // Determine status and initiatedBy based on request
+      const status = params.status === 'EXTERNAL' ? AuthorizationStatus.EXTERNAL : AuthorizationStatus.HOLDER_REQUESTED
+      const initiatedBy = params.status === 'EXTERNAL' ? AuthorizationInitiator.SYSTEM : AuthorizationInitiator.HOLDER
+      
       // Create authorization request in database
       const authorization = await prisma.authorization.create({
         data: {
@@ -388,11 +538,11 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
           currency: params.currencyCode,
           holderAddress: params.holderAddress,
           limit,
-          status: AuthorizationStatus.HOLDER_REQUESTED,
-          initiatedBy: AuthorizationInitiator.HOLDER,
+          status,
+          initiatedBy,
           txHash: null,
-          external: false,
-          externalSource: null
+          external: params.status === 'EXTERNAL',
+          externalSource: params.status === 'EXTERNAL' ? 'ledger-detected' : null
         }
       })
       

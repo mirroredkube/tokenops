@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ensureJson } from '@/lib/api'
+import { getTenantApiUrl } from '@/lib/tenantApi'
 import FormField from './FormField'
 import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
@@ -377,12 +378,20 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
     }
 
     try {
-      const { data, error } = await api.GET(`/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}` as any, {})
+      const response = await fetch(`${getTenantApiUrl()}/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
 
-      if (error) {
-        throw new Error((error as any).error || 'Failed to check authorization status')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to check authorization status')
       }
 
+      const data = await response.json()
       return data
     } catch (err: any) {
       console.error('Error checking authorization status:', err)
@@ -411,16 +420,24 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       console.log('Asset ID being used:', selectedAsset.id)
       console.log('Checking trustline for:', trustlineCheckData)
       
-      const apiUrl = `/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}`
+      const apiUrl = `${getTenantApiUrl()}/v1/assets/${selectedAsset.id}/authorizations/${trustlineCheckData.holderAddress}`
       console.log('API URL:', apiUrl)
       
-      const { data, error } = await api.GET(apiUrl as any, {})
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
 
-      console.log('API response:', { data, error })
-
-      if (error && typeof error === 'object' && 'error' in error) {
-        throw new Error((error as any).error || 'Failed to check trustline')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to check trustline')
       }
+
+      const data = await response.json()
+      console.log('API response:', { data })
 
       if (!data) {
         throw new Error('No response data received')
@@ -515,16 +532,92 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       
       // Check if authorization exists and is in ISSUER_AUTHORIZED state
       if (!authData.exists) {
-        throw new Error('No authorization found. Please create an authorization first using the Authorization Flow.')
+        // Save as pending issuance instead of throwing error
+        const pendingResult = await savePendingIssuance()
+        const message = pendingResult.message === 'Using existing pending issuance' 
+          ? 'No authorization found. A pending issuance already exists for this asset and holder. Please create an authorization first using the Authorization Flow.'
+          : 'No authorization found. Your issuance has been saved as pending. Please create an authorization first using the Authorization Flow.'
+        throw new Error(message)
       }
 
       if (authData.status !== 'ISSUER_AUTHORIZED') {
-        throw new Error(`Authorization exists but is not authorized. Current status: ${authData.status}. Please complete the authorization process first.`)
+        // Save as pending issuance instead of throwing error
+        const pendingResult = await savePendingIssuance()
+        const message = pendingResult.message === 'Using existing pending issuance'
+          ? `Authorization exists but is not ready. Current status: ${authData.status}. A pending issuance already exists for this asset and holder. Please complete the authorization process first.`
+          : `Authorization exists but is not ready. Current status: ${authData.status}. Your issuance has been saved as pending. Please complete the authorization process first.`
+        throw new Error(message)
       }
 
       return authData
     } catch (err: any) {
       console.error('Error validating authorization:', err)
+      throw err
+    }
+  }
+
+  // Save issuance as pending when authorization is not ready
+  const savePendingIssuance = async () => {
+    if (!selectedAsset || !trustlineCheckData.holderAddress) {
+      throw new Error('No asset selected or holder address provided')
+    }
+
+    try {
+      // Create a pending issuance
+      const response = await fetch(`${getTenantApiUrl()}/v1/assets/${selectedAsset.id}/issuances`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          holder: trustlineCheckData.holderAddress,
+          amount: '1000000', // Default amount, will be updated later
+          anchor: false,
+          status: 'PENDING' // Save as pending
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        
+        // Handle duplicate pending issuance case
+        if (response.status === 409 && errorData.existingIssuanceId) {
+          // Store the existing pending issuance ID for later continuation
+          sessionStorage.setItem('pendingIssuanceId', errorData.existingIssuanceId)
+          sessionStorage.setItem('issuanceData', JSON.stringify({
+            selectedAssetId: selectedAsset.id,
+            holderAddress: trustlineCheckData.holderAddress,
+            currencyCode: trustlineCheckData.currencyCode,
+            issuerAddress: trustlineCheckData.issuerAddress,
+            pendingIssuanceId: errorData.existingIssuanceId
+          }))
+          
+          // Return the existing issuance info
+          return {
+            issuanceId: errorData.existingIssuanceId,
+            message: 'Using existing pending issuance'
+          }
+        }
+        
+        throw new Error(errorData.error || 'Failed to save pending issuance')
+      }
+
+      const data = await response.json()
+
+      // Store the pending issuance ID for later continuation
+      sessionStorage.setItem('pendingIssuanceId', data.issuanceId)
+      sessionStorage.setItem('issuanceData', JSON.stringify({
+        selectedAssetId: selectedAsset.id,
+        holderAddress: trustlineCheckData.holderAddress,
+        currencyCode: trustlineCheckData.currencyCode,
+        issuerAddress: trustlineCheckData.issuerAddress,
+        pendingIssuanceId: data.issuanceId
+      }))
+
+      return data
+    } catch (err: any) {
+      console.error('Error saving pending issuance:', err)
       throw err
     }
   }
@@ -1348,34 +1441,34 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           }
                         </p>
                         
-                        {/* Authorization Required Message */}
+                        {/* Pending Issuance Message */}
                         {!trustlineCheckResult.exists && (
-                          <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-xl">
+                          <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-xl">
                             <div className="flex items-start gap-4">
                               <div className="flex-shrink-0">
-                                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               </div>
                               <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-amber-900 mb-3">Authorization Required</h3>
-                                <p className="text-amber-800 mb-4">
-                                  You need to create an authorization before issuing tokens. The holder must set up their trustline first.
+                                <h3 className="text-lg font-semibold text-blue-900 mb-3">Issuance Saved as Pending</h3>
+                                <p className="text-blue-800 mb-4">
+                                  Your issuance has been saved in pending state. You can now create the authorization and return here to complete the issuance.
                                 </p>
                                 <div className="flex items-center gap-3">
                                   <button
                                     type="button"
                                     onClick={redirectToAuthorizationFlow}
                                     disabled={!selectedAsset || !trustlineCheckData.holderAddress || !trustlineCheckData.currencyCode}
-                                    className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                                   >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>
                                     Go to Authorization Flow
                                   </button>
-                                  <span className="text-sm text-amber-700">
-                                    Return here after authorization is complete
+                                  <span className="text-sm text-blue-700">
+                                    Your issuance is safely saved and waiting
                                   </span>
                                 </div>
                               </div>

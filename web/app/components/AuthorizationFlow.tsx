@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ensureJson } from '@/lib/api'
+import { getTenantApiUrl } from '@/lib/tenantApi'
 import FormField from './FormField'
 import TransactionResult from './TransactionResult'
 import LedgerLogo from './LedgerLogo'
@@ -61,6 +62,63 @@ export default function AuthorizationFlow() {
   const [result, setResult] = useState<AuthorizationResult>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authorizationStatus, setAuthorizationStatus] = useState<'checking' | 'external' | 'none' | 'requested' | 'awaiting_authorization'>('checking')
+  const [existingAuthorization, setExistingAuthorization] = useState<any>(null)
+
+  // Check authorization status when holder address or asset changes
+  const checkAuthorizationStatus = async () => {
+    if (!selectedAsset || !authorizationData.holderAddress || authorizationData.holderAddress.trim() === '') {
+      setAuthorizationStatus('checking')
+      setExistingAuthorization(null)
+      return
+    }
+
+    // Only proceed if we have a valid XRPL address format
+    if (!authorizationData.holderAddress.match(/^r[a-zA-Z0-9]{24,34}$/)) {
+      setAuthorizationStatus('checking')
+      setExistingAuthorization(null)
+      return
+    }
+
+    try {
+      // Check authorization status (this now checks both ledger and database)
+      const response = await fetch(`${getTenantApiUrl()}/v1/assets/${selectedAsset.id}/authorizations/${authorizationData.holderAddress}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setExistingAuthorization(data)
+        
+        if (data.exists) {
+          // Trustline exists - check status
+          if (data.status === 'EXTERNAL' || data.status === 'ISSUER_AUTHORIZED') {
+            setAuthorizationStatus('external')
+          } else if (data.status === 'AWAITING_ISSUER_AUTHORIZATION') {
+            setAuthorizationStatus('awaiting_authorization')
+          } else {
+            setAuthorizationStatus('requested')
+          }
+        } else {
+          setAuthorizationStatus('none')
+        }
+      } else {
+        setAuthorizationStatus('none')
+      }
+    } catch (error) {
+      console.error('Error checking authorization status:', error)
+      setAuthorizationStatus('none')
+    }
+  }
+
+  // Check authorization status when holder address or asset changes
+  useEffect(() => {
+    checkAuthorizationStatus()
+  }, [selectedAsset, authorizationData.holderAddress])
 
   // Restore issuance data when coming from issuance flow
   useEffect(() => {
@@ -238,6 +296,109 @@ export default function AuthorizationFlow() {
     } catch (err: any) {
       console.error('Error creating limit update authorization:', err)
       setError(err.message || 'Failed to create limit update authorization entry')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Create external authorization for existing trustline
+  const createExternalAuthorization = async () => {
+    if (!selectedAsset) {
+      setError('Please select an asset first')
+      return
+    }
+
+    if (!authorizationData.holderAddress) {
+      setError('Please enter a holder address')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${getTenantApiUrl()}/v1/assets/${selectedAsset.id}/authorizations/${authorizationData.holderAddress}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          params: {
+            limit: authorizationData.limit,
+            holderAddress: authorizationData.holderAddress,
+            currencyCode: selectedAsset.code,
+            issuerAddress: selectedAsset.issuer,
+            noRipple: false,
+            requireAuth: true,
+            status: 'EXTERNAL'
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create external authorization')
+      }
+
+      const data = await response.json()
+      setResult({
+        authorizationId: data.id,
+        message: 'External authorization created successfully. You can now proceed with issuance.'
+      })
+      setCurrentStep('success')
+      
+      // Refresh authorization status
+      await checkAuthorizationStatus()
+    } catch (err: any) {
+      console.error('Error creating external authorization:', err)
+      setError(err.message || 'Failed to create external authorization')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Authorize existing request
+  const authorizeExistingRequest = async () => {
+    if (!existingAuthorization?.id) {
+      setError('No authorization request found to authorize')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${getTenantApiUrl()}/v1/authorization-requests/${existingAuthorization.id}/authorize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          issuerLimit: authorizationData.limit
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to authorize request')
+      }
+
+      const data = await response.json()
+      setResult({
+        authorizationId: data.authorizationId,
+        txId: data.txHash,
+        explorer: data.explorer,
+        message: 'Authorization completed successfully. You can now proceed with issuance.'
+      })
+      setCurrentStep('success')
+      
+      // Refresh authorization status
+      await checkAuthorizationStatus()
+    } catch (err: any) {
+      console.error('Error authorizing request:', err)
+      setError(err.message || 'Failed to authorize request')
     } finally {
       setLoading(false)
     }
@@ -888,31 +1049,98 @@ export default function AuthorizationFlow() {
               <p className="text-sm text-gray-500 mt-1">{t('authorizations:authorizationSetup.fields.limitHint', 'Maximum amount the holder is willing to accept')}</p>
             </FormField>
 
-            <FormField 
-              label={t('authorizations:authorizationSetup.fields.authorizationRequest', 'Authorization Request')} 
-              required
-              helperText={t('authorizations:authorizationSetup.fields.authorizationRequestHint', 'Send a secure authorization request to the holder')}
-            >
+            {/* Dynamic Authorization Status Section */}
+            {authorizationStatus === 'checking' && selectedAsset && authorizationData.holderAddress && authorizationData.holderAddress.match(/^r[a-zA-Z0-9]{24,34}$/) && (
+              <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Checking Authorization Status</p>
+                    <p className="text-sm text-blue-700">Please wait while we check the current authorization status...</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {authorizationStatus === 'external' && (
               <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
                 <div className="flex items-center gap-3">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-sm font-medium text-green-900">Send Authorization Request</p>
-                    <p className="text-sm text-green-700">Send a secure authorization request to the holder to set up their trustline</p>
+                    <p className="text-sm font-medium text-green-900">Trustline Already Exists</p>
+                    <p className="text-sm text-green-700">A trustline already exists for this holder. You can proceed with issuance or create an external authorization record.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={createExternalAuthorization}
+                  disabled={loading}
+                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Creating External Authorization...' : 'Create External Authorization'}
+                </button>
+              </div>
+            )}
+
+            {authorizationStatus === 'none' && (
+              <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">No Trustline Found</p>
+                    <p className="text-sm text-blue-700">No trustline exists for this holder. Send an authorization request to the holder to set up their trustline.</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={createAuthorizationRequest}
                   disabled={loading || !selectedAsset || !authorizationData.holderAddress || !authorizationData.currencyCode}
-                  className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Creating Request...' : 'Send Authorization Request'}
+                  {loading ? 'Sending Request...' : 'Send Authorization Request'}
                 </button>
               </div>
-            </FormField>
+            )}
+
+            {authorizationStatus === 'awaiting_authorization' && (
+              <div className="p-4 bg-orange-50 border-2 border-orange-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-orange-900">Awaiting Your Authorization</p>
+                    <p className="text-sm text-orange-700">The holder has set up their trustline. You can now authorize it to complete the process.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={authorizeExistingRequest}
+                  disabled={loading}
+                  className="mt-3 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Authorizing...' : 'Authorize Trustline'}
+                </button>
+              </div>
+            )}
+
+            {authorizationStatus === 'requested' && (
+              <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-yellow-900">Authorization Request Sent</p>
+                    <p className="text-sm text-yellow-700">An authorization request has been sent to the holder. Please wait for them to set up their trustline.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="flex items-center">
@@ -958,25 +1186,6 @@ export default function AuthorizationFlow() {
                 className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 hover:border-gray-400"
               >
                 {t('authorizations:actions.backToAssets', '← Back to Assets')}
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 disabled:opacity-50 font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-600 border-t-transparent"></div>
-                    {t('authorizations:actions.creatingAuthorization', 'Creating Authorization...')}
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {t('authorizations:actions.createAuthorization', 'Create Authorization')}
-                  </>
-                )}
               </button>
             </div>
           </form>

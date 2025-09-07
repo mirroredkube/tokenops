@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
+import { getTenantApiUrl } from '@/lib/tenantApi'
 import { Eye, RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle, Plus } from 'lucide-react'
 import CustomDropdown from '../../../components/CustomDropdown'
 import InfoPopup from '../../../components/InfoPopup'
@@ -57,15 +58,22 @@ export default function IssuanceHistoryPage() {
         ...(filters.assetId && { assetId: filters.assetId })
       })
 
-      const { data, error } = await api.GET(`/v1/issuances?${queryParams}` as any, {})
-      
-      if (error) {
-        throw new Error(error.error || 'Failed to fetch issuances')
+      const response = await fetch(`${getTenantApiUrl()}/v1/issuances?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch issuances')
       }
 
-      const response = data as IssuanceListResponse
-      setIssuances(response.items || [])
-      setPagination(prev => ({ ...prev, total: response.total }))
+      const data = await response.json() as IssuanceListResponse
+      setIssuances(data.items || [])
+      setPagination(prev => ({ ...prev, total: data.total }))
     } catch (err: any) {
       console.error('Error fetching issuances:', err)
       setError(err.message || 'Failed to fetch issuances')
@@ -89,11 +97,20 @@ export default function IssuanceHistoryPage() {
 
   const handleRefreshStatus = async (issuanceId: string, assetId: string) => {
     try {
-      const { data, error } = await api.GET(`/v1/assets/${assetId}/issuances/${issuanceId}?refresh=true` as any, {})
+      const response = await fetch(`${getTenantApiUrl()}/v1/assets/${assetId}/issuances/${issuanceId}?refresh=true`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
       
-      if (error) {
-        throw new Error(error.error || 'Failed to refresh status')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to refresh status')
       }
+
+      const data = await response.json()
 
       // Update the issuance in the list
       setIssuances(prev => prev.map(issuance => 
