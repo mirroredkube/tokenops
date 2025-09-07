@@ -11,7 +11,7 @@ import CustomDropdown from './CustomDropdown'
 import InfoPopup from './InfoPopup'
 
 type LedgerType = 'XRPL' | 'HEDERA' | 'ETHEREUM'
-type Step = 'ledger-selection' | 'asset-selection' | 'authorization-setup' | 'success' | 'coming-soon'
+type Step = 'ledger-selection' | 'asset-selection' | 'authorization-setup' | 'complete' | 'success' | 'coming-soon'
 
 interface AuthorizationData {
   currencyCode: string
@@ -719,7 +719,7 @@ export default function AuthorizationFlow() {
         authorizationId: responseData.authorizationId
       })
 
-      setCurrentStep('success')
+      setCurrentStep('complete')
     } catch (err: any) {
       console.error('Authorization submit error:', err)
       setError(err.message || 'Failed to create authorization')
@@ -741,56 +741,135 @@ export default function AuthorizationFlow() {
   if (currentStep === 'ledger-selection') {
     return (
       <div className="max-w-4xl mx-auto">
-                {/* Flow Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center relative">
-            {/* Background Lines */}
-            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-80 h-0.5 bg-gray-300"></div>
+                {/* Modern Progress Indicator */}
+        <div className="mb-6">
+          <div className="relative">
+            {/* Background line */}
+            <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
             
-            {/* Step 1: Select Ledger - Active */}
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
-                <div className="absolute inset-0 bg-gray-800 rounded-full animate-ping opacity-20"></div>
-                <svg className="w-6 h-6 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectLedger', 'Select Ledger')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step1', 'Step 1')}</div>
-              </div>
-            </div>
+            {/* Progress line */}
+            <div 
+              className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
+              style={{ 
+                width: `${(['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep) / 3) * 100}%` 
+              }}
+            ></div>
             
-            {/* Step 2: Select Asset - Inactive */}
-            <div className="flex flex-col items-center relative z-10 ml-16">
-              <div className="w-12 h-12 border-2 border-gray-300 text-gray-400 rounded-full flex items-center justify-center mb-2 relative">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectAsset', 'Select Asset')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step2', 'Step 2')}</div>
-              </div>
-            </div>
-            
-            {/* Step 3: Authorization - Inactive */}
-            <div className="flex flex-col items-center relative z-10 ml-16">
-              <div className="w-12 h-12 border-2 border-gray-300 text-gray-400 rounded-full flex items-center justify-center mb-2 relative">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.authorizationSetup', 'Authorization')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step3', 'Step 3')}</div>
-              </div>
+            <div className="flex items-center justify-between relative z-10">
+              {[
+                { 
+                  step: 'ledger-selection', 
+                  label: t('authorizations:flow.steps.selectLedger', 'Select Ledger'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'asset-selection', 
+                  label: t('authorizations:flow.steps.selectAsset', 'Select Asset'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'authorization-setup', 
+                  label: t('authorizations:flow.steps.authorizationSetup', 'Authorization Setup'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'complete', 
+                  label: t('authorizations:flow.steps.complete', 'Complete'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )
+                }
+              ].map((item, index) => {
+                const stepIndex = ['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep)
+                const isActive = currentStep === item.step
+                const isCompleted = index < stepIndex
+                const isUpcoming = index > stepIndex
+                
+                return (
+                  <div key={item.step} className="flex flex-col items-center">
+                    {/* Step Circle */}
+                    <div className={`
+                      relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
+                      ${isActive 
+                        ? 'bg-gray-800 border-gray-800 text-white shadow-sm scale-110' 
+                        : isCompleted 
+                          ? 'bg-gray-600 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                      }
+                      ${isUpcoming ? 'opacity-60' : 'opacity-100'}
+                    `}>
+                      {isCompleted ? (
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-5 h-5">{item.icon}</div>
+                      )}
+                      
+                      {/* Enhanced pulse animation for active step (except Complete) */}
+                      {isActive && item.step !== 'complete' && (
+                        <>
+                          <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-40"></div>
+                          <div className="absolute inset-0 rounded-full bg-gray-500 animate-pulse opacity-30"></div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Step Label */}
+                    <div className="mt-3 text-center">
+                      <span className={`
+                        text-sm font-medium transition-all duration-300 leading-tight
+                        ${isActive 
+                          ? 'text-gray-900' 
+                          : isCompleted 
+                            ? 'text-gray-700' 
+                            : 'text-gray-500'
+                        }
+                        ${isActive ? 'scale-105' : ''}
+                      `}>
+                        {item.label}
+                      </span>
+                      
+                      {/* Step number */}
+                      <div className={`
+                        mt-1 text-xs font-mono transition-all duration-300
+                        ${isActive 
+                          ? 'text-gray-600' 
+                          : isCompleted 
+                            ? 'text-gray-500' 
+                            : 'text-gray-400'
+                        }
+                      `}>
+                        Step {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
           
-          {/* Progress Percentage */}
-          <div className="text-center mt-4">
-            <span className="text-sm font-medium text-gray-800">{t('authorizations:flow.progress', 'Progress')}: 33%</span>
+          {/* Progress percentage */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
+              <span className="text-sm font-medium text-gray-600">
+                {t('authorizations:flow.progress', 'Progress')}: {Math.round((['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep) / 3) * 100)}%
+              </span>
+            </div>
           </div>
         </div>
 
@@ -840,56 +919,135 @@ export default function AuthorizationFlow() {
   if (currentStep === 'asset-selection') {
     return (
       <div className="max-w-4xl mx-auto">
-        {/* Flow Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center relative">
-            {/* Background Lines */}
-            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-80 h-0.5 bg-gray-800"></div>
+        {/* Modern Progress Indicator */}
+        <div className="mb-6">
+          <div className="relative">
+            {/* Background line */}
+            <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
             
-            {/* Step 1: Select Ledger - Completed */}
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectLedger', 'Select Ledger')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step1', 'Step 1')}</div>
-              </div>
-            </div>
+            {/* Progress line */}
+            <div 
+              className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
+              style={{ 
+                width: `${(['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep) / 3) * 100}%` 
+              }}
+            ></div>
             
-            {/* Step 2: Select Asset - Active */}
-            <div className="flex flex-col items-center relative z-10 ml-16">
-              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
-                <div className="absolute inset-0 bg-gray-800 rounded-full animate-ping opacity-20"></div>
-                <svg className="w-6 h-6 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectAsset', 'Select Asset')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step2', 'Step 2')}</div>
-              </div>
-            </div>
-            
-            {/* Step 3: Authorization - Inactive */}
-            <div className="flex flex-col items-center relative z-10 ml-16">
-              <div className="w-12 h-12 border-2 border-gray-300 text-gray-400 rounded-full flex items-center justify-center mb-2 relative">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.authorizationSetup', 'Authorization')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step3', 'Step 3')}</div>
-              </div>
+            <div className="flex items-center justify-between relative z-10">
+              {[
+                { 
+                  step: 'ledger-selection', 
+                  label: t('authorizations:flow.steps.selectLedger', 'Select Ledger'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'asset-selection', 
+                  label: t('authorizations:flow.steps.selectAsset', 'Select Asset'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'authorization-setup', 
+                  label: t('authorizations:flow.steps.authorizationSetup', 'Authorization Setup'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'complete', 
+                  label: t('authorizations:flow.steps.complete', 'Complete'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )
+                }
+              ].map((item, index) => {
+                const stepIndex = ['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep)
+                const isActive = currentStep === item.step
+                const isCompleted = index < stepIndex
+                const isUpcoming = index > stepIndex
+                
+                return (
+                  <div key={item.step} className="flex flex-col items-center">
+                    {/* Step Circle */}
+                    <div className={`
+                      relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
+                      ${isActive 
+                        ? 'bg-gray-800 border-gray-800 text-white shadow-sm scale-110' 
+                        : isCompleted 
+                          ? 'bg-gray-600 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                      }
+                      ${isUpcoming ? 'opacity-60' : 'opacity-100'}
+                    `}>
+                      {isCompleted ? (
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-5 h-5">{item.icon}</div>
+                      )}
+                      
+                      {/* Enhanced pulse animation for active step (except Complete) */}
+                      {isActive && item.step !== 'complete' && (
+                        <>
+                          <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-40"></div>
+                          <div className="absolute inset-0 rounded-full bg-gray-500 animate-pulse opacity-30"></div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Step Label */}
+                    <div className="mt-3 text-center">
+                      <span className={`
+                        text-sm font-medium transition-all duration-300 leading-tight
+                        ${isActive 
+                          ? 'text-gray-900' 
+                          : isCompleted 
+                            ? 'text-gray-700' 
+                            : 'text-gray-500'
+                        }
+                        ${isActive ? 'scale-105' : ''}
+                      `}>
+                        {item.label}
+                      </span>
+                      
+                      {/* Step number */}
+                      <div className={`
+                        mt-1 text-xs font-mono transition-all duration-300
+                        ${isActive 
+                          ? 'text-gray-600' 
+                          : isCompleted 
+                            ? 'text-gray-500' 
+                            : 'text-gray-400'
+                        }
+                      `}>
+                        Step {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
           
-          {/* Progress Percentage */}
-          <div className="text-center mt-4">
-            <span className="text-sm font-medium text-gray-800">{t('authorizations:flow.progress', 'Progress')}: 67%</span>
+          {/* Progress percentage */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
+              <span className="text-sm font-medium text-gray-600">
+                {t('authorizations:flow.progress', 'Progress')}: {Math.round((['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep) / 3) * 100)}%
+              </span>
+            </div>
           </div>
         </div>
 
@@ -975,56 +1133,135 @@ export default function AuthorizationFlow() {
   if (currentStep === 'authorization-setup') {
     return (
       <div className="max-w-2xl mx-auto">
-                {/* Flow Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center relative">
-            {/* Background Lines */}
-            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-80 h-0.5 bg-gray-800"></div>
+                {/* Modern Progress Indicator */}
+        <div className="mb-6">
+          <div className="relative">
+            {/* Background line */}
+            <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
             
-            {/* Step 1: Select Ledger - Completed */}
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectLedger', 'Select Ledger')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step1', 'Step 1')}</div>
-              </div>
-            </div>
+            {/* Progress line */}
+            <div 
+              className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
+              style={{ 
+                width: `${(['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep) / 3) * 100}%` 
+              }}
+            ></div>
             
-            {/* Step 2: Select Asset - Completed */}
-            <div className="flex flex-col items-center relative z-10 ml-16">
-              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.selectAsset', 'Select Asset')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step2', 'Step 2')}</div>
-              </div>
-            </div>
-            
-            {/* Step 3: Authorization - Active */}
-            <div className="flex flex-col items-center relative z-10 ml-16">
-              <div className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center mb-2 relative">
-                <div className="absolute inset-0 bg-gray-800 rounded-full animate-ping opacity-20"></div>
-                <svg className="w-6 h-6 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-800">{t('authorizations:flow.steps.authorizationSetup', 'Authorization')}</div>
-                <div className="text-xs text-gray-500">{t('authorizations:flow.step3', 'Step 3')}</div>
-              </div>
+            <div className="flex items-center justify-between relative z-10">
+              {[
+                { 
+                  step: 'ledger-selection', 
+                  label: t('authorizations:flow.steps.selectLedger', 'Select Ledger'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'asset-selection', 
+                  label: t('authorizations:flow.steps.selectAsset', 'Select Asset'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'authorization-setup', 
+                  label: t('authorizations:flow.steps.authorizationSetup', 'Authorization Setup'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'complete', 
+                  label: t('authorizations:flow.steps.complete', 'Complete'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )
+                }
+              ].map((item, index) => {
+                const stepIndex = ['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep)
+                const isActive = currentStep === item.step
+                const isCompleted = index < stepIndex
+                const isUpcoming = index > stepIndex
+                
+                return (
+                  <div key={item.step} className="flex flex-col items-center">
+                    {/* Step Circle */}
+                    <div className={`
+                      relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
+                      ${isActive 
+                        ? 'bg-gray-800 border-gray-800 text-white shadow-sm scale-110' 
+                        : isCompleted 
+                          ? 'bg-gray-600 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                      }
+                      ${isUpcoming ? 'opacity-60' : 'opacity-100'}
+                    `}>
+                      {isCompleted ? (
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-5 h-5">{item.icon}</div>
+                      )}
+                      
+                      {/* Enhanced pulse animation for active step (except Complete) */}
+                      {isActive && item.step !== 'complete' && (
+                        <>
+                          <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-40"></div>
+                          <div className="absolute inset-0 rounded-full bg-gray-500 animate-pulse opacity-30"></div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Step Label */}
+                    <div className="mt-3 text-center">
+                      <span className={`
+                        text-sm font-medium transition-all duration-300 leading-tight
+                        ${isActive 
+                          ? 'text-gray-900' 
+                          : isCompleted 
+                            ? 'text-gray-700' 
+                            : 'text-gray-500'
+                        }
+                        ${isActive ? 'scale-105' : ''}
+                      `}>
+                        {item.label}
+                      </span>
+                      
+                      {/* Step number */}
+                      <div className={`
+                        mt-1 text-xs font-mono transition-all duration-300
+                        ${isActive 
+                          ? 'text-gray-600' 
+                          : isCompleted 
+                            ? 'text-gray-500' 
+                            : 'text-gray-400'
+                        }
+                      `}>
+                        Step {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
           
-          {/* Progress Percentage */}
-          <div className="text-center mt-4">
-            <span className="text-sm font-medium text-gray-800">{t('authorizations:flow.progress', 'Progress')}: 100%</span>
+          {/* Progress percentage */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
+              <span className="text-sm font-medium text-gray-600">
+                {t('authorizations:flow.progress', 'Progress')}: {Math.round((['ledger-selection', 'asset-selection', 'authorization-setup', 'complete', 'success'].indexOf(currentStep) / 3) * 100)}%
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1181,7 +1418,7 @@ export default function AuthorizationFlow() {
                   type="button"
                   onClick={createAuthorizationRequest}
                   disabled={loading || !selectedAsset || !authorizationData.holderAddress || !authorizationData.currencyCode || pendingRequest}
-                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="mt-3 px-4 py-2 border-2 border-blue-600 text-blue-600 bg-transparent rounded-lg hover:bg-blue-50 font-medium text-sm transition-colors duration-200 disabled:border-gray-400 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Sending Request...' : 'Send Authorization Request'}
                 </button>
@@ -1288,9 +1525,354 @@ export default function AuthorizationFlow() {
     )
   }
 
+  if (currentStep === 'complete') {
+    return (
+      <div className="max-w-4xl mx-auto">
+        {/* Modern Progress Indicator */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Authorization Flow Complete</h3>
+          <div className="relative">
+            {/* Background line */}
+            <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
+            
+            {/* Progress line - show full progress on complete step */}
+            <div 
+              className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
+              style={{ 
+                width: '100%' 
+              }}
+            ></div>
+            
+            <div className="flex items-center justify-between relative z-10">
+              {[
+                { 
+                  step: 'ledger-selection', 
+                  label: t('authorizations:flow.steps.selectLedger', 'Select Ledger'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'asset-selection', 
+                  label: t('authorizations:flow.steps.selectAsset', 'Select Asset'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'authorization-setup', 
+                  label: t('authorizations:flow.steps.authorizationSetup', 'Authorization Setup'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'complete', 
+                  label: t('authorizations:flow.steps.complete', 'Complete'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )
+                }
+              ].map((item, index) => {
+                // On the 'complete' step, show all steps as completed
+                const isActive = false // No active step on complete screen
+                const isCompleted = true // All steps completed
+                const isUpcoming = false // No upcoming steps
+                
+                return (
+                  <div key={item.step} className="flex flex-col items-center">
+                    {/* Step Circle */}
+                    <div className={`
+                      relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
+                      ${isActive 
+                        ? 'bg-gray-800 border-gray-800 text-white shadow-sm scale-110' 
+                        : isCompleted 
+                          ? 'bg-gray-600 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                      }
+                      ${isUpcoming ? 'opacity-60' : 'opacity-100'}
+                    `}>
+                      {isCompleted ? (
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-5 h-5">{item.icon}</div>
+                      )}
+                      
+                      {/* Enhanced pulse animation for active step (except Complete) */}
+                      {isActive && item.step !== 'complete' && (
+                        <>
+                          <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-40"></div>
+                          <div className="absolute inset-0 rounded-full bg-gray-500 animate-pulse opacity-30"></div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Step Label */}
+                    <div className="mt-3 text-center">
+                      <span className={`
+                        text-sm font-medium transition-all duration-300 leading-tight
+                        ${isActive 
+                          ? 'text-gray-900' 
+                          : isCompleted 
+                            ? 'text-gray-700' 
+                            : 'text-gray-500'
+                        }
+                        ${isActive ? 'scale-105' : ''}
+                      `}>
+                        {item.label}
+                      </span>
+                      
+                      {/* Step number */}
+                      <div className={`
+                        mt-1 text-xs font-mono transition-all duration-300
+                        ${isActive 
+                          ? 'text-gray-600' 
+                          : isCompleted 
+                            ? 'text-gray-500' 
+                            : 'text-gray-400'
+                        }
+                      `}>
+                        Step {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          
+          {/* Progress percentage */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
+              <span className="text-sm font-medium text-gray-600">
+                {t('authorizations:flow.progress', 'Progress')}: 100%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Authorization Request Created</h2>
+            <p className="text-gray-600 mb-6">
+              Your authorization request has been successfully created. Share the unique link below with the holder to complete the authorization process.
+            </p>
+
+            {/* Authorization Link */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Authorization Link
+              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={result.authUrl || ''}
+                  readOnly
+                  className="flex-1 p-2 border border-gray-300 rounded-md bg-white text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (result.authUrl) {
+                      navigator.clipboard.writeText(result.authUrl)
+                      setCopySuccess(true)
+                      setTimeout(() => setCopySuccess(false), 2000)
+                    }
+                  }}
+                  className="px-4 py-2 border-2 border-blue-600 text-blue-600 bg-transparent rounded-lg hover:bg-blue-50 font-medium text-sm transition-colors duration-200"
+                >
+                  {copySuccess ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-center space-x-4">
+              <button
+                type="button"
+                onClick={() => setCurrentStep('success')}
+                className="px-6 py-3 border-2 border-emerald-600 text-emerald-600 bg-transparent rounded-lg hover:bg-emerald-50 font-medium transition-colors duration-200"
+              >
+                View Details →
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentStep('ledger-selection')
+                  setSelectedAsset(null)
+                  setAuthorizationData({
+                    currencyCode: '',
+                    holderAddress: '',
+                    issuerAddress: '',
+                    limit: '1000000000',
+                    noRipple: false,
+                    requireAuth: true
+                  })
+                  setResult({})
+                }}
+                className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-colors duration-200"
+              >
+                Create Another
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (currentStep === 'success') {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
+        {/* Modern Progress Indicator */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Authorization Flow Complete</h3>
+          <div className="relative">
+            {/* Background line */}
+            <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
+            
+            {/* Progress line - show full progress on success step */}
+            <div 
+              className="absolute top-6 left-0 h-0.5 bg-gray-400 rounded-full transition-all duration-700 ease-out"
+              style={{ 
+                width: '100%' 
+              }}
+            ></div>
+            
+            <div className="flex items-center justify-between relative z-10">
+              {[
+                { 
+                  step: 'ledger-selection', 
+                  label: t('authorizations:flow.steps.selectLedger', 'Select Ledger'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'asset-selection', 
+                  label: t('authorizations:flow.steps.selectAsset', 'Select Asset'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'authorization-setup', 
+                  label: t('authorizations:flow.steps.authorizationSetup', 'Authorization Setup'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                    </svg>
+                  )
+                },
+                { 
+                  step: 'complete', 
+                  label: t('authorizations:flow.steps.complete', 'Complete'), 
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )
+                }
+              ].map((item, index) => {
+                // On the 'success' step, show all steps as completed
+                const isActive = false // No active step on success screen
+                const isCompleted = true // All steps completed
+                const isUpcoming = false // No upcoming steps
+                
+                return (
+                  <div key={item.step} className="flex flex-col items-center">
+                    {/* Step Circle */}
+                    <div className={`
+                      relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ease-out transform
+                      ${isActive 
+                        ? 'bg-gray-800 border-gray-800 text-white shadow-sm scale-110' 
+                        : isCompleted 
+                          ? 'bg-gray-600 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                      }
+                      ${isUpcoming ? 'opacity-60' : 'opacity-100'}
+                    `}>
+                      {isCompleted ? (
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-5 h-5">{item.icon}</div>
+                      )}
+                      
+                      {/* Enhanced pulse animation for active step (except Complete) */}
+                      {isActive && item.step !== 'complete' && (
+                        <>
+                          <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-40"></div>
+                          <div className="absolute inset-0 rounded-full bg-gray-500 animate-pulse opacity-30"></div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Step Label */}
+                    <div className="mt-3 text-center">
+                      <span className={`
+                        text-sm font-medium transition-all duration-300 leading-tight
+                        ${isActive 
+                          ? 'text-gray-900' 
+                          : isCompleted 
+                            ? 'text-gray-700' 
+                            : 'text-gray-500'
+                        }
+                        ${isActive ? 'scale-105' : ''}
+                      `}>
+                        {item.label}
+                      </span>
+                      
+                      {/* Step number */}
+                      <div className={`
+                        mt-1 text-xs font-mono transition-all duration-300
+                        ${isActive 
+                          ? 'text-gray-600' 
+                          : isCompleted 
+                            ? 'text-gray-500' 
+                            : 'text-gray-400'
+                        }
+                      `}>
+                        Step {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          
+          {/* Progress percentage */}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center px-4 py-2 bg-gray-50 rounded-full">
+              <span className="text-sm font-medium text-gray-600">
+                {t('authorizations:flow.progress', 'Progress')}: 100%
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-gradient-to-br from-gray-50 to-slate-50 py-8 px-4 rounded-2xl">
           <div className="text-center">
             {/* Success Icon */}
@@ -1428,3 +2010,4 @@ export default function AuthorizationFlow() {
 
   return null
 }
+
