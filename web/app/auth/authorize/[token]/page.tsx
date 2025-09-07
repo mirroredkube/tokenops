@@ -101,9 +101,6 @@ export default function AuthorizationPage() {
       // Call the holder auth endpoint to create Xaman payload
       const response = await fetch(`http://localhost:4000/v1/holder-auth/${authRequest.id}/start`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         credentials: 'include'
       })
       

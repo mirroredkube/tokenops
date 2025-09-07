@@ -59,5 +59,5 @@ export function generateExpirationTime(hours: number = 24): Date {
  * Create a secure authorization URL
  */
 export function createAuthUrl(baseUrl: string, token: string): string {
-  return `${baseUrl}/authorize/${token}`
+  return `${baseUrl}/auth/authorize/${token}`
 }
