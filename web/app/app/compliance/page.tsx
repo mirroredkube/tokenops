@@ -211,6 +211,7 @@ export default function CompliancePage() {
       const endpoint = queryString ? `/v1/compliance/instances?${queryString}` : '/v1/compliance/instances'
       
       console.log('🔍 Fetching compliance requirements with query:', endpoint)
+      console.log('🔍 Current filters:', filters)
       
       // Fetch requirement instances with server-side filtering
       const { data, error } = await api.GET(endpoint as any, {})
@@ -288,8 +289,26 @@ export default function CompliancePage() {
 
   const fetchAllRequirements = async () => {
     try {
-      // Fetch ALL requirements without any filters for Overview tab
-      const { data, error } = await api.GET('/v1/compliance/instances' as any, {})
+      // Build query parameters for server-side filtering
+      const queryParams = new URLSearchParams()
+      
+      // Only add assetId if it's not empty (not "All Assets")
+      if (filters.assetId && filters.assetId.trim() !== '') {
+        queryParams.append('assetId', filters.assetId)
+      }
+      
+      // Only add status if it's not empty (not "All Statuses")
+      if (filters.requirementStatus && filters.requirementStatus.trim() !== '') {
+        queryParams.append('status', filters.requirementStatus)
+      }
+      
+      const queryString = queryParams.toString()
+      const endpoint = queryString ? `/v1/compliance/instances?${queryString}` : '/v1/compliance/instances'
+      
+      console.log('🔍 Fetching all requirements for overview with query:', endpoint)
+      
+      // Fetch ALL requirements with filters for Overview tab
+      const { data, error } = await api.GET(endpoint as any, {})
       
       if (error) {
         console.error('Error fetching all requirements:', error)
@@ -344,7 +363,7 @@ export default function CompliancePage() {
       fetchRecords()
       fetchAllRequirements()
     }
-  }, [activeTab, pagination.page])
+  }, [activeTab, pagination.page, filters.assetId, filters.requirementStatus])
 
   // Separate effect for filtering on Overview and Requirements tabs
   useEffect(() => {
@@ -352,9 +371,10 @@ export default function CompliancePage() {
       // For Overview and Requirements tabs, fetch filtered requirements
       fetchComplianceRequirements()
     }
-  }, [activeTab, filters])
+  }, [activeTab, filters.assetId, filters.requirementStatus])
 
   const handleFilterChange = (key: string, value: string) => {
+    console.log('🔍 Filter change:', key, '=', value)
     setFilters(prev => ({ ...prev, [key]: value }))
     setPagination(prev => ({ ...prev, page: 1 })) // Reset to first page
   }
