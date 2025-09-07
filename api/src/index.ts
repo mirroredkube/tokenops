@@ -93,6 +93,7 @@ import v1OrganizationRoutes from './routes/v1/organizations.js'
 import v1ProductRoutes from './routes/v1/products.js'
 import v1IssuerAddressRoutes from './routes/v1/issuer-addresses.js'
 import v1AuthorizationRequestRoutes from './routes/v1/authorizationRequests.js'
+import v1HolderAuthRoutes from './routes/v1/holderAuth.js'
 
 // Background jobs
 import { startIssuanceWatcherJob } from './jobs/issuanceWatcherJob.js'
@@ -110,6 +111,7 @@ await app.register(v1OrganizationRoutes, { prefix: '/v1' })
 await app.register(v1ProductRoutes,  { prefix: '/v1' })
 await app.register(v1IssuerAddressRoutes, { prefix: '/v1' })
 await app.register(v1AuthorizationRequestRoutes, { prefix: '/v1' })
+await app.register(v1HolderAuthRoutes, { prefix: '/v1' })
 await app.register(v1BalancesRoutes, { prefix: '/v1' })
 
 // ----------------------------------------------------------------------------

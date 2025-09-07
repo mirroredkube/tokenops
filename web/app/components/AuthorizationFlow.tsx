@@ -60,10 +60,12 @@ export default function AuthorizationFlow() {
     requireAuth: true // Default to true for institutional use cases
   })
   const [result, setResult] = useState<AuthorizationResult>({})
+  const [copySuccess, setCopySuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [authorizationStatus, setAuthorizationStatus] = useState<'checking' | 'external' | 'none' | 'requested' | 'awaiting_authorization'>('checking')
   const [existingAuthorization, setExistingAuthorization] = useState<any>(null)
+  const [pendingRequest, setPendingRequest] = useState<any>(null)
 
   // Check authorization status when holder address or asset changes
   const checkAuthorizationStatus = async () => {
@@ -93,6 +95,7 @@ export default function AuthorizationFlow() {
       if (response.ok) {
         const data = await response.json()
         setExistingAuthorization(data)
+        setPendingRequest(data.pendingRequest || null)
         
         if (data.exists) {
           // Trustline exists - check status
@@ -103,11 +106,15 @@ export default function AuthorizationFlow() {
           } else {
             setAuthorizationStatus('requested')
           }
+        } else if (data.pendingRequest) {
+          // We have a pending authorization request
+          setAuthorizationStatus('requested')
         } else {
           setAuthorizationStatus('none')
         }
       } else {
         setAuthorizationStatus('none')
+        setPendingRequest(null)
       }
     } catch (error) {
       console.error('Error checking authorization status:', error)
@@ -426,13 +433,18 @@ export default function AuthorizationFlow() {
         requestedLimit: authorizationData.limit
       })
 
-      // First, check if authorization already exists
+      // First, check if authorization already exists or if there's a pending request
       const existingAuthResponse = await fetch(`http://localhost:4000/v1/assets/${selectedAsset.id}/authorizations/${authorizationData.holderAddress}`)
       
       if (existingAuthResponse.ok) {
         const existingAuth = await existingAuthResponse.json()
         if (existingAuth.exists) {
           setError(`Authorization already exists for this holder and asset. Status: ${existingAuth.status}. You can view it in the authorization history.`)
+          setLoading(false)
+          return
+        }
+        if (existingAuth.pendingRequest) {
+          setError(`An authorization request has already been sent to this holder and is still pending. Request ID: ${existingAuth.pendingRequest.id}. It expires on ${new Date(existingAuth.pendingRequest.expiresAt).toLocaleDateString()}.`)
           setLoading(false)
           return
         }
@@ -454,6 +466,13 @@ export default function AuthorizationFlow() {
       if (!response.ok) {
         const errorData = await response.json()
         
+        // If it's a 409 conflict (duplicate request), refresh the status to show the pending request
+        if (response.status === 409) {
+          await checkAuthorizationStatus()
+          setError(errorData.message || 'Authorization request already exists')
+          return
+        }
+        
         // Use the user-friendly message from the API if available
         const errorMessage = errorData.message || errorData.error || 'Failed to create authorization request'
         setError(errorMessage)
@@ -466,10 +485,11 @@ export default function AuthorizationFlow() {
         throw new Error('No data received from server')
       }
 
-      // Store the result and show success
+      // Store the result and show success (handles both 200 idempotency and 201 new creation)
       setResult({
         id: data.id,
-        authUrl: data.authUrl
+        authUrl: data.authUrl,
+        isNew: response.status === 201 // Track if this is a new creation or existing request
       })
       
       setCurrentStep('success')
@@ -1098,7 +1118,7 @@ export default function AuthorizationFlow() {
                 <button
                   type="button"
                   onClick={createAuthorizationRequest}
-                  disabled={loading || !selectedAsset || !authorizationData.holderAddress || !authorizationData.currencyCode}
+                  disabled={loading || !selectedAsset || !authorizationData.holderAddress || !authorizationData.currencyCode || pendingRequest}
                   className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Sending Request...' : 'Send Authorization Request'}
@@ -1135,8 +1155,20 @@ export default function AuthorizationFlow() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-sm font-medium text-yellow-900">Authorization Request Sent</p>
-                    <p className="text-sm text-yellow-700">An authorization request has been sent to the holder. Please wait for them to set up their trustline.</p>
+                    <p className="text-sm font-medium text-yellow-900">
+                      {pendingRequest ? 'Authorization Request Already Sent' : 'Authorization Request Sent'}
+                    </p>
+                    <p className="text-sm text-yellow-700">
+                      {pendingRequest 
+                        ? `An authorization request was already sent to this holder on ${new Date(pendingRequest.createdAt).toLocaleDateString()}. It expires on ${new Date(pendingRequest.expiresAt).toLocaleDateString()}.`
+                        : 'An authorization request has been sent to the holder. Please wait for them to set up their trustline.'
+                      }
+                    </p>
+                    {pendingRequest && (
+                      <div className="mt-2 text-xs text-yellow-600">
+                        Request ID: {pendingRequest.id}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1206,9 +1238,17 @@ export default function AuthorizationFlow() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('authorizations:success.title', 'Authorization Request Created Successfully!')}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                {result.isNew 
+                  ? t('authorizations:success.title', 'Authorization Request Created Successfully!')
+                  : 'Authorization Request Found'
+                }
+              </h1>
               <p className="text-lg text-gray-600">
-                {t('authorizations:success.description', 'A secure authorization request has been created and is waiting for the holder to set up their trustline. Share the link below with the holder to complete the process.', { ledger: selectedLedger })}
+                {result.isNew 
+                  ? t('authorizations:success.description', 'A secure authorization request has been created and is waiting for the holder to set up their trustline. Share the link below with the holder to complete the process.', { ledger: selectedLedger })
+                  : 'An existing authorization request was found for this holder. You can share the link below with the holder to complete the process.'
+                }
               </p>
             </div>
 
@@ -1232,10 +1272,31 @@ export default function AuthorizationFlow() {
                         {result.authUrl}
                       </code>
                       <button
-                        onClick={() => navigator.clipboard.writeText(result.authUrl || '')}
-                        className="inline-flex items-center px-3 py-2 text-green-600 border border-green-600 rounded-lg hover:bg-green-50 transition-colors duration-200 text-sm"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(result.authUrl || '')
+                            setCopySuccess(true)
+                            setTimeout(() => setCopySuccess(false), 2000)
+                          } catch (err) {
+                            console.error('Failed to copy:', err)
+                          }
+                        }}
+                        className={`inline-flex items-center px-3 py-2 border rounded-lg transition-colors duration-200 text-sm ${
+                          copySuccess 
+                            ? 'text-green-600 border-green-600 bg-green-50' 
+                            : 'text-green-600 border-green-600 hover:bg-green-50'
+                        }`}
                       >
-                        Copy Link
+                        {copySuccess ? (
+                          <>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Copied!
+                          </>
+                        ) : (
+                          'Copy Link'
+                        )}
                       </button>
                     </div>
                     <p className="text-xs text-green-600 mt-2">

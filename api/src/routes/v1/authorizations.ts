@@ -214,6 +214,22 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         }
       })
       
+      // Also check for pending authorization requests
+      const pendingRequest = await prisma.authorizationRequest.findFirst({
+        where: {
+          assetId: asset.id,
+          holderAddress: holder,
+          tenantId: (req as TenantRequest).tenant?.id,
+          status: 'INVITED',
+          expiresAt: {
+            gt: new Date() // Not expired
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
+      
       const adapter = getLedgerAdapter()
       const lines = await adapter.getAccountLines({ 
         account: holder, 
@@ -246,6 +262,20 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
               limit: authorization.limit,
               balance: '0',
               authorized: false
+            }
+          })
+        } else if (pendingRequest) {
+          // We have a pending authorization request
+          return reply.send({
+            assetId: asset.id,
+            assetRef: asset.assetRef,
+            holder,
+            exists: false,
+            status: 'HOLDER_REQUESTED',
+            pendingRequest: {
+              id: pendingRequest.id,
+              expiresAt: pendingRequest.expiresAt,
+              requestedLimit: pendingRequest.requestedLimit
             }
           })
         } else {

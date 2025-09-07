@@ -9,7 +9,6 @@ datasource db {
 
 model Organization {
   id              String             @id @default(cuid())
-  subdomain       String             @unique // Lookup alias for tenant isolation
   name            String             @unique @db.VarChar(100)
   legalName       String?            @db.VarChar(200)
   country         String             @db.Char(2)
@@ -20,6 +19,7 @@ model Organization {
   metadata        Json?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+  subdomain       String             @unique
   events          Event[]
   issuerAddresses IssuerAddress[]
   products        Product[]
@@ -94,29 +94,29 @@ model Product {
 }
 
 model Asset {
-  id                   String                @id @default(cuid())
-  assetRef             String                @unique
-  ledger               AssetLedger
-  network              AssetNetwork
-  code                 String
-  decimals             Int
-  complianceMode       ComplianceMode        @default(RECORD_ONLY)
-  controls             Json?
-  registry             Json?
-  metadata             Json?
-  status               AssetStatus           @default(DRAFT)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  productId            String
-  issuingAddressId     String?
-  assetClass           AssetClass            @default(OTHER)
-  issuingAddress       IssuerAddress?        @relation(fields: [issuingAddressId], references: [id])
-  product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
-  authorizations       Authorization[]
+  id                    String                 @id @default(cuid())
+  assetRef              String                 @unique
+  ledger                AssetLedger
+  network               AssetNetwork
+  code                  String
+  decimals              Int
+  complianceMode        ComplianceMode         @default(RECORD_ONLY)
+  controls              Json?
+  registry              Json?
+  metadata              Json?
+  status                AssetStatus            @default(DRAFT)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  productId             String
+  issuingAddressId      String?
+  assetClass            AssetClass             @default(OTHER)
+  issuingAddress        IssuerAddress?         @relation(fields: [issuingAddressId], references: [id])
+  product               Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorizations        Authorization[]
   authorizationRequests AuthorizationRequest[]
-  events               Event[]
-  issuances            Issuance[]
-  requirementInstances RequirementInstance[]
+  events                Event[]
+  issuances             Issuance[]
+  requirementInstances  RequirementInstance[]
 
   @@index([productId])
   @@index([ledger, network])
@@ -308,20 +308,19 @@ model Issuance {
 
 model Authorization {
   id             String                 @id @default(cuid())
-  tenantId       String
   assetId        String
-  ledger         String                 // XRPL-Testnet | XRPL-Mainnet
-  currency       String                 // e.g., CHIMP
-  holderAddress  String
-  limit          String                 // store as string to avoid precision issues
+  limit          String
   status         AuthorizationStatus
-  initiatedBy    AuthorizationInitiator
-  txHash         String?                @db.VarChar(64)
   createdAt      DateTime               @default(now())
-  // Legacy fields for backward compatibility
   issuanceId     String?
+  currency       String
   external       Boolean                @default(false)
   externalSource String?
+  holderAddress  String
+  initiatedBy    AuthorizationInitiator
+  ledger         String
+  tenantId       String
+  txHash         String?                @db.VarChar(64)
   asset          Asset                  @relation(fields: [assetId], references: [id], onDelete: Cascade)
   issuance       Issuance?              @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
 
@@ -333,19 +332,18 @@ model Authorization {
 }
 
 model AuthorizationRequest {
-  id                String                     @id @default(cuid())
-  tenantId          String
-  assetId           String
-  holderAddress     String
-  requestedLimit    String
-  oneTimeTokenHash  String                     // hash, never store raw token
-  authUrl           String
-  status            AuthorizationRequestStatus @default(INVITED)
-  expiresAt         DateTime
-  consumedAt        DateTime?
-  createdAt         DateTime                   @default(now())
-  
-  asset             Asset                      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  id               String                     @id @default(cuid())
+  tenantId         String
+  assetId          String
+  holderAddress    String
+  requestedLimit   String
+  oneTimeTokenHash String
+  authUrl          String
+  status           AuthorizationRequestStatus @default(INVITED)
+  expiresAt        DateTime
+  consumedAt       DateTime?
+  createdAt        DateTime                   @default(now())
+  asset            Asset                      @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, assetId, holderAddress])
 }
@@ -436,26 +434,26 @@ enum AssetStatus {
 
 enum AuthorizationStatus {
   HOLDER_REQUESTED
-  AWAITING_ISSUER_AUTHORIZATION
   ISSUER_AUTHORIZED
   EXTERNAL
   LIMIT_UPDATED
   TRUSTLINE_CLOSED
   FROZEN
   UNFROZEN
+  AWAITING_ISSUER_AUTHORIZATION
 }
 
-enum AuthorizationInitiator { 
-  HOLDER 
-  ISSUER 
-  SYSTEM 
+enum AuthorizationInitiator {
+  HOLDER
+  ISSUER
+  SYSTEM
 }
 
-enum AuthorizationRequestStatus { 
-  INVITED 
-  CONSUMED 
-  EXPIRED 
-  CANCELLED 
+enum AuthorizationRequestStatus {
+  INVITED
+  CONSUMED
+  EXPIRED
+  CANCELLED
 }
 
 enum IssuanceStatus {

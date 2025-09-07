@@ -39,8 +39,12 @@ export default function AuthorizationPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [trustlineStatus, setTrustlineStatus] = useState<TrustlineStatus | null>(null)
-  const [walletConnected, setWalletConnected] = useState(false)
-  const [transactionPending, setTransactionPending] = useState(false)
+  const [xamanPayload, setXamanPayload] = useState<{
+    uuid: string
+    deepLink: string
+    qrPng: string
+  } | null>(null)
+  const [signingStatus, setSigningStatus] = useState<'idle' | 'pending' | 'signed' | 'rejected' | 'expired'>('idle')
   const [transactionHash, setTransactionHash] = useState<string | null>(null)
 
   // Fetch authorization request details
@@ -87,73 +91,76 @@ export default function AuthorizationPage() {
     }
   }
 
-  // Connect wallet and build transaction
-  const connectWallet = async () => {
+  // Start Xaman signing flow
+  const startXamanFlow = async () => {
+    if (!authRequest) return
+    
     try {
-      setWalletConnected(true)
+      setSigningStatus('pending')
       
-      // Build TrustSet transaction for XRPL
-      const trustSetTransaction = {
-        TransactionType: 'TrustSet',
-        Account: authRequest?.holderAddress,
-        LimitAmount: {
-          currency: authRequest?.asset.code,
-          issuer: authRequest?.asset.issuingAddress.address,
-          value: authRequest?.requestedLimit
-        },
-        Flags: 0 // No special flags for now
-      }
-
-      // For now, show the transaction details
-      // In a real implementation, this would integrate with Xaman/XUMM or other wallets
-      console.log('TrustSet transaction:', trustSetTransaction)
-      
-      // Simulate wallet connection
-      setWalletConnected(true)
-    } catch (err) {
-      setError('Failed to connect wallet')
-      setWalletConnected(false)
-    }
-  }
-
-  // Submit transaction (placeholder for wallet integration)
-  const submitTransaction = async () => {
-    try {
-      setTransactionPending(true)
-      
-      // In a real implementation, this would:
-      // 1. Sign the transaction with the holder's wallet
-      // 2. Submit to XRPL network
-      // 3. Wait for validation
-      // 4. Call the holder callback endpoint
-      
-      // Simulate transaction submission
-      const simulatedTxHash = 'simulated_tx_hash_' + Date.now()
-      
-      // Call the holder callback endpoint
-      const response = await fetch(`http://localhost:4000/v1/authorization-requests/${authRequest?.id}/holder-callback`, {
+      // Call the holder auth endpoint to create Xaman payload
+      const response = await fetch(`http://localhost:4000/v1/holder-auth/${authRequest.id}/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          txHash: simulatedTxHash
-        })
+        credentials: 'include'
       })
       
-      if (response.ok) {
-        setTransactionHash(simulatedTxHash)
-        setTransactionPending(false)
-        checkTrustlineStatus()
-      } else {
-        throw new Error('Failed to record transaction')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to start authorization flow')
       }
       
+      const payload = await response.json()
+      setXamanPayload(payload)
+      
+      // Check if mobile device
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      
+      if (isMobile) {
+        // Open Xaman app directly on mobile
+        window.location.href = payload.deepLink
+      }
+      
+      // Start polling for status updates
+      pollSigningStatus(payload.uuid)
+      
     } catch (err) {
-      setError('Failed to submit transaction')
-      setTransactionPending(false)
+      setError(err instanceof Error ? err.message : 'Failed to start authorization flow')
+      setSigningStatus('idle')
     }
   }
+  
+  // Poll for signing status updates
+  const pollSigningStatus = async (uuid: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`http://localhost:4000/v1/holder-auth/${authRequest?.id}/status`)
+        if (response.ok) {
+          const status = await response.json()
+          
+          if (status.status === 'CONSUMED') {
+            setSigningStatus('signed')
+            setTransactionHash('signed') // We don't have the actual tx hash in this simple implementation
+            clearInterval(pollInterval)
+            checkTrustlineStatus()
+          }
+        }
+      } catch (err) {
+        console.error('Error polling signing status:', err)
+      }
+    }, 2000) // Poll every 2 seconds
+    
+    // Stop polling after 10 minutes
+    setTimeout(() => {
+      clearInterval(pollInterval)
+      if (signingStatus === 'pending') {
+        setSigningStatus('expired')
+      }
+    }, 600000)
+  }
+
 
   if (loading) {
     return (
@@ -262,67 +269,117 @@ export default function AuthorizationPage() {
             </div>
           </div>
 
-          {/* Wallet Integration */}
+          {/* Xaman Integration */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Set Up Trustline</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Set Up Trustline with Xaman</h2>
             
-            {!walletConnected ? (
+            {signingStatus === 'idle' && (
               <div className="text-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Connect Your Wallet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Sign with Xaman Wallet</h3>
                 <p className="text-gray-600 mb-6">
-                  Connect your XRPL wallet to set up the trustline securely. We never handle your private keys.
+                  Use your Xaman wallet to securely sign the trustline transaction. We never handle your private keys.
                 </p>
                 <button
-                  onClick={connectWallet}
+                  onClick={startXamanFlow}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
-                  Connect Wallet
+                  Start Authorization
                 </button>
               </div>
-            ) : !transactionHash ? (
+            )}
+            
+            {signingStatus === 'pending' && (
               <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600"></div>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Wallet Connected</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Waiting for Signature</h3>
                 <p className="text-gray-600 mb-6">
-                  Your wallet is connected. Click below to create the trustline transaction.
+                  Please sign the transaction in your Xaman wallet. The page will update automatically when complete.
                 </p>
-                <button
-                  onClick={submitTransaction}
-                  disabled={transactionPending}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-                >
-                  {transactionPending ? 'Submitting...' : 'Create Trustline'}
-                </button>
+                
+                {xamanPayload && (
+                  <div className="space-y-4">
+                    {/* QR Code for Desktop */}
+                    <div className="flex justify-center">
+                      <img 
+                        src={xamanPayload.qrPng} 
+                        alt="Xaman QR Code" 
+                        className="w-48 h-48 border border-gray-200 rounded-lg"
+                      />
+                    </div>
+                    
+                    {/* Deep Link Button */}
+                    <div>
+                      <button
+                        onClick={() => window.open(xamanPayload.deepLink, '_blank')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        Open in Xaman
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
+            )}
+            
+            {signingStatus === 'signed' && (
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Transaction Submitted</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Trustline Created Successfully!</h3>
                 <p className="text-gray-600 mb-4">
-                  Your trustline transaction has been submitted to the network.
+                  Your trustline has been created on the XRPL network. The issuer will now authorize it.
                 </p>
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-gray-600">Transaction Hash:</p>
-                  <p className="text-sm font-mono text-gray-900 break-all">{transactionHash}</p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-green-800">
+                    ✅ Trustline created and recorded in our system
+                  </p>
+                  <p className="text-sm text-green-700 mt-1">
+                    The issuer will be notified and can now authorize your trustline.
+                  </p>
                 </div>
                 <button
                   onClick={checkTrustlineStatus}
                   className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
                 >
                   Check Status
+                </button>
+              </div>
+            )}
+            
+            {(signingStatus === 'rejected' || signingStatus === 'expired') && (
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {signingStatus === 'rejected' ? 'Transaction Rejected' : 'Request Expired'}
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {signingStatus === 'rejected' 
+                    ? 'The transaction was rejected in your wallet. You can try again.'
+                    : 'The authorization request has expired. Please request a new one.'
+                  }
+                </p>
+                <button
+                  onClick={() => {
+                    setSigningStatus('idle')
+                    setXamanPayload(null)
+                  }}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Try Again
                 </button>
               </div>
             )}

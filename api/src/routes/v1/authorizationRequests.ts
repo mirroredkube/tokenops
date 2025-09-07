@@ -135,6 +135,12 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
     
     const { assetId, holderAddress, requestedLimit } = request.body as any
     const tenantId = (request as TenantRequest).tenant?.id
+    const tenantSubdomain = (request as TenantRequest).tenant?.subdomain
+    
+    // Debug logging (can be removed later)
+    console.log('DEBUG: request.tenant =', (request as TenantRequest).tenant)
+    console.log('DEBUG: tenantId =', tenantId)
+    console.log('DEBUG: tenantSubdomain =', tenantSubdomain)
 
     // Generate idempotency key
     const idempotencyKey = generateIdempotencyKey('create_authorization_request', {
@@ -170,11 +176,50 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
         throw new Error('Asset does not belong to tenant')
       }
 
+      // Check for existing pending authorization request
+      const existingRequest = await prisma.authorizationRequest.findFirst({
+        where: {
+          assetId,
+          holderAddress,
+          tenantId,
+          status: 'INVITED',
+          expiresAt: {
+            gt: new Date() // Not expired
+          }
+        }
+      })
+
+      if (existingRequest) {
+        return reply.status(409).send({
+          error: 'Authorization request already exists',
+          message: 'An authorization request has already been sent to this holder and is still pending.',
+          existingRequest: {
+            id: existingRequest.id,
+            createdAt: existingRequest.createdAt,
+            expiresAt: existingRequest.expiresAt
+          }
+        })
+      }
+
       // Generate one-time token
       const token = generateOneTimeToken()
       const tokenHash = hashToken(token)
       const expiresAt = generateExpirationTime(24) // 24 hours
-      const authUrl = createAuthUrl(process.env.UI_ORIGIN || 'http://localhost:3000', token)
+      // Generate tenant-aware authorization URL
+      const baseUrl = process.env.UI_ORIGIN || 'http://localhost:3000'
+      console.log('DEBUG: tenantSubdomain =', tenantSubdomain)
+      console.log('DEBUG: baseUrl =', baseUrl)
+      
+      // Use tenant subdomain if available, otherwise fallback to default
+      const effectiveTenant = tenantSubdomain || 'default'
+      console.log('DEBUG: effectiveTenant =', effectiveTenant)
+      
+      // Build tenant-aware URL
+      const tenantAwareUrl = `http://${effectiveTenant}.app.localhost:3000`
+      
+      console.log('DEBUG: tenantAwareUrl =', tenantAwareUrl)
+      const authUrl = createAuthUrl(tenantAwareUrl, token)
+      console.log('DEBUG: authUrl =', authUrl)
 
       // Create authorization request
       const request = await prisma.authorizationRequest.create({
