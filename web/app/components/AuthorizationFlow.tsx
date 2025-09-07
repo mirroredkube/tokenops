@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'next/navigation'
 import { api, ensureJson } from '@/lib/api'
 import { getTenantApiUrl } from '@/lib/tenantApi'
 import FormField from './FormField'
@@ -46,6 +47,7 @@ interface AuthorizationResult {
 
 export default function AuthorizationFlow() {
   const { t } = useTranslation(['authorizations', 'common'])
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<Step>('ledger-selection')
   const [selectedLedger, setSelectedLedger] = useState<LedgerType>('XRPL')
   const [assets, setAssets] = useState<Asset[]>([])
@@ -67,6 +69,55 @@ export default function AuthorizationFlow() {
   const [authorizationStatus, setAuthorizationStatus] = useState<'checking' | 'external' | 'none' | 'requested' | 'awaiting_authorization'>('checking')
   const [existingAuthorization, setExistingAuthorization] = useState<any>(null)
   const [pendingRequest, setPendingRequest] = useState<any>(null)
+
+  // Read URL parameters and pre-populate form data
+  useEffect(() => {
+    const assetId = searchParams.get('assetId')
+    const holderAddress = searchParams.get('holderAddress')
+    const currencyCode = searchParams.get('currencyCode')
+    const issuerAddress = searchParams.get('issuerAddress')
+    const step = searchParams.get('step')
+    const limit = searchParams.get('limit')
+
+    // If we have pre-populated data, set it and skip to the appropriate step
+    if (assetId && holderAddress && currencyCode && issuerAddress) {
+      console.log('🔄 Pre-populating authorization form from URL parameters:', {
+        assetId,
+        holderAddress,
+        currencyCode,
+        issuerAddress,
+        step,
+        limit
+      })
+
+      // Pre-populate the authorization data
+      setAuthorizationData(prev => ({
+        ...prev,
+        currencyCode: currencyCode,
+        holderAddress: holderAddress,
+        issuerAddress: issuerAddress,
+        limit: limit || '1000000000'
+      }))
+
+      // Set the ledger to XRPL (since we're coming from issuance flow)
+      setSelectedLedger('XRPL')
+
+      // Skip to the appropriate step
+      if (step === 'authorization-setup') {
+        setCurrentStep('authorization-setup')
+      } else {
+        setCurrentStep('asset-selection')
+      }
+    }
+  }, [searchParams])
+
+  // Fetch assets when we skip directly to authorization-setup step
+  useEffect(() => {
+    const step = searchParams.get('step')
+    if (step === 'authorization-setup' && selectedLedger === 'XRPL') {
+      fetchAssets()
+    }
+  }, [searchParams, selectedLedger])
 
   // Check authorization status when holder address or asset changes
   const checkAuthorizationStatus = async () => {
@@ -542,6 +593,16 @@ export default function AuthorizationFlow() {
       }))
       
       setAssets(transformedAssets)
+
+      // If we have an assetId from URL parameters, select that asset
+      const assetId = searchParams.get('assetId')
+      if (assetId) {
+        const preSelectedAsset = transformedAssets.find(asset => asset.id === assetId)
+        if (preSelectedAsset) {
+          console.log('🎯 Pre-selecting asset from URL parameters:', preSelectedAsset)
+          setSelectedAsset(preSelectedAsset)
+        }
+      }
     } catch (err: any) {
       console.error('Error fetching assets:', err)
       setAssetsError(err.message || 'Failed to fetch assets')

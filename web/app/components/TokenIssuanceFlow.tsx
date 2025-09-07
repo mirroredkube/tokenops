@@ -676,18 +676,17 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
 
   // Redirect to authorization flow
   const redirectToAuthorizationFlow = () => {
-    // Store the current issuance data in sessionStorage to restore later
-    const issuanceData = {
-      selectedAssetId: selectedAsset?.id,
-      holderAddress: trustlineCheckData.holderAddress,
-      currencyCode: trustlineCheckData.currencyCode,
-      issuerAddress: trustlineCheckData.issuerAddress
-    }
+    // Build URL with pre-populated data
+    const params = new URLSearchParams({
+      assetId: selectedAsset?.id || '',
+      holderAddress: trustlineCheckData.holderAddress || '',
+      currencyCode: trustlineCheckData.currencyCode || '',
+      issuerAddress: trustlineCheckData.issuerAddress || '',
+      step: 'authorization-setup' // Skip to the final step
+    })
     
-    sessionStorage.setItem('issuanceData', JSON.stringify(issuanceData))
-    
-    // Redirect to authorization flow
-    window.location.href = '/app/authorizations'
+    // Redirect to authorization flow with pre-populated data
+    window.location.href = `/app/authorizations?${params.toString()}`
   }
 
   const handleTokenIssuance = async (e: React.FormEvent) => {
