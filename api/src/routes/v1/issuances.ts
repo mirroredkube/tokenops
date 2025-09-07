@@ -270,7 +270,8 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
             },
             description: 'Compliance facts for issuance'
           },
-          anchor: { type: 'boolean', default: false, description: 'Anchor compliance data to blockchain' }
+          anchor: { type: 'boolean', default: false, description: 'Anchor compliance data to blockchain' },
+          status: { type: 'string', enum: ['PENDING', 'SUBMITTED'], default: 'SUBMITTED', description: 'Issuance status' }
         }
       },
                 response: {
@@ -338,7 +339,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       return reply.status(400).send({ error: 'Invalid request body' })
     }
 
-    const { holder, amount, issuanceFacts, anchor, publicMetadata } = body.data
+    const { holder, amount, issuanceFacts, anchor, publicMetadata, status } = body.data
     
     // Check idempotency
     const idempotencyKey = req.headers['idempotency-key'] as string
@@ -408,11 +409,11 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         if (!line) {
           return reply.status(422).send({ error: 'Trustline does not exist' })
         }
-      }
-      
-      // Check trustline limit - only for submitted issuances
-      if (body.data.status === 'SUBMITTED' && line && Number(line.limit) < Number(amount)) {
-        return reply.status(422).send({ error: 'Amount exceeds trustline limit' })
+        
+        // Check trustline limit - only for submitted issuances
+        if (Number(line.limit) < Number(amount)) {
+          return reply.status(422).send({ error: 'Amount exceeds trustline limit' })
+        }
       }
       
       // Check for existing pending issuance for the same asset and holder
@@ -459,7 +460,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
         data: {
           issuanceId: issuance.id
         }
-      })
+      } as any)
       
       // Create snapshot of live requirements for this issuance
       await snapshotService.createIssuanceSnapshot(assetId, issuance.id)

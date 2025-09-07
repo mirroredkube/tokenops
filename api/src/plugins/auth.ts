@@ -387,6 +387,27 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
   // Session helpers
   app.get("/auth/me", async (req, reply) => {
+    // If AUTH_MODE is off, return a mock user response
+    if (AUTH_MODE === "off") {
+      return reply.send({
+        user: {
+          sub: "dev-user",
+          email: "dev@localhost",
+          name: "Development User",
+          role: "admin",
+          organizationId: "default-org"
+        },
+        organization: {
+          id: "default-org",
+          subdomain: "default",
+          name: "Default Organization",
+          legalName: "Default Organization",
+          country: "US",
+          jurisdiction: "US"
+        }
+      });
+    }
+    
     try {
       await req.jwtVerify();
       const jwtUser = req.user as any;

@@ -47,15 +47,28 @@ function getTenantApiUrl(host: string): string {
 export async function GET(request: NextRequest) {
   try {
     const host = request.headers.get('host') || ''
+    const apiUrl = getTenantApiUrl(host)
+    
+    // First, check if the API server has authentication enabled
+    const authTestResponse = await fetch(`${apiUrl}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Host': host
+      }
+    })
+    
+    // If the API returns 200 without auth, it means AUTH_MODE=off
+    if (authTestResponse.status === 200) {
+      // API has AUTH_MODE=off - always return valid
+      return NextResponse.json({ valid: true, reason: 'auth_disabled' })
+    }
+    
+    // API has authentication enabled - check for auth cookie
     const authCookie = request.cookies.get('auth')
     
     if (!authCookie) {
       return NextResponse.json({ valid: false, reason: 'no_auth_cookie' })
     }
-    
-    // Get the tenant from the host
-    const tenant = extractTenantFromHost(host)
-    const apiUrl = getTenantApiUrl(host)
     
     // Validate user with the API
     const response = await fetch(`${apiUrl}/auth/me`, {

@@ -15,16 +15,22 @@ export function getTenantApiUrl(): string {
   const host = window.location.host
   const tenant = extractTenantFromHost(host)
   
+  console.log('DEBUG: getTenantApiUrl - host:', host, 'tenant:', tenant)
+  
   // Build tenant-specific API URL
   if (host.includes('.app.localhost')) {
     // Development: use tenant subdomain for API
-    return `http://${tenant}.api.localhost:4000`
+    const apiUrl = `http://${tenant}.api.localhost:4000`
+    console.log('DEBUG: getTenantApiUrl - returning:', apiUrl)
+    return apiUrl
   } else if (host.includes('.app.tokenops.com')) {
     // Production: use tenant subdomain for API
     return `https://${tenant}.api.tokenops.com`
   } else {
     // Fallback: use default API URL
-    return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+    const fallbackUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+    console.log('DEBUG: getTenantApiUrl - fallback:', fallbackUrl)
+    return fallbackUrl
   }
 }
 
@@ -35,11 +41,15 @@ function extractTenantFromHost(host: string): string {
   // Remove port if present
   const hostWithoutPort = host.split(':')[0].toLowerCase()
   
+  console.log('DEBUG: extractTenantFromHost - host:', host, 'hostWithoutPort:', hostWithoutPort)
+  
   // Check for tenant subdomain pattern: {tenant}.app.localhost
   if (hostWithoutPort.endsWith('.app.localhost')) {
     const tenant = hostWithoutPort.replace('.app.localhost', '')
+    console.log('DEBUG: extractTenantFromHost - extracted tenant:', tenant)
     // Validate tenant format (simple alphanumeric + hyphens)
     if (/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(tenant) && tenant.length <= 63) {
+      console.log('DEBUG: extractTenantFromHost - returning tenant:', tenant)
       return tenant
     }
   }
@@ -54,10 +64,12 @@ function extractTenantFromHost(host: string): string {
   
   // Development fallback: plain localhost defaults to 'default' tenant
   if (hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1') {
+    console.log('DEBUG: extractTenantFromHost - fallback to default (localhost)')
     return 'default'
   }
   
   // Production fallback: if no subdomain pattern matches, default to 'default'
+  console.log('DEBUG: extractTenantFromHost - fallback to default (no match)')
   return 'default'
 }
 
