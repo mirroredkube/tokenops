@@ -54,14 +54,19 @@ export default function AuthorizationHistoryPage() {
         offset: (currentPage - 1) * limit
       }
       
-      if (statusFilter !== 'all') {
+      // Map UI status filter to API status values
+      let apiStatus = statusFilter
+      if (statusFilter === 'HOLDER_REQUESTED') {
+        // For HOLDER_REQUESTED, we need to check both Authorization table and pending AuthorizationRequest table
+        apiStatus = undefined // Don't filter Authorization table, we'll handle it manually
+      } else if (statusFilter !== 'all') {
         params.status = statusFilter
       }
 
-      // Fetch both authorizations and authorization requests
+      // Fetch authorizations and pending authorization requests
       const [authorizationsResponse, requestsResponse] = await Promise.all([
         api.GET('/v1/authorizations', { params }),
-        fetch(`http://localhost:4000/v1/authorization-requests?status=${statusFilter === 'all' ? '' : statusFilter}`)
+        fetch(`http://localhost:4000/v1/authorization-requests?status=INVITED`)
       ])
 
       if (authorizationsResponse.error) {
@@ -72,14 +77,15 @@ export default function AuthorizationHistoryPage() {
         throw new Error(t('common:messages.noDataReceived', 'No data received'))
       }
 
-      // Get authorization requests
-      let requests: any[] = []
+      // Get only pending authorization requests (INVITED status)
+      let pendingRequests: any[] = []
       if (requestsResponse.ok) {
-        requests = await requestsResponse.json()
+        const requestsData = await requestsResponse.json()
+        pendingRequests = requestsData.filter((req: any) => req.status === 'INVITED')
       }
 
-      // Convert authorization requests to authorization format for display
-      const convertedRequests: Authorization[] = requests.map((req: any) => ({
+      // Convert pending authorization requests to authorization format for display
+      const convertedRequests: Authorization[] = pendingRequests.map((req: any) => ({
         id: req.id,
         assetId: req.assetId,
         holderAddress: req.holderAddress,
@@ -98,9 +104,16 @@ export default function AuthorizationHistoryPage() {
         }
       }))
 
+      // Filter authorizations based on status if needed
+      let filteredAuthorizations = authorizationsResponse.data.authorizations || []
+      if (statusFilter === 'HOLDER_REQUESTED') {
+        // Only show HOLDER_REQUESTED status from Authorization table
+        filteredAuthorizations = filteredAuthorizations.filter((auth: any) => auth.status === 'HOLDER_REQUESTED')
+      }
+
       // Combine and sort by creation date
       const allAuthorizations = [
-        ...(authorizationsResponse.data.authorizations || []),
+        ...filteredAuthorizations,
         ...convertedRequests
       ].sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
 

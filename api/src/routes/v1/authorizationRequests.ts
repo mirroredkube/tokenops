@@ -59,6 +59,8 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
     try {
       // Hash the token to find the authorization request
       const tokenHash = hashToken(token)
+      console.log('DEBUG: Token lookup for token:', token)
+      console.log('DEBUG: Token hash:', tokenHash)
       
       const authRequest = await prisma.authorizationRequest.findFirst({
         where: {
@@ -76,6 +78,16 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
           }
         }
       })
+
+      console.log('DEBUG: Found auth request:', authRequest ? 'YES' : 'NO')
+      if (authRequest) {
+        console.log('DEBUG: Auth request details:', {
+          id: authRequest.id,
+          status: authRequest.status,
+          expiresAt: authRequest.expiresAt,
+          tokenHash: authRequest.oneTimeTokenHash
+        })
+      }
 
       if (!authRequest) {
         return reply.status(404).send({ error: 'Authorization request not found or expired' })
@@ -205,6 +217,9 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
       const token = generateOneTimeToken()
       const tokenHash = hashToken(token)
       const expiresAt = generateExpirationTime(24) // 24 hours
+      
+      console.log('DEBUG: Generated token:', token)
+      console.log('DEBUG: Generated token hash:', tokenHash)
       // Generate tenant-aware authorization URL
       const baseUrl = process.env.UI_ORIGIN || 'http://localhost:3000'
       console.log('DEBUG: tenantSubdomain =', tenantSubdomain)
@@ -465,10 +480,16 @@ export default async function authorizationRequestRoutes(fastify: FastifyInstanc
     const { status } = request.query as any
     const tenantId = (request as any).tenantId
 
+    // Map UI status to AuthorizationRequestStatus
+    let requestStatus = status
+    if (status === 'HOLDER_REQUESTED') {
+      requestStatus = 'INVITED' // Authorization requests start as INVITED
+    }
+
     const requests = await prisma.authorizationRequest.findMany({
       where: {
         tenantId,
-        ...(status && { status })
+        ...(requestStatus && { status: requestStatus })
       },
       include: {
         asset: {

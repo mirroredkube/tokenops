@@ -6,7 +6,7 @@ import { currencyToHex, isHexCurrency, hexCurrencyToAscii } from '../../utils/cu
 import { Asset, assets, validateAsset } from './shared.js'
 import prisma from '../../db/client.js'
 import { tenantMiddleware, TenantRequest, requireActiveTenant } from '../../middleware/tenantMiddleware.js'
-import { AuthorizationStatus, AuthorizationInitiator } from '@prisma/client'
+// import { AuthorizationStatus, AuthorizationInitiator } from '@prisma/client'
 
 // ---------- Validation Schemas ----------
 const AuthorizationRequestSchema = z.object({
@@ -18,7 +18,8 @@ const AuthorizationRequestSchema = z.object({
     noRipple: z.boolean().default(false),
     requireAuth: z.boolean().default(false),
     expiresAt: z.string().datetime().optional(), // ISO string
-    callbackUrl: z.string().url().optional()
+    callbackUrl: z.string().url().optional(),
+    preAuthorize: z.boolean().default(false) // Pre-authorize trustline before sending to holder
   }),
   signing: z.object({
     mode: z.enum(['wallet']).default('wallet') // Always wallet mode for security
@@ -492,8 +493,9 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
     const { params, signing } = body.data
     const limit = params.limit || '1000000000' // Safe high default
     const mode = signing?.mode || 'wallet'
+    const preAuthorize = params.preAuthorize || false
     
-    console.log('Authorization request params:', { status: params.status, limit, mode })
+    console.log('Authorization request params:', { limit, mode, preAuthorize })
     
     // Security: Always use wallet mode, never handle private keys
     if (mode !== 'wallet') {
@@ -525,22 +527,50 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         return reply.status(422).send({ error: 'Asset is not active' })
       }
       
-      // Validate RequireAuth is enabled on the issuer account (skip for external authorizations)
-      console.log('Checking RequireAuth for status:', params.status)
-      if (params.status !== 'EXTERNAL') {
-        console.log('Performing RequireAuth check for non-external authorization')
-        const { validateAssetRequireAuth } = await import('../../lib/requireAuthChecker.js')
-        const requireAuthCheck = await validateAssetRequireAuth(assetId)
-        console.log('RequireAuth check result:', requireAuthCheck)
-        if (!requireAuthCheck.hasRequireAuth) {
-          return reply.status(400).send({
-            error: 'Authorization not available',
-            message: 'The issuer account does not have RequireAuth enabled. Please contact your administrator to enable RequireAuth on the issuer account before creating authorization requests.',
-            details: requireAuthCheck.error
+      // Check RequireAuth status on the issuer account
+      console.log('Checking RequireAuth for issuer account')
+      const { validateAssetRequireAuth } = await import('../../lib/requireAuthChecker.js')
+      const requireAuthCheck = await validateAssetRequireAuth(assetId)
+      console.log('RequireAuth check result:', requireAuthCheck)
+      
+      // If pre-authorization is requested, we need RequireAuth to be enabled
+      if (preAuthorize && !requireAuthCheck.hasRequireAuth) {
+        return reply.status(400).send({
+          error: 'Pre-authorization not available',
+          message: 'Pre-authorization requires RequireAuth to be enabled on the issuer account. Please contact your administrator to enable RequireAuth.',
+          details: requireAuthCheck.error
+        })
+      }
+      
+      // Perform pre-authorization if requested
+      let preAuthTxHash: string | null = null
+      if (preAuthorize && requireAuthCheck.hasRequireAuth) {
+        console.log('Performing pre-authorization for holder:', params.holderAddress)
+        try {
+          const adapter = getLedgerAdapter()
+          if (adapter.authorizeTrustline) {
+            const result = await adapter.authorizeTrustline({
+              holderAddress: params.holderAddress,
+              currency: params.currencyCode,
+              issuerAddress: asset.issuingAddress!.address,
+              issuerLimit: limit
+            })
+            preAuthTxHash = result.txid
+            console.log('Pre-authorization completed:', preAuthTxHash)
+          } else {
+            return reply.status(400).send({
+              error: 'Pre-authorization not supported',
+              message: 'The ledger adapter does not support trustline authorization'
+            })
+          }
+        } catch (error: any) {
+          console.error('Pre-authorization failed:', error)
+          return reply.status(500).send({
+            error: 'Pre-authorization failed',
+            message: 'Failed to pre-authorize trustline',
+            details: error.message
           })
         }
-      } else {
-        console.log('Skipping RequireAuth check for external authorization')
       }
       
       // Generate secure one-time token for authorization URL
@@ -555,9 +585,23 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
       const baseUrl = process.env.PUBLIC_AUTH_BASE_URL || 'http://localhost:3000'
       const authUrl = `${baseUrl}/auth/authorize/${oneTimeToken}`
       
-      // Determine status and initiatedBy based on request
-      const status = params.status === 'EXTERNAL' ? AuthorizationStatus.EXTERNAL : AuthorizationStatus.HOLDER_REQUESTED
-      const initiatedBy = params.status === 'EXTERNAL' ? AuthorizationInitiator.SYSTEM : AuthorizationInitiator.HOLDER
+      // Determine initial status based on RequireAuth and pre-authorization
+      let initialStatus: string
+      let initiatedBy: string
+      
+      if (preAuthorize && requireAuthCheck.hasRequireAuth) {
+        // Pre-authorize the trustline - issuer will authorize before sending to holder
+        initialStatus = 'ISSUER_AUTHORIZED'
+        initiatedBy = 'ISSUER'
+      } else if (requireAuthCheck.hasRequireAuth) {
+        // RequireAuth enabled - holder will create trustline, then issuer needs to authorize
+        initialStatus = 'AWAITING_ISSUER_AUTHORIZATION'
+        initiatedBy = 'HOLDER'
+      } else {
+        // No RequireAuth - holder creates trustline and it's immediately authorized
+        initialStatus = 'ISSUER_AUTHORIZED'
+        initiatedBy = 'HOLDER'
+      }
       
       // Create authorization request in database
       const authorization = await prisma.authorization.create({
@@ -568,11 +612,11 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
           currency: params.currencyCode,
           holderAddress: params.holderAddress,
           limit,
-          status,
-          initiatedBy,
-          txHash: null,
-          external: params.status === 'EXTERNAL',
-          externalSource: params.status === 'EXTERNAL' ? 'ledger-detected' : null
+          status: initialStatus as any,
+          initiatedBy: initiatedBy as any,
+          txHash: preAuthTxHash,
+          external: false,
+          externalSource: null
         }
       })
       
