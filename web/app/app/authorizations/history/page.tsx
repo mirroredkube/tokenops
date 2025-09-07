@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
-import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react'
+import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, ExternalLink, Check, X } from 'lucide-react'
 import CustomDropdown from '../../../components/CustomDropdown'
 
 interface Authorization {
@@ -46,6 +46,16 @@ export default function AuthorizationHistoryPage() {
     fetchAuthorizations()
   }, [statusFilter, currentPage])
 
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
   const fetchAuthorizations = async () => {
     setLoading(true)
     try {
@@ -55,10 +65,9 @@ export default function AuthorizationHistoryPage() {
       }
       
       // Map UI status filter to API status values
-      let apiStatus = statusFilter
       if (statusFilter === 'HOLDER_REQUESTED') {
         // For HOLDER_REQUESTED, we need to check both Authorization table and pending AuthorizationRequest table
-        apiStatus = undefined // Don't filter Authorization table, we'll handle it manually
+        // Don't filter Authorization table, we'll handle it manually
       } else if (statusFilter !== 'all') {
         params.status = statusFilter
       }
@@ -131,6 +140,35 @@ export default function AuthorizationHistoryPage() {
   const handleFilterChange = (newStatus: string) => {
     setStatusFilter(newStatus)
     setCurrentPage(1) // Reset to first page when filter changes
+  }
+
+  const handleIssuerAuthorize = async (authorizationId: string) => {
+    try {
+      setLoading(true)
+      const response = await fetch(`http://localhost:4000/v1/authorizations/${authorizationId}/authorize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to authorize trustline as issuer')
+      }
+      
+      // Refresh the authorizations list
+      await fetchAuthorizations()
+      
+      // Show success message (you could add a toast notification here)
+      console.log('Issuer authorization successful')
+    } catch (error: any) {
+      console.error('Issuer authorization failed:', error)
+      setError(error.message || 'Failed to authorize trustline as issuer')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getStatusIcon = (status: string) => {
@@ -242,9 +280,18 @@ export default function AuthorizationHistoryPage() {
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center">
-            <span className="text-red-600 mr-2">⚠️</span>
-            <span className="text-red-800">{error}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-red-600 mr-2">⚠️</span>
+              <span className="text-red-800">{error}</span>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-600 transition-colors"
+              aria-label="Close error message"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
       )}
@@ -358,12 +405,22 @@ export default function AuthorizationHistoryPage() {
                             {t('authorizations:actions.view', 'View')}
                           </a>
                         )}
-                                                 <button
-                           onClick={() => router.push(`/app/assets/${auth.assetId || ''}`)}
-                           className="text-blue-600 hover:text-blue-900"
-                         >
-                           {t('authorizations:actions.viewAsset', 'View Asset')}
-                         </button>
+                        {auth.status === 'AWAITING_ISSUER_AUTHORIZATION' && auth.id && (
+                          <button
+                            onClick={() => handleIssuerAuthorize(auth.id!)}
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-emerald-600 border border-transparent rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+                            title="Authorize trustline as issuer (tfSetfAuth)"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            Authorize Trustline
+                          </button>
+                        )}
+                        <button
+                          onClick={() => router.push(`/app/assets/${auth.assetId || ''}`)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          {t('authorizations:actions.viewAsset', 'View Asset')}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -382,7 +439,7 @@ export default function AuthorizationHistoryPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('authorizations:history.messages.noAuthorizationsFound', 'No Authorizations Found')}</h3>
           <p className="text-gray-600 mb-6">
             {statusFilter !== 'all' 
-              ? t('authorizations:history.messages.noAuthorizationsWithStatus', 'No authorizations with status "{{status}}" found.', { status: statusFilter })
+              ? t('authorizations:history.messages.noAuthorizationsWithStatus', 'No authorizations with status "{{status}}" found.', { status: statusFilter || 'unknown' })
               : t('authorizations:history.messages.noAuthorizationRecords', 'No authorization records found. Create your first authorization to get started.')
             }
           </p>

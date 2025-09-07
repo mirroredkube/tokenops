@@ -150,6 +150,48 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
   const [result, setResult] = useState<IssuanceResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Poll for issuance status updates when on success page without txId
+  useEffect(() => {
+    if (currentStep === 'success' && result && !result.txId && result.issuanceId && result.assetId) {
+      const pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`${getTenantApiUrl()}/v1/assets/${result.assetId}/issuances/${result.issuanceId}?refresh=true`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.txId) {
+              setResult(prev => prev ? {
+                ...prev,
+                txId: data.txId,
+                txHash: data.txId,
+                explorer: data.explorer
+              } : null)
+              clearInterval(pollInterval)
+            }
+          }
+        } catch (err) {
+          console.error('Error polling issuance status:', err)
+        }
+      }, 3000) // Poll every 3 seconds
+      
+      // Stop polling after 2 minutes
+      const timeout = setTimeout(() => {
+        clearInterval(pollInterval)
+      }, 120000)
+      
+      return () => {
+        clearInterval(pollInterval)
+        clearTimeout(timeout)
+      }
+    }
+  }, [currentStep, result])
   const [trustlineCheckResult, setTrustlineCheckResult] = useState<{
     exists: boolean
     details?: any

@@ -199,7 +199,17 @@ export const xrplAdapter: LedgerAdapter = {
       const signed = wallet.sign(prepared)
       const res = await client.submitAndWait(signed.tx_blob)
       const ok = ((res.result as any)?.engine_result || (res.result as any)?.meta?.TransactionResult) === 'tesSUCCESS'
-      if (!ok) throw new Error((res.result as any)?.engine_result ?? 'submit_failed')
+      if (!ok) {
+        const errorResult = res.result as any
+        const engineResult = errorResult?.engine_result || errorResult?.meta?.TransactionResult
+        const errorMessage = errorResult?.engine_result_message || errorResult?.meta?.TransactionResult
+        console.error('XRPL issuance failed:', {
+          engineResult,
+          errorMessage,
+          fullResult: errorResult
+        })
+        throw new Error(`XRPL issuance failed: ${engineResult} - ${errorMessage}`)
+      }
       return { txid: signed.hash }
     })
   },

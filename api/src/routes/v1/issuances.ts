@@ -536,7 +536,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
       }
       
       if (body.data.status === 'SUBMITTED') {
-        console.log('✅ Updated issuance with txId:', issuance.txId)
+        console.log('✅ Updated issuance with txId:', result.txid)
       } else {
         console.log('📝 Pending issuance created:', issuance.id)
       }

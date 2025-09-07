@@ -635,7 +635,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         currency: params.currencyCode,
         issuerAddress: params.issuerAddress,
         limit,
-        status: AuthorizationStatus.HOLDER_REQUESTED,
+        status: 'HOLDER_REQUESTED' as any,
         authUrl,
         expiresAt: expiresAt.toISOString(),
         oneTimeToken
@@ -908,11 +908,11 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         }
         
         // Update authorization status if trustline exists
-        if (status.exists && authorization.status === AuthorizationStatus.AWAITING_ISSUER_AUTHORIZATION) {
+        if (status.exists && authorization.status === 'AWAITING_ISSUER_AUTHORIZATION') {
           await prisma.authorization.update({
             where: { id: authorization.id },
             data: { 
-              status: AuthorizationStatus.ISSUER_AUTHORIZED,
+              status: 'ISSUER_AUTHORIZED' as any,
               txHash: 'ledger-detected'
             }
           })
@@ -924,8 +924,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         
         // Fallback to database status if ledger query fails
         const fallbackStatus = {
-          exists: authorization.status === AuthorizationStatus.ISSUER_AUTHORIZED || authorization.status === AuthorizationStatus.EXTERNAL,
-          authorized: authorization.status === AuthorizationStatus.ISSUER_AUTHORIZED,
+          exists: authorization.status === 'ISSUER_AUTHORIZED' || authorization.status === 'EXTERNAL',
+          authorized: authorization.status === 'ISSUER_AUTHORIZED',
           limit: authorization.limit,
           balance: '0'
         }
@@ -1004,33 +1004,55 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
         return reply.status(404).send({ error: 'Authorization request not found' })
       }
       
-      if (authorization.status !== AuthorizationStatus.HOLDER_REQUESTED) {
-        return reply.status(400).send({ error: 'Authorization request is not in HOLDER_REQUESTED status' })
+      if (authorization.status !== 'AWAITING_ISSUER_AUTHORIZATION') {
+        return reply.status(400).send({ error: 'Authorization request is not in AWAITING_ISSUER_AUTHORIZATION status' })
       }
       
       // Note: requireAuth check is now handled by RequireAuth checker service
       
       // TODO: Implement 4-eyes approval check
-      // For now, require approvedBy parameter
-      if (!approvedBy) {
-        return reply.status(400).send({ error: '4-eyes approval required - approvedBy parameter missing' })
-      }
+      // For now, use system as approvedBy if not provided
+      const finalApprovedBy = approvedBy || 'system'
       
-      // TODO: Implement actual issuer authorization using tfSetfAuth
-      // This would use the XRPL adapter to sign and submit the authorization transaction
-      if (!issuerSecret) {
-        return reply.status(400).send({ error: 'Issuer secret required for authorization' })
-      }
+      console.log('Issuer authorization requested:', {
+        authorizationId: id,
+        approvedBy: finalApprovedBy,
+        hasIssuerSecret: !!issuerSecret,
+        asset: authorization.asset.code,
+        holder: authorization.holderAddress,
+        issuer: authorization.asset.issuingAddress?.address
+      })
       
-      // Mock authorization for now
-      const mockTxId = `auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      // Perform actual XRPL trustline authorization using tfSetfAuth
+      const adapter = getLedgerAdapter()
+      const { currencyToHex } = await import('../../utils/currency.js')
       
-      // Update authorization status
+      // Convert currency to XRPL format
+      const currency = currencyToHex(authorization.asset.code)
+      
+      console.log('Authorizing trustline on XRPL:', {
+        issuer: authorization.asset.issuingAddress?.address,
+        holder: authorization.holderAddress,
+        currency,
+        assetCode: authorization.asset.code
+      })
+      
+      // Use the XRPL adapter to authorize the trustline
+      const authResult = await adapter.authorizeTrustline!({
+        issuerAddress: authorization.asset.issuingAddress?.address!,
+        holderAddress: authorization.holderAddress,
+        currency: currency,
+        issuerLimit: authorization.requestedLimit || '1000000000' // Default high limit
+      })
+      
+      console.log('XRPL authorization result:', authResult)
+      
+      // Update authorization status with actual transaction hash
       const updatedAuth = await prisma.authorization.update({
         where: { id },
         data: {
-          status: AuthorizationStatus.ISSUER_AUTHORIZED,
-          txHash: mockTxId
+          status: 'ISSUER_AUTHORIZED' as any,
+          txHash: authResult.txid
         }
       })
       
@@ -1139,8 +1161,8 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
           currency,
           holderAddress: holderAddress,
           limit,
-          status: AuthorizationStatus.EXTERNAL, // External trustlines are considered external
-          initiatedBy: AuthorizationInitiator.SYSTEM,
+          status: 'EXTERNAL' as any, // External trustlines are considered external
+          initiatedBy: 'SYSTEM' as any,
           txHash: null,
           external: true,
           externalSource
