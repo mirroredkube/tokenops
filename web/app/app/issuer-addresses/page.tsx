@@ -90,9 +90,9 @@ export default function IssuerAddressesPage() {
   // Update organization when user changes
   useEffect(() => {
     if (user?.organization) {
-      setUserOrganization(user.organization)
-      setFilters(prev => ({ ...prev, organizationId: user.organization.id }))
-      setCreateData(prev => ({ ...prev, organizationId: user.organization.id }))
+      setUserOrganization(user.organization as any)
+      setFilters(prev => ({ ...prev, organizationId: user.organization!.id }))
+      setCreateData(prev => ({ ...prev, organizationId: user.organization!.id }))
     }
   }, [user])
 
@@ -137,9 +137,9 @@ export default function IssuerAddressesPage() {
         
         // Use the user's organization from the auth context
         if (user?.organization) {
-          setUserOrganization(user.organization)
-          setFilters(prev => ({ ...prev, organizationId: user.organization.id }))
-          setCreateData(prev => ({ ...prev, organizationId: user.organization.id }))
+          setUserOrganization(user.organization as any)
+          setFilters(prev => ({ ...prev, organizationId: user.organization!.id }))
+          setCreateData(prev => ({ ...prev, organizationId: user.organization!.id }))
         } else if (orgs.length > 0) {
           // Fallback to first organization if user context not available
           const userOrg = orgs[0]
@@ -191,7 +191,7 @@ export default function IssuerAddressesPage() {
       setApprovalLoading(true)
       setError(null)
       
-      const response = await api.PUT(`/v1/issuer-addresses/${pendingAddressId}/approve`, {
+      const response = await (api as any).PUT(`/v1/issuer-addresses/${pendingAddressId}/approve`, {
         body: {
           reason: approvalReason,
           allowedUseTags: createData.allowedUseTags
@@ -222,7 +222,7 @@ export default function IssuerAddressesPage() {
       setSuspensionLoading(true)
       setError(null)
       
-      const response = await api.PUT(`/v1/issuer-addresses/${addressId}/suspend`, {
+      const response = await (api as any).PUT(`/v1/issuer-addresses/${addressId}/suspend`, {
         body: {
           reason: suspensionReason
         }

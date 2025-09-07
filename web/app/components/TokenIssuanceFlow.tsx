@@ -89,6 +89,8 @@ interface IssuanceResult {
   manifestHash?: string
   publicMetadata?: Record<string, any>
   complianceRecord?: ComplianceRecord
+  issuanceId?: string
+  assetId?: string
   compliance?: {
     status?: string
     requirementCount?: number
@@ -154,8 +156,11 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
   // Poll for issuance status updates when on success page without txId
   useEffect(() => {
     if (currentStep === 'success' && result && !result.txId && result.issuanceId && result.assetId) {
+      console.log('🔄 Starting polling for issuance status:', { issuanceId: result.issuanceId, assetId: result.assetId })
+      
       const pollInterval = setInterval(async () => {
         try {
+          console.log('🔄 Polling issuance status...')
           const response = await fetch(`${getTenantApiUrl()}/v1/assets/${result.assetId}/issuances/${result.issuanceId}?refresh=true`, {
             method: 'GET',
             headers: {
@@ -166,7 +171,9 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
           
           if (response.ok) {
             const data = await response.json()
+            console.log('📊 Polling response:', data)
             if (data.txId) {
+              console.log('✅ Found transaction ID, updating result:', data.txId)
               setResult(prev => prev ? {
                 ...prev,
                 txId: data.txId,
@@ -175,6 +182,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
               } : null)
               clearInterval(pollInterval)
             }
+          } else {
+            console.error('❌ Polling failed with status:', response.status)
           }
         } catch (err) {
           console.error('Error polling issuance status:', err)
@@ -183,6 +192,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       
       // Stop polling after 2 minutes
       const timeout = setTimeout(() => {
+        console.log('⏰ Polling timeout reached')
         clearInterval(pollInterval)
       }, 120000)
       
@@ -733,6 +743,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
       console.log('🎯 Issuance response:', responseData)
       console.log('🔍 Transaction ID from response:', responseData.txId)
       console.log('🔍 Explorer URL from response:', responseData.explorer)
+      console.log('🔍 Issuance ID from response:', responseData.issuanceId)
+      console.log('🔍 Asset ID from selected asset:', selectedAsset?.id)
 
       setResult(prev => ({
         ...prev,
@@ -742,6 +754,8 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
         manifestHash: responseData.manifestHash,
         publicMetadata: tokenData.metadata,
         compliance: responseData.compliance,
+        issuanceId: responseData.issuanceId,
+        assetId: selectedAsset?.id,
         complianceRecord: {
           recordId: responseData.manifestHash || responseData.issuanceId,
           sha256: responseData.manifestHash || '',
@@ -1426,7 +1440,7 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                           </svg>
-                          {t('issuances:trustlineDetails.checkAndConfigureTrustline', 'Check & Configure Trustline')}
+                          Step 1: {t('issuances:trustlineDetails.checkAndConfigureTrustline', 'Check & Configure Trustline')}
                         </>
                       )}
                     </button>
@@ -1521,42 +1535,55 @@ export default function TokenIssuanceFlow({ preSelectedAssetId }: TokenIssuanceF
                         {/* Proceed Button for Existing Trustline */}
                         {trustlineCheckResult.exists && (
                           <div className="mt-8">
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                setLoading(true)
-                                setError(null)
-                                try {
-                                  // Validate authorization for issuance
-                                  const result = await validateAuthorizationForIssuance()
-                                  console.log('Authorization validation result:', result)
-                                  setCurrentStep('compliance-metadata')
-                                } catch (err: any) {
-                                  setError(err.message || 'Failed to validate authorization')
-                                } finally {
-                                  setLoading(false)
-                                }
-                              }}
-                              disabled={loading}
-                              className="px-8 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {loading ? (
-                                <>
-                                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                   </svg>
-                                  Processing Authorization...
-                                </>
-                              ) : (
-                                <>
-                                  Validate Authorization & Continue
-                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                  </svg>
-                                </>
-                              )}
-                            </button>
+                                </div>
+                                <h4 className="text-lg font-semibold text-green-800">Step 1 Complete: Trustline Verified</h4>
+                              </div>
+                              <p className="text-green-700 mb-6">
+                                ✅ Trustline exists and is ready for authorization validation. Click below to proceed to the next step.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setLoading(true)
+                                  setError(null)
+                                  try {
+                                    // Validate authorization for issuance
+                                    const result = await validateAuthorizationForIssuance()
+                                    console.log('Authorization validation result:', result)
+                                    setCurrentStep('compliance-metadata')
+                                  } catch (err: any) {
+                                    setError(err.message || 'Failed to validate authorization')
+                                  } finally {
+                                    setLoading(false)
+                                  }
+                                }}
+                                disabled={loading}
+                                className="px-8 py-3 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {loading ? (
+                                  <>
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Processing Authorization...
+                                  </>
+                                ) : (
+                                  <>
+                                    Step 2: Validate Authorization & Continue
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>

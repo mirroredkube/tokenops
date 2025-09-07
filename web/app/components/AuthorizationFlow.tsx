@@ -41,6 +41,7 @@ interface AuthorizationResult {
   id?: string
   authUrl?: string
   message?: string
+  isNew?: boolean
 }
 
 export default function AuthorizationFlow() {

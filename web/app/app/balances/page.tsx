@@ -279,7 +279,7 @@ function OutstandingView({
                 { value: '', label: t('balances:fields.selectAsset', 'Select an asset') },
                 ...(assetsData?.map((asset: any) => ({
                   value: asset.id,
-                  label: `${asset.code} (${asset.issuer})`
+                  label: `${asset.code} (${asset.issuingAddress?.address || 'Unknown'})`
                 })) || [])
               ]}
               className="w-full sm:w-80"
@@ -390,15 +390,15 @@ function IssuerOutstandingView({
           throw new Error('Asset not found')
         }
         
-        const asset = assetResponse.data
-        const issuerAccount = asset.issuer || ''
+        const asset = assetResponse.data as any
+        const issuerAccount = asset.issuingAddress?.address || ''
         
         if (!issuerAccount) {
           throw new Error('Asset issuer not found')
         }
         
         // Now get balances for the issuer account, filtered by the asset's currency
-        const balancesResponse = await api.GET('/balances/{account}', {
+        const balancesResponse = await (api as any).GET('/balances/{account}', {
           params: { 
             path: { account: issuerAccount },
             query: { currency: asset.code }
@@ -616,7 +616,7 @@ function HolderLookupContent({
       
       try {
         // Use the existing balances endpoint for holder lookup
-        const response = await api.GET('/balances/{account}', {
+        const response = await (api as any).GET('/balances/{account}', {
           params: { path: { account: filters.holderAddress } }
         })
         
@@ -641,7 +641,7 @@ function HolderLookupContent({
             return {
               assetId: asset.id || '',
               assetCode: asset.code || '',
-              issuer: asset.issuer || '',
+              issuer: asset.issuingAddress?.address || '',
               balance: line.balance || '0',
               limit: line.limit || '0',
               available: (parseFloat(line.limit || '0') - parseFloat(line.balance || '0')).toString(),

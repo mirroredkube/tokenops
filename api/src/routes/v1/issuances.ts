@@ -531,13 +531,10 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
             } : {})
           } as any
         })
-      } else {
-        console.log('📝 Issuance saved as PENDING - waiting for authorization')
-      }
-      
-      if (body.data.status === 'SUBMITTED') {
+        
         console.log('✅ Updated issuance with txId:', result.txid)
       } else {
+        console.log('📝 Issuance saved as PENDING - waiting for authorization')
         console.log('📝 Pending issuance created:', issuance.id)
       }
       
