@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { getTenantApiUrl } from '@/lib/tenantApi'
 import { Eye, RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle, Plus } from 'lucide-react'
@@ -31,6 +31,7 @@ interface IssuanceListResponse {
 export default function IssuanceHistoryPage() {
   const { t } = useTranslation(['issuances', 'common'])
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [issuances, setIssuances] = useState<Issuance[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,6 +86,17 @@ export default function IssuanceHistoryPage() {
   useEffect(() => {
     fetchIssuances()
   }, [pagination.page, filters])
+
+  // Initialize filters from URL query params (e.g., ?status=pending&assetId=...)
+  useEffect(() => {
+    const status = (searchParams.get('status') || '').toLowerCase()
+    const assetId = searchParams.get('assetId') || ''
+    if (status || assetId) {
+      setFilters(prev => ({ ...prev, status, assetId }))
+      setPagination(prev => ({ ...prev, page: 1 }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))

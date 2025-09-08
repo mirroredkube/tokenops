@@ -33,7 +33,7 @@ export default function PendingIssuancesQueue() {
   useEffect(() => {
     const fetchPendingIssuances = async () => {
       try {
-        const { data, error } = await api.GET('/v1/issuances?status=submitted&limit=10' as any, {})
+        const { data, error } = await api.GET('/v1/issuances?status=pending&limit=10' as any, {})
         
         if (error) {
           throw new Error(error.error || 'Failed to fetch pending issuances')
@@ -159,7 +159,7 @@ export default function PendingIssuancesQueue() {
         items={issuances}
         columns={columns}
         emptyMessage={t('dashboard:queue.noPendingIssuances', 'No pending issuances. All recent issuances have been processed.')}
-        viewAllLink="/app/issuance/history?status=submitted"
+        viewAllLink="/app/issuance/history?status=pending"
         loading={loading}
         maxItems={5}
         showViewAll={true}

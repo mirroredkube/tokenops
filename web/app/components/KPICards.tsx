@@ -79,7 +79,7 @@ export default function KPICards() {
       
       const totalComplianceRecords = complianceResponse?.pagination?.total || complianceRecords.length
 
-      // Fetch pending issuances count
+      // Fetch pending issuances count (awaiting authorization before submission)
       const { data: pendingIssuancesResponse } = await api.GET('/v1/issuances?status=pending&limit=1' as any, {})
       const pendingIssuances = pendingIssuancesResponse?.total || 0
 
@@ -171,7 +171,7 @@ export default function KPICards() {
       color: 'bg-orange-500',
       hoverColor: 'hover:bg-orange-50',
       onClick: () => router.push('/app/issuance/history?status=pending'),
-      tooltip: t('dashboard:kpi.pendingIssuancesTooltip', 'Number of asset issuances waiting for ledger validation')
+      tooltip: t('dashboard:kpi.pendingIssuancesTooltip', 'Number of asset issuances awaiting authorization (not yet submitted to ledger)')
     },
     
     {
