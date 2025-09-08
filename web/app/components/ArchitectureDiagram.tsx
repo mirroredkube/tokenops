@@ -33,15 +33,15 @@ export function ArchitectureDiagram() {
 
         {/* Layer 2 */}
         <div className="grid gap-4 md:grid-cols-3 w-full max-w-3xl">
-          <Box title="Ledger Adapter" subtitle="XRPL now • Hedera next" icon={Layers} />
-          <Box title="Token Engine" subtitle="Issue • Revoke • Transfer • Reports" icon={Settings2} />
-          <Box title="Compliance Module" subtitle="KYC • AML • Audit trail" icon={ShieldCheck} />
+          <Box title="Regime Plug‑ins" subtitle="MiCA • Travel Rule • Jurisdiction packs" icon={ShieldCheck} />
+          <Box title="Policy Kernel" subtitle="Derive • Apply • Audit" icon={Settings2} />
+          <Box title="Ledger Adapters" subtitle="XRPL • Ethereum • Hyperledger" icon={Layers} />
         </div>
         <VArrow />
 
         {/* Layer 3 */}
         <div className="grid gap-4 md:grid-cols-2 w-full max-w-3xl">
-          <Box title="Ledgers" subtitle="XRPL • Hedera" icon={Database} />
+          <Box title="Ledgers" subtitle="XRPL • Ethereum • Hyperledger" icon={Database} />
           <Box title="Key Management" subtitle="HSM/KMS • Secrets rotation" icon={Key} />
           <Box title="Observability" subtitle="Metrics • Alerts • Traces" icon={Activity} />
           <Box title="Evidence Store" subtitle="Logs • Exports" icon={Archive} />
@@ -50,11 +50,11 @@ export function ArchitectureDiagram() {
 
       {/* Labels under diagram */}
       <div className="mt-8 flex flex-wrap justify-center gap-3 text-xs text-neutral-700 dark:text-neutral-300">
-        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Policies</span>
+        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Regimes</span>
+        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Policy Kernel</span>
+        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Adapters</span>
         <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">RBAC</span>
-        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Metadata</span>
-        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Workflows</span>
-        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Single Sign-on</span>
+        <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">Evidence</span>
       </div>
     </div>
   );

@@ -18,33 +18,33 @@ const slides = [
   },
   {
     id: "02",
-    title: "Issuance Controls",
+    title: "Policy Evaluation",
     blurb:
-      "Mint, freeze, or claw back with guard‑rails. You get role‑based approvals, pre‑flight checks for limits and flags, and a human‑readable summary of what the transaction will do before it’s sent.",
+      "Feed organization, product, and asset facts into the kernel. It determines applicability per regime (MiCA, Travel Rule, jurisdiction packs) and generates a ledger‑aware plan.",
   },
   {
     id: "03",
-    title: "Asset Transfers & Payouts",
+    title: "On‑chain Controls via Adapters",
     blurb:
-      "Execute single or batch transfers of tokenized assets across multiple currencies, with automatic tagging for transaction metadata and built-in reconciliation aids. Every transfer run generates a downloadable ledger report that finance teams can align with their on-chain and off-chain records in minutes instead of hours.",
+      "Apply controls through adapters: trustline authorization and freezes on XRPL; allowlists and transfer gates on EVM; or controls on permissioned ledgers like Hyperledger.",
   },
   {
     id: "04",
-    title: "Compliance & Regulatory Reporting",
+    title: "Evidence & Reporting",
     blurb:
-      "Automatically generate compliance-ready reports for issued digital assets, covering activity summaries, transfer restrictions, and audit logs. The system enforces regulatory requirements at the transaction level and produces exportable records that meet financial and jurisdictional standards—making it easy to demonstrate compliance to auditors, regulators, and enterprise stakeholders.",
+      "Capture evidence and acknowledgements, generate immutable hashes, and export audit‑ready bundles (ZIP/JSON/CSV) for regulators and internal audit.",
   },
   {
     id: "05",
-    title: "Balances & Trust Lines",
+    title: "Balances, Trustlines & Limits",
     blurb:
-      "View every holder, their trust limits, and live balances with filters by issuer, asset code, and risk flags. Ops can quickly pinpoint outliers—like accounts near their limit or with stale activity—and export the view for support.",
+      "View every holder, trust limits, and live balances with filters by issuer, asset code, and risk flags. Quickly pinpoint outliers and export regulator‑friendly snapshots.",
   },
   {
     id: "06",
     title: "Monitoring & Alerts",
     blurb:
-      "Track key events—new trust lines, freezes, large transfers—and route alerts to Slack or email. Tuning rules takes seconds and every alert links back to the exact on‑chain transaction for instant triage.",
+      "Track key events—new trustlines, freezes, large transfers—and route alerts to Slack or email. Every alert links back to the exact on‑chain transaction.",
   },
 ];
 
