@@ -7,6 +7,64 @@ import CapabilitiesPager from './components/CapabilitiesPager'
 import { ArchitectureDiagram } from "./components/ArchitectureDiagram";
 import { CookieConsent } from "./components/CookieConsent";
 import { CookieSettingsLink } from './components/FooterLink';
+// Subtle animated banner for regimes ↔ kernel ↔ ledgers
+function PolicyFlowBanner() {
+  return (
+    <div className="relative hidden md:block overflow-hidden rounded-2xl border bg-white/70 backdrop-blur-md px-6 py-10 lg:py-12">
+      <style>{`
+        @keyframes float { from { transform: translateY(0); } 50% { transform: translateY(-4px);} to { transform: translateY(0);} }
+        @keyframes pulseLine { 0% { stroke-dashoffset: 140; } 100% { stroke-dashoffset: 0; } }
+      `}</style>
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute left-1/2 top-[-160px] -translate-x-1/2 h-[420px] w-[1100px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.10),rgba(15,23,42,0.06),transparent_70%)] blur-2xl" />
+      </div>
+      <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+        <div className="flex flex-col gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm" style={{animation: 'float 4s ease-in-out infinite'}}>
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> MiCA
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm" style={{animation: 'float 5s 0.2s ease-in-out infinite'}}>
+            <span className="h-2 w-2 rounded-full bg-blue-500" /> Travel Rule
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm" style={{animation: 'float 6s 0.4s ease-in-out infinite'}}>
+            <span className="h-2 w-2 rounded-full bg-purple-500" /> EU / US / SG
+          </span>
+        </div>
+        <div className="relative">
+          <svg viewBox="0 0 420 220" className="h-52 w-[420px]">
+            <defs>
+              <marker id="mArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L0,8 L8,4 z" fill="#cfd4dc" />
+              </marker>
+            </defs>
+            <g style={{opacity: 0.9}}>
+              <line x1="10" y1="110" x2="160" y2="110" stroke="#cfd4dc" strokeWidth="2" markerEnd="url(#mArrow)" style={{strokeDasharray: 140, animation: 'pulseLine 2.5s linear infinite'}} />
+              <line x1="260" y1="110" x2="410" y2="110" stroke="#cfd4dc" strokeWidth="2" markerEnd="url(#mArrow)" style={{strokeDasharray: 140, animation: 'pulseLine 2.5s linear infinite reverse'}} />
+              <circle cx="210" cy="110" r="60" fill="#10B9810D" stroke="#10B981" />
+              <text x="210" y="104" textAnchor="middle" fontSize="12" fill="#0a0a0a">Policy</text>
+              <text x="210" y="120" textAnchor="middle" fontSize="12" fill="#0a0a0a">Kernel</text>
+            </g>
+          </svg>
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[12px] text-neutral-500">Derive → Apply → Audit</div>
+        </div>
+        <div className="flex flex-col gap-2 items-end">
+          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm" style={{animation: 'float 4.5s ease-in-out infinite'}}>
+            <span className="grid h-4 w-4 place-items-center rounded bg-blue-600 text-[9px] font-bold text-white">X</span>
+            XRPL
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm" style={{animation: 'float 5.5s 0.2s ease-in-out infinite'}}>
+            <span className="grid h-4 w-4 place-items-center rounded bg-orange-600 text-[9px] font-bold text-white">E</span>
+            Ethereum
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm" style={{animation: 'float 6.5s 0.4s ease-in-out infinite'}}>
+            <span className="grid h-4 w-4 place-items-center rounded bg-purple-600 text-[9px] font-bold text-white">H</span>
+            Hyperledger
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const BRAND = 'Regula'
 
@@ -383,6 +441,76 @@ function IconGlobe({ className = '' }: { className?: string }) {
   )
 }
 
+/* ---------- Visual: Regimes ↔ Policy Kernel ↔ Ledgers ---------- */
+function PolicyFlowVisual() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border bg-white/80 backdrop-blur-sm p-6 md:p-10 lg:p-12">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute left-1/2 top-[-120px] -translate-x-1/2 h-[380px] w-[980px] lg:h-[440px] lg:w-[1180px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.08),rgba(15,23,42,0.06),transparent_70%)] blur-2xl" />
+      </div>
+
+      <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto_1fr]">
+        {/* Regimes */}
+        <div>
+          <div className="text-sm font-medium text-neutral-800 mb-3">Regime plug‑ins</div>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> MiCA
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-blue-500" /> Travel Rule
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-purple-500" /> EU / US / SG packs
+            </span>
+          </div>
+        </div>
+
+        {/* Kernel node with arrows */}
+        <div className="relative">
+          <svg viewBox="0 0 360 200" className="h-44 w-[360px] md:h-48 md:w-[400px] lg:h-56 lg:w-[480px] xl:h-64 xl:w-[560px]">
+            {/* Arrow marker */}
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L0,8 L8,4 z" fill="#cfd4dc" />
+              </marker>
+            </defs>
+            {/* Left line */}
+            <line x1="0" y1="100" x2="125" y2="100" stroke="#cfd4dc" strokeWidth="2" markerEnd="url(#arrow)" />
+            {/* Right line */}
+            <line x1="235" y1="100" x2="360" y2="100" stroke="#cfd4dc" strokeWidth="2" markerEnd="url(#arrow)" />
+            {/* Kernel */}
+            <circle cx="180" cy="100" r="56" fill="#10B9810D" stroke="#10B981" />
+            <circle cx="180" cy="100" r="56" fill="none" stroke="#10B981" className="opacity-20" />
+            <text x="180" y="95" textAnchor="middle" fontSize="12" fill="#0a0a0a">Policy</text>
+            <text x="180" y="111" textAnchor="middle" fontSize="12" fill="#0a0a0a">Kernel</text>
+          </svg>
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[12px] text-neutral-500">Evaluate → Enforce → Evidence</div>
+        </div>
+
+        {/* Ledgers */}
+        <div className="md:text-right">
+          <div className="text-sm font-medium text-neutral-800 mb-3">Ledger adapters</div>
+          <div className="flex flex-wrap gap-2 md:justify-end">
+            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
+              <span className="grid h-4 w-4 place-items-center rounded bg-blue-600 text-[9px] font-bold text-white">X</span>
+              XRPL
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
+              <span className="grid h-4 w-4 place-items-center rounded bg-orange-600 text-[9px] font-bold text-white">E</span>
+              Ethereum
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
+              <span className="grid h-4 w-4 place-items-center rounded bg-purple-600 text-[9px] font-bold text-white">H</span>
+              Hyperledger
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function HomePage() {
   const [isContactOpen, setIsContactOpen] = useState(false)
 
@@ -401,11 +529,12 @@ export default function HomePage() {
 
           {/* Punchline */}
           <h1 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight text-neutral-900">
-            Compliance-Grade Tokenization, Delivered as an API
+            Regime‑aware, Ledger‑agnostic Policy Kernel for Token Issuance
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-lg leading-7 text-neutral-600">
-            Issue and govern tokens with built-in compliance controls, audit trails, and role-based access. 
-            Multi-ledger support with XRPL, Hedera, and Ethereum adapters. Enterprise-ready from day one.
+            Plug‑and‑play regulatory regimes and ledger adapters (XRPL, Ethereum, Hyperledger) to
+            evaluate, enforce, and evidence compliance across the asset lifecycle — from creation
+            to secondary transfer.
           </p>
 
           <div className="mt-8 flex items-center justify-center gap-3">
@@ -435,23 +564,46 @@ export default function HomePage() {
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <Feature
-              icon={<IconCode className="h-8 w-8 text-emerald-600" />}
-              title="API-first"
-              subtitle="Built for engineers & auditors"
-            />
-            <Feature
               icon={<IconShield className="h-8 w-8 text-emerald-600" />}
-              title="MiCA-aware"
-              subtitle="Compliance-framed metadata"
+              title="Policy Kernel"
+              subtitle="Evaluate → Enforce → Evidence"
             />
             <Feature
               icon={<IconPluggable className="h-8 w-8 text-emerald-600" />}
-              title="Multi-ledger"
-              subtitle="XRPL, Hedera, Ethereum"
+              title="Regime plug‑ins"
+              subtitle="MiCA, Travel Rule, jurisdiction packs"
+            />
+            <Feature
+              icon={<IconCode className="h-8 w-8 text-emerald-600" />}
+              title="Ledger adapters"
+              subtitle="XRPL, Ethereum, Hyperledger"
             />
           </div>
         </div>
       </section>
+
+      {/* POLICY KERNEL */}
+      <Section kicker="Core" title="The Policy Kernel">
+        <div className="mb-6">
+          <PolicyFlowVisual />
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card title="Evaluate (facts → requirements)">
+            Feed organization, product, and asset facts into the kernel. It derives
+            applicable requirements per regime and produces an enforcement plan
+            tailored to the target ledger.
+          </Card>
+          <Card title="Enforce (controls on‑chain)">
+            Execute the plan through ledger adapters: trustline authorization and
+            freezing on XRPL, allowlists & transfer gates on EVM, or controls on
+            permissioned ledgers like Hyperledger.
+          </Card>
+          <Card title="Evidence (prove compliance)">
+            Capture evidence, acknowledgements, and immutable hashes. Export
+            audit‑ready bundles (ZIP/JSON/CSV) for regulators and internal audit.
+          </Card>
+        </div>
+      </Section>
 
       {/* PRODUCT OVERVIEW */}
       <Section
@@ -536,58 +688,58 @@ export default function HomePage() {
       <Section kicker="Technical Specifications" title="Enterprise-grade infrastructure">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-neutral-900">Supported Ledgers</h3>
+            <h3 className="text-lg font-semibold text-neutral-900">Ledger Adapters</h3>
             <div className="grid gap-3">
               <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
                 <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">X</div>
                 <div>
                   <div className="font-medium text-neutral-900">XRPL (XRP Ledger)</div>
-                  <div className="text-sm text-neutral-600">Production ready with trustline management</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
-                <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center text-white text-xs font-bold">H</div>
-                <div>
-                  <div className="font-medium text-neutral-900">Hedera</div>
-                  <div className="text-sm text-neutral-600">Coming Soon - Enterprise DLT</div>
+                  <div className="text-sm text-neutral-600">Production adapter: trustline authorization, freeze control</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
                 <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center text-white text-xs font-bold">E</div>
                 <div>
-                  <div className="font-medium text-neutral-900">Ethereum</div>
-                  <div className="text-sm text-neutral-600">Coming Soon - ERC-20 & ERC-1400</div>
+                  <div className="font-medium text-neutral-900">Ethereum / EVM</div>
+                  <div className="text-sm text-neutral-600">Adapter design: ERC‑20 / ERC‑1400, allowlists, pause & transfer gates</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
+                <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center text-white text-xs font-bold">H</div>
+                <div>
+                  <div className="font-medium text-neutral-900">Hyperledger (Fabric / Corda)</div>
+                  <div className="text-sm text-neutral-600">Private & permissioned ledgers via the same kernel API</div>
                 </div>
               </div>
             </div>
           </div>
           
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-neutral-900">Compliance Features</h3>
+            <h3 className="text-lg font-semibold text-neutral-900">Regime Plug‑ins & Compliance</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm text-neutral-700">MiCA-compliant metadata structure</span>
+                <span className="text-sm text-neutral-700">Regime plug‑ins: MiCA, Travel Rule; jurisdiction packs</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm text-neutral-700">Role-based access control (RBAC)</span>
+                <span className="text-sm text-neutral-700">Policy Kernel: facts → requirements → enforcement plan</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm text-neutral-700">Audit trail with immutable logs</span>
+                <span className="text-sm text-neutral-700">Evidence capture, hashes, and audit‑ready exports (ZIP/JSON/CSV)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm text-neutral-700">KYC/AML flag management</span>
+                <span className="text-sm text-neutral-700">KYC/AML flags, transfer restrictions & investor limits</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm text-neutral-700">Regulatory reporting exports</span>
+                <span className="text-sm text-neutral-700">Regulatory reporting and platform acknowledgements</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm text-neutral-700">Transfer restrictions & limits</span>
+                <span className="text-sm text-neutral-700">RBAC, API keys, multi‑tenant isolation</span>
               </div>
             </div>
           </div>
@@ -595,46 +747,46 @@ export default function HomePage() {
       </Section>
 
       {/* HOW IT WORKS */}
-      <Section kicker="How it works" title="From idea to pilot in four steps">
+      <Section kicker="How it works" title="From facts to enforcement in four steps">
         <ol className="grid gap-4 md:grid-cols-4">
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 1</div>
             <div className="mt-1 font-medium text-neutral-900">
-              Connect issuer
+              Define facts & scope
             </div>
             <p className="mt-2 text-sm">
-              Configure your issuer account and workspace. No mainnet funds
-              required for pilots. Multi-tenant support for organizations.
+              Describe organization, product, asset, investors, and target markets. Select
+              applicable regimes and the target ledger environment.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 2</div>
             <div className="mt-1 font-medium text-neutral-900">
-              Create trust lines
+              Evaluate with the kernel
             </div>
             <p className="mt-2 text-sm">
-              Establish holder limits and policies. Add KYC/AML flags as needed.
-              Set transfer restrictions and compliance rules.
+              The Policy Kernel derives requirements and produces a ledger‑specific enforcement plan
+              based on the selected regimes.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 3</div>
             <div className="mt-1 font-medium text-neutral-900">
-              Issue tokens
+              Enforce on‑chain
             </div>
             <p className="mt-2 text-sm">
-              Mint tokens with structured metadata. Instant hashes & explorer
-              links. Real-time balance tracking and event monitoring.
+              Adapters apply controls (e.g., trustline auth, freezes, allowlists, transfer gates) and
+              mint tokens with structured, regime‑aware metadata.
             </p>
           </li>
           <li className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="text-xs font-medium text-neutral-500">Step 4</div>
             <div className="mt-1 font-medium text-neutral-900">
-              Monitor & export
+              Evidence & reporting
             </div>
             <p className="mt-2 text-sm">
-              Track balances and events, export audit-ready CSV/JSON.
-              Real-time alerts and regulatory reporting dashboards.
+              Capture evidence and acknowledgements, generate immutable hashes, and export
+              audit‑ready bundles for regulators and internal audit.
             </p>
           </li>
         </ol>
