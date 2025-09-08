@@ -7,13 +7,19 @@ const prisma = new PrismaClient()
 // ---------- Authentication Helper ----------
 async function verifyAuthIfRequired(req: any): Promise<any> {
   const AUTH_MODE = (process.env.AUTH_MODE ?? "off").toLowerCase()
-  
-  if (AUTH_MODE === "off") {
-    return null // No authentication required
+  if (AUTH_MODE === "off") return null
+
+  if (typeof (req as any).jwtVerify === 'function') {
+    await (req as any).jwtVerify()
+    return (req as any).user
   }
-  
-  await req.jwtVerify()
-  return req.user
+
+  if ((req.server as any)?.verifyAuthOrApiKey) {
+    await (req.server as any).verifyAuthOrApiKey(req)
+    return (req as any).user
+  }
+
+  return null
 }
 
 // ---------- Utility Functions ----------
