@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360">
+  <defs>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#34D399" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L0,10 L10,5 z" fill="#cbd5e1"/>
+    </marker>
+    <filter id="soft">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <!-- background glow -->
+  <ellipse cx="360" cy="180" rx="200" ry="110" fill="url(#halo)"/>
+
+  <!-- pipes -->
+  <g stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round">
+    <path d="M40 180 H240" marker-end="url(#arrow)">
+      <animate attributeName="stroke-dasharray" values="1,180; 180,1" dur="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-dashoffset" values="180;0" dur="2.6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M480 180 H680" marker-end="url(#arrow)">
+      <animate attributeName="stroke-dasharray" values="1,180; 180,1" dur="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-dashoffset" values="0;180" dur="2.6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- kernel -->
+  <g>
+    <circle cx="360" cy="180" r="64" fill="none" stroke="url(#glow)" stroke-width="2"/>
+    <circle cx="360" cy="180" r="64" fill="url(#halo)"/>
+    <text x="360" y="174" font-size="14" text-anchor="middle" fill="#0a0a0a" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">Policy</text>
+    <text x="360" y="194" font-size="14" text-anchor="middle" fill="#0a0a0a" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">Kernel</text>
+
+    <!-- orbiting dots -->
+    <g>
+      <circle r="3" fill="#10B981">
+        <animateMotion dur="6s" repeatCount="indefinite" path="M360,180 m-92,0 a92,92 0 1,0 184,0 a92,92 0 1,0 -184,0"/>
+      </circle>
+      <circle r="3" fill="#6366F1">
+        <animateMotion dur="7.5s" repeatCount="indefinite" path="M360,180 m-110,0 a110,110 0 1,0 220,0 a110,110 0 1,0 -220,0"/>
+      </circle>
+      <circle r="3" fill="#A855F7">
+        <animateMotion dur="5.5s" repeatCount="indefinite" path="M360,180 m-74,0 a74,74 0 1,0 148,0 a74,74 0 1,0 -148,0"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- labels -->
+  <g font-size="12" fill="#0a0a0a" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">
+    <text x="80" y="150">Regime plug-ins</text>
+    <text x="560" y="150" text-anchor="end">Ledger adapters</text>
+  </g>
+
+  <!-- badges left -->
+  <g>
+    <g transform="translate(60,168)">
+      <rect rx="10" width="70" height="22" fill="#ffffff" stroke="#e5e7eb"/>
+      <circle cx="12" cy="11" r="4" fill="#10B981"/>
+      <text x="22" y="15" font-size="11" fill="#111827">MiCA</text>
+    </g>
+    <g transform="translate(60,194)">
+      <rect rx="10" width="92" height="22" fill="#ffffff" stroke="#e5e7eb"/>
+      <circle cx="12" cy="11" r="4" fill="#3B82F6"/>
+      <text x="22" y="15" font-size="11" fill="#111827">Travel Rule</text>
+    </g>
+    <g transform="translate(60,220)">
+      <rect rx="10" width="128" height="22" fill="#ffffff" stroke="#e5e7eb"/>
+      <circle cx="12" cy="11" r="4" fill="#A78BFA"/>
+      <text x="22" y="15" font-size="11" fill="#111827">EU / US / SG packs</text>
+    </g>
+  </g>
+
+  <!-- badges right -->
+  <g>
+    <g transform="translate(590,168)">
+      <rect rx="10" width="70" height="22" fill="#ffffff" stroke="#e5e7eb"/>
+      <rect x="8" y="5" rx="4" ry="4" width="12" height="12" fill="#2563EB"/>
+      <text x="26" y="15" font-size="11" fill="#111827">XRPL</text>
+    </g>
+    <g transform="translate(590,194)">
+      <rect rx="10" width="98" height="22" fill="#ffffff" stroke="#e5e7eb"/>
+      <rect x="8" y="5" rx="4" ry="4" width="12" height="12" fill="#EA580C"/>
+      <text x="26" y="15" font-size="11" fill="#111827">Ethereum</text>
+    </g>
+    <g transform="translate(590,220)">
+      <rect rx="10" width="112" height="22" fill="#ffffff" stroke="#e5e7eb"/>
+      <rect x="8" y="5" rx="4" ry="4" width="12" height="12" fill="#9333EA"/>
+      <text x="26" y="15" font-size="11" fill="#111827">Hyperledger</text>
+    </g>
+  </g>
+
+  <!-- caption -->
+  <text x="360" y="320" text-anchor="middle" font-size="12" fill="#6b7280" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">
+    Evaluate → Enforce → Evidence
+  </text>
+</svg>

@@ -7,6 +7,7 @@ import CapabilitiesPager from './components/CapabilitiesPager'
 import { ArchitectureDiagram } from "./components/ArchitectureDiagram";
 import { CookieConsent } from "./components/CookieConsent";
 import { CookieSettingsLink } from './components/FooterLink';
+import PolicyKernelAnimated from './components/PolicyKernelAnimated';
 // Subtle animated banner for regimes ↔ kernel ↔ ledgers
 function PolicyFlowBanner() {
   return (
@@ -441,81 +442,39 @@ function IconGlobe({ className = '' }: { className?: string }) {
   )
 }
 
-/* ---------- Visual: Regimes ↔ Policy Kernel ↔ Ledgers ---------- */
-function PolicyFlowVisual() {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border bg-white/80 backdrop-blur-sm p-6 md:p-10 lg:p-12">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute left-1/2 top-[-120px] -translate-x-1/2 h-[380px] w-[980px] lg:h-[440px] lg:w-[1180px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.08),rgba(15,23,42,0.06),transparent_70%)] blur-2xl" />
-      </div>
-
-      <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto_1fr]">
-        {/* Regimes */}
-        <div>
-          <div className="text-sm font-medium text-neutral-800 mb-3">Regime plug‑ins</div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> MiCA
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-blue-500" /> Travel Rule
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-purple-500" /> EU / US / SG packs
-            </span>
-          </div>
-        </div>
-
-        {/* Kernel node with arrows */}
-        <div className="relative">
-          <svg viewBox="0 0 360 200" className="h-44 w-[360px] md:h-48 md:w-[400px] lg:h-56 lg:w-[480px] xl:h-64 xl:w-[560px]">
-            {/* Arrow marker */}
-            <defs>
-              <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                <path d="M0,0 L0,8 L8,4 z" fill="#cfd4dc" />
-              </marker>
-            </defs>
-            {/* Left line */}
-            <line x1="0" y1="100" x2="125" y2="100" stroke="#cfd4dc" strokeWidth="2" markerEnd="url(#arrow)" />
-            {/* Right line */}
-            <line x1="235" y1="100" x2="360" y2="100" stroke="#cfd4dc" strokeWidth="2" markerEnd="url(#arrow)" />
-            {/* Kernel */}
-            <circle cx="180" cy="100" r="56" fill="#10B9810D" stroke="#10B981" />
-            <circle cx="180" cy="100" r="56" fill="none" stroke="#10B981" className="opacity-20" />
-            <text x="180" y="95" textAnchor="middle" fontSize="12" fill="#0a0a0a">Policy</text>
-            <text x="180" y="111" textAnchor="middle" fontSize="12" fill="#0a0a0a">Kernel</text>
-          </svg>
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[12px] text-neutral-500">Evaluate → Enforce → Evidence</div>
-        </div>
-
-        {/* Ledgers */}
-        <div className="md:text-right">
-          <div className="text-sm font-medium text-neutral-800 mb-3">Ledger adapters</div>
-          <div className="flex flex-wrap gap-2 md:justify-end">
-            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
-              <span className="grid h-4 w-4 place-items-center rounded bg-blue-600 text-[9px] font-bold text-white">X</span>
-              XRPL
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
-              <span className="grid h-4 w-4 place-items-center rounded bg-orange-600 text-[9px] font-bold text-white">E</span>
-              Ethereum
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 shadow-sm">
-              <span className="grid h-4 w-4 place-items-center rounded bg-purple-600 text-[9px] font-bold text-white">H</span>
-              Hyperledger
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function HomePage() {
   const [isContactOpen, setIsContactOpen] = useState(false)
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-white">
+    <main className="relative min-h-screen bg-white">
+      {/* Background layers */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        {/* soft neutral gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#fafafa] via-white to-[#f9fafb]" />
+
+        {/* faint blueprint grid */}
+        <div
+          className="absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage: "url('/bg/bg-grid.svg')",
+            backgroundSize: "32px 32px",
+          }}
+        />
+
+        {/* subtle paper/grain overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.2] mix-blend-soft-light"
+          style={{
+            backgroundImage: "url('/bg/paper-texture.png')",
+            backgroundSize: "600px 600px",
+          }}
+        />
+
+        {/* brand accent dots */}
+        <div className="absolute top-1/3 left-1/4 h-2 w-2 rounded-full bg-emerald-400 opacity-50" />
+        <div className="absolute bottom-1/4 right-1/5 h-2 w-2 rounded-full bg-indigo-400 opacity-50" />
+        <div className="absolute top-1/2 right-1/3 h-2 w-2 rounded-full bg-purple-400 opacity-50" />
+      </div>
       <TopStrip isContactOpen={isContactOpen} setIsContactOpen={setIsContactOpen} />
 
       {/* HERO */}
@@ -585,7 +544,7 @@ export default function HomePage() {
       {/* POLICY KERNEL */}
       <Section kicker="Core" title="The Policy Kernel">
         <div className="mb-6">
-          <PolicyFlowVisual />
+          <PolicyKernelAnimated />
         </div>
         <div className="grid gap-6 md:grid-cols-3">
           <Card title="Evaluate (facts → requirements)">
