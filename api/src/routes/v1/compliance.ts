@@ -1444,35 +1444,35 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     }
   })
 
-  // GET /v1/compliance/evidence/bundle/:requirementInstanceId - Export evidence bundle
-  app.get('/compliance/evidence/bundle/:requirementInstanceId', {
+  // GET /v1/compliance/assets/:assetId/export - Export all compliance data for an asset
+  app.get('/compliance/assets/:assetId/export', {
     schema: {
-      summary: 'Export evidence bundle for a compliance requirement',
-      description: 'Download evidence bundle in multiple formats: ZIP (with files), JSON (data only), or PDF (human-readable report)',
+      summary: 'Export all compliance data for an asset',
+      description: 'Download comprehensive compliance report for an asset including all requirements and evidence',
       tags: ['v1'],
       params: {
         type: 'object',
-        required: ['requirementInstanceId'],
+        required: ['assetId'],
         properties: {
-          requirementInstanceId: { type: 'string', description: 'ID of the requirement instance' }
+          assetId: { type: 'string', description: 'ID of the asset' }
         }
       },
       querystring: {
         type: 'object',
         properties: {
-                         format: {
-                 type: 'string',
-                 enum: ['zip', 'json', 'csv'],
-                 default: 'zip',
-                 description: 'Export format: zip (with evidence files), json (data only), csv (spreadsheet analysis)'
-               }
+          format: {
+            type: 'string',
+            enum: ['zip', 'json', 'csv'],
+            default: 'zip',
+            description: 'Export format: zip (with evidence files), json (data only), csv (spreadsheet analysis)'
+          }
         }
       },
       response: {
         200: {
           type: 'string',
           format: 'binary',
-          description: 'File containing evidence bundle (format depends on format parameter)'
+          description: 'File containing asset compliance report (format depends on format parameter)'
         },
         404: { type: 'object', properties: { error: { type: 'string' } } },
         500: { type: 'object', properties: { error: { type: 'string' } } }
@@ -1483,96 +1483,120 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
     await tenantMiddleware(req, reply)
     requireActiveTenant(req, reply)
     try {
-      const { requirementInstanceId } = req.params as { requirementInstanceId: string }
-                   const { format = 'zip' } = req.query as { format?: 'zip' | 'json' | 'csv' }
+      const { assetId } = req.params as { assetId: string }
+      const { format = 'zip' } = req.query as { format?: 'zip' | 'json' | 'csv' }
 
-      // Verify requirement instance exists
-      const requirementInstance = await prisma.requirementInstance.findUnique({
-        where: { id: requirementInstanceId },
+      // Get asset with all related data
+      const asset = await prisma.asset.findUnique({
+        where: { id: assetId },
         include: {
-          asset: {
+          product: {
             include: {
-              product: {
-                include: {
-                  organization: true
-                }
-              }
-            }
-          },
-          requirementTemplate: {
-            include: {
-              regime: true
+              organization: true
             }
           }
         }
       })
 
-      if (!requirementInstance) {
-        return reply.status(404).send({ error: 'Requirement instance not found' })
+      if (!asset) {
+        return reply.status(404).send({ error: 'Asset not found' })
       }
 
-      // Get all evidence for this requirement
-      const evidence = await prisma.evidence.findMany({
-        where: { requirementInstanceId },
+      // Get all requirement instances for this asset
+      const requirementInstances = await prisma.requirementInstance.findMany({
+        where: { assetId },
+        include: {
+          requirementTemplate: {
+            include: {
+              regime: true
+            }
+          },
+          evidence: true
+        },
+        orderBy: { createdAt: 'asc' }
+      })
+
+      // Get all evidence for this asset
+      const allEvidence = await prisma.evidence.findMany({
+        where: {
+          requirementInstance: {
+            assetId: assetId
+          }
+        },
         orderBy: { uploadedAt: 'desc' }
       })
 
-      // Create compliance manifest data
+      // Create comprehensive asset compliance manifest
       const manifest = {
-        requirementInstance: {
-          id: requirementInstance.id,
-          status: requirementInstance.status,
-          rationale: requirementInstance.rationale,
-          exceptionReason: requirementInstance.exceptionReason,
-          platformAcknowledged: requirementInstance.platformAcknowledged,
-          platformAcknowledgedAt: requirementInstance.platformAcknowledgedAt,
-          platformAcknowledgmentReason: requirementInstance.platformAcknowledgmentReason,
-          createdAt: requirementInstance.createdAt,
-          updatedAt: requirementInstance.updatedAt
-        },
         asset: {
-          id: requirementInstance.asset.id,
-          assetRef: requirementInstance.asset.assetRef,
-          ledger: requirementInstance.asset.ledger,
-          network: requirementInstance.asset.network,
-          code: requirementInstance.asset.code,
-          assetClass: requirementInstance.asset.product.assetClass
+          id: asset.id,
+          assetRef: asset.assetRef,
+          ledger: asset.ledger,
+          network: asset.network,
+          code: asset.code,
+          status: asset.status,
+          createdAt: asset.createdAt,
+          updatedAt: asset.updatedAt
         },
         product: {
-          id: requirementInstance.asset.product.id,
-          name: requirementInstance.asset.product.name,
-          description: requirementInstance.asset.product.description,
-          assetClass: requirementInstance.asset.product.assetClass,
-          targetMarkets: requirementInstance.asset.product.targetMarkets
+          id: asset.product.id,
+          name: asset.product.name,
+          description: asset.product.description,
+          assetClass: asset.product.assetClass,
+          targetMarkets: asset.product.targetMarkets
         },
         organization: {
-          id: requirementInstance.asset.product.organization.id,
-          name: requirementInstance.asset.product.organization.name,
-          legalName: requirementInstance.asset.product.organization.legalName,
-          country: requirementInstance.asset.product.organization.country,
-          jurisdiction: requirementInstance.asset.product.organization.jurisdiction
+          id: asset.product.organization.id,
+          name: asset.product.organization.name,
+          legalName: asset.product.organization.legalName,
+          country: asset.product.organization.country,
+          jurisdiction: asset.product.organization.jurisdiction
         },
-        requirementTemplate: {
-          id: requirementInstance.requirementTemplate.id,
-          name: requirementInstance.requirementTemplate.name,
-          description: requirementInstance.requirementTemplate.description,
-          regime: {
-            id: requirementInstance.requirementTemplate.regime.id,
-            name: requirementInstance.requirementTemplate.regime.name,
-            version: requirementInstance.requirementTemplate.regime.version
-          }
+        compliance: {
+          totalRequirements: requirementInstances.length,
+          requirementsByStatus: {
+            REQUIRED: requirementInstances.filter(r => r.status === 'REQUIRED').length,
+            SATISFIED: requirementInstances.filter(r => r.status === 'SATISFIED').length,
+            EXCEPTION: requirementInstances.filter(r => r.status === 'EXCEPTION').length
+          },
+          totalEvidenceFiles: allEvidence.length,
+          platformAcknowledgedRequirements: requirementInstances.filter(r => r.platformAcknowledged).length
         },
-        evidence: evidence.map((ev: any) => ({
-          id: ev.id,
-          fileName: ev.fileName,
-          fileSize: ev.fileSize,
-          mimeType: ev.mimeType,
-          uploadedAt: ev.uploadedAt,
-          uploadedBy: ev.uploadedBy,
-          description: ev.description
+        requirementInstances: requirementInstances.map((req: any) => ({
+          id: req.id,
+          status: req.status,
+          rationale: req.rationale,
+          exceptionReason: req.exceptionReason,
+          platformAcknowledged: req.platformAcknowledged,
+          platformAcknowledgedAt: req.platformAcknowledgedAt,
+          platformAcknowledgmentReason: req.platformAcknowledgmentReason,
+          createdAt: req.createdAt,
+          updatedAt: req.updatedAt,
+          requirementTemplate: {
+            id: req.requirementTemplate.id,
+            name: req.requirementTemplate.name,
+            description: req.requirementTemplate.description,
+            regime: {
+              id: req.requirementTemplate.regime.id,
+              name: req.requirementTemplate.regime.name,
+              jurisdiction: req.requirementTemplate.regime.jurisdiction,
+              version: req.requirementTemplate.regime.version
+            }
+          },
+          evidenceCount: req.evidence.length,
+          evidence: req.evidence.map((ev: any) => ({
+            id: ev.id,
+            fileName: ev.fileName,
+            fileSize: ev.fileSize,
+            fileType: ev.fileType,
+            uploadedAt: ev.uploadedAt,
+            uploadedBy: ev.uploadedBy,
+            description: ev.description
+          }))
         })),
         exportedAt: new Date().toISOString(),
-        bundleVersion: '1.0'
+        bundleVersion: '1.0',
+        exportType: 'asset_compliance_report'
       }
 
       // Set CORS headers
@@ -1582,13 +1606,13 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
       // Handle different export formats
       if (format === 'json') {
         // JSON export - data only
-        const bundleName = `compliance-data-${requirementInstanceId}-${Date.now()}.json`
+        const bundleName = `asset-compliance-${asset.code}-${Date.now()}.json`
         reply.header('Content-Type', 'application/json')
         reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
         return reply.send(JSON.stringify(manifest, null, 2))
       } else if (format === 'csv') {
         // CSV export - structured data for spreadsheet analysis
-        const bundleName = `compliance-data-${requirementInstanceId}-${Date.now()}.csv`
+        const bundleName = `asset-compliance-${asset.code}-${Date.now()}.csv`
         reply.header('Content-Type', 'text/csv')
         reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
         
@@ -1597,61 +1621,48 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         
         // Header row
         csvRows.push([
-          'Field Category',
+          'Category',
           'Field Name', 
           'Field Value',
           'Data Type',
           'Description'
         ])
         
-        // Requirement Instance data
-        csvRows.push(['Requirement Instance', 'ID', manifest.requirementInstance.id, 'String', 'Unique requirement instance identifier'])
-        csvRows.push(['Requirement Instance', 'Status', manifest.requirementInstance.status, 'String', 'Current compliance status'])
-        csvRows.push(['Requirement Instance', 'Created Date', new Date(manifest.requirementInstance.createdAt).toISOString(), 'DateTime', 'When requirement was created'])
-        csvRows.push(['Requirement Instance', 'Updated Date', new Date(manifest.requirementInstance.updatedAt).toISOString(), 'DateTime', 'When requirement was last updated'])
-        if (manifest.requirementInstance.exceptionReason) {
-          csvRows.push(['Requirement Instance', 'Exception Reason', manifest.requirementInstance.exceptionReason, 'String', 'Reason for exception status'])
-        }
-        if (manifest.requirementInstance.rationale) {
-          csvRows.push(['Requirement Instance', 'Rationale', manifest.requirementInstance.rationale, 'String', 'Business rationale for requirement'])
-        }
-        
         // Asset data
         csvRows.push(['Asset', 'Code', manifest.asset.code, 'String', 'Asset code/symbol'])
         csvRows.push(['Asset', 'Reference', manifest.asset.assetRef, 'String', 'Full asset reference'])
         csvRows.push(['Asset', 'Ledger', manifest.asset.ledger, 'String', 'Blockchain ledger'])
         csvRows.push(['Asset', 'Network', manifest.asset.network, 'String', 'Network environment'])
-        csvRows.push(['Asset', 'Asset Class', manifest.asset.assetClass, 'String', 'Classification of asset'])
+        csvRows.push(['Asset', 'Status', manifest.asset.status, 'String', 'Asset status'])
         
         // Product data
         csvRows.push(['Product', 'Name', manifest.product.name, 'String', 'Product name'])
-        csvRows.push(['Product', 'Description', manifest.product.description, 'String', 'Product description'])
         csvRows.push(['Product', 'Asset Class', manifest.product.assetClass, 'String', 'Product asset class'])
         csvRows.push(['Product', 'Target Markets', manifest.product.targetMarkets.join('; '), 'String', 'Target market jurisdictions'])
         
         // Organization data
         csvRows.push(['Organization', 'Name', manifest.organization.name, 'String', 'Organization name'])
-        csvRows.push(['Organization', 'Legal Name', manifest.organization.legalName, 'String', 'Legal entity name'])
         csvRows.push(['Organization', 'Country', manifest.organization.country, 'String', 'Country of incorporation'])
         csvRows.push(['Organization', 'Jurisdiction', manifest.organization.jurisdiction, 'String', 'Regulatory jurisdiction'])
         
-        // Requirement Template data
-        csvRows.push(['Requirement Template', 'Name', manifest.requirementTemplate.name, 'String', 'Template name'])
-        csvRows.push(['Requirement Template', 'Description', manifest.requirementTemplate.description, 'String', 'Template description'])
-        csvRows.push(['Requirement Template', 'Regime', manifest.requirementTemplate.regime.name, 'String', 'Regulatory regime'])
-        csvRows.push(['Requirement Template', 'Regime Version', manifest.requirementTemplate.regime.version, 'String', 'Regime version'])
+        // Compliance summary
+        csvRows.push(['Compliance', 'Total Requirements', manifest.compliance.totalRequirements, 'Number', 'Total number of compliance requirements'])
+        csvRows.push(['Compliance', 'Required Status', manifest.compliance.requirementsByStatus.REQUIRED, 'Number', 'Requirements with REQUIRED status'])
+        csvRows.push(['Compliance', 'Satisfied Status', manifest.compliance.requirementsByStatus.SATISFIED, 'Number', 'Requirements with SATISFIED status'])
+        csvRows.push(['Compliance', 'Exception Status', manifest.compliance.requirementsByStatus.EXCEPTION, 'Number', 'Requirements with EXCEPTION status'])
+        csvRows.push(['Compliance', 'Total Evidence Files', manifest.compliance.totalEvidenceFiles, 'Number', 'Total number of evidence files'])
+        csvRows.push(['Compliance', 'Platform Acknowledged', manifest.compliance.platformAcknowledgedRequirements, 'Number', 'Requirements acknowledged by platform'])
         
-        // Evidence data
-        if (manifest.evidence.length > 0) {
-          manifest.evidence.forEach((ev: any, index: number) => {
-            csvRows.push(['Evidence', `File ${index + 1} Name`, ev.fileName, 'String', 'Evidence file name'])
-            csvRows.push(['Evidence', `File ${index + 1} Size`, ev.fileSize, 'Number', 'File size in bytes'])
-            csvRows.push(['Evidence', `File ${index + 1} Upload Date`, new Date(ev.uploadedAt).toISOString(), 'DateTime', 'When file was uploaded'])
-            csvRows.push(['Evidence', `File ${index + 1} Uploaded By`, ev.uploadedBy, 'String', 'User who uploaded file'])
-          })
-        } else {
-          csvRows.push(['Evidence', 'Files Count', '0', 'Number', 'Number of evidence files'])
-        }
+        // Individual requirements
+        manifest.requirementInstances.forEach((req: any, index: number) => {
+          csvRows.push(['Requirement', `Req ${index + 1} Name`, req.requirementTemplate.name, 'String', 'Requirement template name'])
+          csvRows.push(['Requirement', `Req ${index + 1} Status`, req.status, 'String', 'Current requirement status'])
+          csvRows.push(['Requirement', `Req ${index + 1} Regime`, req.requirementTemplate.regime.name, 'String', 'Regulatory regime'])
+          csvRows.push(['Requirement', `Req ${index + 1} Evidence Count`, req.evidenceCount, 'Number', 'Number of evidence files'])
+          if (req.platformAcknowledged) {
+            csvRows.push(['Requirement', `Req ${index + 1} Platform Acknowledged`, 'Yes', 'String', 'Platform acknowledgement status'])
+          }
+        })
         
         // Export metadata
         csvRows.push(['Export', 'Exported At', new Date(manifest.exportedAt).toISOString(), 'DateTime', 'Export timestamp'])
@@ -1672,7 +1683,7 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         return reply.send(csvContent)
       } else {
         // ZIP export - with evidence files (default)
-        const bundleName = `evidence-bundle-${requirementInstanceId}-${Date.now()}.zip`
+        const bundleName = `asset-compliance-${asset.code}-${Date.now()}.zip`
         reply.header('Content-Type', 'application/zip')
         reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
 
@@ -1684,27 +1695,343 @@ export default async function complianceRoutes(app: FastifyInstance, _opts: Fast
         reply.raw.setHeader('Access-Control-Allow-Credentials', 'true')
         archive.pipe(reply.raw)
 
-        // Add evidence files
+        // Add evidence files organized by requirement
         const __filename = fileURLToPath(import.meta.url)
         const __dirname = path.dirname(__filename)
         const uploadsDir = path.join(__dirname, '../../../uploads')
-        for (const evidenceItem of evidence) {
-          const filePath = path.join(uploadsDir, evidenceItem.uploadPath)
-          if (fs.existsSync(filePath)) {
-            archive.file(filePath, { name: `evidence/${evidenceItem.fileName}` })
+        
+        for (const req of requirementInstances) {
+          const reqDir = `requirements/${req.requirementTemplate.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+          
+          for (const evidenceItem of req.evidence) {
+            const filePath = path.join(uploadsDir, evidenceItem.uploadPath)
+            if (fs.existsSync(filePath)) {
+              archive.file(filePath, { name: `${reqDir}/evidence/${evidenceItem.fileName}` })
+            }
           }
         }
 
-        // Add compliance manifest
-        archive.append(JSON.stringify(manifest, null, 2), { name: 'compliance-manifest.json' })
+        // Add comprehensive compliance manifest
+        archive.append(JSON.stringify(manifest, null, 2), { name: 'asset-compliance-manifest.json' })
+
+        // Add individual requirement summaries
+        for (const req of requirementInstances) {
+          const reqSummary = {
+            requirement: req.requirementTemplate,
+            status: req.status,
+            rationale: req.rationale,
+            evidence: req.evidence,
+            platformAcknowledgement: {
+              acknowledged: req.platformAcknowledged,
+              acknowledgedAt: req.platformAcknowledgedAt,
+              reason: req.platformAcknowledgmentReason
+            }
+          }
+          
+          const reqDir = `requirements/${req.requirementTemplate.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+          archive.append(JSON.stringify(reqSummary, null, 2), { name: `${reqDir}/requirement-summary.json` })
+        }
 
         // Finalize archive
         await archive.finalize()
       }
 
     } catch (error: any) {
-      console.error('Error creating evidence bundle:', error)
-      return reply.status(500).send({ error: 'Failed to create evidence bundle' })
+      console.error('Error creating asset compliance export:', error)
+      return reply.status(500).send({ error: 'Failed to create asset compliance export' })
     }
   })
+
+  // GET /v1/compliance/export - Export filtered compliance requirements
+  app.get('/compliance/export', {
+    schema: {
+      summary: 'Export filtered compliance requirements',
+      description: 'Download compliance report for all requirements matching the specified filters',
+      tags: ['v1'],
+      querystring: {
+        type: 'object',
+        properties: {
+          assetId: { type: 'string', description: 'Filter by asset ID' },
+          status: { type: 'string', enum: ['REQUIRED', 'SATISFIED', 'EXCEPTION'], description: 'Filter by requirement status' },
+          regime: { type: 'string', description: 'Filter by regulatory regime' },
+          format: {
+            type: 'string',
+            enum: ['zip', 'json', 'csv'],
+            default: 'zip',
+            description: 'Export format: zip (with evidence files), json (data only), csv (spreadsheet analysis)'
+          },
+          limit: { type: 'number', minimum: 1, maximum: 1000, default: 100, description: 'Maximum number of requirements to export' }
+        }
+      },
+      response: {
+        200: {
+          type: 'string',
+          format: 'binary',
+          description: 'File containing filtered compliance report (format depends on format parameter)'
+        },
+        400: { type: 'object', properties: { error: { type: 'string' } } },
+        500: { type: 'object', properties: { error: { type: 'string' } } }
+      }
+    }
+  }, async (req: TenantRequest, reply) => {
+    // Apply tenant middleware
+    await tenantMiddleware(req, reply)
+    requireActiveTenant(req, reply)
+    try {
+      const { assetId, status, regime, format = 'zip', limit = 100 } = req.query as any
+
+      // Build where clause based on filters
+      const where: any = {}
+      
+      if (assetId) {
+        where.assetId = assetId
+      }
+      
+      if (status) {
+        where.status = status
+      }
+      
+      if (regime) {
+        where.requirementTemplate = {
+          regime: { id: regime }
+        }
+      }
+
+      // Get filtered requirement instances
+      const requirementInstances = await prisma.requirementInstance.findMany({
+        where,
+        include: {
+          requirementTemplate: {
+            include: {
+              regime: true
+            }
+          },
+          asset: {
+            include: {
+              product: {
+                include: {
+                  organization: true
+                }
+              }
+            }
+          },
+          evidence: true
+        },
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      })
+
+      if (requirementInstances.length === 0) {
+        return reply.status(400).send({ error: 'No requirements found matching the specified filters' })
+      }
+
+      // Group by asset for better organization
+      const assetsMap = new Map()
+      for (const req of requirementInstances) {
+        const assetId = req.assetId
+        if (!assetsMap.has(assetId)) {
+          assetsMap.set(assetId, {
+            asset: req.asset,
+            requirements: []
+          })
+        }
+        assetsMap.get(assetId).requirements.push(req)
+      }
+
+      // Create comprehensive filtered export manifest
+      const manifest = {
+        export: {
+          filters: {
+            assetId: assetId || null,
+            status: status || null,
+            regime: regime || null,
+            limit: limit
+          },
+          totalRequirements: requirementInstances.length,
+          totalAssets: assetsMap.size,
+          exportedAt: new Date().toISOString(),
+          bundleVersion: '1.0',
+          exportType: 'filtered_compliance_report'
+        },
+        summary: {
+          requirementsByStatus: {
+            REQUIRED: requirementInstances.filter(r => r.status === 'REQUIRED').length,
+            SATISFIED: requirementInstances.filter(r => r.status === 'SATISFIED').length,
+            EXCEPTION: requirementInstances.filter(r => r.status === 'EXCEPTION').length
+          },
+          totalEvidenceFiles: requirementInstances.reduce((sum, req) => sum + req.evidence.length, 0),
+          platformAcknowledgedRequirements: requirementInstances.filter(r => r.platformAcknowledged).length
+        },
+        assets: Array.from(assetsMap.values()).map(({ asset, requirements }) => ({
+          asset: {
+            id: asset.id,
+            assetRef: asset.assetRef,
+            ledger: asset.ledger,
+            network: asset.network,
+            code: asset.code,
+            status: asset.status
+          },
+          product: {
+            id: asset.product.id,
+            name: asset.product.name,
+            assetClass: asset.product.assetClass,
+            targetMarkets: asset.product.targetMarkets
+          },
+          organization: {
+            id: asset.product.organization.id,
+            name: asset.product.organization.name,
+            country: asset.product.organization.country,
+            jurisdiction: asset.product.organization.jurisdiction
+          },
+          requirements: requirements.map((req: any) => ({
+            id: req.id,
+            status: req.status,
+            rationale: req.rationale,
+            exceptionReason: req.exceptionReason,
+            platformAcknowledged: req.platformAcknowledged,
+            createdAt: req.createdAt,
+            updatedAt: req.updatedAt,
+            requirementTemplate: {
+              id: req.requirementTemplate.id,
+              name: req.requirementTemplate.name,
+              description: req.requirementTemplate.description,
+              regime: {
+                id: req.requirementTemplate.regime.id,
+                name: req.requirementTemplate.regime.name,
+                jurisdiction: req.requirementTemplate.regime.jurisdiction
+              }
+            },
+            evidenceCount: req.evidence.length,
+            evidence: req.evidence.map((ev: any) => ({
+              id: ev.id,
+              fileName: ev.fileName,
+              fileSize: ev.fileSize,
+              fileType: ev.fileType,
+              uploadedAt: ev.uploadedAt,
+              uploadedBy: ev.uploadedBy
+            }))
+          }))
+        }))
+      }
+
+      // Set CORS headers
+      reply.header('Access-Control-Allow-Origin', 'http://localhost:3000')
+      reply.header('Access-Control-Allow-Credentials', 'true')
+
+      // Handle different export formats
+      if (format === 'json') {
+        // JSON export - data only
+        const bundleName = `filtered-compliance-${Date.now()}.json`
+        reply.header('Content-Type', 'application/json')
+        reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
+        return reply.send(JSON.stringify(manifest, null, 2))
+      } else if (format === 'csv') {
+        // CSV export - structured data for spreadsheet analysis
+        const bundleName = `filtered-compliance-${Date.now()}.csv`
+        reply.header('Content-Type', 'text/csv')
+        reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
+        
+        // Generate CSV data
+        const csvRows = []
+        
+        // Header row
+        csvRows.push([
+          'Asset Code',
+          'Asset Reference',
+          'Product Name',
+          'Organization',
+          'Requirement Name',
+          'Regime',
+          'Status',
+          'Evidence Count',
+          'Platform Acknowledged',
+          'Created Date',
+          'Updated Date'
+        ])
+        
+        // Add data rows
+        for (const assetData of manifest.assets) {
+          for (const req of assetData.requirements) {
+            csvRows.push([
+              assetData.asset.code,
+              assetData.asset.assetRef,
+              assetData.product.name,
+              assetData.organization.name,
+              req.requirementTemplate.name,
+              req.requirementTemplate.regime.name,
+              req.status,
+              req.evidenceCount,
+              req.platformAcknowledged ? 'Yes' : 'No',
+              new Date(req.createdAt).toISOString(),
+              new Date(req.updatedAt).toISOString()
+            ])
+          }
+        }
+        
+        // Convert to CSV format
+        const csvContent = csvRows.map(row => 
+          row.map(field => {
+            // Escape fields that contain commas, quotes, or newlines
+            const fieldStr = String(field || '')
+            if (fieldStr.includes(',') || fieldStr.includes('"') || fieldStr.includes('\n')) {
+              return `"${fieldStr.replace(/"/g, '""')}"`
+            }
+            return fieldStr
+          }).join(',')
+        ).join('\n')
+        
+        return reply.send(csvContent)
+      } else {
+        // ZIP export - with evidence files (default)
+        const bundleName = `filtered-compliance-${Date.now()}.zip`
+        reply.header('Content-Type', 'application/zip')
+        reply.header('Content-Disposition', `attachment; filename="${bundleName}"`)
+
+        // Create archive
+        const archive = archiver('zip', { zlib: { level: 9 } })
+        
+        // Use reply.raw but ensure headers are sent first
+        reply.raw.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+        reply.raw.setHeader('Access-Control-Allow-Credentials', 'true')
+        archive.pipe(reply.raw)
+
+        // Add evidence files organized by asset and requirement
+        const __filename = fileURLToPath(import.meta.url)
+        const __dirname = path.dirname(__filename)
+        const uploadsDir = path.join(__dirname, '../../../uploads')
+        
+        for (const assetData of manifest.assets) {
+          const assetDir = `assets/${assetData.asset.code.replace(/[^a-zA-Z0-9]/g, '_')}`
+          
+          for (const req of assetData.requirements) {
+            const reqDir = `${assetDir}/requirements/${req.requirementTemplate.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+            
+            for (const evidenceItem of req.evidence) {
+              const filePath = path.join(uploadsDir, evidenceItem.uploadPath)
+              if (fs.existsSync(filePath)) {
+                archive.file(filePath, { name: `${reqDir}/evidence/${evidenceItem.fileName}` })
+              }
+            }
+          }
+        }
+
+        // Add comprehensive manifest
+        archive.append(JSON.stringify(manifest, null, 2), { name: 'filtered-compliance-manifest.json' })
+
+        // Add individual asset summaries
+        for (const assetData of manifest.assets) {
+          const assetDir = `assets/${assetData.asset.code.replace(/[^a-zA-Z0-9]/g, '_')}`
+          archive.append(JSON.stringify(assetData, null, 2), { name: `${assetDir}/asset-summary.json` })
+        }
+
+        // Finalize archive
+        await archive.finalize()
+      }
+
+    } catch (error: any) {
+      console.error('Error creating filtered compliance export:', error)
+      return reply.status(500).send({ error: 'Failed to create filtered compliance export' })
+    }
+  })
+
 }

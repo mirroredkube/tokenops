@@ -85,7 +85,8 @@ export default function CompliancePage() {
   // Export format state
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState<'zip' | 'json' | 'csv'>('zip')
-  const [pendingExportRequirementId, setPendingExportRequirementId] = useState<string | null>(null)
+  const [exportType, setExportType] = useState<'asset' | 'filtered'>('asset')
+  const [pendingExportAssetId, setPendingExportAssetId] = useState<string | null>(null)
   
   // Filters
   const [filters, setFilters] = useState({
@@ -468,48 +469,80 @@ export default function CompliancePage() {
     setShowPlatformAckModal(true)
   }
 
-  const handleExportEvidenceBundle = (requirementId: string) => {
-    // Show format selection modal
-    setPendingExportRequirementId(requirementId)
+  const handleExportAssetCompliance = (assetId: string) => {
+    // Show format selection modal for asset export
+    setExportType('asset')
+    setPendingExportAssetId(assetId)
+    setExportFormat('zip')
+    setShowExportModal(true)
+  }
+
+  const handleExportFilteredResults = () => {
+    // Show format selection modal for filtered export
+    setExportType('filtered')
+    setPendingExportAssetId(null)
     setExportFormat('zip')
     setShowExportModal(true)
   }
 
   const handleExportSubmit = async () => {
-    if (!pendingExportRequirementId) return
-
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/compliance/evidence/bundle/${pendingExportRequirementId}?format=${exportFormat}`, {
+      let url = ''
+      let filename = ''
+      
+      if (exportType === 'asset' && pendingExportAssetId) {
+        // Asset-level export
+        url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/compliance/assets/${pendingExportAssetId}/export?format=${exportFormat}`
+        filename = `asset-compliance-${pendingExportAssetId}.${exportFormat}`
+      } else if (exportType === 'filtered') {
+        // Filtered export
+        const queryParams = new URLSearchParams()
+        if (filters.assetId) queryParams.append('assetId', filters.assetId)
+        if (filters.requirementStatus) queryParams.append('status', filters.requirementStatus)
+        queryParams.append('format', exportFormat)
+        queryParams.append('limit', '1000')
+        
+        url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/compliance/export?${queryParams.toString()}`
+        filename = `filtered-compliance-${Date.now()}.${exportFormat}`
+      } else {
+        throw new Error('Invalid export configuration')
+      }
+      
+      const response = await fetch(url, {
         credentials: 'include'
       })
       
       if (!response.ok) {
-        throw new Error('Failed to export evidence bundle')
+        throw new Error('Failed to export compliance data')
       }
       
-      // Get filename from response headers or create default
+      // Get filename from response headers or use default
       const contentDisposition = response.headers.get('content-disposition')
-      const filename = contentDisposition 
-        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-        : `evidence-bundle-${pendingExportRequirementId}.${exportFormat}`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
       
       // Create blob and download
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const downloadUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = downloadUrl
       a.download = filename
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
+      window.URL.revokeObjectURL(downloadUrl)
       document.body.removeChild(a)
 
       // Close modal and reset state
       setShowExportModal(false)
-      setPendingExportRequirementId(null)
+      setPendingExportAssetId(null)
       setExportFormat('zip')
     } catch (err: any) {
-      console.error('Error exporting evidence bundle:', err)
+      console.error('Error exporting compliance data:', err)
+      alert('Failed to export compliance data. Please try again.')
     }
   }
 
@@ -657,6 +690,41 @@ export default function CompliancePage() {
             />
           </div>
 
+        </div>
+        
+        {/* Export Actions */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              {activeTab === 'requirements' && (
+                <span>
+                  {requirements.length} requirements found
+                  {filters.assetId && ` for selected asset`}
+                  {filters.requirementStatus && ` with status: ${filters.requirementStatus}`}
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {activeTab === 'requirements' && filters.assetId && (
+                <button
+                  onClick={() => handleExportAssetCompliance(filters.assetId)}
+                  className="px-4 py-2 text-sm border border-emerald-600 text-emerald-600 bg-white rounded-lg hover:bg-emerald-50 flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Asset Compliance
+                </button>
+              )}
+              {activeTab === 'requirements' && (
+                <button
+                  onClick={handleExportFilteredResults}
+                  className="px-4 py-2 text-sm border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50 flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Filtered Results
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -887,15 +955,6 @@ export default function CompliancePage() {
                           </button>
                         )}
 
-                        {/* Export Evidence Bundle Button */}
-                        <button
-                          onClick={() => handleExportEvidenceBundle(req.id)}
-                          className="px-3 py-1 text-xs border border-gray-600 text-gray-600 bg-white rounded hover:bg-gray-50"
-                          title={t('actions.exportBundle')}
-                        >
-                          <Download className="w-3 h-3 mr-1 inline" />
-{t('actions.exportBundle')}
-                        </button>
                       </div>
                     </div>
                   ))}
@@ -1159,9 +1218,14 @@ export default function CompliancePage() {
       {showExportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">Export Evidence Bundle</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {exportType === 'asset' ? 'Export Asset Compliance Report' : 'Export Filtered Compliance Data'}
+            </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Choose the export format for the compliance evidence bundle.
+              {exportType === 'asset' 
+                ? 'Choose the export format for the comprehensive asset compliance report including all requirements and evidence.'
+                : 'Choose the export format for the filtered compliance data based on your current filters.'
+              }
             </p>
             
             <div className="mb-4">
@@ -1176,12 +1240,12 @@ export default function CompliancePage() {
                   { value: 'json', label: 'JSON Data (structured data only)' },
                   { value: 'csv', label: 'CSV Data (spreadsheet analysis)' }
                 ]}
-                placeholder={t('requirements.selectExportFormat')}
+                placeholder="Select export format"
               />
               <div className="mt-2 text-xs text-gray-500">
-                {exportFormat === 'zip' && 'Complete bundle with evidence files and manifest'}
-                {exportFormat === 'json' && 'Structured data for API integration and analysis'}
-                {exportFormat === 'csv' && 'Structured CSV data for spreadsheet analysis and reporting'}
+                {exportFormat === 'zip' && 'Complete bundle with evidence files and comprehensive manifest'}
+                {exportFormat === 'json' && 'Structured data for API integration and programmatic analysis'}
+                {exportFormat === 'csv' && 'Structured CSV data for spreadsheet analysis and compliance reporting'}
               </div>
             </div>
             
@@ -1189,7 +1253,7 @@ export default function CompliancePage() {
               <button
                 onClick={() => {
                   setShowExportModal(false)
-                  setPendingExportRequirementId(null)
+                  setPendingExportAssetId(null)
                   setExportFormat('zip')
                 }}
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
