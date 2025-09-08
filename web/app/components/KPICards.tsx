@@ -161,7 +161,7 @@ export default function KPICards() {
       icon: Shield,
       color: 'bg-purple-500',
       hoverColor: 'hover:bg-purple-50',
-      onClick: () => router.push('/app/compliance'),
+      onClick: () => router.push('/app/compliance?tab=issuances'),
       tooltip: t('dashboard:kpi.complianceRecordsTooltip', 'Total compliance records (verified and unverified)')
     },
     {

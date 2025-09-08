@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download } from 'lucide-react'
 import CustomDropdown from '../../components/CustomDropdown'
@@ -58,6 +58,7 @@ interface ComplianceListResponse {
 export default function CompliancePage() {
   const { t } = useTranslation(['compliance', 'common'])
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [records, setRecords] = useState<ComplianceRecord[]>([])
   const [requirements, setRequirements] = useState<ComplianceRequirement[]>([])
   const [allRequirements, setAllRequirements] = useState<ComplianceRequirement[]>([]) // For Overview tab
@@ -352,7 +353,12 @@ export default function CompliancePage() {
   useEffect(() => {
     // Fetch assets on initial load
     fetchAssets()
-  }, [])
+    // Initialize tab from query (?tab=issuances/requirements/overview)
+    const tab = (searchParams.get('tab') || '').toLowerCase()
+    if (tab === 'issuances' || tab === 'requirements' || tab === 'overview') {
+      setActiveTab(tab as any)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (activeTab === 'issuances') {
