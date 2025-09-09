@@ -799,7 +799,17 @@ export default function HomePage() {
       <footer className="mx-auto max-w-6xl px-6 pb-16">
         <div className="rounded-2xl border bg-white p-6 text-sm text-neutral-600">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="font-medium text-neutral-900">{BRAND}</div>
+            <div className="flex items-center gap-2 text-neutral-900">
+              <img
+                src="/brand/logo.svg"
+                width={18}
+                height={18}
+                alt="Regula logo"
+                className="h-5 w-5"
+              />
+              <span className="font-medium">{BRAND}</span>
+              <span className="text-neutral-500">© {new Date().getFullYear()}</span>
+            </div>
             <nav className="flex flex-wrap gap-4">
               <div className="flex gap-4 text-sm text-neutral-500">
                 <a href="/privacy" className="hover:underline">
