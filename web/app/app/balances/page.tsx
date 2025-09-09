@@ -442,7 +442,12 @@ function IssuerOutstandingView({
         
       } catch (error) {
         console.error('Error fetching outstanding balances:', error)
-        throw error
+        // Fail-soft so the page does not show an error banner
+        return {
+          outstandingSupply: '0',
+          holderCount: 0,
+          holders: []
+        } as OutstandingData
       }
     },
     enabled: !!filters.assetId
@@ -670,7 +675,13 @@ function HolderLookupContent({
         
       } catch (error) {
         console.error('Error fetching holder lookup data:', error)
-        throw error
+        // Fail-soft: return empty structure
+        return {
+          holder: filters.holderAddress,
+          xrpBalance: '0',
+          reserve: '0',
+          assets: []
+        } as HolderLookupData
       }
     },
     enabled: !!filters.holderAddress
