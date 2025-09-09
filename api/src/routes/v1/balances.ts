@@ -81,10 +81,19 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
 
     const adapter = getLedgerAdapter()
     try {
-      const { xrpBalance, balances } = await adapter.getBalances({ account, issuer, currency })
+      const TIMEOUT_MS = Number(process.env.BALANCES_TIMEOUT_MS || 6000)
+      const timeout = new Promise<{ xrpBalance?: string; balances: any[] }>((_, reject) => {
+        setTimeout(() => reject(new Error('balances_timeout')), TIMEOUT_MS)
+      })
+      const { xrpBalance, balances } = await Promise.race([
+        adapter.getBalances({ account, issuer, currency }),
+        timeout,
+      ])
       return reply.send({ ok: true, account, xrpBalance: xrpBalance ?? '0', trustLines: balances })
     } catch (e: any) {
-      return reply.status(400).send({ ok: false, error: e?.data || e?.message || String(e) })
+      app.log.error({ err: e, account, issuer, currency }, 'getBalances failed; returning empty set')
+      // Fail-soft: return empty dataset so UI can render without error
+      return reply.send({ ok: true, account, xrpBalance: '0', trustLines: [] })
     }
   })
 }
