@@ -398,7 +398,7 @@ function IssuerOutstandingView({
         }
         
         // Now get balances for the issuer account, filtered by the asset's currency
-        const balancesResponse = await (api as any).GET('/balances/{account}', {
+        const balancesResponse = await (api as any).GET('/v1/balances/{account}', {
           params: { 
             path: { account: issuerAccount },
             query: { currency: asset.code }
@@ -616,7 +616,7 @@ function HolderLookupContent({
       
       try {
         // Use the existing balances endpoint for holder lookup
-        const response = await (api as any).GET('/balances/{account}', {
+        const response = await (api as any).GET('/v1/balances/{account}', {
           params: { path: { account: filters.holderAddress } }
         })
         
