@@ -279,7 +279,7 @@ function OutstandingView({
                 { value: '', label: t('balances:fields.selectAsset', 'Select an asset') },
                 ...(assetsData?.map((asset: any) => ({
                   value: asset.id,
-                  label: `${asset.code} (${asset.issuingAddress?.address || 'Unknown'})`
+                  label: `${asset.code} (${asset.issuer || 'Unknown'})`
                 })) || [])
               ]}
               className="w-full sm:w-80"
@@ -391,10 +391,15 @@ function IssuerOutstandingView({
         }
         
         const asset = assetResponse.data as any
-        const issuerAccount = asset.issuingAddress?.address || ''
+        const issuerAccount = asset.issuer || ''
         
         if (!issuerAccount) {
-          throw new Error('Asset issuer not found')
+          // If issuer is missing, return empty dataset gracefully
+          return {
+            outstandingSupply: '0',
+            holderCount: 0,
+            holders: []
+          } as OutstandingData
         }
         
         // Now get balances for the issuer account, filtered by the asset's currency
