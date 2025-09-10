@@ -7,6 +7,31 @@ import { emailService } from '../../lib/emailService.js'
 
 const prisma = new PrismaClient()
 
+// ---------- Authentication Helper ----------
+async function verifyAuthIfRequired(req: any, reply: any): Promise<any> {
+  const AUTH_MODE = (process.env.AUTH_MODE ?? "off").toLowerCase()
+  if (AUTH_MODE === "off") return null
+
+  // Prefer JWT verification if available
+  if (typeof (req as any).jwtVerify === 'function') {
+    try {
+      await (req as any).jwtVerify()
+      return (req as any).user
+    } catch (err) {
+      throw err
+    }
+  }
+
+  // Fallback to server decorator if present
+  if ((req.server as any)?.verifyAuthOrApiKey) {
+    await (req.server as any).verifyAuthOrApiKey(req, reply)
+    return (req as any).user
+  }
+
+  // If no mechanism available, treat as unauthenticated (dev convenience)
+  return null
+}
+
 export default async function routes(app: FastifyInstance, _opts: FastifyPluginOptions) {
   // Get users with filtering and pagination
   app.get('/users', {
@@ -332,7 +357,7 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
 
   // Invite user (placeholder - would integrate with email service)
   app.post('/users/invite', {
-    preHandler: [tenantMiddleware, requireActiveTenant],
+    preHandler: [tenantMiddleware, requireActiveTenant, verifyAuthIfRequired],
     schema: {
       body: {
         type: 'object',
