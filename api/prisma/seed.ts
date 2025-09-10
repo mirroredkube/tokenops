@@ -231,7 +231,8 @@ async function main() {
           legalName: SEED_CONFIG.defaultOrgName,
           country: SEED_CONFIG.defaultOrgCountry,
           jurisdiction: SEED_CONFIG.defaultOrgJurisdiction,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
+          subdomain: 'default'
         }
       })
       console.log('✅ Default organization created')

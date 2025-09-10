@@ -48,6 +48,8 @@ export default function CollapsibleSidebar() {
     { href: '/app/assets', label: t('navigation.assets'), icon: <Building className="h-5 w-5" /> },
     { href: '/app/issuer-addresses', label: t('navigation.issuerAddresses'), icon: <Key className="h-5 w-5" /> },
     { href: '/app/issuance/new', label: t('navigation.issuances'), icon: <Coins className="h-5 w-5" /> },
+    // Only show Users menu for admins
+    ...(user?.role === 'ADMIN' ? [{ href: '/app/users', label: t('navigation.users'), icon: <User className="h-5 w-5" /> }] : []),
     { href: '/app/authorizations', label: t('navigation.authorizations'), icon: <CheckSquare className="h-5 w-5" /> },
     { href: '/app/compliance', label: t('navigation.compliance'), icon: <Shield className="h-5 w-5" /> },
     { href: '/app/reports', label: t('navigation.reports'), icon: <BarChart3 className="h-5 w-5" /> },
