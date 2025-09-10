@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Shield, Check, X, Info } from 'lucide-react'
+import { Shield, Check, X as XIcon, Info } from 'lucide-react'
 
 interface Permission {
   category: string
@@ -377,7 +377,7 @@ export default function PermissionsMatrix() {
                             {hasPermission ? (
                               <Check className="h-3 w-3" />
                             ) : (
-                              <X className="h-3 w-3" />
+                              <XIcon className="h-3 w-3" />
                             )}
                             {PERMISSION_LABELS[permission as keyof typeof PERMISSION_LABELS]}
                           </div>

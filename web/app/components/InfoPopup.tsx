@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { X, HelpCircle } from 'lucide-react'
+import { X as XIcon, HelpCircle } from 'lucide-react'
 
 interface InfoPopupProps {
   title: string
@@ -31,7 +31,7 @@ export default function InfoPopup({ title, children, trigger }: InfoPopupProps) 
                 onClick={handleClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <X className="h-5 w-5" />
+                <XIcon className="h-5 w-5" />
               </button>
             </div>
 

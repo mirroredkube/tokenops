@@ -17,7 +17,8 @@ import {
   AlertCircle,
   MoreVertical,
   Search,
-  Filter
+  Filter,
+  X as XIcon
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { AdminOnly } from '@app/components/RoleGuard'
@@ -427,7 +428,7 @@ function UsersPageContent() {
                   onClick={() => setShowPermissionsMatrix(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <X className="h-6 w-6" />
+                  <XIcon className="h-6 w-6" />
                 </button>
               </div>
               <PermissionsMatrix />

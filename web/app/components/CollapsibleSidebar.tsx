@@ -10,7 +10,7 @@ import {
   Coins, 
   Wallet, 
   Menu,
-  X,
+  X as XIcon,
   User,
   Settings,
   HelpCircle,
@@ -88,7 +88,7 @@ export default function CollapsibleSidebar() {
         onClick={toggleMobile}
         className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-white border border-gray-200 rounded-lg shadow-sm"
       >
-        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isMobileOpen ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Mobile overlay */}
