@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { PrismaClient } from '@prisma/client'
-import { requireActiveTenant } from '../../middleware/tenantMiddleware.js'
+import { requireActiveTenant, tenantMiddleware } from '../../middleware/tenantMiddleware.js'
 import type { TenantRequest } from '../../middleware/tenantMiddleware.js'
 
 const prisma = new PrismaClient()
@@ -8,7 +8,7 @@ const prisma = new PrismaClient()
 export default async function routes(app: FastifyInstance, _opts: FastifyPluginOptions) {
   // Get users with filtering and pagination
   app.get('/users', {
-    preHandler: [requireActiveTenant],
+    preHandler: [tenantMiddleware, requireActiveTenant],
     schema: {
       querystring: {
         type: 'object',

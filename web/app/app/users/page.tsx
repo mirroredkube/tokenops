@@ -22,6 +22,7 @@ import {
 import { api } from '@/lib/api'
 import { AdminOnly } from '@app/components/RoleGuard'
 import PermissionsMatrix from '@app/components/PermissionsMatrix'
+import CustomDropdown from '@app/components/CustomDropdown'
 
 interface User {
   id: string
@@ -200,41 +201,30 @@ function UsersPageContent() {
             />
           </div>
           
-          <div className="relative">
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="appearance-none w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-gray-900 cursor-pointer transition-colors hover:border-gray-400"
-            >
-              <option value="">{t('users:allRoles', 'All Roles')}</option>
-              {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
+          <CustomDropdown
+            value={roleFilter}
+            onChange={setRoleFilter}
+            options={[
+              { value: '', label: t('users:allRoles', 'All Roles') },
+              ...Object.entries(ROLE_LABELS).map(([value, label]) => ({
+                value,
+                label
+              }))
+            ]}
+            placeholder={t('users:allRoles', 'All Roles')}
+          />
 
-          <div className="relative">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-gray-900 cursor-pointer transition-colors hover:border-gray-400"
-            >
-              <option value="">{t('users:allStatuses', 'All Statuses')}</option>
-              <option value="ACTIVE">{t('users:active', 'Active')}</option>
-              <option value="SUSPENDED">{t('users:suspended', 'Suspended')}</option>
-              <option value="INACTIVE">{t('users:inactive', 'Inactive')}</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
+          <CustomDropdown
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: '', label: t('users:allStatuses', 'All Statuses') },
+              { value: 'ACTIVE', label: t('users:active', 'Active') },
+              { value: 'SUSPENDED', label: t('users:suspended', 'Suspended') },
+              { value: 'INACTIVE', label: t('users:inactive', 'Inactive') }
+            ]}
+            placeholder={t('users:allStatuses', 'All Statuses')}
+          />
 
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-400" />
@@ -494,15 +484,15 @@ function EditUserModal({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('users:role', 'Role')}
             </label>
-            <select
+            <CustomDropdown
               value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+              onChange={(value) => setSelectedRole(value as any)}
+              options={Object.entries(ROLE_LABELS).map(([value, label]) => ({
+                value,
+                label
+              }))}
+              placeholder={t('users:selectRole', 'Select a role')}
+            />
             <p className="text-xs text-gray-500 mt-1">
               {ROLE_DESCRIPTIONS[selectedRole]}
             </p>
@@ -576,15 +566,15 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('users:role', 'Role')}
             </label>
-            <select
+            <CustomDropdown
               value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+              onChange={setRole}
+              options={Object.entries(ROLE_LABELS).map(([value, label]) => ({
+                value,
+                label
+              }))}
+              placeholder={t('users:selectRole', 'Select a role')}
+            />
             <p className="text-xs text-gray-500 mt-1">
               {ROLE_DESCRIPTIONS[role as keyof typeof ROLE_DESCRIPTIONS]}
             </p>
