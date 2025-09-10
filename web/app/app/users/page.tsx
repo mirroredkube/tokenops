@@ -408,6 +408,23 @@ function UsersPageContent() {
         />
       )}
 
+      {/* Pending Invitations Section */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t('users:pendingInvitations', 'Pending Invitations')}
+          </h3>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="p-4 text-center text-gray-500">
+            <p>{t('users:noPendingInvitations', 'No pending invitations')}</p>
+            <p className="text-sm mt-1">
+              {t('users:invitationsWillAppearHere', 'Invitations will appear here once sent')}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Invite User Modal */}
       {showInviteModal && (
         <InviteUserModal
@@ -526,17 +543,44 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('VIEWER')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleInvite = async () => {
-    if (!email) return
+    if (!email) {
+      setError(t('users:emailRequired', 'Email is required'))
+      return
+    }
     
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError(t('users:invalidEmail', 'Please enter a valid email address'))
+      return
+    }
+    
+    setError('')
     setIsLoading(true)
+    
     try {
-      // TODO: Implement invite API call
-      console.log('Inviting user:', { email, role })
+      const response = await api.POST('/v1/users/invite' as any, {
+        body: {
+          email,
+          role,
+          name: email.split('@')[0] // Use email prefix as default name
+        }
+      })
+      
+      // Show success message
+      alert(t('users:inviteSent', 'Invitation sent successfully!'))
       onClose()
-    } catch (error) {
+      // Reset form
+      setEmail('')
+      setRole('VIEWER')
+      setError('')
+    } catch (error: any) {
       console.error('Error inviting user:', error)
+      const errorMessage = error?.data?.message || t('users:inviteError', 'Failed to send invitation')
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -550,6 +594,12 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
         </h3>
         
         <div className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('users:emailAddress', 'Email Address')}
@@ -557,9 +607,13 @@ function InviteUserModal({ onClose }: { onClose: () => void }) {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                if (error) setError('') // Clear error when user types
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               placeholder="user@example.com"
+              disabled={isLoading}
             />
           </div>
 

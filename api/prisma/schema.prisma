@@ -24,6 +24,7 @@ model Organization {
   issuerAddresses IssuerAddress[]
   products        Product[]
   users           User[]
+  invitations     Invitation[]
 
   @@index([country])
   @@index([status])
@@ -359,6 +360,27 @@ model IdempotencyKey {
   @@index([expiresAt])
 }
 
+model Invitation {
+  id             String            @id @default(cuid())
+  email          String
+  name           String?
+  role           UserRole          @default(VIEWER)
+  token          String            @unique
+  expiresAt      DateTime
+  status         InvitationStatus  @default(PENDING)
+  organizationId String
+  invitedBy      String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([organizationId])
+}
+
 enum OrganizationStatus {
   ACTIVE
   SUSPENDED
@@ -462,4 +484,11 @@ enum IssuanceStatus {
   VALIDATED
   FAILED
   EXPIRED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
 }

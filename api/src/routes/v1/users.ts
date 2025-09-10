@@ -2,6 +2,8 @@ import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import { PrismaClient } from '@prisma/client'
 import { requireActiveTenant, tenantMiddleware } from '../../middleware/tenantMiddleware.js'
 import type { TenantRequest } from '../../middleware/tenantMiddleware.js'
+import crypto from 'crypto'
+import { emailService } from '../../lib/emailService.js'
 
 const prisma = new PrismaClient()
 
@@ -195,7 +197,7 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
       }
 
       // Prevent self-demotion from ADMIN role
-      if (updates.role && updates.role !== 'ADMIN' && existingUser.id === req.user?.id) {
+      if (updates.role && updates.role !== 'ADMIN' && existingUser.id === req.user?.sub) {
         return reply.status(400).send({
           error: 'Bad Request',
           message: 'Cannot change your own role from ADMIN'
@@ -224,11 +226,10 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
       // Log the change
       await prisma.event.create({
         data: {
-          type: 'USER_UPDATED',
           entityType: 'User',
           entityId: userId,
           organizationId: req.tenant!.id,
-          userId: req.user?.id,
+          userId: req.user?.sub,
           metadata: {
             changes: updates,
             previousRole: existingUser.role,
@@ -279,7 +280,7 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
       }
 
       // Prevent self-deletion
-      if (existingUser.id === req.user?.id) {
+      if (existingUser.id === req.user?.sub) {
         return reply.status(400).send({
           error: 'Bad Request',
           message: 'Cannot delete your own account'
@@ -305,11 +306,10 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
       // Log the deletion
       await prisma.event.create({
         data: {
-          type: 'USER_DELETED',
           entityType: 'User',
           entityId: userId,
           organizationId: req.tenant!.id,
-          userId: req.user?.id,
+          userId: req.user?.sub,
           metadata: {
             deletedUser: {
               email: existingUser.email,
@@ -364,25 +364,288 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
         })
       }
 
-      // TODO: Implement actual invitation flow
-      // This would typically:
-      // 1. Create a pending user record
-      // 2. Generate an invitation token
-      // 3. Send invitation email
-      // 4. Store invitation details
+      // Generate invitation token
+      const invitationToken = crypto.randomBytes(32).toString('hex')
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
-      // For now, return a placeholder response
+      // Create invitation record
+      const invitation = await prisma.invitation.create({
+        data: {
+          email,
+          role,
+          name: name || email.split('@')[0],
+          token: invitationToken,
+          expiresAt,
+          organizationId: req.tenant!.id,
+          invitedBy: req.user.sub,
+          status: 'PENDING'
+        }
+      })
+
+      // Send invitation email
+      const invitationUrl = `${process.env.UI_ORIGIN || 'http://localhost:3000'}/invite/${invitationToken}`
+      
+      // Get inviter information
+      const inviter = await prisma.user.findUnique({
+        where: { sub: req.user.sub },
+        select: { name: true, email: true }
+      })
+      
+      const inviterName = inviter?.name || inviter?.email || 'Administrator'
+      const organizationName = req.tenant?.name || 'Your Organization'
+      
+      // Send email invitation
+      const emailSent = await emailService.sendInvitationEmail({
+        to: email,
+        inviterName,
+        organizationName,
+        role,
+        invitationUrl,
+        expiresAt: invitation.expiresAt
+      })
+      
+      app.log.info({ 
+        email, 
+        invitationUrl, 
+        invitationId: invitation.id,
+        emailSent
+      }, 'User invitation created and email sent')
+
       return reply.send({
         message: 'Invitation sent successfully',
         email,
         role,
-        name
+        name: name || email.split('@')[0],
+        invitationId: invitation.id,
+        expiresAt: invitation.expiresAt
       })
     } catch (error) {
       app.log.error({ err: error }, 'Error inviting user')
       return reply.status(500).send({
         error: 'Internal Server Error',
         message: 'Failed to send invitation'
+      })
+    }
+  })
+
+  // Get pending invitations
+  app.get('/users/invitations', {
+    preHandler: [requireActiveTenant],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          status: { 
+            type: 'string', 
+            enum: ['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED'],
+            default: 'PENDING'
+          },
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
+        }
+      }
+    }
+  }, async (req: TenantRequest, reply) => {
+    const { status = 'PENDING', page = 1, limit = 20 } = req.query as any
+    const offset = (page - 1) * limit
+
+    try {
+      const invitations = await prisma.invitation.findMany({
+        where: {
+          organizationId: req.tenant!.id,
+          status
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          status: true,
+          expiresAt: true,
+          createdAt: true,
+          invitedBy: true
+        }
+      })
+
+      const total = await prisma.invitation.count({
+        where: {
+          organizationId: req.tenant!.id,
+          status
+        }
+      })
+
+      return reply.send({
+        invitations,
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      })
+    } catch (error) {
+      app.log.error({ err: error }, 'Error fetching invitations')
+      return reply.status(500).send({
+        error: 'Internal Server Error',
+        message: 'Failed to fetch invitations'
+      })
+    }
+  })
+
+  // Accept invitation endpoint
+  app.post('/users/invitations/:token/accept', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          token: { type: 'string' }
+        },
+        required: ['token']
+      },
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          password: { type: 'string', minLength: 8 }
+        },
+        required: ['name', 'password']
+      }
+    }
+  }, async (req, reply) => {
+    const { token } = req.params as any
+    const { name, password } = req.body as any
+
+    try {
+      // Find the invitation
+      const invitation = await prisma.invitation.findUnique({
+        where: { token },
+        include: { organization: true }
+      })
+
+      if (!invitation) {
+        return reply.status(404).send({
+          error: 'Not Found',
+          message: 'Invalid invitation token'
+        })
+      }
+
+      if (invitation.status !== 'PENDING') {
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: 'Invitation has already been used or expired'
+        })
+      }
+
+      if (invitation.expiresAt < new Date()) {
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: 'Invitation has expired'
+        })
+      }
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email: invitation.email }
+      })
+
+      if (existingUser) {
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: 'User with this email already exists'
+        })
+      }
+
+      // Create the user
+      const user = await prisma.user.create({
+        data: {
+          email: invitation.email,
+          name,
+          sub: `invited-${crypto.randomBytes(16).toString('hex')}`, // Generate a unique sub
+          organizationId: invitation.organizationId,
+          role: invitation.role,
+          status: 'ACTIVE'
+        }
+      })
+
+      // Update invitation status
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED' }
+      })
+
+      return reply.send({
+        message: 'Account created successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          organization: invitation.organization
+        }
+      })
+    } catch (error) {
+      app.log.error({ err: error }, 'Error accepting invitation')
+      return reply.status(500).send({
+        error: 'Internal Server Error',
+        message: 'Failed to accept invitation'
+      })
+    }
+  })
+
+  // Test email service endpoint (for development/testing)
+  app.post('/users/test-email', {
+    preHandler: [requireActiveTenant],
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email' }
+        },
+        required: ['email']
+      }
+    }
+  }, async (req: TenantRequest, reply) => {
+    const { email } = req.body as any
+
+    try {
+      // Test email connection first
+      const connectionOk = await emailService.testConnection()
+      if (!connectionOk) {
+        return reply.status(500).send({
+          error: 'Email Service Error',
+          message: 'Email service connection failed'
+        })
+      }
+
+      // Send test invitation email
+      const testInvitationUrl = `${process.env.UI_ORIGIN || 'http://localhost:3000'}/invite/test-token`
+      const emailSent = await emailService.sendInvitationEmail({
+        to: email,
+        inviterName: 'Test Administrator',
+        organizationName: req.tenant?.name || 'Test Organization',
+        role: 'VIEWER',
+        invitationUrl: testInvitationUrl,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      })
+
+      if (emailSent) {
+        return reply.send({
+          message: 'Test email sent successfully',
+          email,
+          connectionOk: true
+        })
+      } else {
+        return reply.status(500).send({
+          error: 'Email Send Error',
+          message: 'Failed to send test email'
+        })
+      }
+    } catch (error) {
+      app.log.error({ err: error }, 'Error sending test email')
+      return reply.status(500).send({
+        error: 'Internal Server Error',
+        message: 'Failed to send test email'
       })
     }
   })
