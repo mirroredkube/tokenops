@@ -84,7 +84,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { limit = '50', offset = '0', status, assetId } = req.query as any
     
@@ -186,7 +186,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { id } = req.params as { id: string }
     
@@ -330,7 +330,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId } = req.params as { assetId: string }
     const body = IssuanceSchema.safeParse(req.body)
@@ -681,7 +681,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId, issuanceId } = req.params as { assetId: string; issuanceId: string }
     const { refresh } = req.query as { refresh?: boolean }
@@ -803,7 +803,7 @@ export default async function issuanceRoutes(app: FastifyInstance, _opts: Fastif
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId } = req.params as { assetId: string }
     const { limit = 50, offset = 0 } = req.query as any

@@ -9,7 +9,7 @@ const usersPlugin: FastifyPluginAsync = async (app) => {
   app.get("/me/settings", async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     try {
       await req.jwtVerify()
       const user = req.user as any
@@ -45,7 +45,7 @@ const usersPlugin: FastifyPluginAsync = async (app) => {
   app.patch("/me/settings", async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     try {
       await req.jwtVerify()
       const user = req.user as any
@@ -97,7 +97,7 @@ const usersPlugin: FastifyPluginAsync = async (app) => {
   app.patch("/me/profile", async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     try {
       await req.jwtVerify()
       const user = req.user as any

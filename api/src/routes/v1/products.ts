@@ -40,7 +40,7 @@ export default async function productRoutes(fastify: FastifyInstance) {
     try {
       // Apply tenant middleware
       await tenantMiddleware(request, reply)
-      requireActiveTenant(request, reply)
+      await requireActiveTenant(request, reply)
       
       const user = await verifyAuthIfRequired(request)
       const query = listProductsQuerySchema.parse(request.query)
@@ -113,7 +113,7 @@ export default async function productRoutes(fastify: FastifyInstance) {
     try {
       // Apply tenant middleware
       await tenantMiddleware(request, reply)
-      requireActiveTenant(request, reply)
+      await requireActiveTenant(request, reply)
       
       const user = await verifyAuthIfRequired(request)
       const data = createProductSchema.parse(request.body)

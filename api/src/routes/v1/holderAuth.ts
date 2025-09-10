@@ -57,7 +57,7 @@ export default async function holderAuthRoutes(app: FastifyInstance, _opts: Fast
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { reqId } = req.params as { reqId: string }
     
@@ -334,7 +334,7 @@ export default async function holderAuthRoutes(app: FastifyInstance, _opts: Fast
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { reqId } = req.params as { reqId: string }
     

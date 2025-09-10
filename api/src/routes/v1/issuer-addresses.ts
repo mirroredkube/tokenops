@@ -148,7 +148,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       // Verify authentication if required
@@ -287,7 +287,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       // Verify authentication if required
@@ -400,7 +400,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       // Verify authentication if required
@@ -501,7 +501,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       // Verify authentication if required
@@ -605,7 +605,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       // Verify authentication if required
@@ -714,7 +714,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       // Verify authentication if required
@@ -814,7 +814,7 @@ export default async function issuerAddressRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       // Verify authentication if required

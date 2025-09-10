@@ -95,7 +95,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { limit = 20, offset = 0, status, assetId, holder } = req.query as {
       limit?: number
@@ -195,7 +195,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId, holder } = req.params as { assetId: string; holder: string }
     
@@ -364,7 +364,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId, holder } = req.params as { assetId: string, holder: string }
     
@@ -481,7 +481,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId, holder } = req.params as { assetId: string; holder: string }
     const body = AuthorizationRequestSchema.safeParse(req.body)
@@ -845,7 +845,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       const { id } = req.params as { id: string }
@@ -975,7 +975,7 @@ export default async function authorizationRoutes(app: FastifyInstance, _opts: F
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     try {
       const { id } = req.params as { id: string }

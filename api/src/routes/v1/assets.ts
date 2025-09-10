@@ -165,7 +165,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const parsed = AssetCreateSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -328,7 +328,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
   app.get('/assets/:assetId', async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId } = req.params as { assetId: string }
     
@@ -450,7 +450,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId } = req.params as { assetId: string }
     const parsed = AssetUpdateSchema.safeParse(req.body)
@@ -587,7 +587,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { assetId } = req.params as { assetId: string }
     
@@ -711,7 +711,7 @@ export default async function assetRoutes(app: FastifyInstance, _opts: FastifyPl
   }, async (req: TenantRequest, reply) => {
     // Apply tenant middleware
     await tenantMiddleware(req, reply)
-    requireActiveTenant(req, reply)
+    await requireActiveTenant(req, reply)
     
     const { productId, ledger, status, limit = 20, offset = 0 } = req.query as any
     

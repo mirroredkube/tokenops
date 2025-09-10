@@ -58,10 +58,8 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
       },
     },
   }, async (req: TenantRequest, reply) => {
-    console.log('[BALANCES] Route handler started')
     const { account } = req.params as { account: string }
     const { issuer, currency } = req.query as { issuer?: string; currency?: string }
-    console.log('[BALANCES] Params:', { account, issuer, currency })
 
     // If issuer filter is provided, validate it belongs to the tenant
     if (issuer) {
@@ -82,11 +80,8 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
     }
 
     const adapter = getLedgerAdapter()
-    console.log('[BALANCES] About to call adapter.getBalances')
     try {
       const TIMEOUT_MS = Number(process.env.BALANCES_TIMEOUT_MS || 3000)
-      app.log.info({ account, issuer, currency, timeout: TIMEOUT_MS }, 'Starting getBalances with timeout')
-      console.log('[BALANCES] Starting getBalances with timeout:', TIMEOUT_MS)
       
       const timeout = new Promise<{ xrpBalance?: string; balances: any[] }>((_, reject) => {
         setTimeout(() => {
@@ -100,7 +95,6 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
         timeout,
       ])
       
-      app.log.info({ account, issuer, currency, balanceCount: balances?.length }, 'getBalances completed successfully')
       return reply.send({ ok: true, account, xrpBalance: xrpBalance ?? '0', trustLines: balances })
     } catch (e: any) {
       app.log.error({ err: e, account, issuer, currency }, 'getBalances failed; returning empty set')
