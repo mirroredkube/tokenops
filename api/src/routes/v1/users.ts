@@ -332,7 +332,7 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
 
   // Invite user (placeholder - would integrate with email service)
   app.post('/users/invite', {
-    preHandler: [requireActiveTenant],
+    preHandler: [tenantMiddleware, requireActiveTenant],
     schema: {
       body: {
         type: 'object',
