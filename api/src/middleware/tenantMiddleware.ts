@@ -58,9 +58,11 @@ function extractSubdomainFromHost(host: string): string | null {
  * Tenant middleware that extracts and validates tenant from subdomain
  */
 export async function tenantMiddleware(request: TenantRequest, reply: FastifyReply) {
+  console.log('[TENANT] Middleware started for:', request.url)
   try {
     // Extract host from request
     const host = request.headers.host || request.headers['x-forwarded-host'] as string;
+    console.log('[TENANT] Host:', host)
     
     if (!host) {
       return reply.status(400).send({
@@ -80,7 +82,9 @@ export async function tenantMiddleware(request: TenantRequest, reply: FastifyRep
     }
 
     // Lookup tenant by subdomain
+    console.log('[TENANT] About to lookup tenant:', subdomain)
     const lookupResult = await lookupTenantBySubdomain(subdomain);
+    console.log('[TENANT] Lookup result:', lookupResult.success ? 'success' : 'failed')
     
     if (!lookupResult.success) {
       // Return 404 for unknown tenants to avoid enumeration attacks
@@ -160,18 +164,24 @@ export function requireTenant(request: TenantRequest, reply: FastifyReply) {
 /**
  * Middleware for routes that require active tenant
  */
-export function requireActiveTenant(request: TenantRequest, reply: FastifyReply) {
+export async function requireActiveTenant(request: TenantRequest, reply: FastifyReply) {
+  console.log('[REQUIRE_ACTIVE_TENANT] Started for:', request.url)
   if (!request.tenant) {
+    console.log('[REQUIRE_ACTIVE_TENANT] No tenant found')
     return reply.status(500).send({
       error: 'Internal Server Error',
       message: 'Tenant context required'
     });
   }
 
+  console.log('[REQUIRE_ACTIVE_TENANT] Tenant status:', request.tenant.status)
   if (request.tenant.status !== 'ACTIVE') {
+    console.log('[REQUIRE_ACTIVE_TENANT] Tenant not active')
     return reply.status(403).send({
       error: 'Forbidden',
       message: 'Tenant is not active'
     });
   }
+  
+  console.log('[REQUIRE_ACTIVE_TENANT] Tenant is active, proceeding')
 }
