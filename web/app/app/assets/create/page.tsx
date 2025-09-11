@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { getTenantApiUrl } from '@/lib/tenantApi'
 import { useAuth } from '@/contexts/AuthContext'
+import { CanCreateAssets } from '../../../components/RoleGuard'
 import FormField from '../../../components/FormField'
 import CustomDropdown from '../../../components/CustomDropdown'
 import Accordion from '../../../components/Accordion'
@@ -56,6 +57,24 @@ interface ApprovedAddress {
 }
 
 export default function CreateAssetPage() {
+  return (
+    <CanCreateAssets fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-gray-400 text-xl">🚫</span>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Access Restricted</h3>
+          <p className="text-gray-600">You don't have permission to create assets. Only Administrators and Issuer Admins can create assets.</p>
+        </div>
+      </div>
+    }>
+      <CreateAssetPageContent />
+    </CanCreateAssets>
+  )
+}
+
+function CreateAssetPageContent() {
   const { t } = useTranslation(['assets', 'common', 'issuerAddresses'])
   const { user } = useAuth()
   const router = useRouter()

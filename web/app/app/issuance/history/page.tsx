@@ -7,6 +7,7 @@ import { getTenantApiUrl } from '@/lib/tenantApi'
 import { Eye, RefreshCw, Clock, CheckCircle, XCircle, AlertTriangle, Plus } from 'lucide-react'
 import CustomDropdown from '../../../components/CustomDropdown'
 import InfoPopup from '../../../components/InfoPopup'
+import { CanCreateIssuances } from '../../../components/RoleGuard'
 
 interface Issuance {
   id: string
@@ -262,13 +263,15 @@ export default function IssuanceHistoryPage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => router.push('/app/issuance/new')}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {t('issuances:pages.history.newIssuance', 'New Issuance')}
-          </button>
+          <CanCreateIssuances fallback={null}>
+            <button
+              onClick={() => router.push('/app/issuance/new')}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('issuances:pages.history.newIssuance', 'New Issuance')}
+            </button>
+          </CanCreateIssuances>
         </div>
       </div>
 

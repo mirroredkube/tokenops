@@ -24,7 +24,7 @@ export default function RoleGuard({
 
   const hasPermission = requireAll 
     ? allowedRoles.every(role => user.role === role)
-    : allowedRoles.includes(user.role)
+    : user.role ? allowedRoles.includes(user.role) : false
 
   return hasPermission ? <>{children}</> : <>{fallback}</>
 }
@@ -65,6 +65,30 @@ export function ComplianceReviewerOnly({ children, fallback }: { children: React
 export function NotViewerOnly({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   return (
     <RoleGuard allowedRoles={['ADMIN', 'COMPLIANCE_OFFICER', 'ISSUER_ADMIN', 'COMPLIANCE_REVIEWER']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
+export function CanCreateAssets({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'ISSUER_ADMIN']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
+export function CanCreateIssuances({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'ISSUER_ADMIN']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
+export function CanManageIssuerAddresses({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'ISSUER_ADMIN']} fallback={fallback}>
       {children}
     </RoleGuard>
   )

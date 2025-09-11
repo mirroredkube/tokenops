@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
+import { usePermissions } from './RoleGuard'
 import { 
   LayoutDashboard, 
   Shield, 
@@ -42,17 +43,25 @@ export default function CollapsibleSidebar() {
 
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { canManageUsers, canCreateAssets, canManageIssuances, canViewReports } = usePermissions()
 
   const navItems: NavItem[] = [
     { href: '/app/dashboard', label: t('navigation.dashboard'), icon: <LayoutDashboard className="h-5 w-5" /> },
+    // Assets - show for all roles (view-only for some)
     { href: '/app/assets', label: t('navigation.assets'), icon: <Building className="h-5 w-5" /> },
+    // Issuer Addresses - show for all roles (view-only for some)
     { href: '/app/issuer-addresses', label: t('navigation.issuerAddresses'), icon: <Key className="h-5 w-5" /> },
+    // Issuances - show for all roles (view-only for some)
     { href: '/app/issuance/new', label: t('navigation.issuances'), icon: <Coins className="h-5 w-5" /> },
-    // Only show Users menu for admins
-    ...(user?.role === 'ADMIN' ? [{ href: '/app/users', label: t('navigation.users'), icon: <User className="h-5 w-5" /> }] : []),
+    // Users - only for admins
+    ...(canManageUsers ? [{ href: '/app/users', label: t('navigation.users'), icon: <User className="h-5 w-5" /> }] : []),
+    // Authorizations - show for all roles (view-only for some)
     { href: '/app/authorizations', label: t('navigation.authorizations'), icon: <CheckSquare className="h-5 w-5" /> },
+    // Compliance - show for all roles (view-only for some)
     { href: '/app/compliance', label: t('navigation.compliance'), icon: <Shield className="h-5 w-5" /> },
+    // Reports - show for all roles (view-only for some)
     { href: '/app/reports', label: t('navigation.reports'), icon: <BarChart3 className="h-5 w-5" /> },
+    // Balances - show for all roles
     { href: '/app/balances', label: t('navigation.balances'), icon: <Wallet className="h-5 w-5" /> },
   ]
 

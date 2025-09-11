@@ -1,10 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRouter } from 'next/navigation'
 import { Plus, CheckCircle, XCircle, Clock, AlertTriangle, Eye, EyeOff } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { getTenantApiUrl } from '@/lib/tenantApi'
+import { CanManageIssuerAddresses } from '../../components/RoleGuard'
 import FormField from '../../components/FormField'
 import CustomDropdown from '../../components/CustomDropdown'
 
@@ -40,6 +42,10 @@ interface CreateAddressData {
 }
 
 export default function IssuerAddressesPage() {
+  return <IssuerAddressesPageContent />
+}
+
+function IssuerAddressesPageContent() {
   const { t } = useTranslation(['issuerAddresses', 'common'])
   const { user } = useAuth()
   const [addresses, setAddresses] = useState<IssuerAddress[]>([])
@@ -289,13 +295,15 @@ export default function IssuerAddressesPage() {
             )}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-        >
-          <Plus className='h-5 w-5 mr-2' />
-          {t('actions.registerAddress')}
-        </button>
+        <CanManageIssuerAddresses fallback={null}>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <Plus className='h-5 w-5 mr-2' />
+            {t('actions.registerAddress')}
+          </button>
+        </CanManageIssuerAddresses>
       </div>
 
       {/* Success/Error Messages */}
@@ -483,7 +491,8 @@ export default function IssuerAddressesPage() {
       </div>
 
       {/* Create Address Modal */}
-      {showCreateModal && (
+      <CanManageIssuerAddresses fallback={null}>
+        {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold mb-4">{t('modals.create.title')}</h3>
@@ -577,7 +586,8 @@ export default function IssuerAddressesPage() {
             </div>
           </div>
         </div>
-      )}
+        )}
+      </CanManageIssuerAddresses>
 
       {/* Approval Modal */}
       {showApprovalModal && (

@@ -7,6 +7,7 @@ import ConfirmationDialog from '../../../components/ConfirmationDialog'
 import { useToast } from '../../../components/Toast'
 import { trackCopyAction, trackAssetAction, AnalyticsEvents, trackPageView } from '../../../lib/analytics'
 import { Copy, Shield } from 'lucide-react'
+import { CanCreateIssuances } from '../../../components/RoleGuard'
 
 interface Asset {
   id: string
@@ -445,13 +446,15 @@ export default function AssetDetailsPage() {
               >
                 {preflightLoading ? 'Validating…' : 'Validate Issuance'}
               </button>
-              <Link
-                href={preflight?.ok === false ? '#' : `/app/issuance/new?assetId=${asset.id}`}
-                className={`px-4 py-2 rounded-lg border ${preflight?.ok === false ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-emerald-600 border-emerald-600 hover:bg-emerald-50'}`}
-                onClick={(e) => { if (preflight?.ok === false) e.preventDefault() }}
-              >
-                Start Issuance
-              </Link>
+              <CanCreateIssuances fallback={null}>
+                <Link
+                  href={preflight?.ok === false ? '#' : `/app/issuance/new?assetId=${asset.id}`}
+                  className={`px-4 py-2 rounded-lg border ${preflight?.ok === false ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-emerald-600 border-emerald-600 hover:bg-emerald-50'}`}
+                  onClick={(e) => { if (preflight?.ok === false) e.preventDefault() }}
+                >
+                  Start Issuance
+                </Link>
+              </CanCreateIssuances>
             </div>
           )}
           {asset.status === 'draft' && (

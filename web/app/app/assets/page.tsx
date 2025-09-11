@@ -6,6 +6,7 @@ import Link from 'next/link'
 import CustomDropdown from '../../components/CustomDropdown'
 import InfoPopup from '../../components/InfoPopup'
 import { trackPageView, trackAssetAction, AnalyticsEvents } from '../../lib/analytics'
+import { CanCreateAssets } from '../../components/RoleGuard'
 
 interface Asset {
   id: string
@@ -322,15 +323,17 @@ export default function AssetsPage() {
             </InfoPopup>
           </div>
         </div>
-        <Link
-          href="/app/assets/create"
-          className="w-10 h-10 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors duration-200"
-          title={t('createAsset')}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </Link>
+        <CanCreateAssets fallback={null}>
+          <Link
+            href="/app/assets/create"
+            className="w-10 h-10 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center transition-colors duration-200"
+            title={t('createAsset')}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </Link>
+        </CanCreateAssets>
       </div>
 
       {/* Error Message */}
