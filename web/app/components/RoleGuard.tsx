@@ -94,6 +94,14 @@ export function CanManageIssuerAddresses({ children, fallback }: { children: Rea
   )
 }
 
+export function CanCreateAuthorizations({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
 // Hook for checking permissions
 export function usePermissions() {
   const { user } = useAuth()

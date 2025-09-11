@@ -2,9 +2,41 @@
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { History } from 'lucide-react'
+import { useEffect } from 'react'
+import { CanCreateAuthorizations } from '../../components/RoleGuard'
 import AuthorizationFlow from '../../components/AuthorizationFlow'
 
 export default function ManageAuthorizationsPage() {
+  return (
+    <CanCreateAuthorizations fallback={<RedirectToHistory />}>
+      <ManageAuthorizationsPageContent />
+    </CanCreateAuthorizations>
+  )
+}
+
+function RedirectToHistory() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to authorization history page
+    router.replace('/app/authorizations/history')
+  }, [router])
+
+  // Show a brief loading message while redirecting
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <History className="h-6 w-6 text-blue-600" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Redirecting...</h3>
+        <p className="text-gray-600">Taking you to authorization history.</p>
+      </div>
+    </div>
+  )
+}
+
+function ManageAuthorizationsPageContent() {
   const { t } = useTranslation(['authorizations', 'common'])
   const router = useRouter()
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, ExternalLink, Check, X } from 'lucide-react'
 import CustomDropdown from '../../../components/CustomDropdown'
+import { CanCreateAuthorizations } from '../../../components/RoleGuard'
 
 interface Authorization {
   id?: string
@@ -287,13 +288,15 @@ export default function AuthorizationHistoryPage() {
           <h1 className="text-3xl font-bold text-gray-900">Authorization History</h1>
           <p className="text-gray-600 mt-1">View and manage all asset authorization transactions</p>
         </div>
-                   <button
-             onClick={() => router.push('/app/authorizations')}
-             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-           >
-             <Plus className="h-4 w-4 mr-2" />
-             {t('authorizations:actions.newAuthorization', 'New Authorization')}
-           </button>
+        <CanCreateAuthorizations fallback={null}>
+          <button
+            onClick={() => router.push('/app/authorizations')}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t('authorizations:actions.newAuthorization', 'New Authorization')}
+          </button>
+        </CanCreateAuthorizations>
       </div>
 
       {error && (
