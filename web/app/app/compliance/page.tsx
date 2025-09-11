@@ -65,7 +65,7 @@ export default function CompliancePage() {
   const [allRequirements, setAllRequirements] = useState<ComplianceRequirement[]>([]) // For Overview tab
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'issuances' | 'kernel'>('overview')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'issuances' | 'kernel'>('dashboard')
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -354,9 +354,9 @@ export default function CompliancePage() {
   useEffect(() => {
     // Fetch assets on initial load
     fetchAssets()
-    // Initialize tab from query (?tab=issuances/requirements/overview)
+    // Initialize tab from query (?tab=issuances/dashboard/kernel)
     const tab = (searchParams.get('tab') || '').toLowerCase()
-    if (tab === 'issuances' || tab === 'requirements' || tab === 'overview') {
+    if (tab === 'issuances' || tab === 'dashboard' || tab === 'kernel') {
       setActiveTab(tab as any)
     }
   }, [searchParams])
@@ -364,21 +364,20 @@ export default function CompliancePage() {
   useEffect(() => {
     if (activeTab === 'issuances') {
       fetchRecords()
-    } else if (activeTab === 'requirements') {
-      fetchComplianceRequirements()
     } else if (activeTab === 'kernel') {
       // Kernel tab - no data fetching needed, handled by the separate page
     } else {
-      // Overview tab - fetch all requirements for summary cards
+      // Dashboard tab - fetch all requirements for summary cards and detailed view
       fetchRecords()
       fetchAllRequirements()
+      fetchComplianceRequirements()
     }
   }, [activeTab, pagination.page, filters.assetId, filters.requirementStatus])
 
-  // Separate effect for filtering on Overview and Requirements tabs
+  // Separate effect for filtering on Dashboard tab
   useEffect(() => {
-    if (activeTab === 'overview' || activeTab === 'requirements') {
-      // For Overview and Requirements tabs, fetch filtered requirements
+    if (activeTab === 'dashboard') {
+      // For Dashboard tab, fetch filtered requirements
       fetchComplianceRequirements()
     }
   }, [activeTab, filters.assetId, filters.requirementStatus])
@@ -606,24 +605,24 @@ export default function CompliancePage() {
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => setActiveTab('kernel')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'overview'
+              activeTab === 'kernel'
                 ? 'border-emerald-500 text-emerald-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-{t('requirements.overview')}
+            Policy Kernel Console
           </button>
           <button
-            onClick={() => setActiveTab('requirements')}
+            onClick={() => setActiveTab('dashboard')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'requirements'
+              activeTab === 'dashboard'
                 ? 'border-emerald-500 text-emerald-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-{t('requirements.assetRequirements')}
+            Compliance Dashboard
           </button>
           <button
             onClick={() => setActiveTab('issuances')}
@@ -634,16 +633,6 @@ export default function CompliancePage() {
             }`}
           >
 {t('requirements.issuanceRecords')}
-          </button>
-          <button
-            onClick={() => setActiveTab('kernel')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'kernel'
-                ? 'border-emerald-500 text-emerald-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Policy Kernel Console
           </button>
         </nav>
       </div>
@@ -716,7 +705,7 @@ export default function CompliancePage() {
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              {activeTab === 'requirements' && (
+              {activeTab === 'dashboard' && (
                 <span>
                   {requirements.length} requirements found
                   {filters.assetId && ` for selected asset`}
@@ -726,7 +715,7 @@ export default function CompliancePage() {
             </div>
             <CanManageCompliance fallback={null}>
               <div className="flex gap-2">
-                {activeTab === 'requirements' && filters.assetId && (
+                {activeTab === 'dashboard' && filters.assetId && (
                   <button
                     onClick={() => handleExportAssetCompliance(filters.assetId)}
                     className="px-4 py-2 text-sm border border-emerald-600 text-emerald-600 bg-white rounded-lg hover:bg-emerald-50 flex items-center gap-2"
@@ -735,7 +724,7 @@ export default function CompliancePage() {
                     Export Asset Compliance
                   </button>
                 )}
-                {activeTab === 'requirements' && (
+                {activeTab === 'dashboard' && (
                   <button
                     onClick={handleExportFilteredResults}
                     className="px-4 py-2 text-sm border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50 flex items-center gap-2"
@@ -751,10 +740,10 @@ export default function CompliancePage() {
       </div>
       )}
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
+      {/* Compliance Dashboard Tab */}
+      {activeTab === 'dashboard' && (
         <div className="space-y-6">
-          {/* Compliance Summary */}
+          {/* Compliance Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <div className="flex items-center gap-3">
@@ -811,86 +800,10 @@ export default function CompliancePage() {
             </div>
           </div>
 
-          {/* Compliance Requirements by Type */}
+          {/* Detailed Requirements List */}
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Compliance Requirements</h3>
-            </div>
-            <div className="p-6">
-              {allRequirements.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No compliance requirements found</p>
-              ) : (
-                <div className="space-y-6">
-                  {/* Asset-Level Requirements */}
-                  {allRequirements.filter(req => req.isAssetLevel).length > 0 && (
-                    <div>
-                      <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        Asset-Level Requirements (Live)
-                      </h4>
-                      <div className="space-y-3">
-                        {allRequirements.filter(req => req.isAssetLevel).map((req) => (
-                          <div key={req.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <div>
-                              <p className="font-medium text-gray-900">{req.requirementName}</p>
-                              <p className="text-sm text-gray-600">{req.assetCode} - {req.regime}</p>
-                              <p className="text-xs text-blue-600">Live requirement for ongoing compliance</p>
-                            </div>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
-                              req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
-                              req.status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {req.status}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Issuance-Level Requirements */}
-                  {allRequirements.filter(req => req.isIssuanceLevel).length > 0 && (
-                    <div>
-                      <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        Issuance-Level Requirements (Snapshots)
-                      </h4>
-                      <div className="space-y-3">
-                        {allRequirements.filter(req => req.isIssuanceLevel).map((req) => (
-                          <div key={req.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                            <div>
-                              <p className="font-medium text-gray-900">{req.requirementName}</p>
-                              <p className="text-sm text-gray-600">{req.assetCode} - {req.regime}</p>
-                              <p className="text-xs text-green-600">Snapshot for issuance: {req.issuanceId?.substring(0, 8)}...</p>
-                            </div>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
-                              req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
-                              req.status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {req.status}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Requirements Tab */}
-      {activeTab === 'requirements' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">Asset Compliance Requirements</h3>
             </div>
             <div className="p-6">
               {loading ? (
@@ -923,15 +836,14 @@ export default function CompliancePage() {
                         <p className="text-xs text-gray-500">Created: {new Date(req.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div className="flex items-center gap-3">
-                                              <span className={`px-3 py-1 text-sm rounded-full ${
-                        req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
-                        req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
-
-                        req.status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {req.status}
-                      </span>
+                        <span className={`px-3 py-1 text-sm rounded-full ${
+                          req.status === 'SATISFIED' ? 'bg-green-100 text-green-800' :
+                          req.status === 'EXCEPTION' ? 'bg-red-100 text-red-800' :
+                          req.status === 'AVAILABLE' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {req.status}
+                        </span>
                         
                         {/* Platform Acknowledgement Status */}
                         {req.requiresPlatformAcknowledgement && (
@@ -981,7 +893,6 @@ export default function CompliancePage() {
                             </button>
                           </CanManageCompliance>
                         )}
-
                       </div>
                     </div>
                   ))}
