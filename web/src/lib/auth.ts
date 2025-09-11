@@ -5,7 +5,7 @@ export interface User {
   email?: string;
   name?: string;
   picture?: string;
-  role?: "admin" | "user";
+  role?: "ADMIN" | "COMPLIANCE_OFFICER" | "ISSUER_ADMIN" | "COMPLIANCE_REVIEWER" | "VIEWER";
   organizationId?: string;
   organization?: {
     id: string;

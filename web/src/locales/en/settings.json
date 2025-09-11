@@ -8,6 +8,7 @@
   "fields": {
     "name": "Name",
     "email": "Email",
+    "role": "Role",
     "timezone": "Timezone",
     "language": "Language",
     "twoFactorAuth": "Two-Factor Authentication",
@@ -45,6 +46,13 @@
     "pst": "Pacific Time",
     "cet": "Central European Time",
     "eet": "Eastern European Time"
+  },
+  "roles": {
+    "ADMIN": "Administrator",
+    "COMPLIANCE_OFFICER": "Compliance Officer",
+    "ISSUER_ADMIN": "Issuer Admin",
+    "COMPLIANCE_REVIEWER": "Compliance Reviewer",
+    "VIEWER": "Viewer"
   },
   "descriptions": {
     "updatePersonalDetails": "Update your personal details",
