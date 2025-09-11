@@ -6,7 +6,7 @@ import Link from 'next/link'
 import CustomDropdown from '../../components/CustomDropdown'
 import InfoPopup from '../../components/InfoPopup'
 import { trackPageView, trackAssetAction, AnalyticsEvents } from '../../lib/analytics'
-import { CanCreateAssets } from '../../components/RoleGuard'
+import { CanCreateAssets, NotViewerOnly } from '../../components/RoleGuard'
 
 interface Asset {
   id: string
@@ -503,52 +503,56 @@ export default function AssetsPage() {
                         </Link>
                         
                         {/* Status Actions */}
-                        {canActivate(asset.status) && (
-                          <button
-                            onClick={() => handleStatusChange(asset.id, 'active')}
-                            className="p-1.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200"
-                            title={t('actions.activateAsset')}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </button>
-                        )}
-                        {canPause(asset.status) && (
-                          <button
-                            onClick={() => handleStatusChange(asset.id, 'paused')}
-                            className="p-1.5 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-md transition-colors duration-200"
-                            title={t('actions.pauseAsset')}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </button>
-                        )}
-                        {canRetire(asset.status) && (
-                          <button
-                            onClick={() => handleStatusChange(asset.id, 'retired')}
-                            className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
-                            title={t('actions.retireAsset')}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
+                        <NotViewerOnly fallback={null}>
+                          {canActivate(asset.status) && (
+                            <button
+                              onClick={() => handleStatusChange(asset.id, 'active')}
+                              className="p-1.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200"
+                              title={t('actions.activateAsset')}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
+                          )}
+                          {canPause(asset.status) && (
+                            <button
+                              onClick={() => handleStatusChange(asset.id, 'paused')}
+                              className="p-1.5 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-md transition-colors duration-200"
+                              title={t('actions.pauseAsset')}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                          )}
+                          {canRetire(asset.status) && (
+                            <button
+                              onClick={() => handleStatusChange(asset.id, 'retired')}
+                              className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+                              title={t('actions.retireAsset')}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </NotViewerOnly>
                         
                         {/* Issue Action */}
-                        {asset.status === 'active' && (
-                          <Link
-                            href={`/app/issuance/new?assetId=${asset.id}`}
-                            className="p-1.5 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors duration-200"
-                            title={t('actions.issueTokens')}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                            </svg>
-                          </Link>
-                        )}
+                        <NotViewerOnly fallback={null}>
+                          {asset.status === 'active' && (
+                            <Link
+                              href={`/app/issuance/new?assetId=${asset.id}`}
+                              className="p-1.5 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors duration-200"
+                              title={t('actions.issueTokens')}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                              </svg>
+                            </Link>
+                          )}
+                        </NotViewerOnly>
                       </div>
                     </td>
                   </tr>

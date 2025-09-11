@@ -7,6 +7,7 @@ import { api } from '@/lib/api'
 import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download } from 'lucide-react'
 import CustomDropdown from '../../components/CustomDropdown'
 import ModernTooltip from '../../components/ModernTooltip'
+import { CanManageCompliance } from '../../components/RoleGuard'
 
 interface ComplianceRecord {
   id: string
@@ -710,26 +711,28 @@ export default function CompliancePage() {
                 </span>
               )}
             </div>
-            <div className="flex gap-2">
-              {activeTab === 'requirements' && filters.assetId && (
-                <button
-                  onClick={() => handleExportAssetCompliance(filters.assetId)}
-                  className="px-4 py-2 text-sm border border-emerald-600 text-emerald-600 bg-white rounded-lg hover:bg-emerald-50 flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Export Asset Compliance
-                </button>
-              )}
-              {activeTab === 'requirements' && (
-                <button
-                  onClick={handleExportFilteredResults}
-                  className="px-4 py-2 text-sm border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50 flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Export Filtered Results
-                </button>
-              )}
-            </div>
+            <CanManageCompliance fallback={null}>
+              <div className="flex gap-2">
+                {activeTab === 'requirements' && filters.assetId && (
+                  <button
+                    onClick={() => handleExportAssetCompliance(filters.assetId)}
+                    className="px-4 py-2 text-sm border border-emerald-600 text-emerald-600 bg-white rounded-lg hover:bg-emerald-50 flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Asset Compliance
+                  </button>
+                )}
+                {activeTab === 'requirements' && (
+                  <button
+                    onClick={handleExportFilteredResults}
+                    className="px-4 py-2 text-sm border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50 flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Filtered Results
+                  </button>
+                )}
+              </div>
+            </CanManageCompliance>
           </div>
         </div>
       </div>
@@ -935,30 +938,34 @@ export default function CompliancePage() {
 
                         {/* Action Buttons */}
                         {req.status === 'REQUIRED' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleRequirementStatusUpdate(req.id, 'SATISFIED')}
-                              className="px-3 py-1 text-xs border border-green-600 text-green-600 bg-white rounded hover:bg-green-50"
-                            >
+                          <CanManageCompliance fallback={null}>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleRequirementStatusUpdate(req.id, 'SATISFIED')}
+                                className="px-3 py-1 text-xs border border-green-600 text-green-600 bg-white rounded hover:bg-green-50"
+                              >
 {t('actions.markSatisfied')}
-                            </button>
-                            <button
-                              onClick={() => handleRequirementStatusUpdate(req.id, 'EXCEPTION')}
-                              className="px-3 py-1 text-xs border border-red-600 text-red-600 bg-white rounded hover:bg-red-50"
-                            >
+                              </button>
+                              <button
+                                onClick={() => handleRequirementStatusUpdate(req.id, 'EXCEPTION')}
+                                className="px-3 py-1 text-xs border border-red-600 text-red-600 bg-white rounded hover:bg-red-50"
+                              >
 {t('actions.markException')}
-                            </button>
-                          </div>
+                              </button>
+                            </div>
+                          </CanManageCompliance>
                         )}
 
                         {/* Platform Acknowledgement Button */}
                         {req.status === 'SATISFIED' && req.requiresPlatformAcknowledgement && !req.platformAcknowledged && (
-                          <button
-                            onClick={() => openPlatformAckModal(req)}
-                            className="px-3 py-1 text-xs border border-blue-600 text-blue-600 bg-white rounded hover:bg-blue-50"
-                          >
-                            Platform Acknowledge
-                          </button>
+                          <CanManageCompliance fallback={null}>
+                            <button
+                              onClick={() => openPlatformAckModal(req)}
+                              className="px-3 py-1 text-xs border border-blue-600 text-blue-600 bg-white rounded hover:bg-blue-50"
+                            >
+                              Platform Acknowledge
+                            </button>
+                          </CanManageCompliance>
                         )}
 
                       </div>

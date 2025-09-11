@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Plus, Clock, CheckCircle, XCircle, AlertTriangle, ExternalLink, Check, X } from 'lucide-react'
 import CustomDropdown from '../../../components/CustomDropdown'
-import { CanCreateAuthorizations } from '../../../components/RoleGuard'
+import { CanCreateAuthorizations, CanApproveAuthorizations, NotViewerOnly } from '../../../components/RoleGuard'
 
 interface Authorization {
   id?: string
@@ -445,35 +445,39 @@ export default function AuthorizationHistoryPage() {
                           </a>
                         )}
                         {auth.status === 'AWAITING_ISSUER_AUTHORIZATION' && auth.id && (
-                          <button
-                            onClick={() => handleIssuerAuthorize(auth.id!)}
-                            disabled={authorizingId === auth.id}
-                            className={`inline-flex items-center px-3 py-1 text-xs font-medium border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
-                              authorizingId === auth.id
-                                ? 'text-white bg-emerald-400 cursor-not-allowed'
-                                : 'text-white bg-emerald-600 hover:bg-emerald-700 hover:scale-105 focus:ring-emerald-500 active:scale-95'
-                            }`}
-                            title="Authorize trustline as issuer (tfSetfAuth)"
-                          >
-                            {authorizingId === auth.id ? (
-                              <>
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                Authorizing...
-                              </>
-                            ) : (
-                              <>
-                                <Check className="h-3 w-3 mr-1" />
-                                Authorize Trustline
-                              </>
-                            )}
-                          </button>
+                          <CanApproveAuthorizations fallback={null}>
+                            <button
+                              onClick={() => handleIssuerAuthorize(auth.id!)}
+                              disabled={authorizingId === auth.id}
+                              className={`inline-flex items-center px-3 py-1 text-xs font-medium border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                                authorizingId === auth.id
+                                  ? 'text-white bg-emerald-400 cursor-not-allowed'
+                                  : 'text-white bg-emerald-600 hover:bg-emerald-700 hover:scale-105 focus:ring-emerald-500 active:scale-95'
+                              }`}
+                              title="Authorize trustline as issuer (tfSetfAuth)"
+                            >
+                              {authorizingId === auth.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                  Authorizing...
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Authorize Trustline
+                                </>
+                              )}
+                            </button>
+                          </CanApproveAuthorizations>
                         )}
-                        <button
-                          onClick={() => router.push(`/app/assets/${auth.assetId || ''}`)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          {t('authorizations:actions.viewAsset', 'View Asset')}
-                        </button>
+                        <NotViewerOnly fallback={null}>
+                          <button
+                            onClick={() => router.push(`/app/assets/${auth.assetId || ''}`)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            {t('authorizations:actions.viewAsset', 'View Asset')}
+                          </button>
+                        </NotViewerOnly>
                       </div>
                     </td>
                   </tr>

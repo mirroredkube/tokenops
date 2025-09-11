@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import CustomDropdown from '../../../components/CustomDropdown'
 import ModernTooltip from '../../../components/ModernTooltip'
+import { CanManageCompliance } from '../../../components/RoleGuard'
 
 interface ComplianceRecord {
   id: string
@@ -274,12 +275,14 @@ export default function ComplianceRecordPage() {
           </span>
           
           {record.status === 'UNVERIFIED' && (
-            <button
-              onClick={() => setShowVerifyForm(true)}
-              className="inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
-            >
-              Verify Record
-            </button>
+            <CanManageCompliance fallback={null}>
+              <button
+                onClick={() => setShowVerifyForm(true)}
+                className="inline-flex items-center px-4 py-2 text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50"
+              >
+                Verify Record
+              </button>
+            </CanManageCompliance>
           )}
         </div>
       </div>

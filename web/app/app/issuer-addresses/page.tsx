@@ -6,7 +6,7 @@ import { Plus, CheckCircle, XCircle, Clock, AlertTriangle, Eye, EyeOff } from 'l
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { getTenantApiUrl } from '@/lib/tenantApi'
-import { CanManageIssuerAddresses } from '../../components/RoleGuard'
+import { CanManageIssuerAddresses, NotViewerOnly } from '../../components/RoleGuard'
 import FormField from '../../components/FormField'
 import CustomDropdown from '../../components/CustomDropdown'
 
@@ -455,32 +455,34 @@ function IssuerAddressesPageContent() {
                       {new Date(address.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        {address.status === 'PENDING' && (
-                          <button
-                            onClick={() => {
-                              setPendingAddressId(address.id)
-                              setShowApprovalModal(true)
-                            }}
-                            className="text-green-600 hover:text-green-900"
-                            title={t('actions.approveAddress')}
-                          >
-                            <CheckCircle className="h-5 w-5" />
-                          </button>
-                        )}
-                        {address.status === 'APPROVED' && (
-                          <button
-                            onClick={() => {
-                              setPendingAddressId(address.id)
-                              setShowSuspensionModal(true)
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                            title={t('actions.suspendAddress')}
-                          >
-                            <XCircle className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
+                      <NotViewerOnly fallback={null}>
+                        <div className="flex space-x-2">
+                          {address.status === 'PENDING' && (
+                            <button
+                              onClick={() => {
+                                setPendingAddressId(address.id)
+                                setShowApprovalModal(true)
+                              }}
+                              className="text-green-600 hover:text-green-900"
+                              title={t('actions.approveAddress')}
+                            >
+                              <CheckCircle className="h-5 w-5" />
+                            </button>
+                          )}
+                          {address.status === 'APPROVED' && (
+                            <button
+                              onClick={() => {
+                                setPendingAddressId(address.id)
+                                setShowSuspensionModal(true)
+                              }}
+                              className="text-red-600 hover:text-red-900"
+                              title={t('actions.suspendAddress')}
+                            >
+                              <XCircle className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+                      </NotViewerOnly>
                     </td>
                   </tr>
                 ))}

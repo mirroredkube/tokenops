@@ -62,14 +62,6 @@ export function ComplianceReviewerOnly({ children, fallback }: { children: React
   )
 }
 
-export function NotViewerOnly({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['ADMIN', 'COMPLIANCE_OFFICER', 'ISSUER_ADMIN', 'COMPLIANCE_REVIEWER']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  )
-}
-
 export function CanCreateAssets({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   return (
     <RoleGuard allowedRoles={['ADMIN', 'ISSUER_ADMIN']} fallback={fallback}>
@@ -97,6 +89,38 @@ export function CanManageIssuerAddresses({ children, fallback }: { children: Rea
 export function CanCreateAuthorizations({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   return (
     <RoleGuard allowedRoles={['ADMIN']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
+export function CanManageUsers({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'COMPLIANCE_OFFICER', 'ISSUER_ADMIN']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
+export function CanApproveAuthorizations({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'COMPLIANCE_OFFICER', 'ISSUER_ADMIN']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
+export function CanManageCompliance({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'COMPLIANCE_OFFICER', 'COMPLIANCE_REVIEWER']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
+export function NotViewerOnly({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'COMPLIANCE_OFFICER', 'ISSUER_ADMIN', 'COMPLIANCE_REVIEWER']} fallback={fallback}>
       {children}
     </RoleGuard>
   )

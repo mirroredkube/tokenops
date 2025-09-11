@@ -7,7 +7,7 @@ import ConfirmationDialog from '../../../components/ConfirmationDialog'
 import { useToast } from '../../../components/Toast'
 import { trackCopyAction, trackAssetAction, AnalyticsEvents, trackPageView } from '../../../lib/analytics'
 import { Copy, Shield } from 'lucide-react'
-import { CanCreateIssuances } from '../../../components/RoleGuard'
+import { CanCreateIssuances, NotViewerOnly } from '../../../components/RoleGuard'
 
 interface Asset {
   id: string
@@ -457,30 +457,32 @@ export default function AssetDetailsPage() {
               </CanCreateIssuances>
             </div>
           )}
-          {asset.status === 'draft' && (
-            <button
-              onClick={() => showConfirmationDialog('activate', 'active')}
-              className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
-            >
-              Activate
-            </button>
-          )}
-          {asset.status === 'active' && (
-            <button
-              onClick={() => showConfirmationDialog('pause', 'paused')}
-              className="px-4 py-2 text-yellow-600 border border-yellow-600 rounded-lg hover:bg-yellow-50"
-            >
-              Pause
-            </button>
-          )}
-          {(asset.status === 'active' || asset.status === 'paused') && (
-            <button
-              onClick={() => showConfirmationDialog('retire', 'retired')}
-              className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50"
-            >
-              Retire
-            </button>
-          )}
+          <NotViewerOnly fallback={null}>
+            {asset.status === 'draft' && (
+              <button
+                onClick={() => showConfirmationDialog('activate', 'active')}
+                className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
+              >
+                Activate
+              </button>
+            )}
+            {asset.status === 'active' && (
+              <button
+                onClick={() => showConfirmationDialog('pause', 'paused')}
+                className="px-4 py-2 text-yellow-600 border border-yellow-600 rounded-lg hover:bg-yellow-50"
+              >
+                Pause
+              </button>
+            )}
+            {(asset.status === 'active' || asset.status === 'paused') && (
+              <button
+                onClick={() => showConfirmationDialog('retire', 'retired')}
+                className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50"
+              >
+                Retire
+              </button>
+            )}
+          </NotViewerOnly>
         </div>
       </div>
 
