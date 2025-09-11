@@ -109,7 +109,7 @@ function UsersPageContent() {
         ...(statusFilter && { status: statusFilter })
       })
       
-      const response = await api.GET(`/v1/users?${params}`)
+      const response = await api.GET('/v1/users' as any, { params: { query: params } })
       return response.data as UserListResponse
     }
   })
@@ -117,8 +117,8 @@ function UsersPageContent() {
   // Update user role mutation
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const response = await api.PATCH(`/v1/users/${userId}`, {
-        role
+      const response = await api.PATCH(`/v1/users/${userId}` as any, {
+        body: { role }
       })
       return response.data
     },
@@ -132,8 +132,8 @@ function UsersPageContent() {
   // Update user status mutation
   const updateUserStatusMutation = useMutation({
     mutationFn: async ({ userId, status }: { userId: string; status: string }) => {
-      const response = await api.PATCH(`/v1/users/${userId}`, {
-        status
+      const response = await api.PATCH(`/v1/users/${userId}` as any, {
+        body: { status }
       })
       return response.data
     },

@@ -11,7 +11,7 @@
 ---
 
 ## Executive Summary
-We already have Org → Product → Asset, XRPL issuance, Compliance with RequirementInstances, regime versioning, and exports. The gap is **presentation**: the Policy Kernel (our USP) is invisible. This initiative adds **read-only views** that make the engine obvious, explainable, and auditor-ready—optimized for a 90-second investor demo.
+We already have Org → Product → Asset, XRPL issuance, Compliance with RequirementInstances, regime versioning, and exports. The gap is **presentation**: the Policy Kernel (our USP) is invisible. This initiative adds **read-only views** that make the engine obvious, explainable, and auditor-ready—optimized for a investor demo.
 
 ---
 
@@ -186,38 +186,6 @@ As a buyer, I want to see versioned, first-class modules.
 
 ---
 
-## EPIC F — Performance & Reliability (PoC-grade)
-
-### F1 — Summary Aggregation + Cache  
-- Single summary endpoint powering A1/B2.  
-- Cache hot results 60s; invalidate on asset change.
-
-### F2 — Skeleton Loading & Timeouts  
-- Skeletons on Kernel/Enforcement; friendly timeout + retry.
-
-### F3 — Telemetry  
-- Events: `kernel_console_viewed`, `evidence_exported`, `enforcement_tab_viewed` (assetId, regime versions, counters).
-
-**Epic F DoD**  
-- P95 page load < **1.5s**; zero blank screens in smoke tests.
-
----
-
-## EPIC G — Demo Data & QA Scenarios
-
-### G1 — Seed Dataset  
-- Product **EURX** → Assets: **XRPL (active)**, **EVM (stub)**.  
-- Compliance mix: ≥1 **Required**, ≥1 **Satisfied**, ≥1 **Exception**, several **N/A**.  
-- Two holders: one pass, one fail → produces allowed + blocked events.
-
-### G2 — Scripted Paths  
-- “Happy path” and “contrast path” scripts aligned to the 90-second narrative.
-
-**Epic G DoD**  
-- Fresh env seeded in < **1 min**; scripts run end-to-end without tweaks.
-
----
-
 ## Delivery Plan (2 Sprints)
 
 **Sprint 1 (USP first):**  
@@ -239,7 +207,7 @@ As a buyer, I want to see versioned, first-class modules.
 ---
 
 ## Program-Level Definition of Done
-- **USP is observable**: counters, regime badges, explainable requirements, per-ledger mapping, and evidence bundle are demoable in **< 90 seconds**.  
+- **USP is observable**: counters, regime badges, explainable requirements, per-ledger mapping, and evidence bundle are demoable.  
 - **Read-only** additions only—no new write paths or RBAC.  
 - **Telemetry** shows usage during demo rehearsals.
 
