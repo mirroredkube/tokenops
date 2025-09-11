@@ -10,26 +10,38 @@ const prisma = new PrismaClient()
 // ---------- Authentication Helper ----------
 async function verifyAuthIfRequired(req: any, reply: any): Promise<any> {
   const AUTH_MODE = (process.env.AUTH_MODE ?? "off").toLowerCase()
-  if (AUTH_MODE === "off") return null
+  
+  // Check for API key first (works with any AUTH_MODE)
+  const apiKey = req.headers['x-api-key'] || req.headers['X-API-Key']
+  const expectedApiKey = process.env.REGISTRY_API_KEY
+  
+  if (apiKey && expectedApiKey && apiKey === expectedApiKey) {
+    req.user = { sub: 'api-key-user', role: 'admin', organizationId: req.tenant?.id }
+    return req.user
+  }
+  
+  if (AUTH_MODE === "off") {
+    // For development, create a mock user
+    req.user = { sub: 'dev-user', organizationId: req.tenant?.id }
+    return req.user
+  }
 
   // Prefer JWT verification if available
   if (typeof (req as any).jwtVerify === 'function') {
     try {
       await (req as any).jwtVerify()
-      return (req as any).user
+      // Ensure req.user is set after JWT verification
+      if (!req.user) {
+        throw new Error('JWT verification succeeded but user not set')
+      }
+      return req.user
     } catch (err) {
       throw err
     }
   }
 
-  // Fallback to server decorator if present
-  if ((req.server as any)?.verifyAuthOrApiKey) {
-    await (req.server as any).verifyAuthOrApiKey(req, reply)
-    return (req as any).user
-  }
-
-  // If no mechanism available, treat as unauthenticated (dev convenience)
-  return null
+  // If no authentication method worked, throw error
+  throw new Error('Authentication required')
 }
 
 export default async function routes(app: FastifyInstance, _opts: FastifyPluginOptions) {
@@ -518,8 +530,53 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
     }
   })
 
+  // Get invitation by token
+  app.get('/invitations/:token', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          token: { type: 'string' }
+        },
+        required: ['token']
+      }
+    }
+  }, async (req, reply) => {
+    const { token } = req.params as any
+
+    try {
+      const invitation = await prisma.invitation.findUnique({
+        where: { token },
+        include: { 
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              subdomain: true
+            }
+          }
+        }
+      })
+
+      if (!invitation) {
+        return reply.status(404).send({
+          error: 'Not Found',
+          message: 'Invalid invitation token'
+        })
+      }
+
+      return reply.send(invitation)
+    } catch (error) {
+      app.log.error({ err: error }, 'Error fetching invitation')
+      return reply.status(500).send({
+        error: 'Internal Server Error',
+        message: 'Failed to fetch invitation'
+      })
+    }
+  })
+
   // Accept invitation endpoint
-  app.post('/users/invitations/:token/accept', {
+  app.post('/invitations/:token/accept', {
     schema: {
       params: {
         type: 'object',
@@ -531,10 +588,9 @@ export default async function routes(app: FastifyInstance, _opts: FastifyPluginO
       body: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
-          password: { type: 'string', minLength: 8 }
+          name: { type: 'string' }
         },
-        required: ['name', 'password']
+        required: ['name']
       }
     }
   }, async (req, reply) => {

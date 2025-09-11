@@ -14,6 +14,7 @@ const fetchWithCredentials = (input: Request | string, init?: RequestInit) => {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'X-API-Key': process.env.NEXT_PUBLIC_API_KEY || 'replace-with-strong-random',
       ...(init?.headers || {}),
     },
     ...init,

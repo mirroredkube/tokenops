@@ -266,6 +266,21 @@ const authPlugin: FastifyPluginAsync = async (app) => {
         where: { sub }
       });
 
+      // If not found by sub, check if user exists by email (for invited users)
+      if (!dbUser && email) {
+        dbUser = await prisma.user.findUnique({
+          where: { email }
+        });
+        
+        // If found by email, update the sub to match the OAuth sub
+        if (dbUser) {
+          dbUser = await prisma.user.update({
+            where: { email },
+            data: { sub }
+          });
+        }
+      }
+
       if (!dbUser) {
         // For new users, assign to the organization based on the tenant they're logging in from
         let targetOrg = await prisma.organization.findFirst({
