@@ -90,6 +90,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     } catch (err: any) {
       console.error('Error fetching product:', err)
       setError(err.message || 'Failed to fetch product')
+    } finally {
+      setLoading(false)
     }
   }
 
