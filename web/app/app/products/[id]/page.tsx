@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { getTenantApiUrl } from '@/lib/tenantApi'
 import { CanManageProducts } from '../../../components/RoleGuard'
+import ConfirmationDialog from '../../../components/ConfirmationDialog'
 
 interface Product {
   id: string
@@ -62,6 +63,11 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean
+  }>({
+    isOpen: false
+  })
 
   useEffect(() => {
     fetchProduct()
@@ -106,11 +112,11 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm(t('products:delete.message'))) {
-      return
-    }
+  const handleDeleteClick = () => {
+    setDeleteDialog({ isOpen: true })
+  }
 
+  const handleDeleteConfirm = async () => {
     try {
       const apiUrl = getTenantApiUrl()
       const response = await fetch(`${apiUrl}/v1/products/${params.id}`, {
@@ -235,7 +241,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             </button>
             
             <button
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
               className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
@@ -472,6 +478,18 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false })}
+        onConfirm={handleDeleteConfirm}
+        title={t('products:delete.title')}
+        message={t('products:delete.message', { name: product?.name || '' })}
+        confirmText={t('common:actions.delete')}
+        cancelText={t('common:actions.cancel')}
+        variant="danger"
+      />
     </div>
   )
 }

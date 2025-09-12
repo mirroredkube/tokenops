@@ -22,6 +22,7 @@ import { getTenantApiUrl } from '@/lib/tenantApi'
 import { useAuth } from '@/contexts/AuthContext'
 import { CanManageProducts } from '../../components/RoleGuard'
 import CustomDropdown from '../../components/CustomDropdown'
+import ConfirmationDialog from '../../components/ConfirmationDialog'
 import { trackPageView } from '../../lib/analytics'
 
 interface Product {
@@ -65,6 +66,15 @@ export default function ProductsPage() {
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20
+  })
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean
+    productId: string | null
+    productName: string
+  }>({
+    isOpen: false,
+    productId: null,
+    productName: ''
   })
 
   // Track page view
@@ -112,14 +122,20 @@ export default function ProductsPage() {
     }
   }
 
-  const handleDelete = async (productId: string) => {
-    if (!confirm(t('products:delete.message'))) {
-      return
-    }
+  const handleDeleteClick = (productId: string, productName: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      productId,
+      productName
+    })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.productId) return
 
     try {
       const apiUrl = getTenantApiUrl()
-      const response = await fetch(`${apiUrl}/v1/products/${productId}`, {
+      const response = await fetch(`${apiUrl}/v1/products/${deleteDialog.productId}`, {
         method: 'DELETE',
         credentials: 'include'
       })
@@ -131,6 +147,7 @@ export default function ProductsPage() {
 
       // Refresh the list
       fetchProducts()
+      setDeleteDialog({ isOpen: false, productId: null, productName: '' })
     } catch (err: any) {
       console.error('Error deleting product:', err)
       setError(err.message || 'Failed to delete product')
@@ -381,7 +398,7 @@ export default function ProductsPage() {
                           </button>
                           
                           <button
-                            onClick={() => handleDelete(product.id)}
+                            onClick={() => handleDeleteClick(product.id, product.name)}
                             className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
                             title={t('products:list.actions.delete')}
                           >
@@ -407,6 +424,18 @@ export default function ProductsPage() {
           {/* Add pagination controls here if needed */}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, productId: null, productName: '' })}
+        onConfirm={handleDeleteConfirm}
+        title={t('products:delete.title')}
+        message={t('products:delete.message', { name: deleteDialog.productName })}
+        confirmText={t('common:actions.delete')}
+        cancelText={t('common:actions.cancel')}
+        variant="danger"
+      />
     </div>
   )
 }
