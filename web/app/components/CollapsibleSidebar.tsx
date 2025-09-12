@@ -66,11 +66,8 @@ export default function CollapsibleSidebar() {
     { href: '/app/reports', label: t('navigation.reports'), icon: <BarChart3 className="h-5 w-5" /> },
     // Balances - show for all roles
     { href: '/app/balances', label: t('navigation.balances'), icon: <Wallet className="h-5 w-5" /> },
-  ]
-
-  const bottomNavItems: NavItem[] = [
-    { href: '/app/settings', label: t('navigation.settings'), icon: <Settings className="h-5 w-5" />, section: 'ACCOUNT' },
-    { href: '/app/help', label: t('navigation.help'), icon: <HelpCircle className="h-5 w-5" />, section: 'HELP' },
+    // Help - show for all roles
+    { href: '/app/help', label: t('navigation.help'), icon: <HelpCircle className="h-5 w-5" /> },
   ]
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed)
@@ -204,67 +201,19 @@ export default function CollapsibleSidebar() {
             })}
           </nav>
 
-          {/* Bottom Navigation */}
+          {/* Profile Section */}
           <div className="border-t border-slate-700">
-            {/* Account Section */}
             <div className={`${isCollapsed ? 'p-2' : 'p-3'}`}>
-              {!isCollapsed && (
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Account
-                </div>
-              )}
-              <div className="space-y-1">
-                {bottomNavItems.filter(item => item.section === 'ACCOUNT').map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`
-                      flex items-center rounded-md text-sm font-medium transition-colors
-                      ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
-                      text-slate-300 hover:bg-slate-700 hover:text-white
-                    `}
-                    onClick={() => setIsMobileOpen(false)}
-                  >
-                    <div className="flex-shrink-0">{item.icon}</div>
-                    {!isCollapsed && <span>{item.label}</span>}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Help Section */}
-            <div className={`${isCollapsed ? 'p-2' : 'p-3'}`}>
-              {!isCollapsed && (
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Help
-                </div>
-              )}
-              <div className="space-y-1">
-                {bottomNavItems.filter(item => item.section === 'HELP').map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`
-                      flex items-center rounded-md text-sm font-medium transition-colors
-                      ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
-                      text-slate-300 hover:bg-slate-700 hover:text-white
-                    `}
-                    onClick={() => setIsMobileOpen(false)}
-                  >
-                    <div className="flex-shrink-0">{item.icon}</div>
-                    {!isCollapsed && <span>{item.label}</span>}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Profile Section */}
-            <div className={`border-t border-slate-700 ${isCollapsed ? 'p-2' : 'p-3'}`}>
-              <div className={`
-                flex items-center rounded-md text-sm font-medium transition-colors
-                ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
-                text-slate-300
-              `}>
+              {/* Profile with Settings Link */}
+              <Link
+                href="/app/settings"
+                className={`
+                  flex items-center rounded-md text-sm font-medium transition-colors
+                  ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2'}
+                  text-slate-300 hover:bg-slate-700 hover:text-white
+                `}
+                onClick={() => setIsMobileOpen(false)}
+              >
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                     {getUserInitials()}
@@ -275,7 +224,7 @@ export default function CollapsibleSidebar() {
                     <div className="text-sm font-medium truncate">{user?.name || 'User'}</div>
                   </div>
                 )}
-              </div>
+              </Link>
               
               {/* Logout Button */}
               <button
