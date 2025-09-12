@@ -13,6 +13,7 @@ import {
   Menu,
   X as XIcon,
   User,
+  Package,
   Settings,
   HelpCircle,
   ChevronLeft,
@@ -43,10 +44,12 @@ export default function CollapsibleSidebar() {
 
   const pathname = usePathname()
   const { user, logout } = useAuth()
-  const { canManageUsers, canCreateAssets, canManageIssuances, canViewReports } = usePermissions()
+  const { canManageUsers, canManageProducts, canCreateAssets, canManageIssuances, canViewReports } = usePermissions()
 
   const navItems: NavItem[] = [
     { href: '/app/dashboard', label: t('navigation.dashboard'), icon: <LayoutDashboard className="h-5 w-5" /> },
+    // Products - show for all roles (view-only for some)
+    { href: '/app/products', label: t('navigation.products'), icon: <Package className="h-5 w-5" /> },
     // Assets - show for all roles (view-only for some)
     { href: '/app/assets', label: t('navigation.assets'), icon: <Building className="h-5 w-5" /> },
     // Issuer Addresses - show for all roles (view-only for some)

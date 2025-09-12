@@ -1,6 +1,7 @@
 {
   "navigation": {
     "dashboard": "Dashboard",
+    "products": "Products",
     "assets": "Assets",
     "issuerAddresses": "Issuer Addresses",
     "issuances": "Issuances",

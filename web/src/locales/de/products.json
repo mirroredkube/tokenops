@@ -1,0 +1,165 @@
+{
+  "title": "Produkte",
+  "description": "Verwalten Sie Ihre Token-Produkte und deren Konfigurationen",
+  "create": {
+    "title": "Produkt erstellen",
+    "description": "Erstellen Sie ein neues Produkt zur Gruppierung mehrerer Token-Assets",
+    "form": {
+      "name": {
+        "label": "Produktname",
+        "placeholder": "Produktname eingeben",
+        "required": "Produktname ist erforderlich",
+        "unique": "Produktname muss innerhalb Ihrer Organisation eindeutig sein"
+      },
+      "assetClass": {
+        "label": "Asset-Klasse",
+        "placeholder": "Asset-Klasse auswählen",
+        "required": "Asset-Klasse ist erforderlich",
+        "options": {
+          "ART": "Asset-Referenced Token (ART)",
+          "EMT": "Electronic Money Token (EMT)",
+          "OTHER": "Sonstige"
+        }
+      },
+      "targetMarkets": {
+        "label": "Zielmärkte",
+        "placeholder": "Zielmärkte auswählen",
+        "description": "Märkte, in denen dieses Produkt angeboten wird",
+        "options": {
+          "US": "Vereinigte Staaten",
+          "EU": "Europäische Union",
+          "UK": "Vereinigtes Königreich",
+          "CH": "Schweiz",
+          "SG": "Singapur",
+          "JP": "Japan",
+          "AU": "Australien",
+          "CA": "Kanada"
+        }
+      },
+      "policyPresets": {
+        "label": "Richtlinien-Voreinstellungen",
+        "description": "Standard-Compliance-Einstellungen für Assets in diesem Produkt",
+        "kycTier": {
+          "label": "KYC-Stufe",
+          "options": {
+            "BASIC": "Basis-KYC",
+            "ENHANCED": "Erweiterte KYC",
+            "INSTITUTIONAL": "Institutionelle KYC"
+          }
+        },
+        "sanctionsPosture": {
+          "label": "Sanktionshaltung",
+          "options": {
+            "STRICT": "Streng",
+            "MODERATE": "Moderat",
+            "PERMISSIVE": "Permissiv"
+          }
+        }
+      },
+      "documents": {
+        "label": "Dokumente",
+        "description": "Produktbezogene Dokumente, die für alle Assets gelten",
+        "authorizationRef": {
+          "label": "Autorisierungsreferenz",
+          "placeholder": "z.B. BaFin-Lizenznummer, SEC-Einreichungsreferenz"
+        },
+        "whitePaperRef": {
+          "label": "Whitepaper-Referenz",
+          "placeholder": "URL oder Dokumentenreferenz"
+        }
+      },
+      "status": {
+        "label": "Status",
+        "options": {
+          "DRAFT": "Entwurf",
+          "ACTIVE": "Aktiv",
+          "PAUSED": "Pausiert",
+          "RETIRED": "Eingestellt"
+        }
+      }
+    },
+    "submit": "Produkt erstellen",
+    "cancel": "Abbrechen"
+  },
+  "edit": {
+    "title": "Produkt bearbeiten",
+    "description": "Produktkonfiguration und -einstellungen aktualisieren",
+    "submit": "Produkt aktualisieren",
+    "cancel": "Abbrechen"
+  },
+  "list": {
+    "title": "Produkte",
+    "description": "Verwalten Sie die Token-Produkte Ihrer Organisation",
+    "empty": {
+      "title": "Keine Produkte gefunden",
+      "description": "Erstellen Sie Ihr erstes Produkt, um mit der Verwaltung von Token-Assets zu beginnen",
+      "action": "Produkt erstellen"
+    },
+    "filters": {
+      "status": "Nach Status filtern",
+      "assetClass": "Nach Asset-Klasse filtern",
+      "search": "Produkte suchen..."
+    },
+    "table": {
+      "name": "Name",
+      "assetClass": "Asset-Klasse",
+      "targetMarkets": "Zielmärkte",
+      "status": "Status",
+      "assets": "Assets",
+      "created": "Erstellt",
+      "actions": "Aktionen"
+    },
+    "actions": {
+      "view": "Anzeigen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "createAsset": "Asset erstellen"
+    }
+  },
+  "detail": {
+    "title": "Produktdetails",
+    "overview": "Übersicht",
+    "assets": "Zugehörige Assets",
+    "documents": "Dokumente",
+    "settings": "Einstellungen",
+    "tabs": {
+      "overview": "Übersicht",
+      "assets": "Assets",
+      "documents": "Dokumente",
+      "settings": "Einstellungen"
+    },
+    "sections": {
+      "basicInfo": "Grundinformationen",
+      "compliance": "Compliance-Einstellungen",
+      "documents": "Produktdokumente",
+      "associatedAssets": "Zugehörige Assets"
+    },
+    "emptyAssets": {
+      "title": "Keine Assets gefunden",
+      "description": "Dieses Produkt hat noch keine zugehörigen Assets",
+      "action": "Asset erstellen"
+    }
+  },
+  "delete": {
+    "title": "Produkt löschen",
+    "message": "Sind Sie sicher, dass Sie dieses Produkt löschen möchten?",
+    "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen Assets werden beeinträchtigt.",
+    "confirm": "Ja, Produkt löschen",
+    "cancel": "Abbrechen"
+  },
+  "messages": {
+    "created": "Produkt erfolgreich erstellt",
+    "updated": "Produkt erfolgreich aktualisiert",
+    "deleted": "Produkt erfolgreich gelöscht",
+    "createError": "Fehler beim Erstellen des Produkts",
+    "updateError": "Fehler beim Aktualisieren des Produkts",
+    "deleteError": "Fehler beim Löschen des Produkts",
+    "loadError": "Fehler beim Laden der Produkte",
+    "nameExists": "Ein Produkt mit diesem Namen existiert bereits",
+    "hasAssets": "Produkt mit zugehörigen Assets kann nicht gelöscht werden"
+  },
+  "permissions": {
+    "viewOnly": "Sie können Produkte anzeigen, aber nicht erstellen, bearbeiten oder löschen",
+    "adminRequired": "Admin-Zugriff erforderlich zur Verwaltung von Produkten"
+  }
+}

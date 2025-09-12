@@ -102,6 +102,14 @@ export function CanManageUsers({ children, fallback }: { children: ReactNode; fa
   )
 }
 
+export function CanManageProducts({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  return (
+    <RoleGuard allowedRoles={['ADMIN']} fallback={fallback}>
+      {children}
+    </RoleGuard>
+  )
+}
+
 export function CanApproveAuthorizations({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   return (
     <RoleGuard allowedRoles={['ADMIN', 'COMPLIANCE_OFFICER', 'ISSUER_ADMIN']} fallback={fallback}>
@@ -140,6 +148,8 @@ export function usePermissions() {
   
   const canManageOrganization = hasAnyRole(['ADMIN'])
   
+  const canManageProducts = hasAnyRole(['ADMIN'])
+  
   const canCreateAssets = hasAnyRole(['ADMIN', 'ISSUER_ADMIN'])
   
   const canVerifyCompliance = hasAnyRole(['ADMIN', 'COMPLIANCE_OFFICER', 'COMPLIANCE_REVIEWER'])
@@ -159,6 +169,7 @@ export function usePermissions() {
     hasAllRoles,
     canManageUsers,
     canManageOrganization,
+    canManageProducts,
     canCreateAssets,
     canVerifyCompliance,
     canApproveCompliance,
