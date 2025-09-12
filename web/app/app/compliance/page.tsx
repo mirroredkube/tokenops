@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
+import { getTenantApiUrl } from '@/lib/tenantApi'
 import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download, Brain, Info, AlertTriangle, ArrowDown, ArrowUp, ArrowRight } from 'lucide-react'
 import CustomDropdown from '../../components/CustomDropdown'
 import ModernTooltip from '../../components/ModernTooltip'
@@ -1509,7 +1510,7 @@ function PolicyKernelConsole() {
         
         <div className="flex items-center gap-3">
           <CustomDropdown
-            options={assets.length > 0 ? assets.map(asset => ({ value: asset.id, label: `${asset.code} - ${asset.name}` })) : []}
+            options={assets.length > 0 ? assets.map(asset => ({ value: asset.id, label: `${asset.code} - ${asset.product?.name || 'Unknown Product'}` })) : []}
             value={assetId || ''}
             onChange={handleAssetChange}
             placeholder={assets.length > 0 ? "Select Asset" : "Loading assets..."}
@@ -1517,11 +1518,55 @@ function PolicyKernelConsole() {
           />
           {assetId && (
             <button
-              onClick={() => {
-                // TODO: Implement evidence bundle export
-                console.log('Export Evidence Bundle for asset:', assetId)
+              onClick={async () => {
+                if (!assetId) return
+                
+                try {
+                  // Call the evidence bundle export API
+                  const response = await fetch(`${getTenantApiUrl()}/v1/compliance/assets/${assetId}/export?format=zip`, {
+                    method: 'GET',
+                    headers: {
+                      'X-API-Key': process.env.NEXT_PUBLIC_API_KEY || '',
+                    },
+                    credentials: 'include'
+                  })
+                  
+                  if (!response.ok) {
+                    throw new Error(`Export failed: ${response.statusText}`)
+                  }
+                  
+                  // Get the blob data
+                  const blob = await response.blob()
+                  
+                  // Create download link
+                  const url = window.URL.createObjectURL(blob)
+                  const link = document.createElement('a')
+                  link.href = url
+                  
+                  // Get filename from Content-Disposition header or use default
+                  const contentDisposition = response.headers.get('Content-Disposition')
+                  let filename = `asset-compliance-${selectedAsset?.code || assetId}-${new Date().toISOString().split('T')[0]}.zip`
+                  
+                  if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+                    if (filenameMatch) {
+                      filename = filenameMatch[1]
+                    }
+                  }
+                  
+                  link.download = filename
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                  window.URL.revokeObjectURL(url)
+                  
+                  console.log('Evidence bundle exported successfully')
+                } catch (error) {
+                  console.error('Failed to export evidence bundle:', error)
+                  alert('Failed to export evidence bundle. Please try again.')
+                }
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 border border-emerald-300 text-emerald-700 bg-white rounded-md hover:bg-emerald-50 hover:border-emerald-400 flex items-center gap-2 transition-colors"
             >
               <Download className="h-4 w-4" />
               Export Evidence Bundle
@@ -1564,14 +1609,14 @@ function PolicyKernelConsole() {
             <div className="relative">
               {/* Asset Input */}
               <div className="flex justify-center mb-4">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+                <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                      <span className="text-2xl">🏦</span>
+                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
+                      <span className="text-slate-600 text-xl">📊</span>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold">Asset Input</h3>
-                      <p className="text-blue-100 text-sm">{selectedAsset?.code} - {selectedAsset?.name}</p>
+                      <h3 className="text-lg font-semibold text-slate-900">Asset Input</h3>
+                      <p className="text-slate-600 text-sm">{selectedAsset?.code} - {selectedAsset?.product?.name || 'Unknown Product'}</p>
                     </div>
                   </div>
                 </div>
@@ -1579,7 +1624,7 @@ function PolicyKernelConsole() {
 
               {/* Facts Evaluated Chips */}
               <div className="flex justify-center mb-8">
-                <div className="flex flex-wrap gap-2 max-w-4xl">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
                   <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.issuerCountry !== 'Unknown' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                     Issuer: {kernelSummary.facts.issuerCountry !== 'Unknown' ? kernelSummary.facts.issuerCountry : 'Missing'}
                   </span>
@@ -1618,26 +1663,26 @@ function PolicyKernelConsole() {
 
               {/* Policy Kernel Brain */}
               <div className="flex justify-center mb-8">
-                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-8 text-white shadow-xl relative">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                      <Brain className="h-8 w-8" />
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-10 shadow-lg relative w-full max-w-6xl">
+                  <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Brain className="h-10 w-10 text-white" />
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold">Policy Kernel</h3>
-                      <p className="text-purple-100 text-sm">Compliance evaluation engine</p>
-                      <div className="flex gap-2 mt-3">
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded">Facts Analysis</span>
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded">Rule Matching</span>
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded">Requirement Generation</span>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-slate-900 mb-1">Policy Kernel</h3>
+                      <p className="text-slate-600 text-base mb-4">Compliance evaluation engine</p>
+                      <div className="flex gap-3">
+                        <span className="text-sm bg-blue-100 text-blue-800 px-3 py-2 rounded-full border border-blue-200 font-medium">Facts Analysis</span>
+                        <span className="text-sm bg-indigo-100 text-indigo-800 px-3 py-2 rounded-full border border-indigo-200 font-medium">Rule Matching</span>
+                        <span className="text-sm bg-purple-100 text-purple-800 px-3 py-2 rounded-full border border-purple-200 font-medium">Requirement Generation</span>
                       </div>
                     </div>
                   </div>
                   
                   {/* Evaluation Pipeline */}
-                  <div className="mt-6 bg-white/10 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium">Evaluation Pipeline</h4>
+                  <div className="mt-8 bg-white border border-slate-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-base font-semibold text-slate-900">Evaluation Pipeline</h4>
                       <button
                         onClick={async () => {
                           if (!assetId || !selectedAsset) return
@@ -1668,43 +1713,43 @@ function PolicyKernelConsole() {
                         Re-evaluate
                       </button>
                     </div>
-                    <div className="flex items-center justify-between text-xs mb-2">
+                    <div className="flex items-center justify-between text-sm mb-3">
                       <ModernTooltip content="Rules considered across all active regimes">
-                        <div className="text-center cursor-help">
-                          <div className="text-lg font-bold">{kernelSummary.counters.evaluated}</div>
-                          <div>Evaluated</div>
+                        <div className="text-center cursor-help px-4 py-2">
+                          <div className="text-2xl font-bold text-slate-900">{kernelSummary.counters.evaluated}</div>
+                          <div className="text-slate-600 font-medium">Evaluated</div>
                         </div>
                       </ModernTooltip>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-5 w-5 text-slate-400" />
                       <ModernTooltip content="Rules matching this asset's facts">
-                        <div className="text-center cursor-help">
-                          <div className="text-lg font-bold">{kernelSummary.counters.applicable}</div>
-                          <div>Applicable</div>
+                        <div className="text-center cursor-help px-4 py-2">
+                          <div className="text-2xl font-bold text-slate-900">{kernelSummary.counters.applicable}</div>
+                          <div className="text-slate-600 font-medium">Applicable</div>
                         </div>
                       </ModernTooltip>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-5 w-5 text-slate-400" />
                       <ModernTooltip content="Obligations the issuer must satisfy">
-                        <div className="text-center cursor-help">
-                          <div className="text-lg font-bold">{kernelSummary.counters.required}</div>
-                          <div>Required</div>
+                        <div className="text-center cursor-help px-4 py-2">
+                          <div className="text-2xl font-bold text-slate-900">{kernelSummary.counters.required}</div>
+                          <div className="text-slate-600 font-medium">Required</div>
                         </div>
                       </ModernTooltip>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-5 w-5 text-slate-400" />
                       <ModernTooltip content="Obligations marked complete with verification">
-                        <div className="text-center cursor-help">
-                          <div className="text-lg font-bold">{kernelSummary.counters.satisfied}</div>
-                          <div>Satisfied</div>
+                        <div className="text-center cursor-help px-4 py-2">
+                          <div className="text-2xl font-bold text-slate-900">{kernelSummary.counters.satisfied}</div>
+                          <div className="text-slate-600 font-medium">Satisfied</div>
                         </div>
                       </ModernTooltip>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-5 w-5 text-slate-400" />
                       <ModernTooltip content="Obligations explicitly waived with governance note">
-                        <div className="text-center cursor-help">
-                          <div className="text-lg font-bold">{kernelSummary.counters.exceptions}</div>
-                          <div>Exceptions</div>
+                        <div className="text-center cursor-help px-4 py-2">
+                          <div className="text-2xl font-bold text-slate-900">{kernelSummary.counters.exceptions}</div>
+                          <div className="text-slate-600 font-medium">Exceptions</div>
                         </div>
                       </ModernTooltip>
                     </div>
-                    <div className="text-xs text-purple-200 text-center">
+                    <div className="text-sm text-slate-500 text-center mt-2">
                       Evaluated at {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} • using MiCA v1.0, EU TFR v1.0
                     </div>
                   </div>
@@ -1836,11 +1881,28 @@ function PolicyKernelConsole() {
           </div>
 
 
+          {/* Flow Indicator */}
+          <div className="flex justify-center mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-0.5 bg-gray-300"></div>
+              <div className="flex items-center gap-2">
+                <ArrowDown className="h-4 w-4 text-gray-400" />
+                <span className="text-xs text-gray-500 font-medium">Policy Outputs</span>
+                <ArrowDown className="h-4 w-4 text-gray-400" />
+              </div>
+              <div className="w-8 h-0.5 bg-gray-300"></div>
+            </div>
+          </div>
+
           {/* A4 - Kernel Outputs Panel */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="text-center mb-6">
               <h2 className="text-lg font-semibold text-gray-900">Adapter Enforcement Plan</h2>
               <p className="text-sm text-gray-600">Policy Kernel outputs translated to ledger-specific enforcement actions</p>
+              <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                <Brain className="h-3 w-3 mr-1" />
+                Generated by Policy Kernel
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
