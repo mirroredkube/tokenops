@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
-import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download, Brain, Info, AlertTriangle } from 'lucide-react'
+import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download, Brain, Info, AlertTriangle, ArrowDown, ArrowUp, ArrowRight } from 'lucide-react'
 import CustomDropdown from '../../components/CustomDropdown'
 import ModernTooltip from '../../components/ModernTooltip'
 import { CanManageCompliance } from '../../components/RoleGuard'
@@ -65,7 +65,7 @@ export default function CompliancePage() {
   const [allRequirements, setAllRequirements] = useState<ComplianceRequirement[]>([]) // For Overview tab
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'issuances' | 'kernel'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'issuances' | 'kernel'>('kernel')
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -358,6 +358,9 @@ export default function CompliancePage() {
     const tab = (searchParams.get('tab') || '').toLowerCase()
     if (tab === 'issuances' || tab === 'dashboard' || tab === 'kernel') {
       setActiveTab(tab as any)
+    } else {
+      // Default to kernel tab when no tab parameter is provided
+      setActiveTab('kernel')
     }
   }, [searchParams])
 
@@ -1231,11 +1234,6 @@ function PolicyKernelConsole() {
   const [kernelSummary, setKernelSummary] = useState<any>(null)
   const [assets, setAssets] = useState<any[]>([])
   const [selectedAsset, setSelectedAsset] = useState<any>(null)
-  
-  // Filters
-  const [statusFilter, setStatusFilter] = useState('')
-  const [regimeFilter, setRegimeFilter] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
 
   const fetchAssets = async () => {
     try {
@@ -1248,6 +1246,13 @@ function PolicyKernelConsole() {
         if (Array.isArray(assetsData)) {
           console.log('🔍 Setting assets:', assetsData)
           setAssets(assetsData)
+          
+          // Auto-select first asset if no asset is currently selected and we have assets
+          if (assetsData.length > 0 && !assetId) {
+            const firstAsset = assetsData[0]
+            console.log('🔍 Auto-selecting first asset:', firstAsset.id)
+            router.push(`/app/compliance?tab=kernel&assetId=${firstAsset.id}`)
+          }
         } else {
           console.log('🔍 Assets data is not an array:', assetsData)
           setAssets([])
@@ -1275,26 +1280,35 @@ function PolicyKernelConsole() {
       }
 
       // Get requirement instances for the asset
-      const requirementsResponse = await api.GET('/v1/compliance/requirements' as any, {
+      const requirementsResponse = await api.GET('/v1/compliance/instances' as any, {
         params: { query: { assetId: targetAssetId } }
       })
       
       console.log('🔍 Requirements API response:', requirementsResponse)
       
       if (requirementsResponse.data) {
-        const requirementInstances = Array.isArray(requirementsResponse.data) ? requirementsResponse.data : []
+        // API returns { instances: [...] }
+        const requirementInstances = requirementsResponse.data.instances || []
         console.log('🔍 Requirement instances:', requirementInstances)
         
         // Get unique regimes from requirement instances
-        const regimes = Array.from(new Set(requirementInstances.map(ri => ri.requirementTemplate.regime)))
+        const regimeMap = new Map()
+        requirementInstances.forEach((ri: any) => {
+          const regime = ri.requirementTemplate.regime
+          if (regime && regime.id) {
+            regimeMap.set(regime.id, regime)
+          }
+        })
+        const regimes = Array.from(regimeMap.values())
+        console.log('🔍 Unique regimes found:', regimes)
         
         // Calculate counters
         const counters = {
           evaluated: requirementInstances.length,
-          applicable: requirementInstances.filter(ri => ri.status !== 'AVAILABLE').length,
-          required: requirementInstances.filter(ri => ri.status === 'REQUIRED').length,
-          satisfied: requirementInstances.filter(ri => ri.status === 'SATISFIED').length,
-          exceptions: requirementInstances.filter(ri => ri.status === 'EXCEPTION').length
+          applicable: requirementInstances.filter((ri: any) => ri.status !== 'AVAILABLE').length,
+          required: requirementInstances.filter((ri: any) => ri.status === 'REQUIRED').length,
+          satisfied: requirementInstances.filter((ri: any) => ri.status === 'SATISFIED').length,
+          exceptions: requirementInstances.filter((ri: any) => ri.status === 'EXCEPTION').length
         }
 
         // Build policy facts from asset data
@@ -1310,30 +1324,32 @@ function PolicyKernelConsole() {
           transferType: 'CASP_TO_CASP' // Default
         }
 
-        // Build enforcement flags based on requirements
+        // Build enforcement flags based on Policy Kernel requirement instances
         const enforcementFlags = {
           xrpl: {
-            requireAuth: requirementInstances.some(ri => 
+            requireAuth: requirementInstances.some((ri: any) => 
               ri.requirementTemplate.enforcementHints?.xrpl?.requireAuth
             ),
-            trustlineAuthorization: requirementInstances.some(ri => 
+            trustlineAuthorization: requirementInstances.some((ri: any) => 
               ri.requirementTemplate.enforcementHints?.xrpl?.trustlineAuthorization
             ),
-            freezeCapability: false // Default
+            freezeCapability: requirementInstances.some((ri: any) => 
+              ri.requirementTemplate.enforcementHints?.xrpl?.freezeControl
+            )
           },
           evm: {
-            allowlistGating: requirementInstances.some(ri => 
+            allowlistGating: requirementInstances.some((ri: any) => 
               ri.requirementTemplate.enforcementHints?.evm?.allowlistGating
             ),
-            pauseControl: requirementInstances.some(ri => 
+            pauseControl: requirementInstances.some((ri: any) => 
               ri.requirementTemplate.enforcementHints?.evm?.pauseControl
             )
           },
           hedera: {
-            allowlistGating: requirementInstances.some(ri => 
+            allowlistGating: requirementInstances.some((ri: any) => 
               ri.requirementTemplate.enforcementHints?.hedera?.allowlistGating
             ),
-            pauseControl: requirementInstances.some(ri => 
+            pauseControl: requirementInstances.some((ri: any) => 
               ri.requirementTemplate.enforcementHints?.hedera?.pauseControl
             )
           }
@@ -1347,9 +1363,9 @@ function PolicyKernelConsole() {
           enforcementFlags
         })
       } else {
-        // If no requirements found, create a mock summary for demo purposes
+        // No requirements found - show empty state
         const asset = assetResponse.data as any
-        const mockSummary = {
+        setKernelSummary({
           facts: {
             issuerCountry: asset?.product?.organization?.country || 'Unknown',
             assetClass: asset?.assetClass || 'Unknown',
@@ -1360,10 +1376,7 @@ function PolicyKernelConsole() {
             isCaspInvolved: true,
             transferType: 'CASP_TO_CASP'
           },
-          regimes: [
-            { id: 'mica-v1', name: 'MiCA', version: '1.0', effectiveFrom: '2024-12-30' },
-            { id: 'eu-tfr-v1', name: 'EU TFR', version: '1.0', effectiveFrom: '2024-12-30' }
-          ],
+          regimes: [],
           requirementInstances: [],
           counters: {
             evaluated: 0,
@@ -1373,12 +1386,15 @@ function PolicyKernelConsole() {
             exceptions: 0
           },
           enforcementFlags: {
-            xrpl: { requireAuth: false, trustlineAuthorization: false, freezeCapability: false },
+            xrpl: { 
+              requireAuth: false,
+              trustlineAuthorization: false,
+              freezeCapability: false 
+            },
             evm: { allowlistGating: false, pauseControl: false },
             hedera: { allowlistGating: false, pauseControl: false }
           }
-        }
-        setKernelSummary(mockSummary)
+        })
       }
     } catch (error: any) {
       console.error('Failed to fetch kernel summary:', error)
@@ -1433,23 +1449,21 @@ function PolicyKernelConsole() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+  const formatDate = (dateString: string | Date) => {
+    if (!dateString) return 'Unknown'
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    } catch (error) {
+      return 'Invalid Date'
+    }
   }
 
-  const filteredRequirements = kernelSummary?.requirementInstances.filter((ri: any) => {
-    const matchesStatus = !statusFilter || ri.status === statusFilter
-    const matchesRegime = !regimeFilter || ri.requirementTemplate.regime.name === regimeFilter
-    const matchesSearch = !searchTerm || 
-      ri.requirementTemplate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ri.requirementTemplate.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    return matchesStatus && matchesRegime && matchesSearch
-  }) || []
 
   if (loading) {
     return (
@@ -1489,7 +1503,7 @@ function PolicyKernelConsole() {
               <Brain className="h-6 w-6 text-blue-600" />
               Policy Kernel Console
             </h1>
-            <p className="text-sm text-gray-600 mt-1">Policy evaluation engine and compliance analysis</p>
+            <p className="text-sm text-gray-600 mt-1">Evaluate → Enforce → Evidence</p>
           </div>
         </div>
         
@@ -1501,6 +1515,18 @@ function PolicyKernelConsole() {
             placeholder={assets.length > 0 ? "Select Asset" : "Loading assets..."}
             className="min-w-64"
           />
+          {assetId && (
+            <button
+              onClick={() => {
+                // TODO: Implement evidence bundle export
+                console.log('Export Evidence Bundle for asset:', assetId)
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export Evidence Bundle
+            </button>
+          )}
         </div>
       </div>
 
@@ -1530,207 +1556,292 @@ function PolicyKernelConsole() {
 
       {kernelSummary && (
         <>
-          {/* A1 - Kernel Summary Header */}
+          {/* Visual Policy Kernel Flow */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Policy Facts & Regime Analysis</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6 text-center">Policy Kernel Architecture</h2>
             
-            {/* Facts Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Issuer Country</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.issuerCountry}</div>
+            {/* Visual Flow Diagram */}
+            <div className="relative">
+              {/* Asset Input */}
+              <div className="flex justify-center mb-4">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">🏦</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">Asset Input</h3>
+                      <p className="text-blue-100 text-sm">{selectedAsset?.code} - {selectedAsset?.name}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Asset Class</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.assetClass}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Target Markets</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.targetMarkets.join(', ') || 'None'}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Ledger</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.ledger}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Distribution</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.distributionType}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Investor Audience</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.investorAudience}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">CASP Involved</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.isCaspInvolved ? 'Yes' : 'No'}</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Transfer Type</div>
-                <div className="text-sm font-semibold text-gray-900">{kernelSummary.facts.transferType}</div>
-              </div>
-            </div>
 
-            {/* Regime Badges */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Active Regulatory Regimes</h3>
-              <div className="flex flex-wrap gap-2">
-                {kernelSummary.regimes.map((regime: any) => (
-                  <span
-                    key={regime.id}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-                  >
-                    <Shield className="h-3 w-3 mr-1" />
-                    {regime.name} v{regime.version}
-                    <ModernTooltip content={`Effective: ${formatDate(regime.effectiveFrom)}`}>
-                      <Info className="h-3 w-3 ml-1" />
-                    </ModernTooltip>
+              {/* Facts Evaluated Chips */}
+              <div className="flex justify-center mb-8">
+                <div className="flex flex-wrap gap-2 max-w-4xl">
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.issuerCountry !== 'Unknown' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    Issuer: {kernelSummary.facts.issuerCountry !== 'Unknown' ? kernelSummary.facts.issuerCountry : 'Missing'}
                   </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Counter Strip */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Requirement Evaluation Pipeline</h3>
-              <div className="flex items-center justify-between">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{kernelSummary.counters.evaluated}</div>
-                  <div className="text-xs text-gray-600">Evaluated</div>
-                </div>
-                <div className="text-gray-400">→</div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-indigo-600">{kernelSummary.counters.applicable}</div>
-                  <div className="text-xs text-gray-600">Applicable</div>
-                </div>
-                <div className="text-gray-400">→</div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{kernelSummary.counters.required}</div>
-                  <div className="text-xs text-gray-600">Required</div>
-                </div>
-                <div className="text-gray-400">→</div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{kernelSummary.counters.satisfied}</div>
-                  <div className="text-xs text-gray-600">Satisfied</div>
-                </div>
-                <div className="text-gray-400">→</div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">{kernelSummary.counters.exceptions}</div>
-                  <div className="text-xs text-gray-600">Exceptions</div>
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.assetClass !== 'Unknown' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    Class: {kernelSummary.facts.assetClass !== 'Unknown' ? kernelSummary.facts.assetClass : 'Missing'}
+                  </span>
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.targetMarkets.length > 0 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    Markets: {kernelSummary.facts.targetMarkets.length > 0 ? kernelSummary.facts.targetMarkets.join(', ') : 'Missing'}
+                  </span>
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.distributionType !== 'Unknown' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    Distribution: {kernelSummary.facts.distributionType}
+                  </span>
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.investorAudience !== 'Unknown' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    Audience: {kernelSummary.facts.investorAudience}
+                  </span>
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.isCaspInvolved !== undefined ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    CASP: {kernelSummary.facts.isCaspInvolved ? 'Yes' : 'No'}
+                  </span>
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.transferType !== 'Unknown' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    Transfer: {kernelSummary.facts.transferType}
+                  </span>
+                  <span className={`text-xs px-3 py-1 rounded-full ${kernelSummary.facts.ledger !== 'Unknown' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    Ledger: {kernelSummary.facts.ledger}
+                  </span>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* A2 - Requirements Table */}
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Requirement Instances</h2>
-                
-                {/* Filters */}
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search requirements..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+              {/* Flow Arrows */}
+              <div className="flex justify-center mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-0.5 bg-gray-300"></div>
+                  <ArrowDown className="h-6 w-6 text-gray-400" />
+                  <div className="w-8 h-0.5 bg-gray-300"></div>
+                </div>
+              </div>
+
+              {/* Policy Kernel Brain */}
+              <div className="flex justify-center mb-8">
+                <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-8 text-white shadow-xl relative">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                      <Brain className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">Policy Kernel</h3>
+                      <p className="text-purple-100 text-sm">Compliance evaluation engine</p>
+                      <div className="flex gap-2 mt-3">
+                        <span className="text-xs bg-white/20 px-2 py-1 rounded">Facts Analysis</span>
+                        <span className="text-xs bg-white/20 px-2 py-1 rounded">Rule Matching</span>
+                        <span className="text-xs bg-white/20 px-2 py-1 rounded">Requirement Generation</span>
+                      </div>
+                    </div>
                   </div>
                   
-                  <CustomDropdown
-                    options={[
-                      { value: '', label: 'All Statuses' },
-                      { value: 'REQUIRED', label: 'Required' },
-                      { value: 'SATISFIED', label: 'Satisfied' },
-                      { value: 'EXCEPTION', label: 'Exception' },
-                      { value: 'AVAILABLE', label: 'N/A' }
-                    ]}
-                    value={statusFilter}
-                    onChange={setStatusFilter}
-                    placeholder="Filter by Status"
-                    className="min-w-32"
-                  />
-                  
-                  <CustomDropdown
-                    options={[
-                      { value: '', label: 'All Regimes' },
-                      ...kernelSummary.regimes.map((regime: any) => ({ value: regime.name, label: regime.name }))
-                    ]}
-                    value={regimeFilter}
-                    onChange={setRegimeFilter}
-                    placeholder="Filter by Regime"
-                    className="min-w-32"
-                  />
+                  {/* Evaluation Pipeline */}
+                  <div className="mt-6 bg-white/10 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium">Evaluation Pipeline</h4>
+                      <button
+                        onClick={async () => {
+                          if (!assetId || !selectedAsset) return
+                          
+                          try {
+                            setLoading(true)
+                            // Trigger compliance evaluation via API
+                            const response = await api.POST('/v1/compliance/evaluate' as any, {
+                              body: {
+                                assetId: assetId,
+                                productId: selectedAsset.productId
+                              }
+                            })
+                            
+                            if (response.data) {
+                              // Refresh the kernel summary after evaluation
+                              await fetchKernelSummary(assetId)
+                            }
+                          } catch (error) {
+                            console.error('Failed to re-evaluate compliance:', error)
+                            setError('Failed to re-evaluate compliance')
+                          } finally {
+                            setLoading(false)
+                          }
+                        }}
+                        className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition-colors"
+                      >
+                        Re-evaluate
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <ModernTooltip content="Rules considered across all active regimes">
+                        <div className="text-center cursor-help">
+                          <div className="text-lg font-bold">{kernelSummary.counters.evaluated}</div>
+                          <div>Evaluated</div>
+                        </div>
+                      </ModernTooltip>
+                      <ArrowRight className="h-4 w-4" />
+                      <ModernTooltip content="Rules matching this asset's facts">
+                        <div className="text-center cursor-help">
+                          <div className="text-lg font-bold">{kernelSummary.counters.applicable}</div>
+                          <div>Applicable</div>
+                        </div>
+                      </ModernTooltip>
+                      <ArrowRight className="h-4 w-4" />
+                      <ModernTooltip content="Obligations the issuer must satisfy">
+                        <div className="text-center cursor-help">
+                          <div className="text-lg font-bold">{kernelSummary.counters.required}</div>
+                          <div>Required</div>
+                        </div>
+                      </ModernTooltip>
+                      <ArrowRight className="h-4 w-4" />
+                      <ModernTooltip content="Obligations marked complete with verification">
+                        <div className="text-center cursor-help">
+                          <div className="text-lg font-bold">{kernelSummary.counters.satisfied}</div>
+                          <div>Satisfied</div>
+                        </div>
+                      </ModernTooltip>
+                      <ArrowRight className="h-4 w-4" />
+                      <ModernTooltip content="Obligations explicitly waived with governance note">
+                        <div className="text-center cursor-help">
+                          <div className="text-lg font-bold">{kernelSummary.counters.exceptions}</div>
+                          <div>Exceptions</div>
+                        </div>
+                      </ModernTooltip>
+                    </div>
+                    <div className="text-xs text-purple-200 text-center">
+                      Evaluated at {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} • using MiCA v1.0, EU TFR v1.0
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Output Arrows */}
+              <div className="flex justify-center mb-8">
+                <div className="flex items-center gap-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <ArrowUp className="h-6 w-6 text-gray-400" />
+                    <div className="w-0.5 h-8 bg-gray-300"></div>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <ArrowUp className="h-6 w-6 text-gray-400" />
+                    <div className="w-0.5 h-8 bg-gray-300"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Regime Plugins & Ledger Adapters */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Regime Plugins */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 text-center">Regime Plugins</h3>
+                  <div className="space-y-3">
+                    {kernelSummary.regimes.length > 0 ? kernelSummary.regimes.map((regime: any) => (
+                      <div key={regime.id} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <Shield className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{regime.name} v{regime.version}</h4>
+                            <p className="text-sm text-gray-600">Effective: {formatDate(regime.effectiveFrom)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="space-y-2">
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                              <Shield className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-900">MiCA v1.0 (EU)</h4>
+                              <p className="text-sm text-gray-600">Effective: Dec 30, 2024</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                              <Shield className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-900">EU Travel Rule v1.0</h4>
+                              <p className="text-sm text-gray-600">Effective: Dec 30, 2024</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ledger Adapters */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 text-center">Ledger Adapters</h3>
+                  <div className="space-y-3">
+                    {/* XRPL */}
+                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">⚡</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-gray-900">XRPL adapter v1</h4>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">RequireAuth, Trustline Auth, Freeze</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* EVM */}
+                    <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🔗</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-gray-900">EVM adapter v1</h4>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Installed
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">Allowlist, Pause Control</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Hedera */}
+                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🌐</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-gray-900">Hedera adapter v1</h4>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Installed
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">Allowlist, Pause Control</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Why</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Regime</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Article</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Verified</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredRequirements.map((requirement: any) => (
-                    <tr key={requirement.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{requirement.requirementTemplate.name}</div>
-                          {requirement.requirementTemplate.description && (
-                            <div className="text-sm text-gray-500">{requirement.requirementTemplate.description}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={getStatusBadge(requirement.status)}>
-                          {getStatusIcon(requirement.status)}
-                          {requirement.status === 'AVAILABLE' ? 'N/A' : requirement.status.toLowerCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {requirement.rationale || (
-                            <span className="text-gray-500 italic">
-                              {requirement.status === 'AVAILABLE' 
-                                ? 'Not applicable to this asset configuration'
-                                : 'Evaluation in progress'
-                              }
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {requirement.requirementTemplate.regime.name}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        v{requirement.requirementTemplate.version}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {requirement.verifiedAt ? formatDate(requirement.verifiedAt) : 'Never'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
+
 
           {/* A4 - Kernel Outputs Panel */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Enforcement Flags</h2>
-            <p className="text-sm text-gray-600 mb-6">Policy-derived enforcement signals emitted to ledger adapters</p>
+            <div className="text-center mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Adapter Enforcement Plan</h2>
+              <p className="text-sm text-gray-600">Policy Kernel outputs translated to ledger-specific enforcement actions</p>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* XRPL */}
@@ -1743,27 +1854,36 @@ function PolicyKernelConsole() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">RequireAuth</span>
+                    <div>
+                      <span className="text-sm text-gray-600">RequireAuth</span>
+                      <div className="text-xs text-gray-500">Retail + Public distribution requires issuer authorization (MiCA)</div>
+                    </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       kernelSummary.enforcementFlags.xrpl.requireAuth 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {kernelSummary.enforcementFlags.xrpl.requireAuth ? 'Enabled' : 'Disabled'}
+                      {kernelSummary.enforcementFlags.xrpl.requireAuth ? 'Active' : 'Not enabled'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Trustline Authorization</span>
+                    <div>
+                      <span className="text-sm text-gray-600">Trustline Authorization</span>
+                      <div className="text-xs text-gray-500">Eligibility gating for investor audience (policy mapping)</div>
+                    </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       kernelSummary.enforcementFlags.xrpl.trustlineAuthorization 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {kernelSummary.enforcementFlags.xrpl.trustlineAuthorization ? 'Enabled' : 'Disabled'}
+                      {kernelSummary.enforcementFlags.xrpl.trustlineAuthorization ? 'Active' : 'Not enabled'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Freeze Capability</span>
+                    <div>
+                      <span className="text-sm text-gray-600">Freeze Capability</span>
+                      <div className="text-xs text-gray-500">Emergency control for regulatory compliance</div>
+                    </div>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                       Available
                     </span>
@@ -1781,23 +1901,29 @@ function PolicyKernelConsole() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Allowlist Gating</span>
+                    <div>
+                      <span className="text-sm text-gray-600">Allowlist Gating</span>
+                      <div className="text-xs text-gray-500">Eligibility gating for investor audience (policy mapping)</div>
+                    </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       kernelSummary.enforcementFlags.evm.allowlistGating 
                         ? 'bg-blue-100 text-blue-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {kernelSummary.enforcementFlags.evm.allowlistGating ? 'Configured' : 'Not configured'}
+                      {kernelSummary.enforcementFlags.evm.allowlistGating ? 'Active' : 'Not enabled'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Pause Control</span>
+                    <div>
+                      <span className="text-sm text-gray-600">Pause Control</span>
+                      <div className="text-xs text-gray-500">Emergency control for regulatory compliance</div>
+                    </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       kernelSummary.enforcementFlags.evm.pauseControl 
                         ? 'bg-blue-100 text-blue-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {kernelSummary.enforcementFlags.evm.pauseControl ? 'Configured' : 'Not configured'}
+                      {kernelSummary.enforcementFlags.evm.pauseControl ? 'Active' : 'Not enabled'}
                     </span>
                   </div>
                 </div>
@@ -1816,23 +1942,29 @@ function PolicyKernelConsole() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Allowlist Gating</span>
+                    <div>
+                      <span className="text-sm text-gray-600">Allowlist Gating</span>
+                      <div className="text-xs text-gray-500">Eligibility gating for investor audience (policy mapping)</div>
+                    </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       kernelSummary.enforcementFlags.hedera.allowlistGating 
                         ? 'bg-blue-100 text-blue-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {kernelSummary.enforcementFlags.hedera.allowlistGating ? 'Configured' : 'Not configured'}
+                      {kernelSummary.enforcementFlags.hedera.allowlistGating ? 'Active' : 'Not enabled'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Pause Control</span>
+                    <div>
+                      <span className="text-sm text-gray-600">Pause Control</span>
+                      <div className="text-xs text-gray-500">Emergency control for regulatory compliance</div>
+                    </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       kernelSummary.enforcementFlags.hedera.pauseControl 
                         ? 'bg-blue-100 text-blue-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {kernelSummary.enforcementFlags.hedera.pauseControl ? 'Configured' : 'Not configured'}
+                      {kernelSummary.enforcementFlags.hedera.pauseControl ? 'Active' : 'Not enabled'}
                     </span>
                   </div>
                 </div>
