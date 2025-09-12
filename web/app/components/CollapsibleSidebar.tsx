@@ -52,18 +52,18 @@ export default function CollapsibleSidebar() {
     { href: '/app/products', label: t('navigation.products'), icon: <Package className="h-5 w-5" /> },
     // Assets - show for all roles (view-only for some)
     { href: '/app/assets', label: t('navigation.assets'), icon: <Building className="h-5 w-5" /> },
+    // Authorizations - show for all roles (view-only for some)
+    { href: '/app/authorizations', label: t('navigation.authorizations'), icon: <CheckSquare className="h-5 w-5" /> },
     // Issuer Addresses - show for all roles (view-only for some)
     { href: '/app/issuer-addresses', label: t('navigation.issuerAddresses'), icon: <Key className="h-5 w-5" /> },
     // Issuances - show for all roles (view-only for some)
     { href: '/app/issuance/new', label: t('navigation.issuances'), icon: <Coins className="h-5 w-5" /> },
-    // Users - only for admins
-    ...(canManageUsers ? [{ href: '/app/users', label: t('navigation.users'), icon: <User className="h-5 w-5" /> }] : []),
-    // Authorizations - show for all roles (view-only for some)
-    { href: '/app/authorizations', label: t('navigation.authorizations'), icon: <CheckSquare className="h-5 w-5" /> },
     // Compliance - show for all roles (view-only for some)
     { href: '/app/compliance', label: t('navigation.compliance'), icon: <Shield className="h-5 w-5" /> },
     // Reports - show for all roles (view-only for some)
     { href: '/app/reports', label: t('navigation.reports'), icon: <BarChart3 className="h-5 w-5" /> },
+    // Users - only for admins
+    ...(canManageUsers ? [{ href: '/app/users', label: t('navigation.users'), icon: <User className="h-5 w-5" /> }] : []),
     // Balances - show for all roles
     { href: '/app/balances', label: t('navigation.balances'), icon: <Wallet className="h-5 w-5" /> },
     // Help - show for all roles
