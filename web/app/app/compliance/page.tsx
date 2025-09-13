@@ -1599,10 +1599,10 @@ function PolicyKernelConsole() {
 
               {/* Flow Arrows */}
               <div className="flex justify-center mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-0.5 bg-gray-300"></div>
-                  <ArrowDown className="h-6 w-6 text-gray-400" />
-                  <div className="w-8 h-0.5 bg-gray-300"></div>
+                <div className="flex items-center gap-6">
+                  <div className="w-12 h-0.5 bg-emerald-200"></div>
+                  <ArrowDown className="h-6 w-6 text-emerald-600" />
+                  <div className="w-12 h-0.5 bg-emerald-200"></div>
                 </div>
               </div>
 
@@ -1705,12 +1705,12 @@ function PolicyKernelConsole() {
               <div className="flex justify-center mb-8">
                 <div className="flex items-center gap-8">
                   <div className="flex flex-col items-center gap-2">
-                    <ArrowUp className="h-6 w-6 text-gray-400" />
-                    <div className="w-0.5 h-8 bg-gray-300"></div>
+                    <ArrowUp className="h-6 w-6 text-emerald-600" />
+                    <div className="w-0.5 h-8 bg-emerald-200"></div>
                   </div>
                   <div className="flex flex-col items-center gap-2">
-                    <ArrowUp className="h-6 w-6 text-gray-400" />
-                    <div className="w-0.5 h-8 bg-gray-300"></div>
+                    <ArrowUp className="h-6 w-6 text-emerald-600" />
+                    <div className="w-0.5 h-8 bg-emerald-200"></div>
                   </div>
                 </div>
               </div>
@@ -1928,14 +1928,14 @@ function PolicyKernelConsole() {
 
           {/* Flow Indicator */}
           <div className="flex justify-center mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-0.5 bg-gray-300"></div>
-              <div className="flex items-center gap-2">
-                <ArrowDown className="h-4 w-4 text-gray-400" />
-                <span className="text-xs text-gray-500 font-medium">Policy Outputs</span>
-                <ArrowDown className="h-4 w-4 text-gray-400" />
+            <div className="flex items-center gap-6">
+              <div className="w-12 h-0.5 bg-emerald-200"></div>
+              <div className="flex items-center gap-3">
+                <ArrowDown className="h-5 w-5 text-emerald-600" />
+                <span className="text-sm text-emerald-700 font-semibold">Policy Outputs</span>
+                <ArrowDown className="h-5 w-5 text-emerald-600" />
               </div>
-              <div className="w-8 h-0.5 bg-gray-300"></div>
+              <div className="w-12 h-0.5 bg-emerald-200"></div>
             </div>
           </div>
 
@@ -2006,14 +2006,14 @@ function PolicyKernelConsole() {
 
           {/* Adapter Mapping Flow Indicator */}
           <div className="flex justify-center mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-0.5 bg-gray-300"></div>
-              <div className="flex items-center gap-2">
-                <ArrowDown className="h-4 w-4 text-gray-400" />
-                <span className="text-xs text-gray-500 font-medium">Adapter Mapping</span>
-                <ArrowDown className="h-4 w-4 text-gray-400" />
+            <div className="flex items-center gap-6">
+              <div className="w-12 h-0.5 bg-emerald-200"></div>
+              <div className="flex items-center gap-3">
+                <ArrowDown className="h-5 w-5 text-emerald-600" />
+                <span className="text-sm text-emerald-700 font-semibold">Adapter Mapping</span>
+                <ArrowDown className="h-5 w-5 text-emerald-600" />
               </div>
-              <div className="w-8 h-0.5 bg-gray-300"></div>
+              <div className="w-12 h-0.5 bg-emerald-200"></div>
             </div>
           </div>
 
