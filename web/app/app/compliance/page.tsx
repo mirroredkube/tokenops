@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { getTenantApiUrl } from '@/lib/tenantApi'
-import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download, Brain, Info, AlertTriangle, ArrowDown, ArrowUp, ArrowRight } from 'lucide-react'
+import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download, Brain, Info, AlertTriangle, ArrowDown, ArrowUp, ArrowRight, ChevronDown, ChevronRight, Lock, FileText } from 'lucide-react'
 import CustomDropdown from '../../components/CustomDropdown'
 import ModernTooltip from '../../components/ModernTooltip'
 import { CanManageCompliance } from '../../components/RoleGuard'
@@ -113,7 +113,6 @@ export default function CompliancePage() {
   }>>([])
   const [assetsLoading, setAssetsLoading] = useState(false)
   
-
   const fetchAssets = async () => {
     setAssetsLoading(true)
     try {
@@ -1236,6 +1235,20 @@ function PolicyKernelConsole() {
   const [kernelSummary, setKernelSummary] = useState<any>(null)
   const [assets, setAssets] = useState<any[]>([])
   const [selectedAsset, setSelectedAsset] = useState<any>(null)
+  
+  // Collapsible sections state for MiCA and Travel Rule requirements
+  const [expandedSections, setExpandedSections] = useState({
+    micaArtEmt: false,
+    micaOngoing: false,
+    travelRuleOperational: false
+  })
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
 
   const fetchAssets = async () => {
     try {
@@ -1718,44 +1731,233 @@ function PolicyKernelConsole() {
                     <p className="text-sm text-gray-600">Regulatory requirements (inputs)</p>
                   </div>
                   <div className="space-y-3">
-                    {kernelSummary.regimes.length > 0 ? kernelSummary.regimes.map((regime: any) => (
-                      <div key={regime.id} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Shield className="h-5 w-5 text-green-600" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{regime.name} v{regime.version}</h4>
-                            <p className="text-sm text-gray-600">Effective: {formatDate(regime.effectiveFrom)}</p>
-                          </div>
+                    {/* MiCA Regulation */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <Shield className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">MiCA v1.0 (EU)</h4>
+                          <p className="text-sm text-gray-600">Effective: Dec 30, 2024</p>
                         </div>
                       </div>
-                    )) : (
-                      <div className="space-y-2">
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                              <Shield className="h-5 w-5 text-green-600" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900">MiCA v1.0 (EU)</h4>
-                              <p className="text-sm text-gray-600">Effective: Dec 30, 2024</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                              <Shield className="h-5 w-5 text-green-600" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900">EU Travel Rule v1.0</h4>
-                              <p className="text-sm text-gray-600">Effective: Dec 30, 2024</p>
-                            </div>
-                          </div>
+                      
+                      {/* Issuance-Critical Requirements (Always Visible) */}
+                      <div className="ml-13 mb-4">
+                        <p className="text-sm text-gray-600 font-medium mb-2">Issuance-Critical Requirements:</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <FileText className="h-3 w-3" />
+                            Issuer Authorization (ART/EMT)
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <FileText className="h-3 w-3" />
+                            Crypto-Asset White Paper (ALL)
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <Lock className="h-3 w-3" />
+                            KYC/Eligibility Posture
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <FileText className="h-3 w-3" />
+                            Right of Withdrawal (Art. 13)
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <FileText className="h-3 w-3" />
+                            Marketing Communications
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <FileText className="h-3 w-3" />
+                            Admission to Trading
+                          </span>
                         </div>
                       </div>
-                    )}
+
+                      {/* Near-term Requirements */}
+                      <div className="ml-13 mb-4">
+                        <p className="text-sm text-gray-600 font-medium mb-2">Near-term (ART/EMT):</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            <FileText className="h-3 w-3" />
+                            Redemption Right (ART/EMT)
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            <FileText className="h-3 w-3" />
+                            Reserve, Custody & Segregation
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* ART/EMT Specific - Collapsible */}
+                      <div className="ml-13 mb-4">
+                        <button
+                          onClick={() => toggleSection('micaArtEmt')}
+                          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          {expandedSections.micaArtEmt ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                          <span className="font-medium">ART/EMT Specific (8 more)</span>
+                        </button>
+                        {expandedSections.micaArtEmt && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Investment Policy & Risk Limits
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Own Funds & Capital Requirements
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Governance & Fit-and-Proper
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Conflicts of Interest Policy
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Complaints Handling & ADR
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Public Disclosures on Reserve
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Prohibition on Interest/Remuneration
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Recovery & Wind-down Plan
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Ongoing/Operational - Collapsible */}
+                      <div className="ml-13">
+                        <button
+                          onClick={() => toggleSection('micaOngoing')}
+                          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          {expandedSections.micaOngoing ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                          <span className="font-medium">Ongoing & Operational (5 more)</span>
+                        </button>
+                        {expandedSections.micaOngoing && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Significant Changes & Updates
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Incident & Outage Reporting
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Outsourcing Register & Oversight
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Ongoing Transparency to Holders
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Market Abuse & Insider Disclosures
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* EU Travel Rule */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <Shield className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">EU Travel Rule v1.0</h4>
+                          <p className="text-sm text-gray-600">Effective: Dec 30, 2024</p>
+                        </div>
+                      </div>
+                      
+                      {/* Transfer-Critical Requirements (Always Visible) */}
+                      <div className="ml-13 mb-4">
+                        <p className="text-sm text-gray-600 font-medium mb-2">Transfer-Critical Requirements:</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <Lock className="h-3 w-3" />
+                            VASP Counterparty Discovery & Authentication
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <FileText className="h-3 w-3" />
+                            Travel Rule Information Payload (off-chain)
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <Lock className="h-3 w-3" />
+                            Hold-until-Safe Interlock
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <Lock className="h-3 w-3" />
+                            Self-Hosted Wallet Policy
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <Lock className="h-3 w-3" />
+                            Sanctions/AML Screening
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Operational/Ongoing - Collapsible */}
+                      <div className="ml-13">
+                        <button
+                          onClick={() => toggleSection('travelRuleOperational')}
+                          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          {expandedSections.travelRuleOperational ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                          <span className="font-medium">Operational & Ongoing (5 more)</span>
+                        </button>
+                        {expandedSections.travelRuleOperational && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Error Handling & Redaction
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Record Retention & Evidence
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Privacy & Security Controls
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Threshold/Exemption Configuration
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                              <FileText className="h-3 w-3" />
+                              Network/Rail Selection Policy
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
