@@ -1770,11 +1770,14 @@ function PolicyKernelConsole() {
                 </div>
               </div>
 
-              {/* Regime Plugins & Ledger Adapters */}
+              {/* Policy Kernel Inputs - Bidirectional Flow */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Regime Plugins */}
+                {/* Regime Plugins - Input to Policy Kernel */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 text-center">Regime Plugins</h3>
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900">Regime Plugins</h3>
+                    <p className="text-sm text-gray-600">Regulatory requirements (inputs)</p>
+                  </div>
                   <div className="space-y-3">
                     {kernelSummary.regimes.length > 0 ? kernelSummary.regimes.map((regime: any) => (
                       <div key={regime.id} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
@@ -1817,11 +1820,14 @@ function PolicyKernelConsole() {
                   </div>
                 </div>
 
-                {/* Ledger Adapters */}
+                {/* Ledger Adapters - Input to Policy Kernel */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 text-center">Ledger Adapters</h3>
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900">Ledger Adapters</h3>
+                    <p className="text-sm text-gray-600">Available capabilities (inputs)</p>
+                  </div>
                   <div className="space-y-3">
-                    {/* XRPL */}
+                    {/* XRPL - Comprehensive Controls */}
                     <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -1834,7 +1840,101 @@ function PolicyKernelConsole() {
                               Active
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600">RequireAuth, Trustline Auth, Freeze</p>
+                          <div className="mt-2">
+                            <p className="text-sm text-gray-600 font-medium mb-2">Available Controls:</p>
+                            
+                            {/* Compliance Controls */}
+                            <div className="mb-3">
+                              <p className="text-xs font-semibold text-gray-700 mb-1">Compliance Controls:</p>
+                              <div className="flex flex-wrap gap-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  RequireAuth
+                                  <span className="ml-1 text-xs text-red-600">(Issuer)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  Global Freeze
+                                  <span className="ml-1 text-xs text-red-600">(Issuer)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  Clawback
+                                  <span className="ml-1 text-xs text-red-600">(Issuer)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  Freeze
+                                  <span className="ml-1 text-xs text-red-600">(Trustline)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  No Freeze
+                                  <span className="ml-1 text-xs text-red-600">(Issuer)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  Account Freeze
+                                  <span className="ml-1 text-xs text-red-600">(Issuer Account)</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Security Controls */}
+                            <div className="mb-3">
+                              <p className="text-xs font-semibold text-gray-700 mb-1">Security Controls:</p>
+                              <div className="flex flex-wrap gap-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  Disable Master
+                                  <span className="ml-1 text-xs text-orange-600">(Any Account)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  Disallow XRP
+                                  <span className="ml-1 text-xs text-orange-600">(Any Account)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  Require Dest Tag
+                                  <span className="ml-1 text-xs text-orange-600">(Any Account)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  Disallow Trust Line
+                                  <span className="ml-1 text-xs text-orange-600">(Any Account)</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Operational Controls */}
+                            <div className="mb-3">
+                              <p className="text-xs font-semibold text-gray-700 mb-1">Operational Controls:</p>
+                              <div className="flex flex-wrap gap-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  Transfer Rate
+                                  <span className="ml-1 text-xs text-green-600">(Issuer)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  Tick Size
+                                  <span className="ml-1 text-xs text-green-600">(Issuer)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  Default Ripple
+                                  <span className="ml-1 text-xs text-green-600">(Trustline)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  Trustline Limit
+                                  <span className="ml-1 text-xs text-green-600">(Holder)</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Advanced Features */}
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700 mb-1">Advanced Features:</p>
+                              <div className="flex flex-wrap gap-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                  Credentials
+                                  <span className="ml-1 text-xs text-purple-600">(Any Account)</span>
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                  Trustline Auth
+                                  <span className="ml-1 text-xs text-purple-600">(Issuer)</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1945,6 +2045,60 @@ function PolicyKernelConsole() {
                     <div>
                       <span className="text-sm text-gray-600">Freeze Capability</span>
                       <div className="text-xs text-gray-500">Emergency control for regulatory compliance</div>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Available
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Clawback</span>
+                      <div className="text-xs text-gray-500">Recovery mechanism for unauthorized transfers</div>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Available
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Transfer Rate</span>
+                      <div className="text-xs text-gray-500">Fee control for transfer operations</div>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Available
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Trustline Limit</span>
+                      <div className="text-xs text-gray-500">Maximum balance control per holder</div>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Available
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Global Freeze</span>
+                      <div className="text-xs text-gray-500">Freeze all tokens issued by the account</div>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Available
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Require Dest Tag</span>
+                      <div className="text-xs text-gray-500">Mandate destination tags for payments</div>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Available
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Credentials</span>
+                      <div className="text-xs text-gray-500">Verifiable KYC credentials for compliance</div>
                     </div>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                       Available
