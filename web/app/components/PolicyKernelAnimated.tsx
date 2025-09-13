@@ -29,7 +29,7 @@ export default function PolicyKernelAnimated() {
                 <PillCard color="emerald" label="MiCA v1.0" />
               </HoverLink>
               <HoverLink targetKeys={["regimes"]}>
-                <PillCard color="blue" label="Travel Rule" />
+                <PillCard color="emerald" label="Travel Rule" />
               </HoverLink>
             </div>
           </div>
@@ -75,13 +75,13 @@ export default function PolicyKernelAnimated() {
             <div className="absolute left-1/2 -translate-x-1/2 bottom-1 flex gap-36">
               <div className="flex flex-col items-center">
                 <SectionTitle title="Universal Outputs" subtitle="" compact />
-                <MiniChip color="emerald" label="Requirements" />
-                <MiniChip color="emerald" label="Evidence" />
+                <MiniChip color="rose" label="Requirements" />
+                <MiniChip color="rose" label="Evidence" />
               </div>
               <div className="flex flex-col items-center">
                 <SectionTitle title="Enforcement Intents" subtitle="" compact />
                 <MiniChip color="orange" label="Gate Controls" />
-                <MiniChip color="rose" label="Freeze Controls" />
+                <MiniChip color="orange" label="Freeze Controls" />
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function PolicyKernelAnimated() {
                 <PillCard color="blue" label="XRPL" />
               </HoverLink>
               <HoverLink targetKeys={["adapters"]}>
-                <PillCard color="orange" label="Ethereum" />
+                <PillCard color="blue" label="Ethereum" />
               </HoverLink>
             </div>
           </div>
@@ -269,21 +269,21 @@ function Kernel() {
     <div className="absolute inset-0 flex items-center justify-center">
       {/* Halo */}
       <motion.div
-        className="absolute h-72 w-72 rounded-full bg-emerald-300/25 blur-2xl"
-        animate={{ opacity: [0.25, 0.55, 0.25], scale: [1, 1.08, 1] }}
+        className="absolute h-72 w-72 rounded-full bg-gradient-to-br from-slate-400/40 to-slate-600/30 blur-2xl"
+        animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.08, 1] }}
         transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* Outer ring */}
       <motion.div
-        className="relative h-60 w-60 rounded-full border-2 border-emerald-400/80 shadow-[0_0_80px_rgba(16,185,129,0.35)] backdrop-blur-sm flex items-center justify-center bg-white/70"
-        animate={{ boxShadow: ["0 0 60px rgba(16,185,129,0.25)", "0 0 100px rgba(16,185,129,0.4)", "0 0 60px rgba(16,185,129,0.25)"] }}
+        className="relative h-60 w-60 rounded-full border-2 border-slate-400/95 shadow-[0_0_80px_rgba(100,116,139,0.6)] backdrop-blur-sm flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300"
+        animate={{ boxShadow: ["0 0 60px rgba(100,116,139,0.5)", "0 0 120px rgba(100,116,139,0.7)", "0 0 60px rgba(100,116,139,0.5)"] }}
         transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
       >
         {/* Orbiting dots removed for clean center */}
 
         {/* Inner pulse */}
         <motion.div
-          className="absolute h-40 w-40 rounded-full border border-emerald-400/60"
+          className="absolute h-40 w-40 rounded-full border border-slate-400/80"
           animate={{ scale: [0.96, 1, 0.96] }}
           transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -329,7 +329,7 @@ function StreamsLayer({ shouldReduceMotion }: { shouldReduceMotion: boolean | nu
       <ParticleStream dataKey="adapters" color="#3B82F6" from={anchors.adapters} to={anchors.kernel} curvature="right" delay={0.5} shouldReduceMotion={shouldReduceMotion} />
 
       {/* Outbound streams - start after 0.4s "think" beat, complete in ~1.2s */}
-      <ParticleStream dataKey="regimes" color="#22C55E" from={anchors.kernel} to={anchors.outputsLeft} curvature="left" delay={2.0} reverse={false} shouldReduceMotion={shouldReduceMotion} />
+      <ParticleStream dataKey="regimes" color="#F43F5E" from={anchors.kernel} to={anchors.outputsLeft} curvature="left" delay={2.0} reverse={false} shouldReduceMotion={shouldReduceMotion} />
       <ParticleStream dataKey="adapters" color="#F59E0B" from={anchors.kernel} to={anchors.outputsRight} curvature="right" delay={2.2} reverse={false} shouldReduceMotion={shouldReduceMotion} />
     </div>
   );
