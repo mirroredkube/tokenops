@@ -1516,62 +1516,6 @@ function PolicyKernelConsole() {
             placeholder={assets.length > 0 ? "Select Asset" : "Loading assets..."}
             className="min-w-64"
           />
-          {assetId && (
-            <button
-              onClick={async () => {
-                if (!assetId) return
-                
-                try {
-                  // Call the evidence bundle export API
-                  const response = await fetch(`${getTenantApiUrl()}/v1/compliance/assets/${assetId}/export?format=zip`, {
-                    method: 'GET',
-                    headers: {
-                      'X-API-Key': process.env.NEXT_PUBLIC_API_KEY || '',
-                    },
-                    credentials: 'include'
-                  })
-                  
-                  if (!response.ok) {
-                    throw new Error(`Export failed: ${response.statusText}`)
-                  }
-                  
-                  // Get the blob data
-                  const blob = await response.blob()
-                  
-                  // Create download link
-                  const url = window.URL.createObjectURL(blob)
-                  const link = document.createElement('a')
-                  link.href = url
-                  
-                  // Get filename from Content-Disposition header or use default
-                  const contentDisposition = response.headers.get('Content-Disposition')
-                  let filename = `asset-compliance-${selectedAsset?.code || assetId}-${new Date().toISOString().split('T')[0]}.zip`
-                  
-                  if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename="(.+)"/)
-                    if (filenameMatch) {
-                      filename = filenameMatch[1]
-                    }
-                  }
-                  
-                  link.download = filename
-                  document.body.appendChild(link)
-                  link.click()
-                  document.body.removeChild(link)
-                  window.URL.revokeObjectURL(url)
-                  
-                  console.log('Evidence bundle exported successfully')
-                } catch (error) {
-                  console.error('Failed to export evidence bundle:', error)
-                  alert('Failed to export evidence bundle. Please try again.')
-                }
-              }}
-              className="px-4 py-2 border border-emerald-300 text-emerald-700 bg-white rounded-md hover:bg-emerald-50 hover:border-emerald-400 flex items-center gap-2 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              Export Evidence Bundle
-            </button>
-          )}
         </div>
       </div>
 
@@ -1831,7 +1775,11 @@ function PolicyKernelConsole() {
                     <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">⚡</span>
+                          {/* XRP Logo */}
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#23292F"/>
+                            <path d="M8 8h8v2H8V8zm0 4h8v2H8v-2zm0 4h8v2H8v-2z" fill="white"/>
+                          </svg>
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -1869,7 +1817,7 @@ function PolicyKernelConsole() {
                                 </span>
                                 <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
                                   Account Freeze
-                                  <span className="ml-1 text-xs text-red-600">(Issuer Account)</span>
+                                  <span className="ml-1 text-xs text-red-600">(Issuer)</span>
                                 </span>
                               </div>
                             </div>
@@ -1943,7 +1891,10 @@ function PolicyKernelConsole() {
                     <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🔗</span>
+                          {/* Ethereum Logo */}
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#627EEA" strokeWidth="2" fill="none"/>
+                          </svg>
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -1961,7 +1912,12 @@ function PolicyKernelConsole() {
                     <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🌐</span>
+                          {/* Hedera Logo */}
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#000000"/>
+                            <path d="M12 6v12M6 12h12" stroke="#00D4AA" strokeWidth="2"/>
+                            <circle cx="12" cy="12" r="3" fill="#00D4AA"/>
+                          </svg>
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -1994,6 +1950,84 @@ function PolicyKernelConsole() {
             </div>
           </div>
 
+          {/* Policy Kernel Outputs - Two Types */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Universal Outputs */}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Universal Outputs</h3>
+                  <p className="text-sm text-gray-600">Ledger-agnostic compliance obligations</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Evaluated Requirements</span>
+                  <span className="text-sm text-blue-600 font-semibold">10 items</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Evidence Obligations</span>
+                  <span className="text-sm text-blue-600 font-semibold">5 categories</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Regime Versions</span>
+                  <span className="text-sm text-blue-600 font-semibold">MiCA v1.0, EU TFR v1.0</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Evaluation Counters</span>
+                  <span className="text-sm text-blue-600 font-semibold">10→10→10→0→0</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Enforcement Intents */}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Brain className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Enforcement Intents</h3>
+                  <p className="text-sm text-gray-600">Abstract actions for ledger mapping</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Gate Holder Eligibility</span>
+                  <span className="text-sm text-purple-600 font-semibold">Active</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Require Authorization</span>
+                  <span className="text-sm text-purple-600 font-semibold">Active</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Emergency Stop</span>
+                  <span className="text-sm text-purple-600 font-semibold">Ready</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                  <span className="text-sm font-medium text-gray-900">Recovery Mechanism</span>
+                  <span className="text-sm text-purple-600 font-semibold">Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Adapter Mapping Flow Indicator */}
+          <div className="flex justify-center mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-0.5 bg-gray-300"></div>
+              <div className="flex items-center gap-2">
+                <ArrowDown className="h-4 w-4 text-gray-400" />
+                <span className="text-xs text-gray-500 font-medium">Adapter Mapping</span>
+                <ArrowDown className="h-4 w-4 text-gray-400" />
+              </div>
+              <div className="w-8 h-0.5 bg-gray-300"></div>
+            </div>
+          </div>
+
           {/* A4 - Kernel Outputs Panel */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="text-center mb-6">
@@ -2005,187 +2039,210 @@ function PolicyKernelConsole() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* XRPL */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-900">XRPL (Active)</h3>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Active
-                  </span>
+            <div className="space-y-6">
+              {/* XRPL - Target Ledger (Expanded) */}
+              <div className="border-2 border-emerald-200 rounded-lg p-6 bg-gradient-to-r from-emerald-50 to-green-50">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      {/* XRP Logo */}
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" fill="#23292F"/>
+                        <path d="M8 8h8v2H8V8zm0 4h8v2H8v-2zm0 4h8v2H8v-2z" fill="white"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">XRPL Adapter</h3>
+                      <p className="text-sm text-gray-600">Target Ledger - Active Enforcement</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      Target Ledger
+                    </span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Active
+                    </span>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">RequireAuth</span>
-                      <div className="text-xs text-gray-500">Retail + Public distribution requires issuer authorization (MiCA)</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Applied Controls */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      Applied Controls
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">RequireAuth</span>
+                          <div className="text-xs text-gray-600">Retail + Public distribution requires issuer authorization (MiCA)</div>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Applied
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">Trustline Authorization</span>
+                          <div className="text-xs text-gray-600">Eligibility gating for investor audience (policy mapping)</div>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Applied
+                        </span>
+                      </div>
                     </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      kernelSummary.enforcementFlags.xrpl.requireAuth 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {kernelSummary.enforcementFlags.xrpl.requireAuth ? 'Active' : 'Not enabled'}
-                    </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Trustline Authorization</span>
-                      <div className="text-xs text-gray-500">Eligibility gating for investor audience (policy mapping)</div>
+
+                  {/* Ready Controls */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-blue-600" />
+                      Ready Controls
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">Global Freeze</span>
+                          <div className="text-xs text-gray-600">Freeze all tokens issued by the account</div>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Ready
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">Clawback</span>
+                          <div className="text-xs text-gray-600">Recovery mechanism for unauthorized transfers</div>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Ready
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">Require Dest Tag</span>
+                          <div className="text-xs text-gray-600">Mandate destination tags for payments</div>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Ready
+                        </span>
+                      </div>
                     </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      kernelSummary.enforcementFlags.xrpl.trustlineAuthorization 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {kernelSummary.enforcementFlags.xrpl.trustlineAuthorization ? 'Active' : 'Not enabled'}
-                    </span>
                   </div>
+                </div>
+
+                {/* Evidence Bundle Export - Moved to XRPL card */}
+                <div className="mt-6 pt-4 border-t border-emerald-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-sm text-gray-600">Freeze Capability</span>
-                      <div className="text-xs text-gray-500">Emergency control for regulatory compliance</div>
+                      <h4 className="text-sm font-semibold text-gray-900">Evidence Bundle</h4>
+                      <p className="text-xs text-gray-600">Export audit-ready compliance package for this asset</p>
                     </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Available
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Clawback</span>
-                      <div className="text-xs text-gray-500">Recovery mechanism for unauthorized transfers</div>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Available
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Transfer Rate</span>
-                      <div className="text-xs text-gray-500">Fee control for transfer operations</div>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Available
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Trustline Limit</span>
-                      <div className="text-xs text-gray-500">Maximum balance control per holder</div>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Available
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Global Freeze</span>
-                      <div className="text-xs text-gray-500">Freeze all tokens issued by the account</div>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Available
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Require Dest Tag</span>
-                      <div className="text-xs text-gray-500">Mandate destination tags for payments</div>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Available
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Credentials</span>
-                      <div className="text-xs text-gray-500">Verifiable KYC credentials for compliance</div>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Available
-                    </span>
+                    <button
+                      onClick={async () => {
+                        if (!assetId) return
+                        
+                        try {
+                          // Call the evidence bundle export API
+                          const response = await fetch(`${getTenantApiUrl()}/v1/compliance/assets/${assetId}/export?format=zip`, {
+                            method: 'GET',
+                            headers: {
+                              'X-API-Key': process.env.NEXT_PUBLIC_API_KEY || '',
+                            },
+                            credentials: 'include'
+                          })
+                          
+                          if (!response.ok) {
+                            throw new Error(`Export failed: ${response.statusText}`)
+                          }
+                          
+                          // Get the blob data
+                          const blob = await response.blob()
+                          
+                          // Create download link
+                          const url = window.URL.createObjectURL(blob)
+                          const link = document.createElement('a')
+                          link.href = url
+                          
+                          // Get filename from Content-Disposition header or use default
+                          const contentDisposition = response.headers.get('Content-Disposition')
+                          let filename = `asset-compliance-${selectedAsset?.code || assetId}-${new Date().toISOString().split('T')[0]}.zip`
+                          
+                          if (contentDisposition) {
+                            const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+                            if (filenameMatch) {
+                              filename = filenameMatch[1]
+                            }
+                          }
+                          
+                          link.download = filename
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                          window.URL.revokeObjectURL(url)
+                          
+                          console.log('Evidence bundle exported successfully')
+                        } catch (error) {
+                          console.error('Failed to export evidence bundle:', error)
+                          alert('Failed to export evidence bundle. Please try again.')
+                        }
+                      }}
+                      className="px-4 py-2 border border-emerald-300 text-emerald-700 bg-white rounded-md hover:bg-emerald-50 hover:border-emerald-400 flex items-center gap-2 transition-colors"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export Evidence Bundle
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* EVM */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-900">EVM (Installed)</h3>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Installed
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Allowlist Gating</span>
-                      <div className="text-xs text-gray-500">Eligibility gating for investor audience (policy mapping)</div>
+              {/* Preview Ledgers - Collapsed */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* EVM - Preview */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        {/* Ethereum Logo */}
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#627EEA" strokeWidth="2" fill="none"/>
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-medium text-gray-900">EVM Adapter</h3>
                     </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      kernelSummary.enforcementFlags.evm.allowlistGating 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {kernelSummary.enforcementFlags.evm.allowlistGating ? 'Active' : 'Not enabled'}
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      Preview
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Pause Control</span>
-                      <div className="text-xs text-gray-500">Emergency control for regulatory compliance</div>
-                    </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      kernelSummary.enforcementFlags.evm.pauseControl 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {kernelSummary.enforcementFlags.evm.pauseControl ? 'Active' : 'Not enabled'}
-                    </span>
+                  <p className="text-xs text-gray-500 mb-2">Allowlist, Pause Control</p>
+                  <div className="text-xs text-gray-400 italic">
+                    Mapping exists but not active for this asset
                   </div>
                 </div>
-                <div className="mt-3 text-xs text-gray-500">
-                  Not enabled for this asset
-                </div>
-              </div>
 
-              {/* Hedera */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-900">Hedera (Installed)</h3>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Installed
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Allowlist Gating</span>
-                      <div className="text-xs text-gray-500">Eligibility gating for investor audience (policy mapping)</div>
+                {/* Hedera - Preview */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        {/* Hedera Logo */}
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" fill="#000000"/>
+                          <path d="M12 6v12M6 12h12" stroke="#00D4AA" strokeWidth="2"/>
+                          <circle cx="12" cy="12" r="3" fill="#00D4AA"/>
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-medium text-gray-900">Hedera Adapter</h3>
                     </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      kernelSummary.enforcementFlags.hedera.allowlistGating 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {kernelSummary.enforcementFlags.hedera.allowlistGating ? 'Active' : 'Not enabled'}
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      Preview
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-gray-600">Pause Control</span>
-                      <div className="text-xs text-gray-500">Emergency control for regulatory compliance</div>
-                    </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      kernelSummary.enforcementFlags.hedera.pauseControl 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {kernelSummary.enforcementFlags.hedera.pauseControl ? 'Active' : 'Not enabled'}
-                    </span>
+                  <p className="text-xs text-gray-500 mb-2">Allowlist, Pause Control</p>
+                  <div className="text-xs text-gray-400 italic">
+                    Mapping exists but not active for this asset
                   </div>
-                </div>
-                <div className="mt-3 text-xs text-gray-500">
-                  Not enabled for this asset
                 </div>
               </div>
             </div>
