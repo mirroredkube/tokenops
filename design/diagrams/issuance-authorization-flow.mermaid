@@ -1,0 +1,78 @@
+graph TB
+    %% Platform Users (Issuers)
+    Issuer[🏢 Issuer/Platform User] --> CreateAuth[Create Authorization Request]
+    Issuer --> CreateIssuance[Create Token Issuance]
+    
+    %% External Holders
+    Holder[👤 External Holder<br/>No Platform Access] --> ReceiveAuth[Receive Authorization Link<br/>via Email/SMS/etc]
+    
+    %% Authorization Flow
+    CreateAuth --> AuthReq[Authorization Request<br/>Status: PENDING]
+    AuthReq --> AuthToken[Generate Authorization Token<br/>One-time use token]
+    AuthToken --> AuthURL[Authorization URL<br/>/auth/authorize/token]
+    AuthURL --> SendLink[Send Authorization Link<br/>to External Holder]
+    
+    %% External Holder Authorization
+    ReceiveAuth --> AuthURL
+    SendLink --> HolderAuth[External Holder Authorization<br/>via XUMM/Wallet<br/>No Platform Login Required]
+    HolderAuth --> TrustlineCheck{Trustline<br/>Exists?}
+    
+    TrustlineCheck -->|No| CreateTrustline[Create Trustline<br/>on XRPL]
+    TrustlineCheck -->|Yes| AuthComplete[Authorization Complete<br/>Status: CONSUMED]
+    CreateTrustline --> AuthComplete
+    
+    %% Issuer Authorization
+    AuthComplete --> IssuerAuth[Issuer Authorization<br/>via API]
+    IssuerAuth --> IssuerAuthTx[Issuer Authorization<br/>Transaction on XRPL]
+    IssuerAuthTx --> AuthRecord[Authorization Record<br/>Status: ISSUER_AUTHORIZED]
+    
+    %% Issuance Flow
+    CreateIssuance --> IssuanceCheck{Issuance Type?}
+    IssuanceCheck -->|PENDING| PendingIssuance[Pending Issuance<br/>Status: PENDING]
+    IssuanceCheck -->|SUBMITTED| SubmittedIssuance[Submitted Issuance<br/>Status: SUBMITTED]
+    
+    %% Pending Issuance Flow
+    PendingIssuance --> LinkAuth[Link to Authorization<br/>if exists]
+    LinkAuth --> WaitAuth[Wait for Authorization<br/>to complete]
+    WaitAuth --> AuthRecord
+    
+    %% Submitted Issuance Flow
+    SubmittedIssuance --> PreflightCheck[Pre-flight Checks]
+    PreflightCheck --> TrustlineExists{Trustline<br/>Exists?}
+    TrustlineExists -->|No| Error1[❌ Error: Trustline Required]
+    TrustlineExists -->|Yes| CheckLimit{Amount <=<br/>Trustline Limit?}
+    CheckLimit -->|No| Error2[❌ Error: Exceeds Limit]
+    CheckLimit -->|Yes| ComplianceCheck[Compliance Evaluation]
+    
+    %% Compliance Flow
+    ComplianceCheck --> ComplianceManifest[Generate Compliance<br/>Manifest]
+    ComplianceManifest --> ComplianceHash[Generate Manifest Hash]
+    ComplianceHash --> XRPLTx[XRPL Transaction<br/>Payment/TrustSet]
+    
+    %% XRPL Transaction
+    XRPLTx --> TxResult{Transaction<br/>Success?}
+    TxResult -->|Success| IssuanceComplete[✅ Issuance Complete<br/>Status: VALIDATED]
+    TxResult -->|Failed| IssuanceFailed[❌ Issuance Failed<br/>Status: FAILED]
+    
+    %% Status Updates
+    IssuanceComplete --> UpdateStatus[Update Issuance Status<br/>with TX ID]
+    IssuanceFailed --> UpdateFailed[Update Issuance Status<br/>with Error]
+    
+    %% Watcher Job
+    UpdateStatus --> WatcherJob[Issuance Watcher Job<br/>Monitor TX Status]
+    WatcherJob --> FinalStatus[Final Status Update<br/>VALIDATED/FAILED]
+    
+    %% Styling
+    classDef userAction fill:#e1f5fe
+    classDef process fill:#f3e5f5
+    classDef decision fill:#fff3e0
+    classDef success fill:#e8f5e8
+    classDef error fill:#ffebee
+    classDef xrpl fill:#fff8e1
+    
+    class Issuer,CreateAuth,CreateIssuance userAction
+    class AuthReq,AuthToken,AuthURL,AuthComplete,AuthRecord,PendingIssuance,SubmittedIssuance,ComplianceManifest,ComplianceHash process
+    class TrustlineCheck,IssuanceCheck,TrustlineExists,CheckLimit,TxResult decision
+    class IssuanceComplete,FinalStatus success
+    class Error1,Error2,IssuanceFailed error
+    class CreateTrustline,IssuerAuthTx,XRPLTx,WatcherJob xrpl
