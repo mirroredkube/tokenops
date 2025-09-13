@@ -1701,24 +1701,18 @@ function PolicyKernelConsole() {
                 </div>
               </div>
 
-              {/* Output Arrows */}
-              <div className="flex justify-center mb-8">
-                <div className="flex items-center gap-8">
-                  <div className="flex flex-col items-center gap-2">
-                    <ArrowUp className="h-6 w-6 text-emerald-600" />
-                    <div className="w-0.5 h-8 bg-emerald-200"></div>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <ArrowUp className="h-6 w-6 text-emerald-600" />
-                    <div className="w-0.5 h-8 bg-emerald-200"></div>
-                  </div>
-                </div>
-              </div>
-
               {/* Policy Kernel Inputs - Bidirectional Flow */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Regime Plugins - Input to Policy Kernel */}
                 <div className="space-y-4">
+                  {/* Arrow above Regime Plugins */}
+                  <div className="flex justify-center mb-4">
+                    <div className="flex items-center gap-6">
+                      <div className="w-12 h-0.5 bg-emerald-200"></div>
+                      <ArrowUp className="h-6 w-6 text-emerald-600" />
+                      <div className="w-12 h-0.5 bg-emerald-200"></div>
+                    </div>
+                  </div>
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-gray-900">Regime Plugins</h3>
                     <p className="text-sm text-gray-600">Regulatory requirements (inputs)</p>
@@ -1767,6 +1761,14 @@ function PolicyKernelConsole() {
 
                 {/* Ledger Adapters - Input to Policy Kernel */}
                 <div className="space-y-4">
+                  {/* Arrow above Ledger Adapters */}
+                  <div className="flex justify-center mb-4">
+                    <div className="flex items-center gap-6">
+                      <div className="w-12 h-0.5 bg-emerald-200"></div>
+                      <ArrowUp className="h-6 w-6 text-emerald-600" />
+                      <div className="w-12 h-0.5 bg-emerald-200"></div>
+                    </div>
+                  </div>
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-gray-900">Ledger Adapters</h3>
                     <p className="text-sm text-gray-600">Available capabilities (inputs)</p>
