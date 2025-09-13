@@ -279,10 +279,7 @@ function Kernel() {
         animate={{ boxShadow: ["0 0 60px rgba(16,185,129,0.25)", "0 0 100px rgba(16,185,129,0.4)", "0 0 60px rgba(16,185,129,0.25)"] }}
         transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
       >
-        {/* Orbiting dots */}
-        <OrbitDot radius={88} color="#10B981" delay={0} />
-        <OrbitDot radius={88} color="#3B82F6" delay={0.2} />
-        <OrbitDot radius={88} color="#8B5CF6" delay={0.4} />
+        {/* Orbiting dots removed for clean center */}
 
         {/* Inner pulse */}
         <motion.div
