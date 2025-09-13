@@ -488,8 +488,6 @@ export default function HomePage() {
         <div className="mb-8">
           <PolicyKernelAnimated />
         </div>
-        
-        
         <div className="grid gap-6 md:grid-cols-3">
           <Card title="Evaluate (facts → requirements)">
             Feed organization, product, and asset facts into the kernel. It derives
