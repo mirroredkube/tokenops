@@ -29,9 +29,9 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-neutral-50 via-white to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-600 mx-auto"></div>
           <p className="mt-4 text-neutral-600">Loading...</p>
         </div>
       </div>
@@ -43,20 +43,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Background Image with Gradient Overlay */}
-      <div className="hidden lg:block lg:w-1/2 relative">
+    <div className="min-h-screen flex relative">
+      {/* Full-width Background Image with Gradient Overlay */}
+      <div className="absolute inset-0">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2310b981;stop-opacity:1" /><stop offset="50%" style="stop-color:%2306b6d4;stop-opacity:1" /><stop offset="100%" style="stop-color:%2310b981;stop-opacity:1" /></linearGradient><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="%23ffffff" stroke-width="1" opacity="0.1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grad1)"/><rect width="100%" height="100%" fill="url(%23grid)"/><circle cx="200" cy="150" r="80" fill="%23ffffff" opacity="0.1"/><circle cx="1000" cy="300" r="120" fill="%23ffffff" opacity="0.08"/><circle cx="800" cy="600" r="60" fill="%23ffffff" opacity="0.12"/><path d="M 0 400 Q 300 200 600 400 T 1200 400" stroke="%23ffffff" stroke-width="3" fill="none" opacity="0.3"/><path d="M 0 500 Q 400 300 800 500 T 1200 500" stroke="%23ffffff" stroke-width="2" fill="none" opacity="0.2"/></svg>')`
+            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:%231e293b;stop-opacity:1" /><stop offset="30%" style="stop-color:%230f766e;stop-opacity:1" /><stop offset="70%" style="stop-color:%23f0fdf4;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ffffff;stop-opacity:1" /></linearGradient><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="%23ffffff" stroke-width="1" opacity="0.1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grad1)"/><rect width="100%" height="100%" fill="url(%23grid)"/><circle cx="200" cy="150" r="80" fill="%23ffffff" opacity="0.1"/><circle cx="1000" cy="300" r="120" fill="%23ffffff" opacity="0.08"/><circle cx="800" cy="600" r="60" fill="%23ffffff" opacity="0.12"/><path d="M 0 400 Q 300 200 600 400 T 1200 400" stroke="%23ffffff" stroke-width="3" fill="none" opacity="0.3"/><path d="M 0 500 Q 400 300 800 500 T 1200 500" stroke="%23ffffff" stroke-width="2" fill="none" opacity="0.2"/></svg>')`
           }}
         />
-        {/* Gradient overlay for dissolve effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white"></div>
+        {/* Gradient overlay for seamless transition - stops before login form */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/80 lg:to-white/60"></div>
         
-        {/* Floating elements */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        {/* Floating elements - only on left side */}
+        <div className="absolute inset-0 flex items-center justify-start pl-8 lg:pl-16">
           <div className="text-white text-center space-y-8 max-w-md mx-8">
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-3">
@@ -73,14 +73,14 @@ export default function LoginPage() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
                   <span className="font-medium">Mica Aware</span>
                 </div>
                 <p className="opacity-80">Compliant with EU crypto regulations</p>
               </div>
               <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
                   <span className="font-medium">Enterprise Ready</span>
                 </div>
                 <p className="opacity-80">Production-grade security and scalability</p>
@@ -91,8 +91,8 @@ export default function LoginPage() {
       </div>
 
       {/* Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="max-w-md w-full">
+      <div className="relative z-10 w-full lg:w-1/2 flex items-center justify-center p-8 ml-auto">
+        <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <img
@@ -130,7 +130,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl border p-8 shadow-sm">
+          <div>
             <button
               onClick={login}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors text-neutral-700 font-medium"
@@ -159,11 +159,11 @@ export default function LoginPage() {
             <div className="mt-6 text-center">
               <p className="text-sm text-neutral-500">
                 By signing in, you agree to our{' '}
-                <a href="/terms" className="text-emerald-600 hover:underline">
+                <a href="/terms" className="text-slate-600 hover:underline">
                   Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="/privacy" className="text-emerald-600 hover:underline">
+                <a href="/privacy" className="text-slate-600 hover:underline">
                   Privacy Policy
                 </a>
               </p>
