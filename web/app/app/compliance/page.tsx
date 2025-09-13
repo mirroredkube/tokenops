@@ -9,6 +9,7 @@ import { Shield, Search, Filter, Eye, CheckCircle, XCircle, Clock, Download, Bra
 import CustomDropdown from '../../components/CustomDropdown'
 import ModernTooltip from '../../components/ModernTooltip'
 import { CanManageCompliance } from '../../components/RoleGuard'
+import LedgerLogo from '../../components/LedgerLogo'
 
 interface ComplianceRecord {
   id: string
@@ -1775,11 +1776,7 @@ function PolicyKernelConsole() {
                     <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          {/* XRP Logo */}
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" fill="#23292F"/>
-                            <path d="M8 8h8v2H8V8zm0 4h8v2H8v-2zm0 4h8v2H8v-2z" fill="white"/>
-                          </svg>
+                          <LedgerLogo type="XRPL" size="sm" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -1891,10 +1888,7 @@ function PolicyKernelConsole() {
                     <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                          {/* Ethereum Logo */}
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#627EEA" strokeWidth="2" fill="none"/>
-                          </svg>
+                          <LedgerLogo type="ETHEREUM" size="sm" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -1912,12 +1906,7 @@ function PolicyKernelConsole() {
                     <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                          {/* Hedera Logo */}
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" fill="#000000"/>
-                            <path d="M12 6v12M6 12h12" stroke="#00D4AA" strokeWidth="2"/>
-                            <circle cx="12" cy="12" r="3" fill="#00D4AA"/>
-                          </svg>
+                          <LedgerLogo type="HEDERA" size="sm" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -2045,11 +2034,7 @@ function PolicyKernelConsole() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                      {/* XRP Logo */}
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="#23292F"/>
-                        <path d="M8 8h8v2H8V8zm0 4h8v2H8v-2zm0 4h8v2H8v-2z" fill="white"/>
-                      </svg>
+                      <LedgerLogo type="XRPL" size="md" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">XRPL Adapter</h3>
@@ -2204,10 +2189,7 @@ function PolicyKernelConsole() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        {/* Ethereum Logo */}
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#627EEA" strokeWidth="2" fill="none"/>
-                        </svg>
+                        <LedgerLogo type="ETHEREUM" size="sm" />
                       </div>
                       <h3 className="text-sm font-medium text-gray-900">EVM Adapter</h3>
                     </div>
@@ -2226,12 +2208,7 @@ function PolicyKernelConsole() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        {/* Hedera Logo */}
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="10" fill="#000000"/>
-                          <path d="M12 6v12M6 12h12" stroke="#00D4AA" strokeWidth="2"/>
-                          <circle cx="12" cy="12" r="3" fill="#00D4AA"/>
-                        </svg>
+                        <LedgerLogo type="HEDERA" size="sm" />
                       </div>
                       <h3 className="text-sm font-medium text-gray-900">Hedera Adapter</h3>
                     </div>
